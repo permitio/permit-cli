@@ -22,21 +22,21 @@ type Props = {
 	options: zod.infer<typeof options>;
 };
 
-export default function apiKey({ args, options }: Props) {
+export default function ApiKey({ args, options }: Props) {
 	const action: string = args[0];
 	const key: string = args[1];
 	const isValid = key.length >= 97 && key.startsWith('permit_key_');
 
 	const [readKey, setReadKey] = React.useState('');
 
-	if (action === 'read') {
-		React.useEffect(() => {
+	React.useEffect(() => {
+		if (action === 'read') {
 			keytar
 				.getPassword(KEYSTORE_PERMIT_SERVICE_NAME, options.keyAccount)
 				.then(value => setReadKey(value || ''))
 				.catch(reason => setReadKey(`-- Failed to read key- reason ${reason}`));
-		}, []);
-	}
+		}
+	}, [action, options.keyAccount]);
 
 	if (isValid && action === 'save') {
 		keytar.setPassword(KEYSTORE_PERMIT_SERVICE_NAME, options.keyAccount, key);

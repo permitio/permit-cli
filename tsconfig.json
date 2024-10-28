@@ -2,9 +2,10 @@
 	"extends": "@sindresorhus/tsconfig",
 	"compilerOptions": {
 		"jsx": "react",
-		"moduleResolution": "node16",
+		"moduleResolution": "nodenext",
 		"module": "Node16",
-		"outDir": "dist"
+		"outDir": "dist",
+		"lib": ["es2022", "dom"]
 	},
 	"include": ["source"]
 }

@@ -35,24 +35,35 @@ type Props = {
 	options: zod.infer<typeof options>;
 };
 
+interface PolicyResult {
+	id: string;
+	[key: string]: unknown;
+}
+
 interface QueryResult {
-	result: { result: Array<any> };
+	result: { result: Array<PolicyResult> };
 	status: number;
 }
 
+interface SelectOption {
+	label: string;
+	value: string;
+}
+
 export default function Policy({ options }: Props) {
-	const [error, setError] = React.useState(null);
-	// result of API
+	const [error, setError] = React.useState<Error | null>(null);
 	const [res, setRes] = React.useState<QueryResult>({
 		result: { result: [] },
 		status: 0,
 	});
-	// selection
-	const [selection, setSelection] = React.useState<any>(undefined);
+	const [selection, setSelection] = React.useState<PolicyResult | undefined>(
+		undefined,
+	);
 	const [selectionFilter, setSelectionFilter] = React.useState('');
 
-	const queryOPA = async (apiKey: String, path?: String) => {
+	const queryOPA = async (apiKey: string, path?: string) => {
 		const document = path ? `/${path}` : '';
+
 		const response = await fetch(
 			`${options.serverUrl}/v1/policies${document}`,
 			// pass api key if not empty
@@ -67,18 +78,26 @@ export default function Policy({ options }: Props) {
 			const apiKey = options.apiKey || (await loadAuthToken());
 			await queryOPA(apiKey);
 		};
-		performQuery().catch(err => setError(err));
-	}, []);
+		performQuery().catch(err =>
+			setError(err instanceof Error ? err : new Error('Unknown error')),
+		);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [options.apiKey, options.serverUrl]);
 
-	const policyItems = res.result.result.map(i => {
-		return { label: i.id, value: i };
+	const policyItems: SelectOption[] = res.result.result.map(i => {
+		return { label: i.id, value: i.id };
 	});
 	const fuse = new Fuse(policyItems, {
-		keys: ['label', 'id'],
+		keys: ['label', 'value'],
 		minMatchCharLength: 0,
 	});
 	const filtered = fuse.search(selectionFilter).map(i => i.item);
 	const view = filtered.length === 0 ? policyItems : filtered;
+
+	const handleSelection = (selectedValue: string) => {
+		const selectedPolicy = res.result.result.find(p => p.id === selectedValue);
+		setSelection(selectedPolicy);
+	};
 
 	return (
 		<>
@@ -97,13 +116,13 @@ export default function Policy({ options }: Props) {
 							<Box flexDirection="column" gap={1}>
 								<TextInput
 									placeholder="Type text to filter list"
-									onSubmit={setSelection}
+									onSubmit={(value: string) => handleSelection(value)}
 									onChange={setSelectionFilter}
 									suggestions={policyItems.map(i => i.label)}
 								/>
 							</Box>
 							<Box padding={2} flexDirection="column" gap={1}>
-								<Select options={policyItems} onChange={setSelection} />
+								<Select options={policyItems} onChange={handleSelection} />
 							</Box>
 						</>
 					)}
@@ -122,7 +141,7 @@ export default function Policy({ options }: Props) {
 			)}
 			{error && (
 				<Box>
-					<Text color="red">Request failed: {JSON.stringify(error)}</Text>
+					<Text color="red">Request failed: {error.message}</Text>
 					<Newline />
 					<Text>
 						{inspect(res, {

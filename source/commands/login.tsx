@@ -35,77 +35,111 @@ type Props = {
 	readonly options: zInfer<typeof options>;
 };
 
+interface Org {
+	id: string;
+	key: string;
+	name: string;
+}
+
+interface Project {
+	id: string;
+	name: string;
+}
+
+interface Environment {
+	id: string;
+	name: string;
+}
+
+interface SelectItem {
+	label: string;
+	value: string;
+}
+
+interface ApiKeyResponse {
+	secret: string;
+}
+
 export default function Login({ options: { key, workspace } }: Props) {
 	const [authError, setAuthError] = useState('');
-	const [orgs, setOrgs] = useState<[]>([]);
+	const [orgs, setOrgs] = useState<SelectItem[]>([]);
 	const [accessToken, setAccessToken] = useState<string | undefined>();
-	const [cookie, setCookie] = useState<string | undefined>('');
-	const [activeOrg, setActiveOrg] = useState<any | undefined>(null);
-	const [activeProject, setActiveProject] = useState<any | undefined>(null);
-	const [activeEnvironment, setActiveEnvironment] = useState<any | undefined>(
-		null,
+	const [cookie, setCookie] = useState<string>('');
+	const [activeOrg, setActiveOrg] = useState<SelectItem | undefined>(undefined);
+	const [activeProject, setActiveProject] = useState<SelectItem | undefined>(
+		undefined,
 	);
-	const [projects, setProjects] = useState<[]>([]);
-	const [environments, setEnvironments] = useState<[]>([]);
+	const [activeEnvironment, setActiveEnvironment] = useState<
+		SelectItem | undefined
+	>(undefined);
+	const [projects, setProjects] = useState<SelectItem[]>([]);
+	const [environments, setEnvironments] = useState<SelectItem[]>([]);
 	const [state, setState] = useState<
 		'login' | 'loggingIn' | 'org' | 'project' | 'environment' | 'done'
 	>('login');
 
 	useEffect(() => {
 		const fetchOrgs = async () => {
-			const { response: orgs } = await apiCall(
+			if (!accessToken) return;
+
+			const { response: orgs } = await apiCall<Org[]>(
 				'v2/orgs',
-				accessToken ?? '',
+				accessToken,
 				cookie,
 			);
 
 			const selectedOrg = orgs.find(
-				(org: any) => workspace && org.key === workspace,
+				(org: Org) => workspace && org.key === workspace,
 			);
 
 			if (selectedOrg) {
 				setActiveOrg({ label: selectedOrg.name, value: selectedOrg.id });
 				setState('project');
 			} else if (orgs && orgs.length === 1) {
-				setActiveOrg({ label: orgs[0].name, value: orgs[0].id });
+				setActiveOrg({ label: orgs[0]?.name ?? '', value: orgs[0]?.id ?? '' });
 				setState('project');
 			}
 
-			setOrgs(orgs.map((org: any) => ({ label: org.name, value: org.id })));
+			setOrgs(orgs.map((org: Org) => ({ label: org.name, value: org.id })));
 		};
 
 		if (state === 'org' && accessToken) {
 			fetchOrgs();
 		}
-	}, [state, accessToken, cookie, key]);
+	}, [state, accessToken, cookie, workspace]);
 
 	useEffect(() => {
 		const fetchProjects = async () => {
-			let newCookie = cookie ?? '';
+			if (!activeOrg || !accessToken) return;
 
-			const { headers } = await apiCall(
+			let newCookie = cookie;
+
+			const { headers } = await apiCall<unknown>(
 				`v2/auth/switch_org/${activeOrg.value}`,
-				accessToken ?? '',
-				cookie ?? '',
+				accessToken,
+				newCookie,
 				'POST',
 			);
 
 			newCookie = headers.getSetCookie()[0] ?? '';
 			setCookie(newCookie);
 
-			const { response: projects } = await apiCall(
+			const { response: projects } = await apiCall<Project[]>(
 				'v2/projects',
-				accessToken ?? '',
+				accessToken,
 				newCookie,
 			);
 
 			if (projects.length === 1) {
-				setActiveProject({ label: projects[0].name, value: projects[0].id });
+				setActiveProject({
+					label: projects[0]?.name ?? '',
+					value: projects[0]?.id ?? '',
+				});
 				setState('environment');
 			}
 
 			setProjects(
-				projects.map((project: any) => ({
+				projects.map((project: Project) => ({
 					label: project.name,
 					value: project.id,
 				})),
@@ -115,17 +149,19 @@ export default function Login({ options: { key, workspace } }: Props) {
 		if (activeOrg) {
 			fetchProjects();
 		}
-	}, [activeOrg]);
+	}, [activeOrg, accessToken, cookie]);
 
 	useEffect(() => {
 		const fetchEnvironments = async () => {
-			const { response: environments } = await apiCall(
+			if (!activeProject || !accessToken) return;
+
+			const { response: environments } = await apiCall<Environment[]>(
 				`v2/projects/${activeProject.value}/envs`,
-				accessToken ?? '',
-				cookie ?? '',
+				accessToken,
+				cookie,
 			);
 			setEnvironments(
-				environments.map((environment: any) => ({
+				environments.map((environment: Environment) => ({
 					label: environment.name,
 					value: environment.id,
 				})),
@@ -135,15 +171,16 @@ export default function Login({ options: { key, workspace } }: Props) {
 		if (activeProject) {
 			fetchEnvironments();
 		}
-	}, [activeProject]);
+	}, [activeProject, accessToken, cookie]);
 
 	useEffect(() => {
 		if (state === 'done') {
+			// eslint-disable-next-line no-undef
 			process.exit(0);
 		}
 	}, [state]);
 
-	const handleOrgSelect = async (org: any) => {
+	const handleOrgSelect = async (org: SelectItem) => {
 		setActiveOrg(org);
 		setState('project');
 	};
@@ -160,14 +197,14 @@ export default function Login({ options: { key, workspace } }: Props) {
 				// Open the authentication URL in the default browser
 				const verifier = await browserAuth();
 				const token = await authCallbackServer(verifier);
-				const { headers } = await apiCall(
+				const { headers } = await apiCall<unknown>(
 					'v2/auth/login',
 					token ?? '',
 					'',
 					'POST',
 				);
 				setAccessToken(token);
-				setCookie(headers.getSetCookie()[0]);
+				setCookie(headers.getSetCookie()[0] ?? '');
 			}
 
 			setState('org');
@@ -220,12 +257,14 @@ export default function Login({ options: { key, workspace } }: Props) {
 							items={environments}
 							onSelect={async environment => {
 								setActiveEnvironment(environment);
-								const { response } = await apiCall(
-									`v2/api-key/${activeProject.value}/${environment.value}`,
-									accessToken ?? '',
-									cookie,
-								);
-								await saveAuthToken(response.secret);
+								if (activeProject && accessToken) {
+									const { response } = await apiCall<ApiKeyResponse>(
+										`v2/api-key/${activeProject.value}/${environment.value}`,
+										accessToken,
+										cookie,
+									);
+									await saveAuthToken(response.secret);
+								}
 								setState('done');
 							}}
 						/>

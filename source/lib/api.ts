@@ -1,18 +1,18 @@
 import { PERMIT_API_URL } from '../config.js';
 
-type ApiResponse = {
+type ApiResponse<T> = {
 	headers: Headers;
-	response: any;
+	response: T;
 	status: number;
 };
 
-export const apiCall = async (
+export const apiCall = async <T>(
 	endpoint: string,
 	token: string,
 	cookie?: string,
 	method = 'GET',
 	body?: string,
-): Promise<ApiResponse> => {
+): Promise<ApiResponse<T>> => {
 	const options: RequestInit = {
 		method,
 		headers: {
@@ -29,7 +29,7 @@ export const apiCall = async (
 
 	const res = await fetch(`${PERMIT_API_URL}/${endpoint}`, options);
 
-	const response = await res.json();
+	const response: T = await res.json();
 
 	return {
 		headers: res.headers,
