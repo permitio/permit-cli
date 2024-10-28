@@ -35,27 +35,29 @@ type Props = {
 	options: zod.infer<typeof options>;
 };
 
+interface PolicyItem {
+	id: string; // Adjust the type based on your actual data structure
+	// Include other fields as necessary
+}
+
 interface QueryResult {
-	result: { result: Array<any> };
+	result: { result: PolicyItem[] };
 	status: number;
 }
 
 export default function Policy({ options }: Props) {
-	const [error, setError] = React.useState(null);
-	// result of API
+	const [error, setError] = React.useState<Error | null>(null);
 	const [res, setRes] = React.useState<QueryResult>({
 		result: { result: [] },
 		status: 0,
 	});
-	// selection
-	const [selection, setSelection] = React.useState<any>(undefined);
-	const [selectionFilter, setSelectionFilter] = React.useState('');
+	const [selection, setSelection] = React.useState<PolicyItem | undefined>(undefined);
+	const [selectionFilter, setSelectionFilter] = React.useState<string>('');
 
-	const queryOPA = async (apiKey: String, path?: String) => {
+	const queryOPA = async (apiKey: string, path?: string) => {
 		const document = path ? `/${path}` : '';
 		const response = await fetch(
 			`${options.serverUrl}/v1/policies${document}`,
-			// pass api key if not empty
 			{ headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {} },
 		);
 		const data = await response.json();
@@ -91,7 +93,7 @@ export default function Policy({ options }: Props) {
 					{!selection && (
 						<>
 							<Text>
-								Showing {view.length} of {policyItems?.length} policies:
+								Showing {view.length} of {policyItems.length} policies:
 							</Text>
 
 							<Box flexDirection="column" gap={1}>

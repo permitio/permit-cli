@@ -1,8 +1,13 @@
 import { PERMIT_API_URL } from '../config.js';
 
+interface ApiResponseData {
+	id?: string;
+	name?: string;
+}
+
 type ApiResponse = {
 	headers: Headers;
-	response: any;
+	response: ApiResponseData;
 	status: number;
 };
 
@@ -28,8 +33,7 @@ export const apiCall = async (
 	}
 
 	const res = await fetch(`${PERMIT_API_URL}/${endpoint}`, options);
-
-	const response = await res.json();
+	const response: ApiResponseData = await res.json();
 
 	return {
 		headers: res.headers,

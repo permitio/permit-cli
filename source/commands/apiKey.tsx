@@ -57,13 +57,12 @@ export default function apiKey({ args, options }: Props) {
 				<Text color="green">{readKey}</Text>
 			</Text>
 		);
-	} else {
-		return (
-			<Text>
-				<Text color="red">Key is not valid.</Text>
-				<Newline />
-				<Text color="red">Provided key: {key}</Text>
-			</Text>
-		);
-	}
+	} 
+	return (
+		<Text>
+			<Text color="red">Key is not valid.</Text>
+			<Newline />
+			<Text color="red">Provided key: {key}</Text>
+		</Text>
+	);
 }

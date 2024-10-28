@@ -12,6 +12,8 @@
 	"scripts": {
 		"build": "tsc",
 		"dev": " NODE_NO_WARNINGS=1 tsc --watch",
+		"lint": "eslint \"source/**/*.{js,ts,tsx}\" --fix",
+		"lint:check": "eslint \"source/**/*.{js,ts,tsx}\"",
 		"test": "prettier --check ./source && npx tsx --test test*.tsx",
 		"simple-check": "npx tsx ./source/cli.tsx pdp check -u filip@permit.io -a create -r task"
 	},
@@ -19,6 +21,8 @@
 		"dist"
 	],
 	"dependencies": {
+		"eslint-plugin-security": "^3.0.1",
+		"eslint-plugin-sonarjs": "^2.0.4",
 		"fuse.js": "^7.0.0",
 		"ink": "^5.0.1",
 		"ink-ascii": "^0.0.4",
@@ -28,21 +32,31 @@
 		"ink-spinner": "^5.0.0",
 		"keytar": "^7.9.0",
 		"open": "^10.1.0",
+		"parser": "^0.1.4",
 		"pastel": "^3.0.0",
 		"permitio": "^2.7.2",
 		"react": "^18.2.0",
 		"zod": "^3.21.4"
 	},
 	"devDependencies": {
+		"@eslint/js": "^9.13.0",
 		"@sindresorhus/tsconfig": "^3.0.1",
 		"@types/react": "^18.0.32",
+		"@typescript-eslint/eslint-plugin": "^8.12.0",
+		"@typescript-eslint/parser": "^8.12.0",
 		"chalk": "^5.2.0",
+		"eslint": "^9.13.0",
+		"eslint-config-prettier": "^9.1.0",
 		"eslint-config-xo-react": "^0.27.0",
+		"eslint-define-config": "^2.1.0",
+		"eslint-plugin-prettier": "^5.2.1",
 		"eslint-plugin-react": "^7.32.2",
-		"eslint-plugin-react-hooks": "^4.6.0",
+		"eslint-plugin-react-hooks": "^5.0.0",
+		"globals": "^15.11.0",
 		"ink-testing-library": "^3.0.0",
-		"prettier": "^2.8.7",
+		"prettier": "^3.3.3",
 		"ts-node": "^10.9.1",
-		"typescript": "^5.0.3"
+		"typescript": "^5.6.3",
+		"typescript-eslint": "^8.11.0"
 	}
 }

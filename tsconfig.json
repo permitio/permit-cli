@@ -6,5 +6,6 @@
 		"module": "Node16",
 		"outDir": "dist"
 	},
-	"include": ["source"]
+	"include": ["source/**/*"],
+	"exclude": ["node_modules"]
 }
