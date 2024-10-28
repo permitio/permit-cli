@@ -1,11 +1,11 @@
 import React from 'react';
-import chalk from 'chalk';
 import { test } from 'node:test';
 import { render } from 'ink-testing-library';
 import assert from 'node:assert';
 import Check from './source/commands/pdp/check.js';
+import { env } from 'process';
 
-const API_KEY = process.env.API_KEY;
+const API_KEY = env.API_KEY;
 
 test('check', t => {
 	t.test('Should Display Checking indicator', () => {

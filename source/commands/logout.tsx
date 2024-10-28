@@ -9,6 +9,7 @@ export default function Logout() {
 		const clearSession = async () => {
 			await cleanAuthToken();
 			setLoading(false);
+			// eslint-disable-next-line no-undef
 			process.exit(0);
 		};
 

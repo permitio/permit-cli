@@ -64,35 +64,51 @@ export default function Check({ options }: Props) {
 	// result of API
 	const [res, setRes] = React.useState<AllowedResult>({ allow: undefined });
 
-	const queryPDP = async (apiKey: string) => {
-		const response = await fetch(`${options.pdpurl || CLOUD_PDP_URL}/allowed`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
-			},
-			body: JSON.stringify({
-				user: { key: options.user },
-				resource: {
-					type: options.resource.includes(':')
-						? options.resource.split(':')[0]
-						: options.resource,
-					key: options.resource.includes(':')
-						? options.resource.split(':')[1]
-						: '',
-					tenant: options.tenant,
-				},
-				action: options.action,
-			}),
-		});
+	const queryPDP = React.useCallback(
+		async (apiKey: string) => {
+			try {
+				const response = await fetch(
+					`${options.pdpurl || CLOUD_PDP_URL}/allowed`,
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+						},
+						body: JSON.stringify({
+							user: { key: options.user },
+							resource: {
+								type: options.resource.includes(':')
+									? options.resource.split(':')[0]
+									: options.resource,
+								key: options.resource.includes(':')
+									? options.resource.split(':')[1]
+									: '',
+								tenant: options.tenant,
+							},
+							action: options.action,
+						}),
+					},
+				);
 
-		if (!response.ok) {
-			setError(await response.text());
-			return;
-		}
+				if (!response.ok) {
+					setError(await response.text());
+					return;
+				}
 
-		setRes(await response.json());
-	};
+				setRes(await response.json());
+			} catch (err) {
+				setError(err instanceof Error ? err.message : String(err));
+			}
+		},
+		[
+			options.pdpurl,
+			options.user,
+			options.resource,
+			options.tenant,
+			options.action,
+		],
+	);
 
 	React.useEffect(() => {
 		keytar
@@ -102,14 +118,15 @@ export default function Check({ options }: Props) {
 				queryPDP(apiKey);
 			})
 			.catch(reason => {
-				setError(reason);
+				setError(String(reason));
 			});
-	}, []);
+	}, [options.keyAccount, queryPDP]);
 
 	return (
 		<>
 			<Text>
-				Checking user="{options.user}" action={options.action} resource=
+				Checking user=&quot;{options.user}&quot; action={options.action}{' '}
+				resource=
 				{options.resource} at tenant={options.tenant}
 			</Text>
 			{res.allow === true && (
@@ -127,10 +144,10 @@ export default function Check({ options }: Props) {
 				</>
 			)}
 			{res.allow === false && <Text color={'red'}> DENIED</Text>}
-			{res.allow === undefined && error === null && <Spinner type="dots" />}
+			{res.allow === undefined && error === '' && <Spinner type="dots" />}
 			{error && (
 				<Box>
-					<Text color="red">Request failed: {JSON.stringify(error)}</Text>
+					<Text color="red">Request failed: {error}</Text>
 					<Newline />
 					<Text>{JSON.stringify(res)}</Text>
 				</Box>
