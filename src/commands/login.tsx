@@ -59,9 +59,14 @@ export default function Login({ options: { key, workspace } }: Props) {
 				cookie,
 			);
 
+			console.log('Organizations fetched:', orgs);
+
 			const selectedOrg = orgs.find(
 				(org: any) => workspace && org.key === workspace,
 			);
+			if (!orgs || orgs.length === 0) {
+				console.error('No organizations received');
+			}
 
 			if (selectedOrg) {
 				setActiveOrg({ label: selectedOrg.name, value: selectedOrg.id });

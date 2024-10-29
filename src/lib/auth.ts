@@ -1,13 +1,12 @@
 import { createHash, randomBytes } from 'node:crypto';
 import * as http from 'node:http';
 import open from 'open';
-import pkg from 'keytar';
+import { setPassword, getPassword, deletePassword } from 'keytar';
 import {
 	DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
 	KEYSTORE_PERMIT_SERVICE_NAME,
 } from '../config.js';
 
-const { setPassword, getPassword, deletePassword } = pkg;
 
 export enum TokenType {
 	APIToken = 'APIToken',
