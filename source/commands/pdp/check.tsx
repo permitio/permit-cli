@@ -1,3 +1,4 @@
+// source/commands/pdp/check.tsx
 import React from 'react';
 import { Box, Newline, Text } from 'ink';
 import zod, { string } from 'zod';
@@ -7,134 +8,181 @@ import Spinner from 'ink-spinner';
 import { keyAccountOption } from '../../options/keychain.js';
 import * as keytar from 'keytar';
 import { inspect } from 'util';
+import { parseAttributes } from '../../utils/attributes.js';
 
 export const options = zod.object({
-	user: zod
-		.string()
-		.describe(
-			option({ description: 'Unique Identity to check for', alias: 'u' }),
-		),
-	resource: zod
-		.string()
-		.describe(option({ description: 'Resource being accessed', alias: 'r' })),
-	action: zod.string().describe(
-		option({
-			description: 'Action being performed on the resource by the user',
-			alias: 'a',
-		}),
-	),
-	tenant: zod
-		.string()
-		.optional()
-		.default('default')
-		.describe(
-			option({
-				description: 'the tenant the resource belongs to',
-				alias: 't',
-			}),
-		),
-	pdpurl: string()
-		.optional()
-		.describe(
-			option({
-				description: 'The URL of the PDP service. Default to the cloud PDP.',
-			}),
-		),
-	apiKey: zod
-		.string()
-		.optional()
-		.describe(
-			option({
-				description: 'The API key for the Permit env, project or Workspace',
-			}),
-		),
-	keyAccount: keyAccountOption,
+    user: zod
+        .string()
+        .min(1, "User identifier cannot be empty")
+        .describe(
+            option({ 
+                description: 'Unique Identity to check for (Required)', 
+                alias: 'u' 
+            }),
+        ),
+    userAttributes: zod
+        .string()
+        .optional()
+        .describe(
+            option({
+                description: 'User attributes in format key1:value1,key2:value2 (Optional)',
+                alias: 'ua'
+            })
+        ),
+    resource: zod
+        .string()
+        .min(1, "Resource cannot be empty")
+        .describe(
+            option({ 
+                description: 'Resource being accessed (Required)', 
+                alias: 'r' 
+            })
+        ),
+    resourceAttributes: zod
+        .string()
+        .optional()
+        .describe(
+            option({
+                description: 'Resource attributes in format key1:value1,key2:value2 (Optional)',
+                alias: 'ra'
+            })
+        ),
+    action: zod
+        .string()
+        .min(1, "Action cannot be empty")
+        .describe(
+            option({
+                description: 'Action being performed on the resource by the user (Required)',
+                alias: 'a',
+            }),
+        ),
+    tenant: zod
+        .string()
+        .optional()
+        .default('default')
+        .describe(
+            option({
+                description: 'The tenant the resource belongs to (Optional, defaults to "default")',
+                alias: 't',
+            }),
+        ),
+    pdpurl: string()
+        .optional()
+        .describe(
+            option({
+                description: 'The URL of the PDP service. Default to the cloud PDP. (Optional)',
+            }),
+        ),
+    apiKey: zod
+        .string()
+        .optional()
+        .describe(
+            option({
+                description: 'The API key for the Permit env, project or Workspace (Optional)',
+            }),
+        ),
+    keyAccount: keyAccountOption,
 });
 
 type Props = {
-	options: zod.infer<typeof options>;
+    options: zod.infer<typeof options>;
 };
 
 interface AllowedResult {
-	allow?: boolean;
+    allow?: boolean;
 }
 
 export default function Check({ options }: Props) {
-	const [error, setError] = React.useState('');
-	// result of API
-	const [res, setRes] = React.useState<AllowedResult>({ allow: undefined });
+    const [error, setError] = React.useState('');
+    const [res, setRes] = React.useState<AllowedResult>({ allow: undefined });
 
-	const queryPDP = async (apiKey: string) => {
-		const response = await fetch(`${options.pdpurl || CLOUD_PDP_URL}/allowed`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
-			},
-			body: JSON.stringify({
-				user: { key: options.user },
-				resource: {
-					type: options.resource.includes(':')
-						? options.resource.split(':')[0]
-						: options.resource,
-					key: options.resource.includes(':')
-						? options.resource.split(':')[1]
-						: '',
-					tenant: options.tenant,
-				},
-				action: options.action,
-			}),
-		});
+    const queryPDP = async (apiKey: string) => {
+        try {
+            const userAttrs = options.userAttributes ? parseAttributes(options.userAttributes) : {};
+            const resourceAttrs = options.resourceAttributes ? parseAttributes(options.resourceAttributes) : {};
 
-		if (!response.ok) {
-			setError(await response.text());
-			return;
-		}
+            const response = await fetch(`${options.pdpurl || CLOUD_PDP_URL}/allowed`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+                },
+                body: JSON.stringify({
+                    user: {
+                        key: options.user,
+                        ...userAttrs
+                    },
+                    resource: {
+                        type: options.resource.includes(':')
+                            ? options.resource.split(':')[0]
+                            : options.resource,
+                        key: options.resource.includes(':')
+                            ? options.resource.split(':')[1]
+                            : '',
+                        tenant: options.tenant,
+                        ...resourceAttrs
+                    },
+                    action: options.action,
+                }),
+            });
 
-		setRes(await response.json());
-	};
+            if (!response.ok) {
+                const errorText = await response.text();
+                setError(errorText);
+                return;
+            }
 
-	React.useEffect(() => {
-		keytar
-			.getPassword(KEYSTORE_PERMIT_SERVICE_NAME, options.keyAccount)
-			.then(value => {
-				const apiKey = value || '';
-				queryPDP(apiKey);
-			})
-			.catch(reason => {
-				setError(reason);
-			});
-	}, []);
+            setRes(await response.json());
+        } catch (err) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError(String(err));
+            }
+        }
+    };
 
-	return (
-		<>
-			<Text>
-				Checking user="{options.user}" action={options.action} resource=
-				{options.resource} at tenant={options.tenant}
-			</Text>
-			{res.allow === true && (
-				<>
-					<Text color={'green'}> ALLOWED </Text>
-					<Box marginLeft={4}>
-						<Text>
-							{inspect(res, {
-								colors: true,
-								depth: null,
-								maxArrayLength: Infinity,
-							})}
-						</Text>
-					</Box>
-				</>
-			)}
-			{res.allow === false && <Text color={'red'}> DENIED</Text>}
-			{res.allow === undefined && error === null && <Spinner type="dots" />}
-			{error && (
-				<Box>
-					<Text color="red">Request failed: {JSON.stringify(error)}</Text>
-					<Newline />
-					<Text>{JSON.stringify(res)}</Text>
-				</Box>
-			)}
-		</>
-	);
+    React.useEffect(() => {
+        keytar
+            .getPassword(KEYSTORE_PERMIT_SERVICE_NAME, options.keyAccount)
+            .then(value => {
+                const apiKey = value || '';
+                queryPDP(apiKey);
+            })
+            .catch(reason => {
+                setError(reason);
+            });
+    }, []);
+
+    return (
+        <>
+            <Text>
+                Checking user="{options.user}"{options.userAttributes && ` with attributes=${options.userAttributes}`} action={options.action} resource=
+                {options.resource}{options.resourceAttributes && ` with attributes=${options.resourceAttributes}`} at tenant={options.tenant}
+            </Text>
+            {res.allow === true && (
+                <>
+                    <Text color={'green'}> ALLOWED </Text>
+                    <Box marginLeft={4}>
+                        <Text>
+                            {inspect(res, {
+                                colors: true,
+                                depth: null,
+                                maxArrayLength: Infinity,
+                            })}
+                        </Text>
+                    </Box>
+                </>
+            )}
+            {res.allow === false && <Text color={'red'}> DENIED</Text>}
+            {res.allow === undefined && error === '' && <Spinner type="dots" />}
+            {error && (
+                <Box>
+                    <Text color="red">Request failed: {error}</Text>
+                    <Newline />
+                    <Text>{JSON.stringify(res)}</Text>
+                </Box>
+            )}
+        </>
+    );
 }
