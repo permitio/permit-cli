@@ -19,6 +19,7 @@
 		"dist"
 	],
 	"dependencies": {
+		"crypto": "^1.0.1",
 		"fuse.js": "^7.0.0",
 		"ink": "^5.0.1",
 		"ink-ascii": "^0.0.4",
@@ -26,7 +27,9 @@
 		"ink-gradient": "^3.0.0",
 		"ink-select-input": "^6.0.0",
 		"ink-spinner": "^5.0.0",
+		"ink-text-input": "^6.0.0",
 		"keytar": "^7.9.0",
+		"micro-key-producer": "^0.7.1",
 		"open": "^10.1.0",
 		"pastel": "^3.0.0",
 		"permitio": "^2.7.2",
