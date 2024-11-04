@@ -1,196 +1,97 @@
-import React, { useState, useEffect } from 'react';
-import { Text, Box } from 'ink';
+import React, { useEffect, useState } from 'react';
+import keytar from 'keytar';
+import { Box, Text } from 'ink';
+import TextInput from 'ink-text-input';
+import {
+	DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
+	KEYSTORE_PERMIT_SERVICE_NAME,
+} from '../../../config.js';
 import GenerateKeyGen from '../../../lib/ssh-gen.js';
-import TextInput, { UncontrolledTextInput } from 'ink-text-input';
-import SelectInput from 'ink-select-input';
-import { apiCall } from '../../../lib/api.js';
-import * as crypto from 'crypto';
-
-type GitOpsConfig = {
-	url: string;
-	main_branch_name: string;
-	credentials: {
-		auth_type: string;
-		username: string;
-		private_key: string;
-	};
-	key: string;
-};
-
-type ProjectResponse = {
-	key: string;
-	urn_namespace: string;
-	name: string;
-};
 
 export default function Github() {
-	const [currstate, setCurrState] = useState<
-		'email' | 'ssh' | 'sshurl' | 'branch' | 'done' | 'key' | 'listProjects'
-	>('email');
-	const [key, setKey] = useState({
+	const [apiKey, setApiKey] = useState('');
+	const [policyRepoKey, setPolicyRepoKey] = useState('');
+	const [state, setState] = useState<
+		'initial' | 'sshurl' | 'branch' | 'project' | 'noAPI'
+	>('noAPI');
+	const [sshKey, setSshKey] = useState({
 		publicKey: '',
-		privateKey: '',
 		fingerprint: '',
+		privateKey: '',
 	});
-	const [projects, setProjects] = useState<ProjectResponse[]>([]);
-	const [projectList, setProjectList] =
-		useState<{ label: string; value: string }[]>();
-	const [authorizationKey, setAuthorizationKey] = useState('');
-	const [projectKey, setProjectKey] = useState('');
-	const [gitOpsConfig, setGitOpsConfig] = useState<GitOpsConfig>({
-		url: '',
-		main_branch_name: '',
-		credentials: {
-			auth_type: 'ssh',
-			username: 'git',
-			private_key: '',
-		},
-		key: crypto.randomBytes(20).toString('hex'),
-	});
-
-	// Handle Email Submission and SSH Key Generation
-	const handleEmailSubmit = (email: string) => {
-		const generatedKey = GenerateKeyGen(email);
-		setKey(generatedKey);
-		setCurrState('ssh'); // Move to SSH state after generating the key
-	};
-
-	// Update gitOpsConfig when we get the SSH URL
-	const handleSSHSubmit = (sshurl: string) => {
-		setGitOpsConfig(prevConfig => ({
-			...prevConfig,
-			url: sshurl,
-		}));
-		setCurrState('branch');
-	};
-
-	// Update gitOpsConfig when we get the main branch name
-	const handleBranchSubmit = (branch: string) => {
-		setGitOpsConfig(prevConfig => ({
-			...prevConfig,
-			main_branch_name: branch,
-		}));
-		setCurrState('key');
-	};
-
-	// Update gitOpsConfig when we select a project
-	const handleSelectProject = (item: { label: string; value: string }) => {
-		setProjectKey(item.value);
-		configurePermit();
-	};
-	// API call to configure:
-
-	const configurePermit = () => {
-		//To implement the configure of the permit and activate it.
-	};
-
-	// API Call to the permit.io with the key.
-	const handleAuthorizationKey = (key: string) => {
-		setAuthorizationKey(key);
-	};
-
+	const [sshURL, setSshURL] = useState('');
 	useEffect(() => {
-		apiCall('v2/projects', authorizationKey).then(res => {
-			if (res.status === 200) {
-				console.log(res.response);
-				const val = res.response;
-				console.log(val.length);
-				for (let i = 0; i < val.length; i++) {
-					setProjects(prevProjects => [
-						...prevProjects,
-						{
-							key: val[i].id,
-							urn_namespace: val[i].urn_namespace,
-							name: val[i].name,
-						},
-					]);
-					setCurrState('listProjects');
-				}
-			} else if (res.status === 404) {
-				console.log('Not Found');
-			}
-		});
-	}, [authorizationKey]);
-
-	// Update the items to list:
-	useEffect(() => {
-		const items = projects.map(project => ({
-			label: project.name,
-			value: project.key,
-		}));
-		setProjectList(items);
-	}, [projects]);
-
-	// Update gitOpsConfig when privateKey is available after key generation
-	useEffect(() => {
-		if (key.privateKey !== '') {
-			setGitOpsConfig(prevConfig => ({
-				...prevConfig,
-				credentials: { ...prevConfig.credentials, private_key: key.privateKey },
-			}));
+		if (apiKey === '') {
+			keytar
+				.getPassword(
+					KEYSTORE_PERMIT_SERVICE_NAME,
+					DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
+				)
+				.then(value => setApiKey(value || 'empty'))
+				.catch(reason =>
+					setApiKey(`-- Failed to read key - reason: ${reason}`),
+				);
 		}
-	}, [key.privateKey]);
+		if (apiKey !== 'empty' && apiKey.startsWith('permit')) {
+			setState('initial');
+		}
+		setSshKey(GenerateKeyGen());
+	}, [apiKey]);
+
+	const handleRepoKeySubmit = (repoKey: string) => {
+		setPolicyRepoKey(repoKey);
+		setState('sshurl');
+	};
+	const handleSshURLSubmit = (sshURL: string) => {
+		setSshURL(sshURL);
+		setState('branch');
+	};
 
 	return (
 		<>
-			<Box margin={2} padding={2}>
-				<Text color={'greenBright'} bold>
-					Welcome to GitOps flow in GitHub
-				</Text>
+			<Box flexDirection="column" margin={2}>
+				<Text color={'cyan'}>Welcome to Permit GitOps Configuration</Text>
 			</Box>
-			{currstate === 'email' && (
-				<Box>
-					<Box marginRight={1}>
-						<Text color={'magenta'}>Enter your email:</Text>
-					</Box>
-					<UncontrolledTextInput onSubmit={handleEmailSubmit} />
-				</Box>
+			{apiKey === 'empty' && (
+				<>
+					<Text color={'red'}>No API Key is found in KeyStore. {'\n'}</Text>
+					<Text color={'green'}>Please Enter the API Key. </Text>
+					<TextInput value={apiKey} onChange={setApiKey} />
+				</>
 			)}
-			{currstate === 'ssh' && (
-				<Box flexDirection="column">
-					<Text color={'blueBright'}>
-						SSH Key Generated! Add the following key to GitHub:
+			{state === 'initial' && (
+				<>
+					<Text color={'green'}>
+						Enter the name of the policy Configuration:
 					</Text>
-					<Text color={'yellow'}>Public Key: {key.publicKey}</Text>
-					<Box marginTop={1}>
-						<Text color={'magenta'}>Enter your repository SSH URL:</Text>
-						<UncontrolledTextInput onSubmit={handleSSHSubmit} />
-					</Box>
-				</Box>
+					<TextInput
+						value={policyRepoKey}
+						onChange={setPolicyRepoKey}
+						onSubmit={handleRepoKeySubmit}
+					/>
+				</>
 			)}
-			{currstate === 'branch' && (
-				<Box flexDirection="column">
-					<Text color={'blueBright'}>
-						Your SSH URL has been set to: {gitOpsConfig.url}
+			{state === 'sshurl' && (
+				<>
+					<Text color={'magenta'}>
+						Your Policy Configuration Name: {policyRepoKey}
+						{'\n'}
 					</Text>
-					<Box marginTop={1}>
-						<Text color={'magenta'}>Enter your main branch name:</Text>
-						<UncontrolledTextInput onSubmit={handleBranchSubmit} />
-					</Box>
-				</Box>
-			)}
-			{currstate === 'key' && (
-				<Box flexDirection="column">
-					<Text color={'blueBright'}>
-						Your main branch name has been set to:{' '}
-						{gitOpsConfig.main_branch_name}
+					<Text color={'yellow'}>
+						Copy this public SSH key and paste it in deploy keys section of
+						GitHub Repo: {'\n'}{' '}
 					</Text>
-					<Box margin={1}>
-						<Text color={'magenta'}>
-							Enter your Authorization Key (API KEY OF PROJECT OR ORGANIZATION){' '}
-						</Text>
-						<TextInput
-							value={authorizationKey}
-							onChange={handleAuthorizationKey}
-						/>
-					</Box>
-				</Box>
-			)}
-			{currstate === 'listProjects' && (
-				<Box flexDirection="column">
-					<Text color={'blueBright'}>List of Projects To Select From :</Text>
-					<SelectInput items={projectList} onSelect={handleSelectProject} />
-				</Box>
+					<Text color={'yellow'}>
+						Public Key: {sshKey.publicKey}
+						{'\n'}
+					</Text>
+					<Text color={'green'}>Enter the SSH URL of the Repository:</Text>
+					<TextInput
+						value={sshURL}
+						onChange={setSshURL}
+						onSubmit={handleSshURLSubmit}
+					/>
+				</>
 			)}
 		</>
 	);
