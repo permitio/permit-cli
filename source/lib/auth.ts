@@ -67,22 +67,18 @@ export const cleanAuthToken = async () => {
 	);
 };
 
-export const authCallbackServer = async (verifier: string): Promise<string> => {
+export const authCallbackServer = async (): Promise<string> => {
 	return new Promise<string>(resolve => {
-		// Define the server logic
 		const server = http.createServer(async (request, res) => {
-			// Get the authorization code from the query string
 			const url = new URL(request.url!, `http://${request.headers.host}`);
-			if (!url.searchParams.has('code')) {
-				// TBD add better error handling for error callbacks
-				res.statusCode = 200; // Set the response status code
-				res.setHeader('Content-Type', 'text/plain'); // Set the content type
-				res.end('Authorization code not found in query string\n'); // Send the response
+			const code = url.searchParams.get('code');
+			const verifier = url.searchParams.get('verifier');
+			if (!code) {
+				res.statusCode = 200;
+				res.setHeader('Content-Type', 'text/plain');
+				res.end('Authorization code not found in query string\n');
 				return;
 			}
-
-			const code = url.searchParams.get('code');
-			// Send the response
 			const data = await fetch('https://auth.permit.io/oauth/token', {
 				method: 'POST',
 				headers: {
@@ -96,19 +92,14 @@ export const authCallbackServer = async (verifier: string): Promise<string> => {
 					redirect_uri: 'http://localhost:62419',
 				}),
 			}).then(async response => response.json());
-			res.statusCode = 200; // Set the response status code
-			res.setHeader('Content-Type', 'text/plain'); // Set the content type
-			res.end('You can close this page now\n'); // Send the response
-			server.close(); // Close the server
-			resolve(data.access_token as string); // Resolve the promise
+			res.statusCode = 200;
+			res.setHeader('Content-Type', 'text/plain');
+			res.end('You can close this page now\n');
+			server.close();
+			resolve(data.access_token as string);
 		});
 
-		// Specify the port and host
-		const port = 62_419;
-		const host = 'localhost';
-
-		// Start the server and listen on the specified port
-		server.listen(port, host);
+		server.listen(62_419, 'localhost');
 
 		setTimeout(() => {
 			server.close();
@@ -117,7 +108,7 @@ export const authCallbackServer = async (verifier: string): Promise<string> => {
 	});
 };
 
-export const browserAuth = async (): Promise<string> => {
+export const browserAuth = async (): Promise<void> => {
 	// Open the authentication URL in the default browser
 	function base64UrlEncode(string_: string | Buffer) {
 		return string_
@@ -144,10 +135,9 @@ export const browserAuth = async (): Promise<string> => {
 		code_challenge: challenge,
 		code_challenge_method: 'S256',
 		client_id: 'Pt7rWJ4BYlpELNIdLg6Ciz7KQ2C068C1',
-		redirect_uri: 'http://localhost:62419',
+		redirect_uri: `http://localhost:62419?verifier=${verifier}`,
 		scope: 'openid profile email',
 		state: 'bFR2dn5idUhBVDNZYlhlSEFHZnJaSjRFdUhuczdaSlhCSHFDSGtlYXpqbQ==',
 	});
 	await open(`https://auth.permit.io/authorize?${parameters.toString()}`);
-	return verifier;
 };

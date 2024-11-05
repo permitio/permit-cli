@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Text } from 'ink';
+import { Box, Newline, Text } from 'ink';
 import SelectInput from 'ink-select-input';
 import Spinner from 'ink-spinner';
 import { type infer as zInfer, object, string } from 'zod';
 import { option } from 'pastel';
 import { apiCall } from '../lib/api.js';
+
 import {
 	authCallbackServer,
 	browserAuth,
@@ -12,6 +13,7 @@ import {
 	TokenType,
 	tokenType,
 } from '../lib/auth.js';
+import open from 'open';
 
 export const options = object({
 	key: string()
@@ -48,8 +50,14 @@ export default function Login({ options: { key, workspace } }: Props) {
 	const [projects, setProjects] = useState<[]>([]);
 	const [environments, setEnvironments] = useState<[]>([]);
 	const [state, setState] = useState<
-		'login' | 'loggingIn' | 'org' | 'project' | 'environment' | 'done'
-	>('login');
+		| 'login'
+		| 'loggingIn'
+		| 'org'
+		| 'project'
+		| 'environment'
+		| 'done'
+		| 'fetchOrgs'
+	>('fetchOrgs');
 
 	useEffect(() => {
 		const fetchOrgs = async () => {
@@ -58,6 +66,10 @@ export default function Login({ options: { key, workspace } }: Props) {
 				accessToken ?? '',
 				cookie,
 			);
+			if (orgs.length === 0) {
+				await open('https://app.permit.io');
+				setState('fetchOrgs');
+			}
 
 			const selectedOrg = orgs.find(
 				(org: any) => workspace && org.key === workspace,
@@ -158,8 +170,8 @@ export default function Login({ options: { key, workspace } }: Props) {
 				setState('done');
 			} else {
 				// Open the authentication URL in the default browser
-				const verifier = await browserAuth();
-				const token = await authCallbackServer(verifier);
+				await browserAuth();
+				const token = await authCallbackServer();
 				const { headers } = await apiCall(
 					'v2/auth/login',
 					token ?? '',
@@ -183,6 +195,21 @@ export default function Login({ options: { key, workspace } }: Props) {
 				<Text>
 					<Spinner type="dots" /> Logging in...
 				</Text>
+			)}
+			{state === 'fetchOrgs' && (
+				<>
+					<Text bold={true}>
+						Create your first workspace. check https://app.permit.io.
+						<Newline />
+						After creating workspace, press enter to continue.
+					</Text>
+					<SelectInput
+						items={[{ label: 'I have created workspace', value: 'fetchOrgs' }]}
+						onSelect={() => {
+							setState('fetchOrgs');
+						}}
+					/>
+				</>
 			)}
 			{state === 'org' &&
 				(orgs && orgs.length > 0 ? (
