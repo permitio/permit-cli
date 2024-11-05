@@ -90,7 +90,7 @@ async function activatePermitPolicy(
 	repoId: string,
 ) {
 	const endpoint = `v2/projects/${projectId}/repos/${repoId}/activate`;
-	const response = await apiCall(endpoint, apiKey, 'PUT');
+	const response = await apiCall(endpoint, apiKey,undefined,  'PUT');
 	if (response.status === 422) {
 		throw new Error('Validation Error');
 	}
