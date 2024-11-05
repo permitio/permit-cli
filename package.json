@@ -24,6 +24,7 @@
 		"ink": "^5.0.1",
 		"ink-ascii": "^0.0.4",
 		"ink-big-text": "^2.0.0",
+		"ink-confirm-input": "^2.0.0",
 		"ink-gradient": "^3.0.0",
 		"ink-select-input": "^6.0.0",
 		"ink-spinner": "^5.0.0",
