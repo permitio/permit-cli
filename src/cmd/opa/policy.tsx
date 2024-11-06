@@ -5,7 +5,7 @@ import { option } from 'pastel';
 import Spinner from 'ink-spinner';
 import { keyAccountOption } from '../../options/keychain.js';
 import { inspect } from 'util';
-import { loadAuthToken } from '../../lib/auth.js';
+import { loadAuthToken } from '../../lib/token.js';
 import { TextInput, Select } from '@inkjs/ui';
 import Fuse from 'fuse.js';
 

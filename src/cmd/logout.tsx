@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Spinner from 'ink-spinner';
 import { Text } from 'ink';
-import { cleanAuthToken } from '../lib/auth.js';
+import { cleanAuthToken } from '../lib/token.js';
 
 export default function Logout() {
 	const [loading, setLoading] = useState(true);

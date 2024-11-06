@@ -1,73 +1,31 @@
-import { createHash, randomBytes } from 'node:crypto';
-import * as http from 'node:http';
+import { APIError } from '../errors/errors.js';
+import { apiCall } from '../utils/apiCall.js';
+import http from 'http';
+import { randomBytes, createHash } from 'crypto';
 import open from 'open';
-import pkg from 'keytar';
-import {
-	DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
-	KEYSTORE_PERMIT_SERVICE_NAME,
-} from '../config/config.js';
 
-const { setPassword, getPassword, deletePassword } = pkg;
-
-export enum TokenType {
-	APIToken = 'APIToken',
-	AccessToken = 'AccessToken',
-	Invalid = 'Invalid',
-}
-
-export const tokenType = (token: string): TokenType => {
-	if (token.length >= 97 && token.startsWith('permit_key_')) {
-		return TokenType.APIToken;
-	}
-
-	// TBD add a better JWT validation/verification
-	if (token.split('.').length === 3) {
-		return TokenType.AccessToken;
-	}
-
-	return TokenType.Invalid;
+type LoginResponse = {
+	accessToken: string;
+	cookie: string;
 };
 
-export const saveAuthToken = async (token: string): Promise<string> => {
-	try {
-		const t: TokenType = tokenType(token);
-		if (t === TokenType.Invalid) {
-			return 'Invalid auth token';
-		}
-
-		await setPassword(
-			KEYSTORE_PERMIT_SERVICE_NAME,
-			DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
-			token,
-		);
-		return '';
-	} catch (error) {
-		return error as string;
-	}
-};
-
-export const loadAuthToken = async (): Promise<string> => {
-	const token = await getPassword(
-		KEYSTORE_PERMIT_SERVICE_NAME,
-		DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
-	);
-	if (!token) {
-		throw new Error(
-			'No token found, use `permit login` command to get an auth token',
-		);
+export const logIn = async (): Promise<APIError | LoginResponse> => {
+	await browserAuth();
+	const token = await authCallbackServer();
+	const res = await apiCall('v2/auth/login', token ?? '', '', 'POST');
+	if (res instanceof APIError) {
+		return res;
 	}
 
-	return token;
+	return {
+		accessToken: token ?? '',
+		cookie: res.headers.getSetCookie()[0] ?? '',
+	};
 };
 
-export const cleanAuthToken = async () => {
-	await deletePassword(
-		KEYSTORE_PERMIT_SERVICE_NAME,
-		DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
-	);
-};
 
-export const authCallbackServer = async (): Promise<string> => {
+
+ const authCallbackServer = async (): Promise<string> => {
 	return new Promise<string>(resolve => {
 		const server = http.createServer(async (request, res) => {
 			const url = new URL(request.url!, `http://${request.headers.host}`);
@@ -108,8 +66,7 @@ export const authCallbackServer = async (): Promise<string> => {
 	});
 };
 
-export const browserAuth = async (): Promise<void> => {
-	// Open the authentication URL in the default browser
+ const browserAuth = async (): Promise<void> => {
 	function base64UrlEncode(string_: string | Buffer) {
 		return string_
 			.toString('base64')

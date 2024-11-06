@@ -6,7 +6,7 @@ import React, {
 	useState,
 } from 'react';
 import { Text } from 'ink';
-import { loadAuthToken } from '../lib/auth.js';
+import { loadAuthToken } from '../lib/token.js';
 
 // Define the AuthContext type
 type AuthContextType = {
