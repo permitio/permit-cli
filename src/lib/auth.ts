@@ -5,7 +5,7 @@ import pkg from 'keytar';
 import {
 	DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
 	KEYSTORE_PERMIT_SERVICE_NAME,
-} from '../config.js';
+} from '../config/config';
 
 const { setPassword, getPassword, deletePassword } = pkg;
 

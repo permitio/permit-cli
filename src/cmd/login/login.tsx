@@ -4,7 +4,7 @@ import SelectInput from 'ink-select-input';
 import Spinner from 'ink-spinner';
 import { type infer as zInfer, object, string } from 'zod';
 import { option } from 'pastel';
-import { apiCall } from '../lib/api.js';
+import { apiCall } from '../../utils/apiCall';
 
 import {
 	authCallbackServer,
@@ -12,7 +12,7 @@ import {
 	saveAuthToken,
 	TokenType,
 	tokenType,
-} from '../lib/auth.js';
+} from '../../lib/auth.ts';
 import open from 'open';
 
 export const options = object({

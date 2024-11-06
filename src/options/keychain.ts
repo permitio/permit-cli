@@ -1,6 +1,6 @@
 import zod from 'zod';
 import { option } from 'pastel';
-import { DEFAULT_PERMIT_KEYSTORE_ACCOUNT } from '../config.js';
+import { DEFAULT_PERMIT_KEYSTORE_ACCOUNT } from '../config/config';
 
 export const keyAccountOption = zod
 	.string()
