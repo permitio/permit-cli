@@ -4,15 +4,24 @@ type ApiResponse = {
 	headers: Headers;
 	response: any;
 	status: number;
+	error: string | null
 };
 
-export const apiCall = async (
+export const apiCall = async <T>(
 	endpoint: string,
 	token: string,
 	cookie?: string,
 	method = 'GET',
 	body?: string,
 ): Promise<ApiResponse> => {
+
+	let defaultResponse: ApiResponse = {
+		headers: new Headers(),
+		response: {},
+		status: -1,
+		error: null,
+	};
+
 	const options: RequestInit = {
 		method,
 		headers: {
@@ -27,13 +36,17 @@ export const apiCall = async (
 		options.body = body;
 	}
 
-	const res = await fetch(`${PERMIT_API_URL}/${endpoint}`, options);
+	try {
+		const res = await fetch(`${PERMIT_API_URL}/${endpoint}`, options);
 
-	const response = await res.json();
+		const response = await res.json();
 
-	return {
-		headers: res.headers,
-		response,
-		status: res.status,
-	};
+		defaultResponse.headers = res.headers;
+		defaultResponse.response = response as T;
+		defaultResponse.status = res.status;
+
+	} catch (error: any) {
+		defaultResponse.error = error.message;
+	}
+	return defaultResponse;
 };

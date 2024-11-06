@@ -6,12 +6,10 @@ import { type infer as zInfer, object, string } from 'zod';
 import { option } from 'pastel';
 import { apiCall } from '../lib/api.js';
 import {
-	authCallbackServer,
-	browserAuth,
 	saveAuthToken,
-	TokenType,
-	tokenType,
 } from '../lib/auth.js';
+import LoginFlow from '../components/LoginFlow.js';
+import EnvironmentSelection from '../components/EnvironmentSelection.js';
 
 export const options = object({
 	key: string()
@@ -36,212 +34,54 @@ type Props = {
 };
 
 export default function Login({ options: { key, workspace } }: Props) {
-	const [authError, setAuthError] = useState('');
-	const [orgs, setOrgs] = useState<[]>([]);
-	const [accessToken, setAccessToken] = useState<string | undefined>();
-	const [cookie, setCookie] = useState<string | undefined>('');
-	const [activeOrg, setActiveOrg] = useState<any | undefined>(null);
-	const [activeProject, setActiveProject] = useState<any | undefined>(null);
-	const [activeEnvironment, setActiveEnvironment] = useState<any | undefined>(
-		null,
-	);
-	const [projects, setProjects] = useState<[]>([]);
-	const [environments, setEnvironments] = useState<[]>([]);
-	const [state, setState] = useState<
-		'login' | 'loggingIn' | 'org' | 'project' | 'environment' | 'done'
-	>('login');
 
-	useEffect(() => {
-		const fetchOrgs = async () => {
-			const { response: orgs } = await apiCall(
-				'v2/orgs',
-				accessToken ?? '',
-				cookie,
-			);
+	const [state, setState] = useState<'login' | 'env' | 'done'>('login');
+	const [accessToken, setAccessToken] = useState<string>('');
+	const [cookie, setCookie] = useState<string>('');
+	const [error, setError] = useState<string | null>(null);
 
-			const selectedOrg = orgs.find(
-				(org: any) => workspace && org.key === workspace,
-			);
+	const [organization, setOrganization] = useState<string>('');
+	const [project, setProject] = useState<string>('');
+	const [environment, setEnvironment] = useState<string>('');
 
-			if (selectedOrg) {
-				setActiveOrg({ label: selectedOrg.name, value: selectedOrg.id });
-				setState('project');
-			} else if (orgs && orgs.length === 1) {
-				setActiveOrg({ label: orgs[0].name, value: orgs[0].id });
-				setState('project');
-			}
-
-			setOrgs(orgs.map((org: any) => ({ label: org.name, value: org.id })));
-		};
-
-		if (state === 'org' && accessToken) {
-			fetchOrgs();
-		}
-	}, [state, accessToken, cookie, key]);
-
-	useEffect(() => {
-		const fetchProjects = async () => {
-			let newCookie = cookie ?? '';
-
-			const { headers } = await apiCall(
-				`v2/auth/switch_org/${activeOrg.value}`,
-				accessToken ?? '',
-				cookie ?? '',
-				'POST',
-			);
-
-			newCookie = headers.getSetCookie()[0] ?? '';
-			setCookie(newCookie);
-
-			const { response: projects } = await apiCall(
-				'v2/projects',
-				accessToken ?? '',
-				newCookie,
-			);
-
-			if (projects.length === 1) {
-				setActiveProject({ label: projects[0].name, value: projects[0].id });
-				setState('environment');
-			}
-
-			setProjects(
-				projects.map((project: any) => ({
-					label: project.name,
-					value: project.id,
-				})),
-			);
-		};
-
-		if (activeOrg) {
-			fetchProjects();
-		}
-	}, [activeOrg]);
-
-	useEffect(() => {
-		const fetchEnvironments = async () => {
-			const { response: environments } = await apiCall(
-				`v2/projects/${activeProject.value}/envs`,
-				accessToken ?? '',
-				cookie ?? '',
-			);
-			setEnvironments(
-				environments.map((environment: any) => ({
-					label: environment.name,
-					value: environment.id,
-				})),
-			);
-		};
-
-		if (activeProject) {
-			fetchEnvironments();
-		}
-	}, [activeProject]);
-
-	useEffect(() => {
-		if (state === 'done') {
-			process.exit(0);
-		}
-	}, [state]);
-
-	const handleOrgSelect = async (org: any) => {
-		setActiveOrg(org);
-		setState('project');
+	const onEnvironmentSelectSuccess = async (organisation: string, project: string, environment: string, secret: string) => {
+		setOrganization(organisation);
+		setProject(project);
+		setEnvironment(environment);
+		await saveAuthToken(secret);
+		setState('done');
+		process.exit(1);
 	};
 
-	useEffect(() => {
-		const authenticateUser = async () => {
-			setState('loggingIn');
-			if (key && tokenType(key) === TokenType.APIToken) {
-				setAccessToken(key);
-			} else if (key) {
-				setAuthError('Invalid API Key');
-				setState('done');
-			} else {
-				// Open the authentication URL in the default browser
-				const verifier = await browserAuth();
-				const token = await authCallbackServer(verifier);
-				const { headers } = await apiCall(
-					'v2/auth/login',
-					token ?? '',
-					'',
-					'POST',
-				);
-				setAccessToken(token);
-				setCookie(headers.getSetCookie()[0]);
-			}
+	const onLoginSuccess = (accessToken: string, cookie: string) => {
+		setAccessToken(accessToken);
+		setCookie(cookie);
+		setState('env');
+	};
 
-			setState('org');
-		};
-
-		authenticateUser();
-	}, [key]);
+	const onError = (error: string) => {
+		setError(error);
+		process.exit(1);
+	};
 
 	return (
 		<>
-			{state === 'login' && <Text>Login to Permit</Text>}
-			{state === 'loggingIn' && (
+			{
+				state == 'login' && <LoginFlow apiKey={key} onSuccess={onLoginSuccess} onError={onError} />
+			}
+			{
+				state === 'env' &&
+				<EnvironmentSelection accessToken={accessToken} cookie={cookie} onComplete={onEnvironmentSelectSuccess}
+															onError={onError} workspace={workspace} />
+			}
+			{state === 'done' &&
 				<Text>
-					<Spinner type="dots" /> Logging in...
+					Logged in as {organization} with selected environment as {environment}
 				</Text>
-			)}
-			{state === 'org' &&
-				(orgs && orgs.length > 0 ? (
-					<>
-						<Text>Select an organization</Text>
-						<SelectInput items={orgs} onSelect={handleOrgSelect} />
-					</>
-				) : (
-					<Text>
-						<Spinner type="dots" /> Loading Organizations
-					</Text>
-				))}
-			{state === 'project' &&
-				(projects && projects.length > 0 ? (
-					<>
-						<Text>Select a project</Text>
-						<SelectInput
-							items={projects}
-							onSelect={project => {
-								setActiveProject(project);
-								setState('environment');
-							}}
-						/>
-					</>
-				) : (
-					<Text>
-						<Spinner type="dots" /> Loading Projects
-					</Text>
-				))}
-			{state === 'environment' &&
-				(environments && environments.length > 0 ? (
-					<>
-						<Text>Select an environment</Text>
-						<SelectInput
-							items={environments}
-							onSelect={async environment => {
-								setActiveEnvironment(environment);
-								const { response } = await apiCall(
-									`v2/api-key/${activeProject.value}/${environment.value}`,
-									accessToken ?? '',
-									cookie,
-								);
-								await saveAuthToken(response.secret);
-								setState('done');
-							}}
-						/>
-					</>
-				) : (
-					<Text>
-						<Spinner type="dots" /> Loading Environments
-					</Text>
-				))}
-			{state === 'done' && activeOrg && (
-				<Text>
-					Logged in as {activeOrg.label} with selected environment as{' '}
-					{activeEnvironment ? activeEnvironment.label : 'None'}
-				</Text>
-			)}
-			{state === 'done' && authError && <Text>{authError}</Text>}
+			}
+			{
+				error && <Text>{error}</Text>
+			}
 		</>
 	);
 }
