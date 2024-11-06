@@ -5,8 +5,7 @@ type ErrorName =
 	| 'INTERNAL_ERROR'; // (Other Errors) All type of error excluding above 
 
 export class AppError extends Error {
-	name: ErrorName;
-	message: string;
+	override name: ErrorName;
 	cause?: any;
 
 	constructor({ name, message, cause }: { name: ErrorName, message: string, cause?: any }) {

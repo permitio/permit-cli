@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import { test } from 'node:test';
 import { render } from 'ink-testing-library';
 import assert from 'node:assert';
-import Check from './source/commands/pdp/check.js';
+import Check from './src/cmd/pdp/check.tsx';
 
 const API_KEY = process.env.API_KEY;
 

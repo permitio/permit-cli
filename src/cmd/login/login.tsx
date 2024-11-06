@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Newline, Text } from 'ink';
+import {  Newline, Text } from 'ink';
 import SelectInput from 'ink-select-input';
 import Spinner from 'ink-spinner';
 import { type infer as zInfer, object, string } from 'zod';
 import { option } from 'pastel';
-import { apiCall } from '../../utils/apiCall';
+import { apiCall } from '../../utils/apiCall.js';
 
 import {
 	authCallbackServer,
@@ -12,7 +12,7 @@ import {
 	saveAuthToken,
 	TokenType,
 	tokenType,
-} from '../../lib/auth.ts';
+} from '../../lib/auth.js';
 import open from 'open';
 
 export const options = object({

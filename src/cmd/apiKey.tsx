@@ -1,8 +1,8 @@
 import React from 'react';
 import { Text, Newline } from 'ink';
 import zod from 'zod';
-import { keyAccountOption } from '../options/keychain.ts';
-import { KEYSTORE_PERMIT_SERVICE_NAME } from '../config/config.ts';
+import { keyAccountOption } from '../options/keychain.js';
+import { KEYSTORE_PERMIT_SERVICE_NAME } from '../config/config.js';
 
 import keytar from 'keytar';
 

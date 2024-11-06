@@ -11,7 +11,7 @@
 	},
 	"scripts": {
 		"build": "tsc",
-		"start": "npx tsx ./source/cli.tsx",
+		"start": "npx tsx ./src/cli.tsx",
 		"dev": " NODE_NO_WARNINGS=1 tsc --watch",
 		"test": "prettier --check ./source && npx tsx --test test*.tsx",
 		"simple-check": "npx tsx ./source/cli.tsx pdp check -u filip@permit.io -a create -r task"

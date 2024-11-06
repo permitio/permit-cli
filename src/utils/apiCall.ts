@@ -1,4 +1,4 @@
-import { PERMIT_API_URL } from "../config/config";
+import { PERMIT_API_URL } from "../config/config.js";
 
 
 type ApiResponse = {

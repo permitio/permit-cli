@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Newline, Text } from 'ink';
 import zod, { string } from 'zod';
 import { option } from 'pastel';
-import { CLOUD_PDP_URL, KEYSTORE_PERMIT_SERVICE_NAME } from '../../config.js';
+import { CLOUD_PDP_URL, KEYSTORE_PERMIT_SERVICE_NAME } from '../../config/config.js';
 import Spinner from 'ink-spinner';
 import { keyAccountOption } from '../../options/keychain.js';
 import * as keytar from 'keytar';
