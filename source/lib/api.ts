@@ -39,14 +39,18 @@ export const apiCall = async <T>(
 	try {
 		const res = await fetch(`${PERMIT_API_URL}/${endpoint}`, options);
 
-		const response = await res.json();
-
-		defaultResponse.headers = res.headers;
-		defaultResponse.response = response as T;
-		defaultResponse.status = res.status;
+		if (!res.ok) {
+			const errorText = await res.text();
+			defaultResponse.error = `Request failed with status ${res.status}: ${errorText}`;
+		} else {
+			const response = await res.json();
+			defaultResponse.headers = res.headers;
+			defaultResponse.response = response as T;
+			defaultResponse.status = res.status;
+		}
 
 	} catch (error: any) {
-		defaultResponse.error = error.message;
+		defaultResponse.error = error instanceof Error ? error.message : 'Unknown fetch error occurred';
 	}
 	return defaultResponse;
 };

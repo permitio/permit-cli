@@ -24,7 +24,7 @@ const SelectEnvironment: React.FC<Props> = ({ accessToken, cookie, onComplete, a
 		const { response: environments, error } = await getEnvironments(activeProject.value, accessToken, cookie);
 
 		if (error) {
-			onError(error);
+			onError(`Failed to load environments for project "${activeProject.label}". Reason: ${error}. Please check your network connection or credentials and try again.`);
 		}
 
 		setEnvironments(
@@ -59,12 +59,6 @@ const SelectEnvironment: React.FC<Props> = ({ accessToken, cookie, onComplete, a
 					/>
 				</>
 			}
-			{/*{*/}
-			{/*	state === 'done' &&*/}
-			{/*	<Text>*/}
-			{/*		{'\u2714\ufe0f'} Environment selected successfully.*/}
-			{/*	</Text>*/}
-			{/*}*/}
 		</>
 	);
 };

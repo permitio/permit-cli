@@ -14,7 +14,13 @@ type SelectOrganizationProps = {
 };
 
 
-const SelectOrganization: React.FC<SelectOrganizationProps> = ({ accessToken, cookie, onComplete, workspace, onError }) => {
+const SelectOrganization: React.FC<SelectOrganizationProps> = ({
+																																 accessToken,
+																																 cookie,
+																																 onComplete,
+																																 workspace,
+																																 onError,
+																															 }) => {
 	const [orgs, setOrgs] = useState<[]>([]);
 	const [loading, setLoading] = useState(true);
 
@@ -24,7 +30,7 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({ accessToken, co
 		const { response: orgs, error } = await getOrgs(accessToken, cookie);
 
 		if (error) {
-			onError(error);
+			onError(`Failed to load organizations. Reason: ${error}. Please check your network connection or credentials and try again.`);
 		}
 
 		if (workspace) {
@@ -33,7 +39,7 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({ accessToken, co
 				onComplete({ label: userSpecifiedOrganization.name, value: userSpecifiedOrganization.id });
 				return;
 			} else {
-				onError(`Could not find user specified organization: ${workspace}`);
+				onError(`Organization "${workspace}" not found. Please ensure the name is correct and try again.`);
 			}
 		}
 
