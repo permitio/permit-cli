@@ -36,15 +36,16 @@ const EnvironmentSelection: React.FC<Props> = ({ accessToken, cookie, onComplete
 
 	async function handleSelectActiveOrganization(organization: ActiveState) {
 
+		if (cookie) {
+			const { headers, error } = await authSwitchOrgs(organization.value, accessToken, cookie);
 
-		const { headers, error } = await authSwitchOrgs(organization.value, accessToken, cookie);
+			if (error) {
+				onError(`Error while selecting active workspace: ${error}`);
+			}
 
-		if (error) {
-			onError(`Error while selecting active workspace: ${error}`);
+			let newCookie = headers.getSetCookie()[0] ?? '';
+			setEnvCookie(newCookie);
 		}
-
-		let newCookie = headers.getSetCookie()[0] ?? '';
-		setEnvCookie(newCookie);
 		setActiveOrganization(organization);
 		setState('project');
 	}
