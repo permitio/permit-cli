@@ -11,14 +11,6 @@ export const useAuthApi = () => {
 		)
 	}
 
-	const getProjectEnvironmentApiKey = async (projectId: string, environmentId: string, cookie: string, accessToken: string | null) => {
-		return await apiCall(
-			`v2/api-key/${projectId}/${environmentId}`,
-			accessToken ?? '',
-			cookie,
-		)
-	}
-
 	const getLogin = async (token: string | null) => {
 		return await apiCall(
 			'v2/auth/login',
@@ -30,7 +22,6 @@ export const useAuthApi = () => {
 
 	return {
 		authSwitchOrgs,
-		getProjectEnvironmentApiKey,
 		getLogin
 	}
 

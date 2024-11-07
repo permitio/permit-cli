@@ -1,10 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Text } from 'ink';
-import SelectInput from 'ink-select-input';
-import Spinner from 'ink-spinner';
 import { type infer as zInfer, object, string } from 'zod';
 import { option } from 'pastel';
-import { apiCall } from '../lib/api.js';
 import {
 	saveAuthToken,
 } from '../lib/auth.js';

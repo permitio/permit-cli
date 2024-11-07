@@ -3,6 +3,7 @@ import SelectOrganization from './SelectOrganization.js';
 import SelectProject from './SelectProject.js';
 import SelectEnvironment from './SelectEnvironment.js';
 import { useAuthApi } from '../hooks/useAuthApi.js';
+import { useApiKeyApi } from '../hooks/useApiKeyApi.js';
 
 
 type Props = {
@@ -32,7 +33,8 @@ const EnvironmentSelection: React.FC<Props> = ({ accessToken, cookie, onComplete
 	const [activeEnvironment, setActiveEnvironment] = useState<ActiveState>(defaultActiveState);
 	const [envCookie, setEnvCookie] = useState<string>(cookie);
 
-	const { authSwitchOrgs, getProjectEnvironmentApiKey } = useAuthApi();
+	const { authSwitchOrgs } = useAuthApi();
+	const { getProjectEnvironmentApiKey } = useApiKeyApi();
 
 	async function handleSelectActiveOrganization(organization: ActiveState) {
 
