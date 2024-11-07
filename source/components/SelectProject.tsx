@@ -47,7 +47,7 @@ const SelectProject: React.FC<Props> = ({ accessToken, cookie, onComplete, onErr
 			<Text>Select a project</Text>
 			<SelectInput
 				items={projects}
-				onSelect={handleProjectSelect} // Replace with state handling
+				onSelect={handleProjectSelect}
 			/>
 		</>
 	);

@@ -68,7 +68,7 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 					<Text>Select an organization</Text>
 					<SelectInput
 						items={orgs}
-						onSelect={handleSelectOrganization} // Replace with state handling
+						onSelect={handleSelectOrganization}
 					/>
 				</>
 			}
