@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Text } from 'ink';
 import { type infer as zInfer, object, string } from 'zod';
 import { option } from 'pastel';
@@ -50,6 +50,12 @@ export default function Login({ options: { key, workspace } }: Props) {
 		process.exit(1);
 	};
 
+	useEffect(() => {
+		if (error) {
+			process.exit(1);
+		}
+	}, [error])
+
 	const onLoginSuccess = (accessToken: string, cookie: string) => {
 		setAccessToken(accessToken);
 		setCookie(cookie);
@@ -58,7 +64,6 @@ export default function Login({ options: { key, workspace } }: Props) {
 
 	const onError = (error: string) => {
 		setError(error);
-		process.exit(1);
 	};
 
 	return (

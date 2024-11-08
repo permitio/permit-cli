@@ -20,6 +20,7 @@ const LoginFlow: React.FC<LoginFlowProps> = ({ apiKey, onSuccess, onError }) => 
 			onSuccess(apiKey, '');
 		} else if (apiKey) {
 			onError('Invalid API Key. Please provide a valid API Key or leave it blank to use browser authentication.');
+			return;
 		} else {
 			try {
 				const verifier = await browserAuth();
@@ -27,10 +28,12 @@ const LoginFlow: React.FC<LoginFlowProps> = ({ apiKey, onSuccess, onError }) => 
 				const { headers, error } = await getLogin(token);
 				if (error) {
 					onError(`Login failed. Reason: ${error}. Please check your network connection and try again.`);
+					return;
 				}
 				onSuccess(token, headers.getSetCookie()[0] ?? '');
 			} catch (error: any) {
 				onError(`Unexpected error during authentication. ${error}`);
+				return;
 			}
 		}
 	};

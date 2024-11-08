@@ -24,6 +24,7 @@ const SelectProject: React.FC<Props> = ({ accessToken, cookie, onComplete, onErr
 
 		if (error) {
 			onError(`Failed to load projects. Reason: ${error}. Please check your network connection or credentials and try again.`);
+			return;
 		}
 
 		setProjects(projects.map((project: any) => ({ label: project.name, value: project.id })));

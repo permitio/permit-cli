@@ -10,7 +10,7 @@ type ApiResponse = {
 export const apiCall = async <T>(
 	endpoint: string,
 	token: string,
-	cookie?: string,
+	cookie?: string | null | undefined,
 	method = 'GET',
 	body?: string,
 ): Promise<ApiResponse> => {
@@ -42,6 +42,7 @@ export const apiCall = async <T>(
 		if (!res.ok) {
 			const errorText = await res.text();
 			defaultResponse.error = `Request failed with status ${res.status}: ${errorText}`;
+			defaultResponse.status = res.status;
 		} else {
 			const response = await res.json();
 			defaultResponse.headers = res.headers;

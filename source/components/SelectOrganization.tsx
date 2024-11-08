@@ -31,6 +31,7 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 
 		if (error) {
 			onError(`Failed to load organizations. Reason: ${error}. Please check your network connection or credentials and try again.`);
+			return;
 		}
 
 		if (workspace) {
@@ -40,6 +41,7 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 				return;
 			} else {
 				onError(`Organization "${workspace}" not found. Please ensure the name is correct and try again.`);
+				return;
 			}
 		}
 

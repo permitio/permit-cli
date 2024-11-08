@@ -24,9 +24,14 @@ export const useOrganisationApi = () => {
 
 	const getOrgs = async (accessToken: string, cookie: string) => {
 		return await apiCall<Organization[]>('v2/orgs', accessToken, cookie);
-	}
+	};
+
+	const getOrg = async (organizationId: string, accessToken: string, cookie?: string | null) => {
+		return await apiCall<Organization>(`v2/orgs/${organizationId}`, accessToken, cookie);
+	};
 
 	return {
-		getOrgs
-	}
+		getOrgs,
+		getOrg
+	};
 };

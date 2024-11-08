@@ -18,12 +18,17 @@ type Environment = {
 
 export const useEnvironmentApi = () => {
 
-	const getEnvironments = async (projectId: string, accessToken: string, cookie: string) => {
-		return await apiCall<Environment[]>(`v2/projects/${projectId}/envs`, accessToken, cookie);
-	}
+	const getEnvironments = async (projectId: string, accessToken: string, cookie: string | null) => {
+		return await apiCall<Environment[]>(`v2/projects/${projectId}/envs`, accessToken, cookie ?? '');
+	};
+
+	const getEnvironment = async (projectId: string, environmentId: string, accessToken: string, cookie: string | null) => {
+		return await apiCall<Environment>(`v2/projects/${projectId}/envs/${environmentId}`, accessToken, cookie ?? '');
+	};
 
 	return {
 		getEnvironments,
-	}
+		getEnvironment,
+	};
 
-}
+};
