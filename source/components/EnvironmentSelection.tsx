@@ -45,7 +45,6 @@ const EnvironmentSelection: React.FC<Props> = ({ accessToken, cookie, onComplete
 
 		// No need to verify scope on browser login
 		if(!cookie) {
-			console.log(accessToken);
 			getApiKeyScope(accessToken).then(async res => {
 				const { response: scope, error, status } = res;
 				if (error) {
