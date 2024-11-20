@@ -38,7 +38,7 @@ export default function Login({ options: { key, workspace } }: Props) {
 	const [error, setError] = useState<string | null>(null);
 
 	const [organization, setOrganization] = useState<string>('');
-	const [project, setProject] = useState<string>('');
+	const [_project, setProject] = useState<string>('');
 	const [environment, setEnvironment] = useState<string>('');
 
 	const onEnvironmentSelectSuccess = async (organisation: string, project: string, environment: string, secret: string) => {

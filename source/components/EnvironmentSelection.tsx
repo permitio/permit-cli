@@ -33,7 +33,7 @@ const EnvironmentSelection: React.FC<Props> = ({ accessToken, cookie, onComplete
 	const [state, setState] = useState<'initial' | 'workspace' | 'project' | 'environment' | 'user-key' | 'done'>('initial');
 	const [activeOrganization, setActiveOrganization] = useState<ActiveState>(defaultActiveState);
 	const [activeProject, setActiveProject] = useState<ActiveState>(defaultActiveState);
-	const [activeEnvironment, setActiveEnvironment] = useState<ActiveState>(defaultActiveState);
+	const [_activeEnvironment, setActiveEnvironment] = useState<ActiveState>(defaultActiveState);
 	const [envCookie, setEnvCookie] = useState<string>(cookie);
 
 	const { authSwitchOrgs } = useAuthApi();
@@ -42,27 +42,35 @@ const EnvironmentSelection: React.FC<Props> = ({ accessToken, cookie, onComplete
 	const { getOrg } = useOrganisationApi();
 
 	useEffect(() => {
-		getApiKeyScope(accessToken).then(async res => {
-			const { response: scope, error, status } = res;
-			if (error) {
-				let errorMsg;
-				if (status === 401) {
-					errorMsg = `Invalid ApiKey, ${error}`;
-				} else {
-					errorMsg = `Error while getting scopes for the ApiKey: ${error}`;
+
+		// No need to verify scope on browser login
+		if(!cookie) {
+			console.log(accessToken);
+			getApiKeyScope(accessToken).then(async res => {
+				const { response: scope, error, status } = res;
+				if (error) {
+					let errorMsg;
+					if (status === 401) {
+						errorMsg = `Invalid ApiKey, ${error}`;
+					} else {
+						errorMsg = `Error while getting scopes for the ApiKey: ${error}`;
+					}
+					onError(errorMsg);
+					return;
 				}
-				onError(errorMsg);
-				return;
-			}
-			if (scope.environment_id && scope.project_id) {
-				setState('user-key');
-				const { response: project } = await getEnvironment(scope.project_id, scope.environment_id, accessToken, cookie);
-				const { response: organization } = await getOrg(scope.organization_id, accessToken, cookie);
-				onComplete(organization.name, '', project.name, accessToken);
-			} else {
-				setState('workspace');
-			}
-		});
+				if (scope.environment_id && scope.project_id) {
+					setState('user-key');
+					const { response: project } = await getEnvironment(scope.project_id, scope.environment_id, accessToken, cookie);
+					const { response: organization } = await getOrg(scope.organization_id, accessToken, cookie);
+					onComplete(organization.name, '', project.name, accessToken);
+				} else {
+					setState('workspace');
+				}
+			});
+		}
+		else {
+			setState('workspace');
+		}
 	}, [accessToken]);
 
 	async function handleSelectActiveOrganization(organization: ActiveState) {
