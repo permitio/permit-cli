@@ -6,6 +6,9 @@ import {
 	DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
 	KEYSTORE_PERMIT_SERVICE_NAME,
 } from '../config.js';
+import { URL, URLSearchParams } from 'url';
+import { setTimeout } from 'timers';
+import { Buffer } from 'buffer';
 
 const { setPassword, getPassword, deletePassword } = pkg;
 
