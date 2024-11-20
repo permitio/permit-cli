@@ -31,22 +31,36 @@ export const options = object({
 		),
 });
 
+type Org = {
+	label: string;
+	value: string;
+};
+
+type Project = {
+	label: string;
+	value: string;
+};
+
+type Environment = {
+	label: string;
+	value: string;
+};
+
 type Props = {
 	readonly options: zInfer<typeof options>;
 };
 
 export default function Login({ options: { key, workspace } }: Props) {
-	const [authError, setAuthError] = useState('');
-	const [orgs, setOrgs] = useState<[]>([]);
+	const [authError, setAuthError] = useState<string>('');
+	const [orgs, setOrgs] = useState<Org[]>([]);
 	const [accessToken, setAccessToken] = useState<string | undefined>();
 	const [cookie, setCookie] = useState<string | undefined>('');
-	const [activeOrg, setActiveOrg] = useState<any | undefined>(null);
-	const [activeProject, setActiveProject] = useState<any | undefined>(null);
-	const [activeEnvironment, setActiveEnvironment] = useState<any | undefined>(
-		null,
-	);
-	const [projects, setProjects] = useState<[]>([]);
-	const [environments, setEnvironments] = useState<[]>([]);
+	const [activeOrg, setActiveOrg] = useState<Org | null>(null);
+	const [activeProject, setActiveProject] = useState<Project | null>(null);
+	const [activeEnvironment, setActiveEnvironment] =
+		useState<Environment | null>(null);
+	const [projects, setProjects] = useState<Project[]>([]);
+	const [environments, setEnvironments] = useState<Environment[]>([]);
 	const [state, setState] = useState<
 		'login' | 'loggingIn' | 'org' | 'project' | 'environment' | 'done'
 	>('login');
@@ -59,37 +73,42 @@ export default function Login({ options: { key, workspace } }: Props) {
 				cookie,
 			);
 
-			console.log('Organizations fetched:', orgs);
 
-			const selectedOrg = orgs.find(
-				(org: any) => workspace && org.key === workspace,
-			);
-			if (!orgs || orgs.length === 0) {
-				console.error('No organizations received');
-			}
+			const selectedOrg = Array.isArray(orgs)
+				? orgs.find(
+						(org: { key: string }) => workspace && org.key === workspace,
+					)
+				: null;
 
 			if (selectedOrg) {
 				setActiveOrg({ label: selectedOrg.name, value: selectedOrg.id });
 				setState('project');
-			} else if (orgs && orgs.length === 1) {
+			} else if (Array.isArray(orgs) && orgs.length === 1) {
 				setActiveOrg({ label: orgs[0].name, value: orgs[0].id });
 				setState('project');
 			}
 
-			setOrgs(orgs.map((org: any) => ({ label: org.name, value: org.id })));
+			setOrgs(
+				Array.isArray(orgs)
+					? orgs.map((org: { name: string; id: string }) => ({
+							label: org.name,
+							value: org.id,
+						}))
+					: [],
+			);
 		};
 
 		if (state === 'org' && accessToken) {
 			fetchOrgs();
 		}
-	}, [state, accessToken, cookie, key]);
+	}, [state, accessToken, cookie, workspace]);
 
 	useEffect(() => {
 		const fetchProjects = async () => {
 			let newCookie = cookie ?? '';
 
 			const { headers } = await apiCall(
-				`v2/auth/switch_org/${activeOrg.value}`,
+				`v2/auth/switch_org/${activeOrg?.value}`,
 				accessToken ?? '',
 				cookie ?? '',
 				'POST',
@@ -104,43 +123,47 @@ export default function Login({ options: { key, workspace } }: Props) {
 				newCookie,
 			);
 
-			if (projects.length === 1) {
+			if (Array.isArray(projects) && projects.length === 1) {
 				setActiveProject({ label: projects[0].name, value: projects[0].id });
 				setState('environment');
 			}
 
 			setProjects(
-				projects.map((project: any) => ({
-					label: project.name,
-					value: project.id,
-				})),
+				Array.isArray(projects)
+					? projects.map((project: { name: string; id: string }) => ({
+							label: project.name,
+							value: project.id,
+						}))
+					: [],
 			);
 		};
 
 		if (activeOrg) {
 			fetchProjects();
 		}
-	}, [activeOrg]);
+	}, [activeOrg, accessToken, cookie]);
 
 	useEffect(() => {
 		const fetchEnvironments = async () => {
 			const { response: environments } = await apiCall(
-				`v2/projects/${activeProject.value}/envs`,
+				`v2/projects/${activeProject?.value}/envs`,
 				accessToken ?? '',
 				cookie ?? '',
 			);
 			setEnvironments(
-				environments.map((environment: any) => ({
-					label: environment.name,
-					value: environment.id,
-				})),
+				Array.isArray(environments)
+					? environments.map((environment: { name: string; id: string }) => ({
+							label: environment.name,
+							value: environment.id,
+						}))
+					: [],
 			);
 		};
 
 		if (activeProject) {
 			fetchEnvironments();
 		}
-	}, [activeProject]);
+	}, [activeProject, accessToken, cookie]);
 
 	useEffect(() => {
 		if (state === 'done') {
@@ -148,7 +171,7 @@ export default function Login({ options: { key, workspace } }: Props) {
 		}
 	}, [state]);
 
-	const handleOrgSelect = async (org: any) => {
+	const handleOrgSelect = async (org: Org) => {
 		setActiveOrg(org);
 		setState('project');
 	};
@@ -226,11 +249,12 @@ export default function Login({ options: { key, workspace } }: Props) {
 							onSelect={async environment => {
 								setActiveEnvironment(environment);
 								const { response } = await apiCall(
-									`v2/api-key/${activeProject.value}/${environment.value}`,
+									`v2/api-key/${activeProject?.value}/${environment.value}`,
 									accessToken ?? '',
 									cookie,
 								);
-								await saveAuthToken(response.secret);
+								const { secret } = response as { secret: string };
+								await saveAuthToken(secret);
 								setState('done');
 							}}
 						/>

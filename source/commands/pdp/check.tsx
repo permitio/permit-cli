@@ -104,12 +104,14 @@ export default function Check({ options }: Props) {
 			.catch(reason => {
 				setError(reason);
 			});
-	}, []);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [options.keyAccount]);
 
 	return (
 		<>
 			<Text>
-				Checking user="{options.user}" action={options.action} resource=
+				Checking user=&quot;{options.user}&quot; action={options.action}{' '}
+				resource=
 				{options.resource} at tenant={options.tenant}
 			</Text>
 			{res.allow === true && (

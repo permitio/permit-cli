@@ -7,5 +7,6 @@
 		"outDir": "dist",
 		"types": ["vitest/globals"],
 	},
-	"include": ["source"]
+	"include": ["source"],
+	"exclude": ["node_modules"]
 }
