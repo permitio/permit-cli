@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ApiToken from '../../../components/gitops/APIToken.js';
 import { Box, Text } from 'ink';
+import SelectProject from '../../../components/gitops/SelectProject.js';
 
 type GitConfig = {
 	url: string;
@@ -15,6 +16,7 @@ type GitConfig = {
 
 export default function GitHub() {
 	const [error, setError] = useState<string>('');
+	const [projectKey, setProjectKey] = useState<string>('');
 	const [gitConfig, setGitConfig] = useState<GitConfig>({
 		url: '',
 		main_branch_name: '',
@@ -29,6 +31,7 @@ export default function GitHub() {
 	const [state, setState] = useState<
 		| 'api_key'
 		| 'policy_name'
+		| 'ssh_key'
 		| 'branch'
 		| 'project'
 		| 'activate'
@@ -45,7 +48,7 @@ export default function GitHub() {
 				<ApiToken
 					onApiKeySubmit={AccessToken => {
 						setApiKey(AccessToken);
-						setState('policy_name');
+						setState('project');
 					}}
 					onError={errormsg => {
 						setError(errormsg);
@@ -54,11 +57,23 @@ export default function GitHub() {
 				/>
 			)}
 
-			
+			{state === 'project' && (
+				<SelectProject
+					accessToken={ApiKey}
+					onError={(errorMessage: string) => {
+						setError(errorMessage);
+						setState('error');
+					}}
+					onProjectSubmit={(projectIdKey: string) => {
+						setProjectKey(projectIdKey);
+						setState('policy_name');
+					}}
+				/>
+			)}
 
 			{state === 'error' && (
 				<Box margin={1}>
-					<Text color={'red'}>{"Error: "+error}</Text>
+					<Text color={'red'}>{'Error: ' + error}</Text>
 				</Box>
 			)}
 		</>

@@ -13,7 +13,7 @@ test('APIToken - Correct Value', async t => {
 	const { stdin, lastFrame } = render(
 		<APIToken onApiKeySubmit={onApiKeySubmit} onError={onError} />,
 	);
-	let frameString:string;
+	let frameString: string;
 	frameString = lastFrame()?.toString() ?? '';
 
 	t.regex(frameString, /Enter Your API Key:/);
@@ -27,13 +27,13 @@ test('APIToken - Correct Value', async t => {
 	t.true(onApiKeySubmit.calledWith(key));
 });
 
-test ('APIToken - Incorrect Value', async t => {
+test('APIToken - Incorrect Value', async t => {
 	const onApiKeySubmit = spy();
 	const onError = spy();
 	const { stdin, lastFrame } = render(
 		<APIToken onApiKeySubmit={onApiKeySubmit} onError={onError} />,
 	);
-	let frameString:string;
+	let frameString: string;
 	frameString = lastFrame()?.toString() ?? '';
 
 	t.regex(frameString, /Enter Your API Key:/);
@@ -45,15 +45,15 @@ test ('APIToken - Incorrect Value', async t => {
 	await delay(300);
 	t.true(onError.calledOnce);
 	t.true(onError.calledWith('Invalid API Key'));
-})
+});
 
-test ('APIToken - Empty Value', async t => {
+test('APIToken - Empty Value', async t => {
 	const onApiKeySubmit = spy();
 	const onError = spy();
 	const { stdin, lastFrame } = render(
 		<APIToken onApiKeySubmit={onApiKeySubmit} onError={onError} />,
 	);
-	let frameString:string;
+	let frameString: string;
 	frameString = lastFrame()?.toString() ?? '';
 
 	t.regex(frameString, /Enter Your API Key:/);
@@ -65,4 +65,4 @@ test ('APIToken - Empty Value', async t => {
 	await delay(300);
 	t.true(onError.calledOnce);
 	t.true(onError.calledWith('API Key is required'));
-})
+});

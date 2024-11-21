@@ -7,7 +7,7 @@ type Props = {
 	onError: (error: string) => void;
 };
 const ApiToken: React.FC<Props> = ({ onApiKeySubmit, onError }) => {
-	const Validate = (Token: string): string => {;
+	const Validate = (Token: string): string => {
 		if (Token.length <= 1) {
 			return 'API Key is required';
 		}
@@ -17,7 +17,7 @@ const ApiToken: React.FC<Props> = ({ onApiKeySubmit, onError }) => {
 		return 'Invalid API Key';
 	};
 	const [accessToken, setAccessToken] = useState<string>('');
-	const handleSubmit = (apiToken:string) => {
+	const handleSubmit = (apiToken: string) => {
 		const error = Validate(apiToken);
 		if (error.length > 1) {
 			onError(error);
