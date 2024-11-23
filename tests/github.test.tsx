@@ -6,7 +6,11 @@ import PolicyName from '../source/components/gitops/PolicyName.js';
 import SSHKey from '../source/components/gitops/SSHKey.js';
 import delay from 'delay';
 import { vi, describe, it, expect } from 'vitest';
-import { generateSSHKey, getProjectList, getRepoList } from '../source/lib/gitops/utils.js';
+import {
+	generateSSHKey,
+	getProjectList,
+	getRepoList,
+} from '../source/lib/gitops/utils.js';
 
 vi.mock('../source/lib/gitops/utils.js', () => ({
 	getProjectList: vi.fn(() =>
@@ -21,12 +25,13 @@ vi.mock('../source/lib/gitops/utils.js', () => ({
 			{ status: 'active', key: 'repo2' },
 		]),
 	),
-  generateSSHKey: vi.fn(() => ({
-    publicKey: ' ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEYpTS7khEGR+PDWsNveNP6ffFNEhoRwrG0+DckrqaJT help@permit.io',
-    privateKey: ' ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEYpTS7khEGR+PDWsNveNP6ffFNEhoRwrG0+DckrqaJT help@permit.io'
-  })),
+	generateSSHKey: vi.fn(() => ({
+		publicKey:
+			' ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEYpTS7khEGR+PDWsNveNP6ffFNEhoRwrG0+DckrqaJT help@permit.io',
+		privateKey:
+			' ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEYpTS7khEGR+PDWsNveNP6ffFNEhoRwrG0+DckrqaJT help@permit.io',
+	})),
 }));
-
 
 const enter = '\r';
 const arrowUp = '\u001B[A';
@@ -281,71 +286,76 @@ describe('Policy Name Component', () => {
 	});
 });
 
-describe("SSHKey Component", () => {
-  it("should call onSSHKeySubmit with the correct value", async () => {
-    const onSSHKeySubmit = vi.fn();
-    const onError = vi.fn();
-    const { stdin, lastFrame } = render(
-      <SSHKey onSSHKeySubmit={onSSHKeySubmit} onError={onError} />,
-    );
-    const frameString = lastFrame()?.toString() ?? "";
+describe('SSHKey Component', () => {
+	it('should call onSSHKeySubmit with the correct value', async () => {
+		const onSSHKeySubmit = vi.fn();
+		const onError = vi.fn();
+		const { stdin, lastFrame } = render(
+			<SSHKey onSSHKeySubmit={onSSHKeySubmit} onError={onError} />,
+		);
+		const frameString = lastFrame()?.toString() ?? '';
 
-    // Assertion
-    expect(frameString).toMatch(/SSH Key Generated./);
-    expect(frameString).toMatch(/Copy The Public Key to Github:/);
-   
-    const sshUrl = "git@github.com:user/repository.git"
-    await delay(50);
-    stdin.write(sshUrl);
-    await delay(50);
-    stdin.write(enter);
-    await delay(50);
+		// Assertion
+		expect(frameString).toMatch(/SSH Key Generated./);
+		expect(frameString).toMatch(/Copy The Public Key to Github:/);
 
-    expect(onSSHKeySubmit).toHaveBeenCalledOnce();
-    expect(onSSHKeySubmit).toHaveBeenCalledWith(expect.stringMatching(/ssh-(ed25519|rsa|ecdsa-sha2-[a-z0-9-]+) [A-Za-z0-9+/=]+ [\w.@+-]+/), sshUrl)
-  });
-  it("should call onError with 'Please enter a valid SSH URL' for empty value", async () => {
-    const onSSHKeySubmit = vi.fn();
-    const onError = vi.fn();
-    const { stdin, lastFrame } = render(
-      <SSHKey onSSHKeySubmit={onSSHKeySubmit} onError={onError} />,
-    );
-    const frameString = lastFrame()?.toString() ?? "";
+		const sshUrl = 'git@github.com:user/repository.git';
+		await delay(50);
+		stdin.write(sshUrl);
+		await delay(50);
+		stdin.write(enter);
+		await delay(50);
 
-    // Assertion
-    expect(frameString).toMatch(/SSH Key Generated./);
-    expect(frameString).toMatch(/Copy The Public Key to Github:/);
-   
-    const sshUrl = ""
-    await delay(50);
-    stdin.write(sshUrl);
-    await delay(50);
-    stdin.write(enter);
-    await delay(50);
+		expect(onSSHKeySubmit).toHaveBeenCalledOnce();
+		expect(onSSHKeySubmit).toHaveBeenCalledWith(
+			expect.stringMatching(
+				/ssh-(ed25519|rsa|ecdsa-sha2-[a-z0-9-]+) [A-Za-z0-9+/=]+ [\w.@+-]+/,
+			),
+			sshUrl,
+		);
+	});
+	it("should call onError with 'Please enter a valid SSH URL' for empty value", async () => {
+		const onSSHKeySubmit = vi.fn();
+		const onError = vi.fn();
+		const { stdin, lastFrame } = render(
+			<SSHKey onSSHKeySubmit={onSSHKeySubmit} onError={onError} />,
+		);
+		const frameString = lastFrame()?.toString() ?? '';
 
-    expect(onError).toHaveBeenCalledOnce();
-    expect(onError).toHaveBeenCalledWith('Please enter a valid SSH URL');
-  })
-  it("should call onError with 'Please enter a valid SSH URL' for invalid value", async () => {
-    const onSSHKeySubmit = vi.fn();
-    const onError = vi.fn();
-    const { stdin, lastFrame } = render(
-      <SSHKey onSSHKeySubmit={onSSHKeySubmit} onError={onError} />,
-    );
-    const frameString = lastFrame()?.toString() ?? "";
+		// Assertion
+		expect(frameString).toMatch(/SSH Key Generated./);
+		expect(frameString).toMatch(/Copy The Public Key to Github:/);
 
-    // Assertion
-    expect(frameString).toMatch(/SSH Key Generated./);
-    expect(frameString).toMatch(/Copy The Public Key to Github:/);
-   
-    const sshUrl = "invalid_url"
-    await delay(50);
-    stdin.write(sshUrl);
-    await delay(50);
-    stdin.write(enter);
-    await delay(50);
+		const sshUrl = '';
+		await delay(50);
+		stdin.write(sshUrl);
+		await delay(50);
+		stdin.write(enter);
+		await delay(50);
 
-    expect(onError).toHaveBeenCalledOnce();
-    expect(onError).toHaveBeenCalledWith('Please enter a valid SSH URL');
-  })
-})
+		expect(onError).toHaveBeenCalledOnce();
+		expect(onError).toHaveBeenCalledWith('Please enter a valid SSH URL');
+	});
+	it("should call onError with 'Please enter a valid SSH URL' for invalid value", async () => {
+		const onSSHKeySubmit = vi.fn();
+		const onError = vi.fn();
+		const { stdin, lastFrame } = render(
+			<SSHKey onSSHKeySubmit={onSSHKeySubmit} onError={onError} />,
+		);
+		const frameString = lastFrame()?.toString() ?? '';
+
+		// Assertion
+		expect(frameString).toMatch(/SSH Key Generated./);
+		expect(frameString).toMatch(/Copy The Public Key to Github:/);
+
+		const sshUrl = 'invalid_url';
+		await delay(50);
+		stdin.write(sshUrl);
+		await delay(50);
+		stdin.write(enter);
+		await delay(50);
+
+		expect(onError).toHaveBeenCalledOnce();
+		expect(onError).toHaveBeenCalledWith('Please enter a valid SSH URL');
+	});
+});

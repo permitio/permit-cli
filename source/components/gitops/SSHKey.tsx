@@ -19,7 +19,7 @@ const SSHKey: React.FC<Props> = ({ onSSHKeySubmit, onError }) => {
 		setSshKey(key);
 	}, []);
 	const handleSSHSubmit = (sshUrl: string) => {
-		if (sshUrl.length<=1) {
+		if (sshUrl.length <= 1) {
 			onError('Please enter a valid SSH URL');
 			return;
 		}

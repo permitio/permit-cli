@@ -89,20 +89,25 @@ export default function GitHub() {
 					}}
 				/>
 			)}
-			{state === 'ssh_key' && (<SSHKey onError={(errormessage) => {
-				setError(errormessage);
-				setState('error');
-			}} onSSHKeySubmit={(sshkey:string, sshUrl:string)=>{
-				setGitConfig({
-					...gitConfig,
-					credentials: {
-						...gitConfig.credentials,
-						private_key: sshkey
-					},
-					url: sshUrl
-				});
-				setState('branch');
-			}}/>)}
+			{state === 'ssh_key' && (
+				<SSHKey
+					onError={errormessage => {
+						setError(errormessage);
+						setState('error');
+					}}
+					onSSHKeySubmit={(sshkey: string, sshUrl: string) => {
+						setGitConfig({
+							...gitConfig,
+							credentials: {
+								...gitConfig.credentials,
+								private_key: sshkey,
+							},
+							url: sshUrl,
+						});
+						setState('branch');
+					}}
+				/>
+			)}
 
 			{state === 'error' && (
 				<Box margin={1}>
