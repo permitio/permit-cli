@@ -24,7 +24,10 @@ const SelectProject: React.FC<Props> = ({
 		getProjectList(accessToken)
 			.then(projects => {
 				setProjects(
-					projects.map(project => ({ label: project.name, value: project.key })),
+					projects.map(project => ({
+						label: project.name,
+						value: project.key,
+					})),
 				);
 				setLoading(false);
 			})

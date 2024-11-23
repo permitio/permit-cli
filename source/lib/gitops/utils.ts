@@ -9,6 +9,10 @@ type Project = {
 	updated_at: string;
 	name: string;
 };
+type Repo = {
+	status: string;
+	key: string;
+};
 
 async function getProjectList(apiKey: string): Promise<Project[]> {
 	const projects = await apiCall('v2/projects', apiKey);
@@ -18,4 +22,11 @@ async function getProjectList(apiKey: string): Promise<Project[]> {
 	return projects.response as Project[];
 }
 
-export { getProjectList };
+async function getRepoList(
+	apiKey: string,
+	projectKey: string,
+): Promise<Repo[]> {
+	const Repos = await apiCall(`v2/projects/${projectKey}/repos`, apiKey);
+	return Repos.response as Repo[];
+}
+export { getProjectList, getRepoList };

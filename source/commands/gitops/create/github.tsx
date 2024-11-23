@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ApiToken from '../../../components/gitops/APIToken.js';
 import { Box, Text } from 'ink';
 import SelectProject from '../../../components/gitops/SelectProject.js';
-
+import PolicyName from '../../../components/gitops/PolicyName.js';
 type GitConfig = {
 	url: string;
 	main_branch_name: string;
@@ -67,6 +67,24 @@ export default function GitHub() {
 					onProjectSubmit={(projectIdKey: string) => {
 						setProjectKey(projectIdKey);
 						setState('policy_name');
+					}}
+				/>
+			)}
+
+			{state === 'policy_name' && (
+				<PolicyName
+					projectName={projectKey}
+					accessToken={ApiKey}
+					onError={errormessage => {
+						setError(errormessage);
+						setState('error');
+					}}
+					onPolicyNameSubmit={policyName => {
+						setGitConfig({
+							...gitConfig,
+							key: policyName,
+						});
+						setState('ssh_key');
 					}}
 				/>
 			)}
