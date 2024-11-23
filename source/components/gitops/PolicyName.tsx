@@ -50,11 +50,10 @@ const PolicyName: React.FC<Props> = ({
 	};
 
 	const isPolicyAlreadyPresent = (policyName: string) => {
-		console.log(repolist)
 		if (repolist.length > 0) {
 			if (repolist.includes(policyName)) {
 				onError('Policy with this name already exists');
-				return ;
+				return;
 			}
 		}
 	};
@@ -71,7 +70,6 @@ const PolicyName: React.FC<Props> = ({
 					/>
 				</Box>
 			</Box>
-		
 		</>
 	);
 };

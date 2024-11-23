@@ -3,9 +3,10 @@ import { render } from 'ink-testing-library';
 import APIToken from '../source/components/gitops/APIToken.js';
 import SelectProject from '../source/components/gitops/SelectProject.js';
 import PolicyName from '../source/components/gitops/PolicyName.js';
+import SSHKey from '../source/components/gitops/SSHKey.js';
 import delay from 'delay';
 import { vi, describe, it, expect } from 'vitest';
-import { getProjectList, getRepoList } from '../source/lib/gitops/utils.js';
+import { generateSSHKey, getProjectList, getRepoList } from '../source/lib/gitops/utils.js';
 
 vi.mock('../source/lib/gitops/utils.js', () => ({
 	getProjectList: vi.fn(() =>
@@ -14,13 +15,19 @@ vi.mock('../source/lib/gitops/utils.js', () => ({
 			{ id: 2, name: 'Project 2', key: 'proj2' },
 		]),
 	),
-  getRepoList: vi.fn(() =>
-    Promise.resolve([
-      { status: 'active', key: 'repo1' },
-      { status: 'active', key: 'repo2' },
-    ]),
-  ),
+	getRepoList: vi.fn(() =>
+		Promise.resolve([
+			{ status: 'active', key: 'repo1' },
+			{ status: 'active', key: 'repo2' },
+		]),
+	),
+  generateSSHKey: vi.fn(() => ({
+    publicKey: ' ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEYpTS7khEGR+PDWsNveNP6ffFNEhoRwrG0+DckrqaJT help@permit.io',
+    privateKey: ' ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEYpTS7khEGR+PDWsNveNP6ffFNEhoRwrG0+DckrqaJT help@permit.io'
+  })),
 }));
+
+
 const enter = '\r';
 const arrowUp = '\u001B[A';
 const arrowDown = '\u001B[B';
@@ -169,86 +176,176 @@ describe('Select Project Component', () => {
 	});
 });
 
+describe('Policy Name Component', () => {
+	it('should call onPolicyNameSubmit with the correct value', async () => {
+		const onPolicyNameSubmit = vi.fn();
+		const onError = vi.fn();
+		const projectName = 'project1';
+		const accessToken = 'permit_key_'.concat('a'.repeat(97));
+		const { stdin, lastFrame } = render(
+			<PolicyName
+				projectName={projectName}
+				accessToken={accessToken}
+				onPolicyNameSubmit={onPolicyNameSubmit}
+				onError={onError}
+			/>,
+		);
+		const frameString = lastFrame()?.toString() ?? '';
+		expect(frameString).toMatch(/Enter Your Policy Name:/);
+		const policyName = 'policy1';
+		await delay(50);
+		stdin.write(policyName);
+		await delay(50);
+		stdin.write(enter);
+		await delay(50);
 
-describe("Policy Name Component", () => { 
+		expect(onPolicyNameSubmit).toHaveBeenCalledOnce();
+		expect(onPolicyNameSubmit).toHaveBeenCalledWith(policyName);
+	});
+	it("should call onError with 'Policy Name is required' for empty value", async () => {
+		const onPolicyNameSubmit = vi.fn();
+		const onError = vi.fn();
+		const projectName = 'project1';
+		const accessToken = 'permit_key_'.concat('a'.repeat(97));
+		const { stdin, lastFrame } = render(
+			<PolicyName
+				projectName={projectName}
+				accessToken={accessToken}
+				onPolicyNameSubmit={onPolicyNameSubmit}
+				onError={onError}
+			/>,
+		);
+		const frameString = lastFrame()?.toString() ?? '';
+		expect(frameString).toMatch(/Enter Your Policy Name:/);
+		const policyName = '';
+		await delay(50);
+		stdin.write(policyName);
+		await delay(50);
+		stdin.write(enter);
+		await delay(50);
+		expect(onError).toHaveBeenCalledOnce();
+		expect(onError).toHaveBeenCalledWith('Policy Name is required');
+	});
+	it('Invalid Policy Name  Error ', async () => {
+		const onPolicyNameSubmit = vi.fn();
+		const onError = vi.fn();
+		const projectName = 'project1';
+		const accessToken = 'permit_key_'.concat('a'.repeat(97));
+		const { stdin, lastFrame } = render(
+			<PolicyName
+				projectName={projectName}
+				accessToken={accessToken}
+				onPolicyNameSubmit={onPolicyNameSubmit}
+				onError={onError}
+			/>,
+		);
+		const frameString = lastFrame()?.toString() ?? '';
+		expect(frameString).toMatch(/Enter Your Policy Name:/);
+		const policyName = 'Invalid Policy Name';
+		await delay(50);
+		stdin.write(policyName);
+		await delay(50);
+		stdin.write(enter);
+		await delay(50);
+		expect(onError).toHaveBeenCalledOnce();
+		expect(onError).toHaveBeenCalledWith(
+			'Policy Name should contain only alphanumeric characters, hyphens and underscores',
+		);
+	});
+	it('Existing policy name', async () => {
+		const onPolicyNameSubmit = vi.fn();
+		const onError = vi.fn();
+		const projectName = 'project1';
+		const accessToken = 'permit_key_'.concat('a'.repeat(97));
+		const { stdin, lastFrame } = render(
+			<PolicyName
+				projectName={projectName}
+				accessToken={accessToken}
+				onPolicyNameSubmit={onPolicyNameSubmit}
+				onError={onError}
+			/>,
+		);
+		const frameString = lastFrame()?.toString() ?? '';
+		expect(frameString).toMatch(/Enter Your Policy Name:/);
+		const policyName = 'repo1';
+		await delay(50);
+		stdin.write(policyName);
+		await delay(50);
+		stdin.write(enter);
+		await delay(50);
 
-  it("should call onPolicyNameSubmit with the correct value", async () => {
-    const onPolicyNameSubmit = vi.fn();
+		expect(onError).toHaveBeenCalledOnce();
+		expect(onError).toHaveBeenCalledWith(
+			'Policy with this name already exists',
+		);
+	});
+});
+
+describe("SSHKey Component", () => {
+  it("should call onSSHKeySubmit with the correct value", async () => {
+    const onSSHKeySubmit = vi.fn();
     const onError = vi.fn();
-    const projectName = 'project1';
-    const accessToken = 'permit_key_'.concat('a'.repeat(97));
     const { stdin, lastFrame } = render(
-      <PolicyName projectName={projectName} accessToken={accessToken} onPolicyNameSubmit={onPolicyNameSubmit} onError={onError} />
+      <SSHKey onSSHKeySubmit={onSSHKeySubmit} onError={onError} />,
     );
-    const frameString = lastFrame()?.toString() ?? '';
-    expect(frameString).toMatch(/Enter Your Policy Name:/);
-    const policyName = 'policy1';
+    const frameString = lastFrame()?.toString() ?? "";
+
+    // Assertion
+    expect(frameString).toMatch(/SSH Key Generated./);
+    expect(frameString).toMatch(/Copy The Public Key to Github:/);
+   
+    const sshUrl = "git@github.com:user/repository.git"
     await delay(50);
-    stdin.write(policyName);
+    stdin.write(sshUrl);
     await delay(50);
     stdin.write(enter);
     await delay(50);
 
-    expect(onPolicyNameSubmit).toHaveBeenCalledOnce();
-    expect(onPolicyNameSubmit).toHaveBeenCalledWith(policyName);
-  })
-  it("should call onError with 'Policy Name is required' for empty value", async () => {
-    const onPolicyNameSubmit = vi.fn();
-    const onError = vi.fn();
-    const projectName = 'project1';
-    const accessToken = 'permit_key_'.concat('a'.repeat(97));
-    const { stdin, lastFrame } = render(
-      <PolicyName projectName={projectName} accessToken={accessToken} onPolicyNameSubmit={onPolicyNameSubmit} onError={onError} />
-    );
-    console.log("After rendering")
-    const frameString = lastFrame()?.toString() ?? '';
-    expect(frameString).toMatch(/Enter Your Policy Name:/);
-    const policyName = '';
-    await delay(50);
-    stdin.write(policyName);
-    await delay(50);
-    stdin.write(enter);
-    await delay(50);
-    expect(onError).toHaveBeenCalledOnce();
-    expect(onError).toHaveBeenCalledWith('Policy Name is required');
-  })
-  it("Invalid Policy Name  Error ", async () => {
-    const onPolicyNameSubmit = vi.fn();
-    const onError = vi.fn();
-    const projectName = 'project1';
-    const accessToken = 'permit_key_'.concat('a'.repeat(97));
-    const { stdin, lastFrame } = render(
-      <PolicyName projectName={projectName} accessToken={accessToken} onPolicyNameSubmit={onPolicyNameSubmit} onError={onError} />
-    );
-    const frameString = lastFrame()?.toString() ?? '';
-    expect(frameString).toMatch(/Enter Your Policy Name:/);
-    const policyName = 'Invalid Policy Name';
-    await delay(50);
-    stdin.write(policyName);
-    await delay(50);
-    stdin.write(enter);
-    await delay(50);
-    expect(onError).toHaveBeenCalledOnce();
-    expect(onError).toHaveBeenCalledWith('Policy Name should contain only alphanumeric characters, hyphens and underscores');
-  })
-  it("Existing policy name", async () => {
-    const onPolicyNameSubmit = vi.fn();
-    const onError = vi.fn();
-    const projectName = 'project1';
-    const accessToken = 'permit_key_'.concat('a'.repeat(97));
-    const { stdin, lastFrame } = render(
-      <PolicyName projectName={projectName} accessToken={accessToken} onPolicyNameSubmit={onPolicyNameSubmit} onError={onError} />
-    );
-    const frameString = lastFrame()?.toString() ?? '';
-    expect(frameString).toMatch(/Enter Your Policy Name:/);
-    const policyName = 'repo1';
-    await delay(50);
-    stdin.write(policyName);
-    await delay(50);
-    stdin.write(enter);
-    await delay(50);
-    
-    expect(onError).toHaveBeenCalledOnce();
-    expect(onError).toHaveBeenCalledWith('Policy with this name already exists');
+    expect(onSSHKeySubmit).toHaveBeenCalledOnce();
+    expect(onSSHKeySubmit).toHaveBeenCalledWith(expect.stringMatching(/ssh-(ed25519|rsa|ecdsa-sha2-[a-z0-9-]+) [A-Za-z0-9+/=]+ [\w.@+-]+/), sshUrl)
   });
-  });
+  it("should call onError with 'Please enter a valid SSH URL' for empty value", async () => {
+    const onSSHKeySubmit = vi.fn();
+    const onError = vi.fn();
+    const { stdin, lastFrame } = render(
+      <SSHKey onSSHKeySubmit={onSSHKeySubmit} onError={onError} />,
+    );
+    const frameString = lastFrame()?.toString() ?? "";
+
+    // Assertion
+    expect(frameString).toMatch(/SSH Key Generated./);
+    expect(frameString).toMatch(/Copy The Public Key to Github:/);
+   
+    const sshUrl = ""
+    await delay(50);
+    stdin.write(sshUrl);
+    await delay(50);
+    stdin.write(enter);
+    await delay(50);
+
+    expect(onError).toHaveBeenCalledOnce();
+    expect(onError).toHaveBeenCalledWith('Please enter a valid SSH URL');
+  })
+  it("should call onError with 'Please enter a valid SSH URL' for invalid value", async () => {
+    const onSSHKeySubmit = vi.fn();
+    const onError = vi.fn();
+    const { stdin, lastFrame } = render(
+      <SSHKey onSSHKeySubmit={onSSHKeySubmit} onError={onError} />,
+    );
+    const frameString = lastFrame()?.toString() ?? "";
+
+    // Assertion
+    expect(frameString).toMatch(/SSH Key Generated./);
+    expect(frameString).toMatch(/Copy The Public Key to Github:/);
+   
+    const sshUrl = "invalid_url"
+    await delay(50);
+    stdin.write(sshUrl);
+    await delay(50);
+    stdin.write(enter);
+    await delay(50);
+
+    expect(onError).toHaveBeenCalledOnce();
+    expect(onError).toHaveBeenCalledWith('Please enter a valid SSH URL');
+  })
+})

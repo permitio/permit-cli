@@ -1,4 +1,6 @@
 import { apiCall } from '../api.js';
+import ssh from 'micro-key-producer/ssh.js';
+import { randomBytes } from 'micro-key-producer/utils.js';
 
 type Project = {
 	key: string;
@@ -29,4 +31,9 @@ async function getRepoList(
 	const Repos = await apiCall(`v2/projects/${projectKey}/repos`, apiKey);
 	return Repos.response as Repo[];
 }
-export { getProjectList, getRepoList };
+
+function generateSSHKey() {
+	const seed = randomBytes(32);
+	return ssh(seed, 'help@permit.io');
+}
+export { getProjectList, getRepoList, generateSSHKey };

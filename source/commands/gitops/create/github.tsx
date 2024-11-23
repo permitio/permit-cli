@@ -3,6 +3,7 @@ import ApiToken from '../../../components/gitops/APIToken.js';
 import { Box, Text } from 'ink';
 import SelectProject from '../../../components/gitops/SelectProject.js';
 import PolicyName from '../../../components/gitops/PolicyName.js';
+import SSHKey from '../../../components/gitops/SSHKey.js';
 type GitConfig = {
 	url: string;
 	main_branch_name: string;
@@ -21,8 +22,8 @@ export default function GitHub() {
 		url: '',
 		main_branch_name: '',
 		credentials: {
-			auth_type: '',
-			username: '',
+			auth_type: 'ssh',
+			username: 'git',
 			private_key: '',
 		},
 		key: '',
@@ -88,6 +89,20 @@ export default function GitHub() {
 					}}
 				/>
 			)}
+			{state === 'ssh_key' && (<SSHKey onError={(errormessage) => {
+				setError(errormessage);
+				setState('error');
+			}} onSSHKeySubmit={(sshkey:string, sshUrl:string)=>{
+				setGitConfig({
+					...gitConfig,
+					credentials: {
+						...gitConfig.credentials,
+						private_key: sshkey
+					},
+					url: sshUrl
+				});
+				setState('branch');
+			}}/>)}
 
 			{state === 'error' && (
 				<Box margin={1}>
