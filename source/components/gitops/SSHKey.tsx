@@ -28,7 +28,7 @@ const SSHKey: React.FC<Props> = ({ onSSHKeySubmit, onError }) => {
 			onError('Please enter a valid SSH URL');
 			return;
 		}
-		onSSHKeySubmit(sshKey.publicKey, sshUrl);
+		onSSHKeySubmit(sshKey.privateKey, sshUrl);
 	};
 
 	return (
@@ -36,10 +36,11 @@ const SSHKey: React.FC<Props> = ({ onSSHKeySubmit, onError }) => {
 			<Box margin={1}>
 				<Text color={'yellow'}>SSH Key Generated.</Text>
 			</Box>
-			<Box margin={1}>
+			<Box>
 				<Text color={'yellow'}>
 					{' '}
 					Copy The Public Key to Github: {sshKey.publicKey}
+					{'\n'}
 				</Text>
 			</Box>
 			<Box margin={1}>

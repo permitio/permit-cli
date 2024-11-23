@@ -4,6 +4,8 @@ import { Box, Text } from 'ink';
 import SelectProject from '../../../components/gitops/SelectProject.js';
 import PolicyName from '../../../components/gitops/PolicyName.js';
 import SSHKey from '../../../components/gitops/SSHKey.js';
+import BranchName from '../../../components/gitops/BranchName.js';
+import Activate from '../../../components/gitops/Activate.js';
 type GitConfig = {
 	url: string;
 	main_branch_name: string;
@@ -18,6 +20,7 @@ type GitConfig = {
 export default function GitHub() {
 	const [error, setError] = useState<string>('');
 	const [projectKey, setProjectKey] = useState<string>('');
+	const [doneMessage, setDoneMessage] = useState<string>('');
 	const [gitConfig, setGitConfig] = useState<GitConfig>({
 		url: '',
 		main_branch_name: '',
@@ -107,6 +110,47 @@ export default function GitHub() {
 						setState('branch');
 					}}
 				/>
+			)}
+			{state === 'branch' && (
+				<BranchName
+					onError={(errormessage: string) => {
+						setError(errormessage);
+						setState('error');
+					}}
+					onBranchSubmit={(branchName: string) => {
+						setGitConfig({
+							...gitConfig,
+							main_branch_name: branchName,
+						});
+						setState('activate');
+					}}
+				/>
+			)}
+			{state === 'activate' && (
+				<Activate
+					accessToken={ApiKey}
+					projectKey={projectKey}
+					config={gitConfig}
+					onError={errormessage => {
+						setError(errormessage);
+						setState('error');
+					}}
+					onActivate={isConfigured => {
+						if (isConfigured) {
+							setDoneMessage(
+								'Your GitOps is configured and activated sucessfully',
+							);
+						} else {
+							setDoneMessage('Your GitOps is configured successfully');
+						}
+						setState('done');
+					}}
+				/>
+			)}
+			{state === 'done' && (
+				<Box margin={1}>
+					<Text color={'green'}>{doneMessage}</Text>
+				</Box>
 			)}
 
 			{state === 'error' && (

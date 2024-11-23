@@ -4,9 +4,14 @@ import APIToken from '../source/components/gitops/APIToken.js';
 import SelectProject from '../source/components/gitops/SelectProject.js';
 import PolicyName from '../source/components/gitops/PolicyName.js';
 import SSHKey from '../source/components/gitops/SSHKey.js';
+import BranchName from '../source/components/gitops/BranchName.js';
+import Activate from '../source/components/gitops/Activate.js';
+import GitHub from '../source/commands/gitops/create/github.js';
 import delay from 'delay';
 import { vi, describe, it, expect } from 'vitest';
 import {
+	activateRepo,
+	configurePermit,
 	generateSSHKey,
 	getProjectList,
 	getRepoList,
@@ -31,6 +36,10 @@ vi.mock('../source/lib/gitops/utils.js', () => ({
 		privateKey:
 			' ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEYpTS7khEGR+PDWsNveNP6ffFNEhoRwrG0+DckrqaJT help@permit.io',
 	})),
+	activateRepo: vi.fn(() => Promise.resolve(true)),
+	configurePermit: vi.fn(() =>
+		Promise.resolve({ id: '1', status: 'active', key: 'repo1' }),
+	),
 }));
 
 const enter = '\r';
@@ -357,5 +366,187 @@ describe('SSHKey Component', () => {
 
 		expect(onError).toHaveBeenCalledOnce();
 		expect(onError).toHaveBeenCalledWith('Please enter a valid SSH URL');
+	});
+});
+
+describe('Branch Name component', () => {
+	it('should call onBranchSubmit with the correct value', async () => {
+		const onBranchSubmit = vi.fn();
+		const onError = vi.fn();
+		const { stdin, lastFrame } = render(
+			<BranchName onBranchSubmit={onBranchSubmit} onError={onError} />,
+		);
+		const frameString = lastFrame()?.toString() ?? '';
+		expect(frameString).toMatch(/Enter the Branch Name:/);
+		const branchName = 'branch1';
+		await delay(50);
+		stdin.write(branchName);
+		await delay(50);
+		stdin.write(enter);
+		await delay(50);
+		expect(onBranchSubmit).toHaveBeenCalledOnce();
+		expect(onBranchSubmit).toHaveBeenCalledWith(branchName);
+	});
+	it("should call onError with 'Please enter a valid branch name' for empty value", async () => {
+		const onBranchSubmit = vi.fn();
+		const onError = vi.fn();
+		const { stdin, lastFrame } = render(
+			<BranchName onBranchSubmit={onBranchSubmit} onError={onError} />,
+		);
+		const frameString = lastFrame()?.toString() ?? '';
+		expect(frameString).toMatch(/Enter the Branch Name:/);
+		const branchName = '';
+		await delay(50);
+		stdin.write(branchName);
+		await delay(50);
+		stdin.write(enter);
+		await delay(50);
+		expect(onError).toHaveBeenCalledOnce();
+		expect(onError).toHaveBeenCalledWith('Please enter a valid branch name');
+	});
+});
+
+describe('Activate Component', () => {
+	it('should call onActivate with the correct value', async () => {
+		const onActivate = vi.fn();
+		const onError = vi.fn();
+		const accessToken = 'permit_key_'.concat('a'.repeat(97));
+		const projectKey = 'proj1';
+		const gitConfig = {
+			url: 'git@example.com/proj1.git',
+			main_branch_name: 'main',
+			credentials: {
+				auth_type: 'ssh',
+				username: 'git',
+				private_key: 'private_key',
+			},
+			key: 'policy1',
+		};
+		const { stdin, lastFrame } = render(
+			<Activate
+				accessToken={accessToken}
+				projectKey={projectKey}
+				config={gitConfig}
+				onActivate={onActivate}
+				onError={onError}
+			/>,
+		);
+		const frameString = lastFrame()?.toString() ?? '';
+		expect(frameString).toMatch(/Do you want to activate the repository?/);
+		await delay(50);
+		stdin.write(enter);
+		await delay(50);
+		expect(onActivate).toHaveBeenCalledOnce();
+		expect(onActivate).toHaveBeenCalledWith(true);
+	});
+	it("should call onError with 'Invalid Repo Status' for incorrect value", async () => {
+		const onActivate = vi.fn();
+		const onError = vi.fn();
+		const accessToken = 'permit_key_'.concat('a'.repeat(97));
+		const projectKey = 'proj1';
+		const gitConfig = {
+			url: 'git@example.com/proj1.git',
+			main_branch_name: 'main',
+			credentials: {
+				auth_type: 'ssh',
+				username: 'git',
+				private_key: 'private_key',
+			},
+			key: 'policy1',
+		};
+		activateRepo.mockRejectedValueOnce(new Error('Invalid Repo Status'));
+		const { stdin, lastFrame } = render(
+			<Activate
+				accessToken={accessToken}
+				projectKey={projectKey}
+				config={gitConfig}
+				onActivate={onActivate}
+				onError={onError}
+			/>,
+		);
+		const frameString = lastFrame()?.toString() ?? '';
+		expect(frameString).toMatch(/Do you want to activate the repository?/);
+		await delay(50);
+		stdin.write(enter);
+		await delay(50);
+		expect(onError).toHaveBeenCalledOnce();
+		expect(onError).toHaveBeenCalledWith('Invalid Repo Status');
+	});
+
+	it('activate value false', async () => {
+		const onActivate = vi.fn();
+		const onError = vi.fn();
+		const accessToken = 'permit_key_'.concat('a'.repeat(97));
+		const projectKey = 'proj1';
+		const gitConfig = {
+			url: 'git@example.com/proj1.git',
+			main_branch_name: 'main',
+			credentials: {
+				auth_type: 'ssh',
+				username: 'git',
+				private_key: 'private_key',
+			},
+			key: 'policy1',
+		};
+		const { stdin, lastFrame } = render(
+			<Activate
+				accessToken={accessToken}
+				projectKey={projectKey}
+				config={gitConfig}
+				onActivate={onActivate}
+				onError={onError}
+			/>,
+		);
+		const frameString = lastFrame()?.toString() ?? '';
+		expect(frameString).toMatch(/Do you want to activate the repository?/);
+		await delay(50);
+		stdin.write(arrowDown);
+		await delay(50);
+		stdin.write(enter);
+		await delay(50);
+		expect(onActivate).toHaveBeenCalledOnce();
+		expect(onActivate).toHaveBeenCalledWith(false);
+	});
+});
+
+describe('GiHub Complete Flow', () => {
+	it('should complete the flow', async () => {
+		const { stdin, lastFrame } = render(<GitHub />);
+		const frameString = lastFrame()?.toString() ?? '';
+		expect(frameString).toMatch(/Enter Your API Key:/);
+		await delay(50);
+		stdin.write('permit_key_'.concat('a'.repeat(97)));
+		await delay(50);
+		stdin.write(enter);
+		expect(lastFrame()?.toString()).toMatch(/Loading projects.../);
+		await delay(50);
+		stdin.write(arrowDown);
+		await delay(50);
+		stdin.write(enter);
+		await delay(50);
+		expect(lastFrame()?.toString()).toMatch(/Enter Your Policy Name:/);
+		await delay(50);
+		stdin.write('policy1');
+		await delay(50);
+		stdin.write(enter);
+		expect(lastFrame()?.toString()).toMatch(/SSH Key Generated./);
+		await delay(50);
+		stdin.write('git@github.com:user/repository.git');
+		await delay(50);
+		stdin.write(enter);
+		expect(lastFrame()?.toString()).toMatch(/Enter the Branch Name:/);
+		await delay(50);
+		stdin.write('main');
+		await delay(50);
+		stdin.write(enter);
+		expect(lastFrame()?.toString()).toMatch(
+			/Do you want to activate the repository?/,
+		);
+		await delay(50);
+		stdin.write(enter);
+		await delay(50);
+		expect(lastFrame()?.toString()).toMatch(
+			/Your GitOps is configured and activated sucessfully/,
+		);
 	});
 });
