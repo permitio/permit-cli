@@ -16,7 +16,6 @@ const PolicyName: React.FC<Props> = ({
 	onPolicyNameSubmit,
 	onError,
 }) => {
-	const [error, setError] = useState<boolean>(false);
 	const Validate = async (policyName: string): Promise<string> => {
 		if (policyName.length <= 1) {
 			return 'Policy Name is required';

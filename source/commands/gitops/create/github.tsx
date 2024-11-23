@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import ApiToken from '../../../components/gitops/APIToken.js';
 import { Box, Text } from 'ink';
 import SelectProject from '../../../components/gitops/SelectProject.js';
