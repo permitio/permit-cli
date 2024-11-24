@@ -37,6 +37,14 @@ const PolicyName: React.FC<Props> = ({
 			setRepoList(tempRepoList);
 		});
 	}, []);
+	const isPolicyAlreadyPresent = (policyName: string) => {
+		if (repolist.length > 0) {
+			if (repolist.includes(policyName)) {
+				onError('Policy with this name already exists');
+				return;
+			}
+		}
+	};
 
 	const handleSubmit = (policyName: string) => {
 		isPolicyAlreadyPresent(policyName);
@@ -47,15 +55,6 @@ const PolicyName: React.FC<Props> = ({
 			}
 		});
 		onPolicyNameSubmit(policyName);
-	};
-
-	const isPolicyAlreadyPresent = (policyName: string) => {
-		if (repolist.length > 0) {
-			if (repolist.includes(policyName)) {
-				onError('Policy with this name already exists');
-				return;
-			}
-		}
 	};
 
 	return (

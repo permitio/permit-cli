@@ -14,7 +14,7 @@
 		"dev": " NODE_NO_WARNINGS=1 tsc --watch",
 		"lint": "eslint \"source/**/*.{js,ts,tsx}\"",
 		"lint:fix": "eslint \"source/**/*.{js,ts,tsx}\" --fix",
-		"test": "prettier --check ./source && npx tsx --test test*.tsx && c8 ava",
+		"test": "prettier --check ./source && npx vitest run && npx tsx --test test*.tsx ",
 		"simple-check": "npx tsx ./source/cli.tsx pdp check -u filip@permit.io -a create -r task"
 	},
 	"files": [

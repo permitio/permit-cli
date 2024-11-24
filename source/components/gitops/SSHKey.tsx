@@ -39,7 +39,8 @@ const SSHKey: React.FC<Props> = ({ onSSHKeySubmit, onError }) => {
 			<Box>
 				<Text color={'yellow'}>
 					{' '}
-					Copy The Public Key to Github: {"\n"}{sshKey.publicKey}
+					Copy The Public Key to Github: {'\n'}
+					{sshKey.publicKey}
 				</Text>
 			</Box>
 			<Box margin={1}>

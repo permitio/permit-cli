@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Text } from 'ink';
-import zod, { set } from 'zod';
+import zod from 'zod';
 import { option } from 'pastel';
 import SelectProject from '../../../components/gitops/SelectProject.js';
 import PolicyName from '../../../components/gitops/PolicyName.js';
@@ -24,7 +24,7 @@ type GitConfig = {
 	key: string;
 };
 export const options = zod.object({
-	apiKey: zod
+	key: zod
 		.string()
 		.optional()
 		.describe(
@@ -54,9 +54,20 @@ export default function GitHub({ options }: Props) {
 		},
 		key: '',
 	});
+	const [ApiKey, setApiKey] = useState<string>('');
+	const [state, setState] = useState<
+		| 'api_key'
+		| 'policy_name'
+		| 'ssh_key'
+		| 'branch'
+		| 'project'
+		| 'activate'
+		| 'done'
+		| 'error'
+	>('api_key');
 	useEffect(() => {
-		if (options.apiKey) {
-			setApiKey(options.apiKey);
+		if (options.key) {
+			setApiKey(options.key);
 			setState('project');
 		} else {
 			keytar
@@ -81,17 +92,6 @@ export default function GitHub({ options }: Props) {
 				});
 		}
 	}, []);
-	const [ApiKey, setApiKey] = useState<string>('');
-	const [state, setState] = useState<
-		| 'api_key'
-		| 'policy_name'
-		| 'ssh_key'
-		| 'branch'
-		| 'project'
-		| 'activate'
-		| 'done'
-		| 'error'
-	>('api_key');
 
 	return (
 		<>
