@@ -1,4 +1,3 @@
-// source/commands/pdp/check.tsx
 import React from 'react';
 import { Box, Newline, Text } from 'ink';
 import zod, { string } from 'zod';
@@ -152,13 +151,18 @@ export default function Check({ options }: Props) {
             .catch(reason => {
                 setError(reason);
             });
-    }, []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [options.keyAccount]);
 
     return (
         <>
             <Text>
-                Checking user="{options.user}"{options.userAttributes && ` with attributes=${options.userAttributes}`} action={options.action} resource=
-                {options.resource}{options.resourceAttributes && ` with attributes=${options.resourceAttributes}`} at tenant={options.tenant}
+                Checking user=&quot;{options.user}&quot;
+                {options.userAttributes && ` with attributes=${options.userAttributes}`} 
+                action={options.action}{' '}
+                resource={options.resource}
+                {options.resourceAttributes && ` with attributes=${options.resourceAttributes}`} 
+                at tenant={options.tenant}
             </Text>
             {res.allow === true && (
                 <>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Text, Newline } from 'ink';
 import zod from 'zod';
 import { keyAccountOption } from '../options/keychain.js';
@@ -22,21 +22,21 @@ type Props = {
 	options: zod.infer<typeof options>;
 };
 
-export default function apiKey({ args, options }: Props) {
+export default function ApiKey({ args, options }: Props) {
 	const action: string = args[0];
 	const key: string = args[1];
 	const isValid = key.length >= 97 && key.startsWith('permit_key_');
 
-	const [readKey, setReadKey] = React.useState('');
+	const [readKey, setReadKey] = useState('');
 
-	if (action === 'read') {
-		React.useEffect(() => {
+	useEffect(() => {
+		if (action === 'read') {
 			keytar
 				.getPassword(KEYSTORE_PERMIT_SERVICE_NAME, options.keyAccount)
 				.then(value => setReadKey(value || ''))
 				.catch(reason => setReadKey(`-- Failed to read key- reason ${reason}`));
-		}, []);
-	}
+		}
+	}, [action, options.keyAccount]);
 
 	if (isValid && action === 'save') {
 		keytar.setPassword(KEYSTORE_PERMIT_SERVICE_NAME, options.keyAccount, key);
@@ -57,13 +57,12 @@ export default function apiKey({ args, options }: Props) {
 				<Text color="green">{readKey}</Text>
 			</Text>
 		);
-	} else {
-		return (
-			<Text>
-				<Text color="red">Key is not valid.</Text>
-				<Newline />
-				<Text color="red">Provided key: {key}</Text>
-			</Text>
-		);
 	}
+	return (
+		<Text>
+			<Text color="red">Key is not valid.</Text>
+			<Newline />
+			<Text color="red">Provided key: {key}</Text>
+		</Text>
+	);
 }
