@@ -15,7 +15,7 @@ type Props = {
 };
 
 const SelectEnvironment: React.FC<Props> = ({ accessToken, cookie, onComplete, activeProject, onError }) => {
-	const [environments, setEnvironments] = useState<[]>([]);
+	const [environments, setEnvironments] = useState<ActiveState[]>([]);
 	const [state, setState] = useState<boolean>(true);
 
 	const { getEnvironments } = useEnvironmentApi();
@@ -29,7 +29,7 @@ const SelectEnvironment: React.FC<Props> = ({ accessToken, cookie, onComplete, a
 		}
 
 		setEnvironments(
-			environments.map((env: any) => ({ label: env.name, value: env.id })),
+			environments.map((env) => ({ label: env.name, value: env.id })),
 		);
 	};
 

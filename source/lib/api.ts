@@ -1,23 +1,23 @@
 import { PERMIT_API_URL } from '../config.js';
 
-type ApiResponse = {
+type ApiResponse<T> = {
 	headers: Headers;
-	response: any;
+	response: T;
 	status: number;
 	error: string | null
 };
 
-export const apiCall = async <T>(
+export const apiCall = async <T = any>(
 	endpoint: string,
 	token: string,
 	cookie?: string | null | undefined,
 	method = 'GET',
 	body?: string,
-): Promise<ApiResponse> => {
+): Promise<ApiResponse<T>> => {
 
-	let defaultResponse: ApiResponse = {
+	let defaultResponse: ApiResponse<T> = {
 		headers: new Headers(),
-		response: {},
+		response: {} as T,
 		status: -1,
 		error: null,
 	};
@@ -29,6 +29,7 @@ export const apiCall = async <T>(
 			Origin: 'https://app.permit.io',
 			Authorization: `Bearer ${token}`,
 			Cookie: cookie ?? '',
+			'Content-Type': 'application/json'
 		},
 	};
 

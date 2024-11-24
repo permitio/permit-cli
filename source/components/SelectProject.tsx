@@ -14,7 +14,7 @@ type Props = {
 };
 
 const SelectProject: React.FC<Props> = ({ accessToken, cookie, onComplete, onError }) => {
-	const [projects, setProjects] = useState<[]>([]);
+	const [projects, setProjects] = useState<ActiveState[]>([]);
 	const [loading, setLoading] = useState(true);
 
 	const { getProjects } = useProjectAPI();
@@ -27,7 +27,7 @@ const SelectProject: React.FC<Props> = ({ accessToken, cookie, onComplete, onErr
 			return;
 		}
 
-		setProjects(projects.map((project: any) => ({ label: project.name, value: project.id })));
+		setProjects(projects.map((project) => ({ label: project.name, value: project.id })));
 		setLoading(false);
 	};
 

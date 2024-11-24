@@ -13,7 +13,7 @@ type Props = {
 	accessToken: string;
 	cookie: string;
 	workspace?: string;
-	onComplete: (organisation: string, project: string, environment: string, secret: string) => void;
+	onComplete: (organisation: ActiveState, project: ActiveState, environment: ActiveState, secret: string) => void;
 	onError: (error: string) => void;
 };
 
@@ -33,7 +33,6 @@ const EnvironmentSelection: React.FC<Props> = ({ accessToken, cookie, onComplete
 	const [state, setState] = useState<'initial' | 'workspace' | 'project' | 'environment' | 'user-key' | 'done'>('initial');
 	const [activeOrganization, setActiveOrganization] = useState<ActiveState>(defaultActiveState);
 	const [activeProject, setActiveProject] = useState<ActiveState>(defaultActiveState);
-	const [_activeEnvironment, setActiveEnvironment] = useState<ActiveState>(defaultActiveState);
 	const [envCookie, setEnvCookie] = useState<string>(cookie);
 
 	const { authSwitchOrgs } = useAuthApi();
@@ -59,9 +58,12 @@ const EnvironmentSelection: React.FC<Props> = ({ accessToken, cookie, onComplete
 				}
 				if (scope.environment_id && scope.project_id) {
 					setState('user-key');
-					const { response: project } = await getEnvironment(scope.project_id, scope.environment_id, accessToken, cookie);
+					const { response: environment } = await getEnvironment(scope.project_id, scope.environment_id, accessToken, cookie);
 					const { response: organization } = await getOrg(scope.organization_id, accessToken, cookie);
-					onComplete(organization.name, '', project.name, accessToken);
+					onComplete({ label: organization.name, value: organization.id }, {
+					label: '',
+					value: environment.project_id,
+				}, { label: environment.name, value: environment.id }, accessToken);
 				} else {
 					setState('workspace');
 				}
@@ -105,9 +107,8 @@ const EnvironmentSelection: React.FC<Props> = ({ accessToken, cookie, onComplete
 			onError(`Error while getting Environment Secret: ${error}`);
 			return;
 		}
-		setActiveEnvironment(environment);
 		setState('done');
-		onComplete(activeOrganization.label, activeProject.label, environment.label, response.secret);
+		onComplete(activeOrganization, activeProject, environment, response.secret);
 	}
 
 	return (

@@ -6,7 +6,7 @@ import {
 	saveAuthToken,
 } from '../lib/auth.js';
 import LoginFlow from '../components/LoginFlow.js';
-import EnvironmentSelection from '../components/EnvironmentSelection.js';
+import EnvironmentSelection, { ActiveState } from '../components/EnvironmentSelection.js';
 
 export const options = object({
 	key: string()
@@ -38,13 +38,11 @@ export default function Login({ options: { key, workspace } }: Props) {
 	const [error, setError] = useState<string | null>(null);
 
 	const [organization, setOrganization] = useState<string>('');
-	const [_project, setProject] = useState<string>('');
 	const [environment, setEnvironment] = useState<string>('');
 
-	const onEnvironmentSelectSuccess = async (organisation: string, project: string, environment: string, secret: string) => {
-		setOrganization(organisation);
-		setProject(project);
-		setEnvironment(environment);
+	const onEnvironmentSelectSuccess = async (organisation: ActiveState, _project: ActiveState, environment: ActiveState, secret: string) => {
+		setOrganization(organisation.label);
+		setEnvironment(environment.label);
 		await saveAuthToken(secret);
 		setState('done');
 		process.exit(1);
