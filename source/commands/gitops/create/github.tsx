@@ -1,11 +1,18 @@
-import React, { useState } from 'react';
-import ApiToken from '../../../components/gitops/APIToken.js';
+import React, { useState, useEffect } from 'react';
 import { Box, Text } from 'ink';
+import zod, { set } from 'zod';
+import { option } from 'pastel';
 import SelectProject from '../../../components/gitops/SelectProject.js';
 import PolicyName from '../../../components/gitops/PolicyName.js';
 import SSHKey from '../../../components/gitops/SSHKey.js';
 import BranchName from '../../../components/gitops/BranchName.js';
 import Activate from '../../../components/gitops/Activate.js';
+import {
+	KEYSTORE_PERMIT_SERVICE_NAME,
+	DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
+} from '../../../config.js';
+import * as keytar from 'keytar';
+
 type GitConfig = {
 	url: string;
 	main_branch_name: string;
@@ -16,8 +23,24 @@ type GitConfig = {
 	};
 	key: string;
 };
+export const options = zod.object({
+	apiKey: zod
+		.string()
+		.optional()
+		.describe(
+			option({
+				description:
+					'The API key for the permit Environment Organization or Project',
+				alias: 'k',
+			}),
+		),
+});
 
-export default function GitHub() {
+type Props = {
+	options: zod.infer<typeof options>;
+};
+
+export default function GitHub({ options }: Props) {
 	const [error, setError] = useState<string>('');
 	const [projectKey, setProjectKey] = useState<string>('');
 	const [doneMessage, setDoneMessage] = useState<string>('');
@@ -31,6 +54,33 @@ export default function GitHub() {
 		},
 		key: '',
 	});
+	useEffect(() => {
+		if (options.apiKey) {
+			setApiKey(options.apiKey);
+			setState('project');
+		} else {
+			keytar
+				.getPassword(
+					KEYSTORE_PERMIT_SERVICE_NAME,
+					DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
+				)
+				.then(apiKey => {
+					if (!apiKey) {
+						setState('error');
+						setError(
+							'API Key not found in the keychain and not passed as an argument',
+						);
+						return;
+					}
+					setApiKey(apiKey);
+					setState('project');
+				})
+				.catch(error => {
+					setError(error.message);
+					setState('error');
+				});
+		}
+	}, []);
 	const [ApiKey, setApiKey] = useState<string>('');
 	const [state, setState] = useState<
 		| 'api_key'
@@ -48,18 +98,6 @@ export default function GitHub() {
 			<Box margin={1}>
 				<Text color={'yellow'}>Welcome to GitOps Wizard</Text>
 			</Box>
-			{state === 'api_key' && (
-				<ApiToken
-					onApiKeySubmit={AccessToken => {
-						setApiKey(AccessToken);
-						setState('project');
-					}}
-					onError={errormsg => {
-						setError(errormsg);
-						setState('error');
-					}}
-				/>
-			)}
 
 			{state === 'project' && (
 				<SelectProject

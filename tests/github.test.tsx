@@ -1,6 +1,5 @@
 import React from 'react';
 import { render } from 'ink-testing-library';
-import APIToken from '../source/components/gitops/APIToken.js';
 import SelectProject from '../source/components/gitops/SelectProject.js';
 import PolicyName from '../source/components/gitops/PolicyName.js';
 import SSHKey from '../source/components/gitops/SSHKey.js';
@@ -16,7 +15,7 @@ import {
 	getProjectList,
 	getRepoList,
 } from '../source/lib/gitops/utils.js';
-
+const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 vi.mock('../source/lib/gitops/utils.js', () => ({
 	getProjectList: vi.fn(() =>
 		Promise.resolve([
@@ -45,81 +44,6 @@ vi.mock('../source/lib/gitops/utils.js', () => ({
 const enter = '\r';
 const arrowUp = '\u001B[A';
 const arrowDown = '\u001B[B';
-
-describe('APIToken Component', () => {
-	it('should call onApiKeySubmit with the correct value', async () => {
-		const onApiKeySubmit = vi.fn();
-		const onError = vi.fn();
-		const { stdin, lastFrame } = render(
-			<APIToken onApiKeySubmit={onApiKeySubmit} onError={onError} />,
-		);
-		const frameString = lastFrame()?.toString() ?? '';
-
-		// Assertion
-		expect(frameString).toMatch(/Enter Your API Key:/);
-
-		const key = 'permit_key_'.concat('a'.repeat(97));
-
-		await delay(50);
-		stdin.write(key);
-		await delay(50);
-		stdin.write(enter);
-		await delay(50);
-
-		// Mock function assertions
-		expect(onApiKeySubmit).toHaveBeenCalledOnce();
-		expect(onApiKeySubmit).toHaveBeenCalledWith(key);
-	});
-
-	it('should call onError with "Invalid API Key" for incorrect value', async () => {
-		const onApiKeySubmit = vi.fn();
-		const onError = vi.fn();
-		const { stdin, lastFrame } = render(
-			<APIToken onApiKeySubmit={onApiKeySubmit} onError={onError} />,
-		);
-		const frameString = lastFrame()?.toString() ?? '';
-
-		// Assertion
-		expect(frameString).toMatch(/Enter Your API Key:/);
-
-		const key = 'InvalidKey';
-
-		await delay(50);
-		stdin.write(key);
-		await delay(50);
-		stdin.write(enter);
-		await delay(50);
-
-		// Mock function assertions
-		expect(onError).toHaveBeenCalledOnce();
-		expect(onError).toHaveBeenCalledWith('Invalid API Key');
-	});
-
-	it('should call onError with "API Key is required" for empty value', async () => {
-		const onApiKeySubmit = vi.fn();
-		const onError = vi.fn();
-		const { stdin, lastFrame } = render(
-			<APIToken onApiKeySubmit={onApiKeySubmit} onError={onError} />,
-		);
-		const frameString = lastFrame()?.toString() ?? '';
-
-		// Assertion
-		expect(frameString).toMatch(/Enter Your API Key:/);
-
-		const key = '';
-
-		await delay(50);
-		stdin.write(key);
-		await delay(50);
-		stdin.write(enter);
-		await delay(50);
-
-		// Mock function assertions
-		expect(onError).toHaveBeenCalledOnce();
-		expect(onError).toHaveBeenCalledWith('API Key is required');
-	});
-});
-
 describe('Select Project Component', () => {
 	it('should display loading message when projects are being loaded', async () => {
 		const onProjectSubmit = vi.fn();
@@ -511,14 +435,11 @@ describe('Activate Component', () => {
 
 describe('GiHub Complete Flow', () => {
 	it('should complete the flow', async () => {
-		const { stdin, lastFrame } = render(<GitHub />);
+		const { stdin, lastFrame } = render(
+			<GitHub options={{ apiKey: demoPermitKey }} />,
+		);
 		const frameString = lastFrame()?.toString() ?? '';
-		expect(frameString).toMatch(/Enter Your API Key:/);
-		await delay(50);
-		stdin.write('permit_key_'.concat('a'.repeat(97)));
-		await delay(50);
-		stdin.write(enter);
-		expect(lastFrame()?.toString()).toMatch(/Loading projects.../);
+		expect(frameString).toMatch(/Welcome to GitOps Wizard/);
 		await delay(50);
 		stdin.write(arrowDown);
 		await delay(50);
