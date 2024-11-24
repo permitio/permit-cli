@@ -8,6 +8,11 @@ import { useEnvironmentApi } from '../hooks/useEnvironmentApi.js';
 import { useOrganisationApi } from '../hooks/useOrganisationApi.js';
 import { Text } from 'ink';
 
+export interface ActiveState {
+	label: string;
+	value: string;
+}
+
 type Props = {
 	accessToken: string;
 	cookie: string;
@@ -20,11 +25,6 @@ type Props = {
 	) => void;
 	onError: (error: string) => void;
 };
-
-export interface ActiveState {
-	label: string;
-	value: string;
-}
 
 const EnvironmentSelection: React.FC<Props> = ({
 	accessToken,
