@@ -259,9 +259,11 @@ describe('SSHKey Component', () => {
 		expect(frameString).toMatch(/SSH Key Generated./);
 		expect(frameString).toMatch(/Copy The Public Key to Github:/);
 
+
 		const sshUrl = '';
 		await delay(50);
 		stdin.write(sshUrl);
+		console.log(lastFrame()?.toString());
 		await delay(50);
 		stdin.write(enter);
 		await delay(50);
