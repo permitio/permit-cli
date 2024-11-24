@@ -14,9 +14,9 @@ export const options = zod.object({
         .string()
         .min(1, "User identifier cannot be empty")
         .describe(
-            option({ 
-                description: 'Unique Identity to check for (Required)', 
-                alias: 'u' 
+            option({
+                description: 'Unique Identity to check for (Required)',
+                alias: 'u'
             }),
         ),
     userAttributes: zod
@@ -32,9 +32,9 @@ export const options = zod.object({
         .string()
         .min(1, "Resource cannot be empty")
         .describe(
-            option({ 
-                description: 'Resource being accessed (Required)', 
-                alias: 'r' 
+            option({
+                description: 'Resource being accessed (Required)',
+                alias: 'r'
             })
         ),
     resourceAttributes: zod
@@ -157,12 +157,8 @@ export default function Check({ options }: Props) {
     return (
         <>
             <Text>
-                Checking user=&quot;{options.user}&quot;
-                {options.userAttributes && ` with attributes=${options.userAttributes}`} 
-                action={options.action}{' '}
-                resource={options.resource}
-                {options.resourceAttributes && ` with attributes=${options.resourceAttributes}`} 
-                at tenant={options.tenant}
+                Checking user="{options.user}"{options.userAttributes && ` with attributes=${options.userAttributes}`} action={options.action} resource=
+                {options.resource}{options.resourceAttributes && ` with attributes=${options.resourceAttributes}`} at tenant={options.tenant}
             </Text>
             {res.allow === true && (
                 <>
