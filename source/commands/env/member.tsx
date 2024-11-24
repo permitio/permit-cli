@@ -9,39 +9,41 @@ import { type infer as zInfer } from 'zod';
 import { ApiKeyScope, useApiKeyApi } from '../../hooks/useApiKeyApi.js';
 import { Form, FormProps } from 'ink-form';
 import { useMemberApi } from '../../hooks/useMemberApi.js';
-import EnvironmentSelection, { ActiveState } from '../../components/EnvironmentSelection.js';
-
+import EnvironmentSelection, {
+	ActiveState,
+} from '../../components/EnvironmentSelection.js';
 
 export const options = zod.object({
-	key: zod
-		.string()
-		.describe(
-			option({
-				description:
-					'(Optional) API Key to be used for the environment selection',
-			}),
-		),
+	key: zod.string().describe(
+		option({
+			description:
+				'(Optional) API Key to be used for the environment selection',
+		}),
+	),
 });
 
 type Props = {
 	readonly options: zInfer<typeof options>;
 };
 
-
 export default function Member({ options: { key: apiKey } }: Props) {
 	const [error, setError] = React.useState<string | null>(null);
-	const [state, setState] = useState<'loading' | 'selecting' | 'done'>('loading');
+	const [state, setState] = useState<'loading' | 'selecting' | 'done'>(
+		'loading',
+	);
 	const [keyScope, setKeyScope] = useState<ApiKeyScope | null>(null);
 
 	const { getApiKeyScope } = useApiKeyApi();
 	const { inviteNewMember } = useMemberApi();
 
-
-	const rolesOptions = [{ label: 'Owner', value: 'admin' }, { label: 'Editor', value: 'write' }, {
-		label: 'Viewer',
-		value: 'read',
-	}];
-
+	const rolesOptions = [
+		{ label: 'Owner', value: 'admin' },
+		{ label: 'Editor', value: 'write' },
+		{
+			label: 'Viewer',
+			value: 'read',
+		},
+	];
 
 	const form: FormProps = {
 		form: {
@@ -50,8 +52,19 @@ export default function Member({ options: { key: apiKey } }: Props) {
 				{
 					title: 'Member Email',
 					fields: [
-						{ type: 'string', name: 'memberEmail', label: 'Email of the member to invite', required: true },
-						{ type: 'select', name: 'memberRole', label: 'Select Role', options: rolesOptions, required: true },
+						{
+							type: 'string',
+							name: 'memberEmail',
+							label: 'Email of the member to invite',
+							required: true,
+						},
+						{
+							type: 'select',
+							name: 'memberRole',
+							label: 'Select Role',
+							options: rolesOptions,
+							required: true,
+						},
 					],
 				},
 			],
@@ -66,7 +79,8 @@ export default function Member({ options: { key: apiKey } }: Props) {
 
 	useEffect(() => {
 		if (apiKey && tokenType(apiKey) === TokenType.APIToken) {
-			getApiKeyScope(apiKey).then(({ response: scope, error }) => {
+			(async () => {
+				const { response: scope, error } = await getApiKeyScope(apiKey);
 				if (error) {
 					setError(error);
 					return;
@@ -77,7 +91,7 @@ export default function Member({ options: { key: apiKey } }: Props) {
 				} else {
 					setKeyScope(scope);
 				}
-			});
+			})();
 		} else {
 			setError('Invalid API Key. Please provide a valid API Key.');
 			return;
@@ -86,7 +100,6 @@ export default function Member({ options: { key: apiKey } }: Props) {
 	}, [apiKey]);
 
 	const handleMemberInvite = (result: any) => {
-
 		const requestBody = {
 			email: result.memberEmail,
 			permissions: [
@@ -98,17 +111,22 @@ export default function Member({ options: { key: apiKey } }: Props) {
 			],
 		};
 
-		inviteNewMember(apiKey ?? '', requestBody).then(res => {
-			const { error } = res;
+		(async () => {
+			const { error } = await inviteNewMember(apiKey ?? '', requestBody);
 			if (error) {
 				setError(error);
 				return;
 			}
 			setState('done');
-		});
+		})();
 	};
 
-	const onEnvironmentSelectSuccess = (_organisation: ActiveState, _project: ActiveState, environment: ActiveState, _secret: string) => {
+	const onEnvironmentSelectSuccess = (
+		_organisation: ActiveState,
+		_project: ActiveState,
+		environment: ActiveState,
+		_secret: string,
+	) => {
 		if (keyScope) {
 			setKeyScope({ ...keyScope, environment_id: environment.value });
 		}
@@ -116,30 +134,25 @@ export default function Member({ options: { key: apiKey } }: Props) {
 
 	return (
 		<>
-			{state === 'loading' &&
+			{state === 'loading' && (
 				<Text>
-					<Spinner type={'dots'} />Loading your environment
+					<Spinner type={'dots'} />
+					Loading your environment
 				</Text>
-
-			}
-			{apiKey && state === 'selecting' &&
-				<EnvironmentSelection accessToken={apiKey} cookie={''} onComplete={onEnvironmentSelectSuccess}
-															onError={setError} />
-			}
-			{apiKey && state === 'selecting' && keyScope?.environment_id &&
-				<Form
-					{...form}
-					onSubmit={handleMemberInvite}
+			)}
+			{apiKey && state === 'selecting' && (
+				<EnvironmentSelection
+					accessToken={apiKey}
+					cookie={''}
+					onComplete={onEnvironmentSelectSuccess}
+					onError={setError}
 				/>
-			}
-			{
-				state === 'done' &&
-				<Text>User Invited Successfully !</Text>
-			}
-			{error &&
-				<Text>{error}</Text>
-			}
+			)}
+			{apiKey && state === 'selecting' && keyScope?.environment_id && (
+				<Form {...form} onSubmit={handleMemberInvite} />
+			)}
+			{state === 'done' && <Text>User Invited Successfully !</Text>}
+			{error && <Text>{error}</Text>}
 		</>
-
 	);
 }

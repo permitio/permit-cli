@@ -18,11 +18,12 @@ export type Role = {
 	updated_at: string; // ISO_8601: Date and time when the role was last updated
 };
 
-
-
 export const useRolesApi = () => {
-
-	const getRoles = async (projectId: string, envId: string, authToken: string) => {
+	const getRoles = async (
+		projectId: string,
+		envId: string,
+		authToken: string,
+	) => {
 		return await apiCall<Role[]>(
 			`v2/schema/${projectId}/${envId}/roles`,
 			authToken,

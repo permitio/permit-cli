@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Text } from 'ink';
 import { type infer as zInfer, object, string } from 'zod';
 import { option } from 'pastel';
-import {
-	saveAuthToken,
-} from '../lib/auth.js';
+import { saveAuthToken } from '../lib/auth.js';
 import LoginFlow from '../components/LoginFlow.js';
-import EnvironmentSelection, { ActiveState } from '../components/EnvironmentSelection.js';
+import EnvironmentSelection, {
+	ActiveState,
+} from '../components/EnvironmentSelection.js';
 
 export const options = object({
 	key: string()
@@ -31,7 +31,6 @@ type Props = {
 };
 
 export default function Login({ options: { key, workspace } }: Props) {
-
 	const [state, setState] = useState<'login' | 'env' | 'done'>('login');
 	const [accessToken, setAccessToken] = useState<string>('');
 	const [cookie, setCookie] = useState<string>('');
@@ -40,7 +39,12 @@ export default function Login({ options: { key, workspace } }: Props) {
 	const [organization, setOrganization] = useState<string>('');
 	const [environment, setEnvironment] = useState<string>('');
 
-	const onEnvironmentSelectSuccess = async (organisation: ActiveState, _project: ActiveState, environment: ActiveState, secret: string) => {
+	const onEnvironmentSelectSuccess = async (
+		organisation: ActiveState,
+		_project: ActiveState,
+		environment: ActiveState,
+		secret: string,
+	) => {
 		setOrganization(organisation.label);
 		setEnvironment(environment.label);
 		await saveAuthToken(secret);
@@ -52,7 +56,7 @@ export default function Login({ options: { key, workspace } }: Props) {
 		if (error) {
 			process.exit(1);
 		}
-	}, [error])
+	}, [error]);
 
 	const onLoginSuccess = (accessToken: string, cookie: string) => {
 		setAccessToken(accessToken);
@@ -66,22 +70,24 @@ export default function Login({ options: { key, workspace } }: Props) {
 
 	return (
 		<>
-			{
-				state == 'login' && <LoginFlow apiKey={key} onSuccess={onLoginSuccess} onError={onError} />
-			}
-			{
-				state === 'env' &&
-				<EnvironmentSelection accessToken={accessToken} cookie={cookie} onComplete={onEnvironmentSelectSuccess}
-															onError={onError} workspace={workspace} />
-			}
-			{state === 'done' &&
+			{state == 'login' && (
+				<LoginFlow apiKey={key} onSuccess={onLoginSuccess} onError={onError} />
+			)}
+			{state === 'env' && (
+				<EnvironmentSelection
+					accessToken={accessToken}
+					cookie={cookie}
+					onComplete={onEnvironmentSelectSuccess}
+					onError={onError}
+					workspace={workspace}
+				/>
+			)}
+			{state === 'done' && (
 				<Text>
 					Logged in as {organization} with selected environment as {environment}
 				</Text>
-			}
-			{
-				error && <Text>{error}</Text>
-			}
+			)}
+			{error && <Text>{error}</Text>}
 		</>
 	);
 }

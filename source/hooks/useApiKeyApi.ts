@@ -7,8 +7,12 @@ export interface ApiKeyScope {
 }
 
 export const useApiKeyApi = () => {
-
-	const getProjectEnvironmentApiKey = async (projectId: string, environmentId: string, cookie: string, accessToken: string | null) => {
+	const getProjectEnvironmentApiKey = async (
+		projectId: string,
+		environmentId: string,
+		cookie: string,
+		accessToken: string | null,
+	) => {
 		return await apiCall(
 			`v2/api-key/${projectId}/${environmentId}`,
 			accessToken ?? '',
@@ -17,15 +21,11 @@ export const useApiKeyApi = () => {
 	};
 
 	const getApiKeyScope = async (accessToken: string) => {
-		return await apiCall<ApiKeyScope>(
-			`v2/api-key/scope`,
-			accessToken,
-		)
-	}
+		return await apiCall<ApiKeyScope>(`v2/api-key/scope`, accessToken);
+	};
 
 	return {
 		getProjectEnvironmentApiKey,
-		getApiKeyScope
+		getApiKeyScope,
 	};
-
 };

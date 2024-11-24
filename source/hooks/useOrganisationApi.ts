@@ -1,5 +1,13 @@
 import { apiCall } from '../lib/api.js';
 
+export interface UsageLimits {
+	mau: number;
+	tenants: number;
+	billing_tier: string;
+}
+
+export type Settings = object;
+
 export interface Organization {
 	key: string;
 	id: string;
@@ -11,27 +19,25 @@ export interface Organization {
 	settings: Settings;
 }
 
-export interface UsageLimits {
-	mau: number;
-	tenants: number;
-	billing_tier: string;
-}
-
-export interface Settings {
-}
-
 export const useOrganisationApi = () => {
-
 	const getOrgs = async (accessToken: string, cookie: string) => {
 		return await apiCall<Organization[]>('v2/orgs', accessToken, cookie);
 	};
 
-	const getOrg = async (organizationId: string, accessToken: string, cookie?: string | null) => {
-		return await apiCall<Organization>(`v2/orgs/${organizationId}`, accessToken, cookie);
+	const getOrg = async (
+		organizationId: string,
+		accessToken: string,
+		cookie?: string | null,
+	) => {
+		return await apiCall<Organization>(
+			`v2/orgs/${organizationId}`,
+			accessToken,
+			cookie,
+		);
 	};
 
 	return {
 		getOrgs,
-		getOrg
+		getOrg,
 	};
 };

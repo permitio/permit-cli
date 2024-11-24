@@ -8,12 +8,16 @@ import { useEnvironmentApi } from '../hooks/useEnvironmentApi.js';
 import { useOrganisationApi } from '../hooks/useOrganisationApi.js';
 import { Text } from 'ink';
 
-
 type Props = {
 	accessToken: string;
 	cookie: string;
 	workspace?: string;
-	onComplete: (organisation: ActiveState, project: ActiveState, environment: ActiveState, secret: string) => void;
+	onComplete: (
+		organisation: ActiveState,
+		project: ActiveState,
+		environment: ActiveState,
+		secret: string,
+	) => void;
 	onError: (error: string) => void;
 };
 
@@ -22,17 +26,25 @@ export interface ActiveState {
 	value: string;
 }
 
-
-const EnvironmentSelection: React.FC<Props> = ({ accessToken, cookie, onComplete, onError, workspace }) => {
-
+const EnvironmentSelection: React.FC<Props> = ({
+	accessToken,
+	cookie,
+	onComplete,
+	onError,
+	workspace,
+}) => {
 	const defaultActiveState: ActiveState = {
 		label: '',
 		value: '',
 	};
 
-	const [state, setState] = useState<'initial' | 'workspace' | 'project' | 'environment' | 'user-key' | 'done'>('initial');
-	const [activeOrganization, setActiveOrganization] = useState<ActiveState>(defaultActiveState);
-	const [activeProject, setActiveProject] = useState<ActiveState>(defaultActiveState);
+	const [state, setState] = useState<
+		'initial' | 'workspace' | 'project' | 'environment' | 'user-key' | 'done'
+	>('initial');
+	const [activeOrganization, setActiveOrganization] =
+		useState<ActiveState>(defaultActiveState);
+	const [activeProject, setActiveProject] =
+		useState<ActiveState>(defaultActiveState);
 	const [envCookie, setEnvCookie] = useState<string>(cookie);
 
 	const { authSwitchOrgs } = useAuthApi();
@@ -41,11 +53,15 @@ const EnvironmentSelection: React.FC<Props> = ({ accessToken, cookie, onComplete
 	const { getOrg } = useOrganisationApi();
 
 	useEffect(() => {
-
 		// No need to verify scope on browser login
-		if(!cookie) {
-			getApiKeyScope(accessToken).then(async res => {
-				const { response: scope, error, status } = res;
+		if (!cookie) {
+			(async () => {
+				const {
+					response: scope,
+					error,
+					status,
+				} = await getApiKeyScope(accessToken);
+
 				if (error) {
 					let errorMsg;
 					if (status === 401) {
@@ -58,26 +74,42 @@ const EnvironmentSelection: React.FC<Props> = ({ accessToken, cookie, onComplete
 				}
 				if (scope.environment_id && scope.project_id) {
 					setState('user-key');
-					const { response: environment } = await getEnvironment(scope.project_id, scope.environment_id, accessToken, cookie);
-					const { response: organization } = await getOrg(scope.organization_id, accessToken, cookie);
-					onComplete({ label: organization.name, value: organization.id }, {
-					label: '',
-					value: environment.project_id,
-				}, { label: environment.name, value: environment.id }, accessToken);
+					const { response: environment } = await getEnvironment(
+						scope.project_id,
+						scope.environment_id,
+						accessToken,
+						cookie,
+					);
+					const { response: organization } = await getOrg(
+						scope.organization_id,
+						accessToken,
+						cookie,
+					);
+					onComplete(
+						{ label: organization.name, value: organization.id },
+						{
+							label: '',
+							value: environment.project_id,
+						},
+						{ label: environment.name, value: environment.id },
+						accessToken,
+					);
 				} else {
 					setState('workspace');
 				}
-			});
-		}
-		else {
+			})();
+		} else {
 			setState('workspace');
 		}
 	}, [accessToken]);
 
 	async function handleSelectActiveOrganization(organization: ActiveState) {
-
 		if (cookie) {
-			const { headers, error } = await authSwitchOrgs(organization.value, accessToken, cookie);
+			const { headers, error } = await authSwitchOrgs(
+				organization.value,
+				accessToken,
+				cookie,
+			);
 
 			if (error) {
 				onError(`Error while selecting active workspace: ${error}`);
@@ -97,11 +129,12 @@ const EnvironmentSelection: React.FC<Props> = ({ accessToken, cookie, onComplete
 	}
 
 	async function handleSelectActiveEnvironment(environment: ActiveState) {
-
-		const {
-			response,
-			error,
-		} = await getProjectEnvironmentApiKey(activeProject.value, environment.value, cookie, accessToken);
+		const { response, error } = await getProjectEnvironmentApiKey(
+			activeProject.value,
+			environment.value,
+			cookie,
+			accessToken,
+		);
 
 		if (error) {
 			onError(`Error while getting Environment Secret: ${error}`);
@@ -113,26 +146,39 @@ const EnvironmentSelection: React.FC<Props> = ({ accessToken, cookie, onComplete
 
 	return (
 		<>
-			{
-				state === 'user-key' &&
-				<Text>
-					User provided ApiKey has environment scope.
-				</Text>
-			}
-			{state === 'workspace' &&
-				<SelectOrganization accessToken={accessToken} cookie={envCookie} onComplete={handleSelectActiveOrganization}
-														onError={onError} workspace={workspace} />}
+			{state === 'user-key' && (
+				<Text>User provided ApiKey has environment scope.</Text>
+			)}
+			{state === 'workspace' && (
+				<SelectOrganization
+					accessToken={accessToken}
+					cookie={envCookie}
+					onComplete={handleSelectActiveOrganization}
+					onError={onError}
+					workspace={workspace}
+				/>
+			)}
 
-			{state === 'project' &&
-				<SelectProject accessToken={accessToken} cookie={envCookie} onComplete={handleSelectActiveProject}
-											 onError={onError} />}
+			{state === 'project' && (
+				<SelectProject
+					accessToken={accessToken}
+					cookie={envCookie}
+					onComplete={handleSelectActiveProject}
+					onError={onError}
+				/>
+			)}
 
-			{state === 'environment' &&
-				<SelectEnvironment accessToken={accessToken} cookie={envCookie} activeProject={activeProject}
-													 onComplete={handleSelectActiveEnvironment} onError={onError} />}
+			{state === 'environment' && (
+				<SelectEnvironment
+					accessToken={accessToken}
+					cookie={envCookie}
+					activeProject={activeProject}
+					onComplete={handleSelectActiveEnvironment}
+					onError={onError}
+				/>
+			)}
 		</>
-	)
-		;
+	);
 };
 
 export default EnvironmentSelection;

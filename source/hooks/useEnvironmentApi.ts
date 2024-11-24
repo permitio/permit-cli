@@ -17,23 +17,50 @@ type Environment = {
 };
 
 export const useEnvironmentApi = () => {
-
-	const getEnvironments = async (projectId: string, accessToken: string, cookie: string | null) => {
-		return await apiCall<Environment[]>(`v2/projects/${projectId}/envs`, accessToken, cookie ?? '');
+	const getEnvironments = async (
+		projectId: string,
+		accessToken: string,
+		cookie: string | null,
+	) => {
+		return await apiCall<Environment[]>(
+			`v2/projects/${projectId}/envs`,
+			accessToken,
+			cookie ?? '',
+		);
 	};
 
-	const getEnvironment = async (projectId: string, environmentId: string, accessToken: string, cookie: string | null) => {
-		return await apiCall<Environment>(`v2/projects/${projectId}/envs/${environmentId}`, accessToken, cookie ?? '');
+	const getEnvironment = async (
+		projectId: string,
+		environmentId: string,
+		accessToken: string,
+		cookie: string | null,
+	) => {
+		return await apiCall<Environment>(
+			`v2/projects/${projectId}/envs/${environmentId}`,
+			accessToken,
+			cookie ?? '',
+		);
 	};
 
-	const copyEnvironment = async (projectId: string, environmentId: string, accessToken: string, cookie: string | null, body: any) => {
-		return await apiCall(`v2/projects/${projectId}/envs/${environmentId}/copy`, accessToken, cookie ?? '', 'POST', body);
+	const copyEnvironment = async (
+		projectId: string,
+		environmentId: string,
+		accessToken: string,
+		cookie: string | null,
+		body: any,
+	) => {
+		return await apiCall(
+			`v2/projects/${projectId}/envs/${environmentId}/copy`,
+			accessToken,
+			cookie ?? '',
+			'POST',
+			body,
+		);
 	};
 
 	return {
 		getEnvironments,
 		getEnvironment,
-		copyEnvironment
+		copyEnvironment,
 	};
-
 };

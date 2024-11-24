@@ -13,15 +13,12 @@ type Project = {
 	active_policy_repo_id: string;
 };
 
-
 export const useProjectAPI = () => {
-
 	const getProjects = async (accessToken: string, cookie: string) => {
-		return await apiCall<Project[]>('v2/projects', accessToken, cookie)
-	}
+		return await apiCall<Project[]>('v2/projects', accessToken, cookie);
+	};
 
 	return {
 		getProjects,
-	}
-
-}
+	};
+};

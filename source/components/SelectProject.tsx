@@ -5,7 +5,6 @@ import Spinner from 'ink-spinner';
 import { ActiveState } from './EnvironmentSelection.js';
 import { useProjectAPI } from '../hooks/useProjectAPI.js';
 
-
 type Props = {
 	accessToken: string;
 	cookie: string;
@@ -13,30 +12,44 @@ type Props = {
 	onError: (error: string) => void;
 };
 
-const SelectProject: React.FC<Props> = ({ accessToken, cookie, onComplete, onError }) => {
+const SelectProject: React.FC<Props> = ({
+	accessToken,
+	cookie,
+	onComplete,
+	onError,
+}) => {
 	const [projects, setProjects] = useState<ActiveState[]>([]);
 	const [loading, setLoading] = useState(true);
 
 	const { getProjects } = useProjectAPI();
-
-	const fetchProjects = async () => {
-		const { response: projects, error } = await getProjects(accessToken, cookie);
-
-		if (error) {
-			onError(`Failed to load projects. Reason: ${error}. Please check your network connection or credentials and try again.`);
-			return;
-		}
-
-		setProjects(projects.map((project) => ({ label: project.name, value: project.id })));
-		setLoading(false);
-	};
 
 	const handleProjectSelect = (project: any) => {
 		onComplete({ label: project.label, value: project.value });
 	};
 
 	useEffect(() => {
-		fetchProjects().then(_ => setLoading(false));
+		const fetchProjects = async () => {
+			const { response: projects, error } = await getProjects(
+				accessToken,
+				cookie,
+			);
+
+			if (error) {
+				onError(
+					`Failed to load projects. Reason: ${error}. Please check your network connection or credentials and try again.`,
+				);
+				return;
+			}
+
+			setProjects(
+				projects.map(project => ({ label: project.name, value: project.id })),
+			);
+			setLoading(false);
+		};
+
+		fetchProjects();
+
+		setLoading(false);
 	}, [accessToken, cookie]);
 
 	return loading ? (
@@ -46,10 +59,7 @@ const SelectProject: React.FC<Props> = ({ accessToken, cookie, onComplete, onErr
 	) : (
 		<>
 			<Text>Select a project</Text>
-			<SelectInput
-				items={projects}
-				onSelect={handleProjectSelect}
-			/>
+			<SelectInput items={projects} onSelect={handleProjectSelect} />
 		</>
 	);
 };

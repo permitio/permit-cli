@@ -4,7 +4,7 @@ type ApiResponse<T> = {
 	headers: Headers;
 	response: T;
 	status: number;
-	error: string | null
+	error: string | null;
 };
 
 export const apiCall = async <T = any>(
@@ -14,7 +14,6 @@ export const apiCall = async <T = any>(
 	method = 'GET',
 	body?: string,
 ): Promise<ApiResponse<T>> => {
-
 	let defaultResponse: ApiResponse<T> = {
 		headers: new Headers(),
 		response: {} as T,
@@ -29,7 +28,7 @@ export const apiCall = async <T = any>(
 			Origin: 'https://app.permit.io',
 			Authorization: `Bearer ${token}`,
 			Cookie: cookie ?? '',
-			'Content-Type': 'application/json'
+			'Content-Type': 'application/json',
 		},
 	};
 
@@ -50,9 +49,9 @@ export const apiCall = async <T = any>(
 			defaultResponse.response = response as T;
 			defaultResponse.status = res.status;
 		}
-
 	} catch (error: any) {
-		defaultResponse.error = error instanceof Error ? error.message : 'Unknown fetch error occurred';
+		defaultResponse.error =
+			error instanceof Error ? error.message : 'Unknown fetch error occurred';
 	}
 	return defaultResponse;
 };
