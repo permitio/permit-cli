@@ -21,7 +21,7 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 																																 workspace,
 																																 onError,
 																															 }) => {
-	const [orgs, setOrgs] = useState<[]>([]);
+	const [orgs, setOrgs] = useState<ActiveState[]>([]);
 	const [loading, setLoading] = useState(true);
 
 	const { getOrgs } = useOrganisationApi();
@@ -35,7 +35,7 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 		}
 
 		if (workspace) {
-			let userSpecifiedOrganization: Organization = orgs.find((org: Organization) => org.name === workspace);
+			let userSpecifiedOrganization: Organization | undefined = orgs.find((org: Organization) => org.name === workspace);
 			if (userSpecifiedOrganization) {
 				onComplete({ label: userSpecifiedOrganization.name, value: userSpecifiedOrganization.id });
 				return;

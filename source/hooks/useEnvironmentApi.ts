@@ -26,9 +26,14 @@ export const useEnvironmentApi = () => {
 		return await apiCall<Environment>(`v2/projects/${projectId}/envs/${environmentId}`, accessToken, cookie ?? '');
 	};
 
+	const copyEnvironment = async (projectId: string, environmentId: string, accessToken: string, cookie: string | null, body: any) => {
+		return await apiCall(`v2/projects/${projectId}/envs/${environmentId}/copy`, accessToken, cookie ?? '', 'POST', body);
+	};
+
 	return {
 		getEnvironments,
 		getEnvironment,
+		copyEnvironment
 	};
 
 };
