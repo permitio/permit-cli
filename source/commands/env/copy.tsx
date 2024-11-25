@@ -81,6 +81,15 @@ type Props = {
 	readonly options: zInfer<typeof options>;
 };
 
+interface EnvCopyResult {
+	existingEnvId?: string;
+	newEnvKey?: string;
+	newEnvName?: string;
+	newEnvDescription?: string;
+	conflictStartegy?: string;
+	scope?: string;
+}
+
 export default function Copy({
 	options: {
 		key: apiKey,
@@ -105,19 +114,20 @@ export default function Copy({
 	const { getApiKeyScope } = useApiKeyApi();
 	const { copyEnvironment } = useEnvironmentApi();
 
-	function handleEnvCopy(result: any) {
+	function handleEnvCopy(result: object) {
+		const envCopyResult = result as EnvCopyResult;
 		let body = {};
-		if (result.existingEnvId) {
+		if (envCopyResult.existingEnvId) {
 			body = {
-				target_env: { existing: result.existingEnvId },
+				target_env: { existing: envCopyResult.existingEnvId },
 			};
-		} else if (result.newEnvKey && result.newEnvName) {
+		} else if (envCopyResult.newEnvKey && envCopyResult.newEnvName) {
 			body = {
 				target_env: {
 					new: {
-						key: result.newEnvKey,
-						name: result.newEnvName,
-						description: result.newEnvDescription,
+						key: envCopyResult.newEnvKey,
+						name: envCopyResult.newEnvName,
+						description: envCopyResult.newEnvDescription,
 					},
 				},
 			};
@@ -132,8 +142,8 @@ export default function Copy({
 		}
 		body = {
 			...body,
-			conflict_strategy: result.conflictStartegy,
-			scope: result.scope,
+			conflict_strategy: envCopyResult.conflictStartegy,
+			scope: envCopyResult.scope,
 		};
 		(async () => {
 			const { error } = await copyEnvironment(
@@ -141,7 +151,7 @@ export default function Copy({
 				envFrom ?? '',
 				apiKey,
 				null,
-				JSON.stringify(body),
+				body,
 			);
 			if (error) {
 				setError(`Error while copying Environment: ${error}`);

@@ -6,11 +6,11 @@ export type Role = {
 	name: string; // The name of the role
 	description?: string; // Optional description explaining the role
 	permissions: string[]; // List of actions this role is permitted to perform
-	attributes?: Record<string, any>; // Optional key-value metadata for filtering
+	attributes?: Record<string, string>; // Optional key-value metadata for filtering
 	extends: string[]; // List of roles this role extends
-	granted_to?: Record<string, any>; // Derived role definition block
-	v1compat_settings?: Record<string, any>; // Optional v1 compatibility settings
-	v1compat_attributes?: Record<string, any>; // Optional v1 compatibility attributes
+	granted_to?: Record<string, string>; // Derived role definition block
+	v1compat_settings?: Record<string, string>; // Optional v1 compatibility settings
+	v1compat_attributes?: Record<string, string>; // Optional v1 compatibility attributes
 	organization_id: string; // UUID of the organization this role belongs to
 	project_id: string; // UUID of the project this role belongs to
 	environment_id: string; // UUID of the environment this role belongs to

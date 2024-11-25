@@ -26,6 +26,11 @@ type Props = {
 	readonly options: zInfer<typeof options>;
 };
 
+interface MemberInviteResult {
+	memberEmail: string;
+	memberRole: string;
+}
+
 export default function Member({ options: { key: apiKey } }: Props) {
 	const [error, setError] = React.useState<string | null>(null);
 	const [state, setState] = useState<'loading' | 'selecting' | 'done'>(
@@ -99,14 +104,15 @@ export default function Member({ options: { key: apiKey } }: Props) {
 		setState('selecting');
 	}, [apiKey]);
 
-	const handleMemberInvite = (result: any) => {
+	const handleMemberInvite = (result: object) => {
+		const memberInvite = result as MemberInviteResult;
 		const requestBody = {
-			email: result.memberEmail,
+			email: memberInvite.memberEmail,
 			permissions: [
 				{
 					...keyScope,
 					object_type: 'env',
-					access_level: result.memberRole,
+					access_level: memberInvite.memberRole,
 				},
 			],
 		};

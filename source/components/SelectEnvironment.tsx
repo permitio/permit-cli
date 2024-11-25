@@ -25,8 +25,9 @@ const SelectEnvironment: React.FC<Props> = ({
 
 	const { getEnvironments } = useEnvironmentApi();
 
-	const handleEnvironmentSelect = (environment: any) => {
-		onComplete({ label: environment.label, value: environment.value });
+	const handleEnvironmentSelect = (environment: object) => {
+		const selectedEnv = environment as ActiveState;
+		onComplete({ label: selectedEnv.label, value: selectedEnv.value });
 	};
 
 	useEffect(() => {

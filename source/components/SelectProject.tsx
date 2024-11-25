@@ -23,8 +23,9 @@ const SelectProject: React.FC<Props> = ({
 
 	const { getProjects } = useProjectAPI();
 
-	const handleProjectSelect = (project: any) => {
-		onComplete({ label: project.label, value: project.value });
+	const handleProjectSelect = (project: object) => {
+		const selectedProject = project as ActiveState;
+		onComplete({ label: selectedProject.label, value: selectedProject.value });
 	};
 
 	useEffect(() => {

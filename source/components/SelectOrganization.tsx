@@ -28,8 +28,9 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 
 	const { getOrgs } = useOrganisationApi();
 
-	const handleSelectOrganization = async (organization: any) => {
-		onComplete({ label: organization.label, value: organization.value });
+	const handleSelectOrganization = async (organization: object) => {
+		const selectedOrg = organization as ActiveState;
+		onComplete({ label: selectedOrg.label, value: selectedOrg.value });
 	};
 
 	useEffect(() => {

@@ -54,8 +54,8 @@ export default function Select({ options: { key: apiKey } }: Props) {
 	) => {
 		try {
 			await saveAuthToken(secret);
-		} catch (error: any) {
-			setError(error);
+		} catch (error: unknown) {
+			setError(error as string);
 		}
 		setEnvironment(environment.label);
 		setState('done');

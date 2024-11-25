@@ -7,6 +7,7 @@ type ApiResponse<T> = {
 	error: string | null;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const apiCall = async <T = any>(
 	endpoint: string,
 	token: string,
@@ -49,7 +50,7 @@ export const apiCall = async <T = any>(
 			defaultResponse.response = response as T;
 			defaultResponse.status = res.status;
 		}
-	} catch (error: any) {
+	} catch (error: unknown) {
 		defaultResponse.error =
 			error instanceof Error ? error.message : 'Unknown fetch error occurred';
 	}

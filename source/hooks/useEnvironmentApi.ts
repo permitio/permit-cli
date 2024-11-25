@@ -47,14 +47,14 @@ export const useEnvironmentApi = () => {
 		environmentId: string,
 		accessToken: string,
 		cookie: string | null,
-		body: any,
+		body: object,
 	) => {
 		return await apiCall(
 			`v2/projects/${projectId}/envs/${environmentId}/copy`,
 			accessToken,
 			cookie ?? '',
 			'POST',
-			body,
+			JSON.stringify(body),
 		);
 	};
 

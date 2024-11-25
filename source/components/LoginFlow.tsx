@@ -45,7 +45,7 @@ const LoginFlow: React.FC<LoginFlowProps> = ({
 						return;
 					}
 					onSuccess(token, headers.getSetCookie()[0] ?? '');
-				} catch (error: any) {
+				} catch (error: unknown) {
 					onError(`Unexpected error during authentication. ${error}`);
 					return;
 				}
