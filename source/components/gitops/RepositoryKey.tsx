@@ -48,15 +48,15 @@ const RepositoryKey: React.FC<Props> = ({
 	if (!isFetched) {
 		fetchRepoList();
 	}
-	const isRepositoryKeyAlreadyPresent = (repoKey: string): boolean => {
-		if (repolist.includes(repoKey)) {
-			onError('RepositoryKey with this name already exists');
-			return true;
-		}
-		return false;
-	};
 	const handleSubmit = useCallback(
 		async (repoKey: string) => {
+			const isRepositoryKeyAlreadyPresent = (repoKey: string): boolean => {
+				if (repolist.includes(repoKey)) {
+					onError('RepositoryKey with this name already exists');
+					return true;
+				}
+				return false;
+			};
 			if (isRepositoryKeyAlreadyPresent(repoKey)) return;
 			try {
 				const error = await Validate(repoKey);
@@ -69,7 +69,7 @@ const RepositoryKey: React.FC<Props> = ({
 			}
 			onRepoKeySubmit(repoKey);
 		},
-		[onError, onRepoKeySubmit, isRepositoryKeyAlreadyPresent],
+		[onError, onRepoKeySubmit, repolist],
 	);
 
 	return (
