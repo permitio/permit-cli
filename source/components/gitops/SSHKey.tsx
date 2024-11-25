@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import { generateSSHKey } from '../../lib/gitops/utils.js';
@@ -18,18 +18,21 @@ const SSHKey: React.FC<Props> = ({ onSSHKeySubmit, onError }) => {
 		const key = generateSSHKey();
 		setSshKey(key);
 	}, []);
-	const handleSSHSubmit = (sshUrl: string) => {
-		if (sshUrl.length <= 1) {
-			onError('Please enter a valid SSH URL');
-			return;
-		}
-		const sshRegex = /^git@[a-zA-Z0-9.-]+:[a-zA-Z0-9/_-]+\.git$/;
-		if (!sshRegex.test(sshUrl)) {
-			onError('Please enter a valid SSH URL');
-			return;
-		}
-		onSSHKeySubmit(sshKey.privateKey, sshUrl);
-	};
+	const handleSSHSubmit = useCallback(
+		(sshUrl: string) => {
+			if (sshUrl.length <= 1) {
+				onError('Please enter a valid SSH URL');
+				return;
+			}
+			const sshRegex = /^git@[a-zA-Z0-9.-]+:[a-zA-Z0-9/_-]+\.git$/;
+			if (!sshRegex.test(sshUrl)) {
+				onError('Please enter a valid SSH URL');
+				return;
+			}
+			onSSHKeySubmit(sshKey.privateKey, sshUrl);
+		},
+		[sshKey, onSSHKeySubmit, onError],
+	);
 
 	return (
 		<>

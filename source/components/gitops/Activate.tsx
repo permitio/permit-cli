@@ -1,21 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Box, Text } from 'ink';
 import SelectInput from 'ink-select-input';
-import { activateRepo, configurePermit } from '../../lib/gitops/utils.js';
-type GitConfig = {
-	url: string;
-	main_branch_name: string;
-	credentials: {
-		auth_type: string;
-		username: string;
-		private_key: string;
-	};
-	key: string;
-};
+import { activateRepo } from '../../lib/gitops/utils.js';
+
 type Props = {
-	accessToken: string;
+	apiKey: string;
 	projectKey: string;
-	config: GitConfig;
+	repoKey: string;
 	onActivate: (isConfigured: boolean) => void;
 	onError: (error: string) => void;
 };
@@ -25,17 +16,12 @@ type ActivateSelect = {
 };
 
 const Activate: React.FC<Props> = ({
-	accessToken,
+	apiKey,
 	projectKey,
-	config,
+	repoKey,
 	onActivate,
 	onError,
 }) => {
-	const [GitConfigResponse, setGitConfigRespone] = useState<{
-		id: string;
-		status: string;
-		key: string;
-	}>({ id: '', status: '', key: '' });
 	const activateItemSelect = [
 		{
 			label: 'Yes',
@@ -46,25 +32,15 @@ const Activate: React.FC<Props> = ({
 			value: false,
 		},
 	];
-	useEffect(() => {
-		configurePermit(accessToken, projectKey, config)
-			.then(response => {
-				setGitConfigRespone(response);
-			})
-			.catch(error => {
-				onError(error.message);
-			});
-	}, []);
 
-	const handleActivateSelect = (activate: ActivateSelect) => {
+	const handleActivateSelect = async (activate: ActivateSelect) => {
 		if (activate.value) {
-			activateRepo(accessToken, projectKey, GitConfigResponse.key)
-				.then(resp => {
-					onActivate(resp);
-				})
-				.catch(error => {
-					onError(error.message);
-				});
+			try {
+				const activationResp = await activateRepo(apiKey, projectKey, repoKey);
+				onActivate(activationResp);
+			} catch (error) {
+				onError(error instanceof Error ? error.message : String(error));
+			}
 		}
 		if (!activate.value) {
 			onActivate(false);
@@ -74,7 +50,7 @@ const Activate: React.FC<Props> = ({
 		<>
 			<Box margin={1}>
 				<Box margin={1}>
-					<Text color={'yellow'}>Do you want to activate the repository?</Text>
+					<Text>Do you want to activate the repository?{'\n'}</Text>
 				</Box>
 				<SelectInput
 					items={activateItemSelect}

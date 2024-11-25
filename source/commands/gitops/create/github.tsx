@@ -3,7 +3,7 @@ import { Box, Text } from 'ink';
 import zod from 'zod';
 import { option } from 'pastel';
 import SelectProject from '../../../components/gitops/SelectProject.js';
-import PolicyName from '../../../components/gitops/PolicyName.js';
+import RepositoryKey from '../../../components/gitops/RepositoryKey.js';
 import SSHKey from '../../../components/gitops/SSHKey.js';
 import BranchName from '../../../components/gitops/BranchName.js';
 import Activate from '../../../components/gitops/Activate.js';
@@ -13,16 +13,7 @@ import {
 } from '../../../config.js';
 import * as keytar from 'keytar';
 
-type GitConfig = {
-	url: string;
-	main_branch_name: string;
-	credentials: {
-		auth_type: string;
-		username: string;
-		private_key: string;
-	};
-	key: string;
-};
+import { configurePermit, gitConfig } from '../../../lib/gitops/utils.js';
 export const options = zod.object({
 	key: zod
 		.string()
@@ -44,27 +35,27 @@ export default function GitHub({ options }: Props) {
 	const [error, setError] = useState<string>('');
 	const [projectKey, setProjectKey] = useState<string>('');
 	const [doneMessage, setDoneMessage] = useState<string>('');
-	const [gitConfig, setGitConfig] = useState<GitConfig>({
+	const [gitConfig, setGitConfig] = useState<gitConfig>({
 		url: '',
-		main_branch_name: '',
+		mainBranchName: '',
 		credentials: {
-			auth_type: 'ssh',
+			authType: 'ssh',
 			username: 'git',
-			private_key: '',
+			privateKey: '',
 		},
 		key: '',
 	});
 	const [ApiKey, setApiKey] = useState<string>('');
 	const [state, setState] = useState<
-		| 'api_key'
-		| 'policy_name'
-		| 'ssh_key'
+		| 'apiKey'
+		| 'repositoryKey'
+		| 'sshKey'
 		| 'branch'
 		| 'project'
 		| 'activate'
 		| 'done'
 		| 'error'
-	>('api_key');
+	>('apiKey');
 	useEffect(() => {
 		if (options.key) {
 			setApiKey(options.key);
@@ -96,7 +87,7 @@ export default function GitHub({ options }: Props) {
 	return (
 		<>
 			<Box margin={1}>
-				<Text color={'yellow'}>Welcome to GitOps Wizard</Text>
+				<Text>GitOps Configuration Wizard - GitHub</Text>
 			</Box>
 
 			{state === 'project' && (
@@ -108,29 +99,29 @@ export default function GitHub({ options }: Props) {
 					}}
 					onProjectSubmit={(projectIdKey: string) => {
 						setProjectKey(projectIdKey);
-						setState('policy_name');
+						setState('repositoryKey');
 					}}
 				/>
 			)}
 
-			{state === 'policy_name' && (
-				<PolicyName
+			{state === 'repositoryKey' && (
+				<RepositoryKey
 					projectName={projectKey}
 					accessToken={ApiKey}
 					onError={errormessage => {
 						setError(errormessage);
 						setState('error');
 					}}
-					onPolicyNameSubmit={policyName => {
+					onRepoKeySubmit={policyName => {
 						setGitConfig({
 							...gitConfig,
 							key: policyName,
 						});
-						setState('ssh_key');
+						setState('sshKey');
 					}}
 				/>
 			)}
-			{state === 'ssh_key' && (
+			{state === 'sshKey' && (
 				<SSHKey
 					onError={errormessage => {
 						setError(errormessage);
@@ -141,7 +132,7 @@ export default function GitHub({ options }: Props) {
 							...gitConfig,
 							credentials: {
 								...gitConfig.credentials,
-								private_key: sshkey,
+								privateKey: sshkey,
 							},
 							url: sshUrl,
 						});
@@ -155,20 +146,32 @@ export default function GitHub({ options }: Props) {
 						setError(errormessage);
 						setState('error');
 					}}
-					onBranchSubmit={(branchName: string) => {
+					onBranchSubmit={async (branchName: string) => {
 						setGitConfig({
 							...gitConfig,
-							main_branch_name: branchName,
+							mainBranchName: branchName,
 						});
+						const configResponse = await configurePermit(
+							ApiKey,
+							projectKey,
+							gitConfig,
+						);
+						if (configResponse.status === 'invalid') {
+							setError(
+								'Invalid configuration. Please check the configuration and try again.',
+							);
+							setState('error');
+							return;
+						}
 						setState('activate');
 					}}
 				/>
 			)}
 			{state === 'activate' && (
 				<Activate
-					accessToken={ApiKey}
+					apiKey={ApiKey}
 					projectKey={projectKey}
-					config={gitConfig}
+					repoKey={gitConfig.key}
 					onError={errormessage => {
 						setError(errormessage);
 						setState('error');
@@ -179,7 +182,9 @@ export default function GitHub({ options }: Props) {
 								'Your GitOps is configured and activated sucessfully',
 							);
 						} else {
-							setDoneMessage('Your GitOps is configured successfully');
+							setDoneMessage(
+								'Your GitOps is configured successfully. To complete the setup, remember to activate it later.',
+							);
 						}
 						setState('done');
 					}}

@@ -37,13 +37,13 @@ function generateSSHKey() {
 	const seed = randomBytes(32);
 	return ssh(seed, 'help@permit.io');
 }
-type GitConfig = {
+type gitConfig = {
 	url: string;
-	main_branch_name: string;
+	mainBranchName: string;
 	credentials: {
-		auth_type: string;
+		authType: string;
 		username: string;
-		private_key: string;
+		privateKey: string;
 	};
 	key: string;
 };
@@ -51,10 +51,19 @@ type GitConfig = {
 async function configurePermit(
 	accessToken: string,
 	projectKey: string,
-	gitconfig: GitConfig,
+	gitconfig: gitConfig,
 ) {
 	const endpoint = `v2/projects/${projectKey}/repos`;
-	const body = gitconfig;
+	const body = {
+		url: gitconfig.url,
+		main_branch_name: gitconfig.mainBranchName,
+		credentials: {
+			auth_type: gitconfig.credentials.authType,
+			username: gitconfig.credentials.username,
+			private_key: gitconfig.credentials.privateKey,
+		},
+		key: gitconfig.key,
+	};
 	const options: RequestInit = {
 		method: 'POST',
 		headers: {
@@ -99,4 +108,5 @@ export {
 	generateSSHKey,
 	configurePermit,
 	activateRepo,
+	gitConfig,
 };

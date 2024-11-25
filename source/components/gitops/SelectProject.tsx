@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { getProjectList } from '../../lib/gitops/utils.js';
 import { Text } from 'ink';
 import SelectInput from 'ink-select-input';
@@ -18,27 +18,25 @@ const SelectProject: React.FC<Props> = ({
 		[],
 	);
 	const [loading, setLoading] = useState<boolean>(true);
-	const [_, setSelectedProject] = useState<string>('');
 
-	useEffect(() => {
-		getProjectList(accessToken)
-			.then(projects => {
-				setProjects(
-					projects.map(project => ({
-						label: project.name,
-						value: project.key,
-					})),
-				);
-				setLoading(false);
-			})
-			.catch(error => {
-				onError(error.message);
-			});
-	}, []);
+	const retriveProject = useCallback(async () => {
+		try {
+			const projects = await getProjectList(accessToken);
+			setProjects(
+				projects.map(project => ({
+					label: project.name,
+					value: project.key,
+				})),
+			);
+			setLoading(false);
+		} catch (error) {
+			onError(error instanceof Error ? error.message : String(error));
+		}
+	}, [accessToken, onError]);
 
-	const handleSubmit = (project: string) => {
-		onProjectSubmit(project);
-	};
+	if (loading) {
+		retriveProject();
+	}
 
 	return (
 		<>
@@ -49,8 +47,7 @@ const SelectProject: React.FC<Props> = ({
 					<SelectInput
 						items={projects}
 						onSelect={project => {
-							setSelectedProject(project.value);
-							handleSubmit(project.value);
+							onProjectSubmit(project.value);
 						}}
 					/>
 				</>
