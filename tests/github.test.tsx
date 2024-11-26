@@ -449,7 +449,9 @@ describe('GiHub Complete Flow', () => {
 			<GitHub options={{ key: demoPermitKey }} />,
 		);
 		const frameString = lastFrame()?.toString() ?? '';
-		expect(frameString).toMatch(/GitOps Configuration Wizard - GitHub/);
+		expect(frameString).toMatch(/Loading Token/);
+		await delay(100);
+		expect(lastFrame()?.toString()).toMatch(/GitOps Configuration Wizard - GitHub/);
 		await delay(50);
 		stdin.write(arrowDown);
 		await delay(50);
@@ -482,10 +484,11 @@ describe('GiHub Complete Flow', () => {
 			/Your GitOps is configured and activated sucessfully/,
 		);
 	});
-	it('should call without value for the props', () => {
+	it('should call without value for the props', async() => {
 		const { stdin, lastFrame } = render(
 			<GitHub options={{ key: undefined }} />,
 		);
+		await delay(50);
 		const frameString = lastFrame()?.toString() ?? '';
 		expect(frameString).toMatch(/GitOps Configuration Wizard - GitHub/);
 	});
