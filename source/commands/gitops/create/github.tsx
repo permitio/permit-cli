@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Box, Text } from 'ink';
 import zod from 'zod';
 import { option } from 'pastel';
@@ -7,11 +7,7 @@ import RepositoryKey from '../../../components/gitops/RepositoryKey.js';
 import SSHKey from '../../../components/gitops/SSHKey.js';
 import BranchName from '../../../components/gitops/BranchName.js';
 import Activate from '../../../components/gitops/Activate.js';
-import {
-	KEYSTORE_PERMIT_SERVICE_NAME,
-	DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
-} from '../../../config.js';
-import * as keytar from 'keytar';
+import { loadAuthToken } from '../../../lib/auth.js';
 
 import { configurePermit, gitConfig } from '../../../lib/gitops/utils.js';
 export const options = zod.object({
@@ -56,33 +52,24 @@ export default function GitHub({ options }: Props) {
 		| 'done'
 		| 'error'
 	>('apiKey');
-	useEffect(() => {
+	const apiKeyRender = useCallback(async () => {
 		if (options.key) {
 			setApiKey(options.key);
 			setState('project');
 		} else {
-			keytar
-				.getPassword(
-					KEYSTORE_PERMIT_SERVICE_NAME,
-					DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
-				)
-				.then(apiKey => {
-					if (!apiKey) {
-						setState('error');
-						setError(
-							'API Key not found in the keychain and not passed as an argument',
-						);
-						return;
-					}
-					setApiKey(apiKey);
-					setState('project');
-				})
-				.catch(error => {
-					setError(error.message);
-					setState('error');
-				});
+			try {
+				const authToken = await loadAuthToken();
+				setApiKey(authToken);
+				setState('project');
+			} catch (error) {
+				setError(error instanceof Error ? error.message : String(error));
+				setState('error');
+			}
 		}
-	}, []);
+	}, [options.key, setApiKey, setState]);
+	if (state === 'apiKey') {
+		apiKeyRender();
+	}
 
 	return (
 		<>

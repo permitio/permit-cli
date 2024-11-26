@@ -79,7 +79,7 @@ const RepositoryKey: React.FC<Props> = ({
 			) : (
 				<Box>
 					<Box marginRight={1}>
-						<Text color={'blue'}> Enter Your RepositoryKey : </Text>
+						<Text> Enter Your RepositoryKey : </Text>
 						<TextInput
 							value={repoKey}
 							onChange={setRepoKey}

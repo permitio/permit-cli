@@ -43,7 +43,7 @@ const SelectProject: React.FC<Props> = ({
 			{loading && <Text>Loading projects...</Text>}
 			{!loading && (
 				<>
-					<Text color={'blue'}> Select Your Project: </Text>
+					<Text> Select Your Project: </Text>
 					<SelectInput
 						items={projects}
 						onSelect={project => {

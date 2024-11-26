@@ -15,7 +15,12 @@ import {
 	getProjectList,
 	getRepoList,
 } from '../source/lib/gitops/utils.js';
+import { loadAuthToken } from '../source/lib/auth.js';
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+
+vi.mock('../source/lib/auth.js', () => ({
+	loadAuthToken: vi.fn(() => demoPermitKey),
+}));
 vi.mock('../source/lib/gitops/utils.js', () => ({
 	getProjectList: vi.fn(() =>
 		Promise.resolve([
@@ -476,5 +481,12 @@ describe('GiHub Complete Flow', () => {
 		expect(lastFrame()?.toString()).toMatch(
 			/Your GitOps is configured and activated sucessfully/,
 		);
+	});
+	it('should call without value for the props', () => {
+		const { stdin, lastFrame } = render(
+			<GitHub options={{ key: undefined }} />,
+		);
+		const frameString = lastFrame()?.toString() ?? '';
+		expect(frameString).toMatch(/GitOps Configuration Wizard - GitHub/);
 	});
 });
