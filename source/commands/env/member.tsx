@@ -133,7 +133,7 @@ export default function Member({ options: { key: apiKey } }: Props) {
 		environment: ActiveState,
 		_secret: string,
 	) => {
-		if (keyScope) {
+		if (keyScope && keyScope.environment_id !== environment.value) {
 			setKeyScope({ ...keyScope, environment_id: environment.value });
 		}
 	};

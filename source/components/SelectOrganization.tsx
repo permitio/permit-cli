@@ -23,7 +23,7 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 	workspace,
 	onError,
 }) => {
-	const [orgs, setOrgs] = useState<ActiveState[]>([]);
+	const [orgs, setOrgs] = useState<ActiveState[] | null>(null);
 	const [loading, setLoading] = useState(true);
 
 	const { getOrgs } = useOrganisationApi();
@@ -63,7 +63,10 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 			}
 
 			setOrgs(
-				orgs.map((org: Organization) => ({ label: org.name, value: org.id })),
+				orgs.map((org: Organization) => ({
+					label: org.name,
+					value: org.id,
+				})),
 			);
 			setLoading(false);
 		};
@@ -80,7 +83,7 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 				</Text>
 			)}
 
-			{!loading && (
+			{!loading && orgs && (
 				<>
 					<Text>Select an organization</Text>
 					<SelectInput items={orgs} onSelect={handleSelectOrganization} />
