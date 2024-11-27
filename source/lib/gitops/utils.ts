@@ -1,5 +1,4 @@
 import { apiCall } from '../api.js';
-import { PERMIT_API_URL } from '../../config.js';
 import ssh from 'micro-key-producer/ssh.js';
 import { randomBytes } from 'micro-key-producer/utils.js';
 
@@ -37,7 +36,7 @@ function generateSSHKey() {
 	const seed = randomBytes(32);
 	return ssh(seed, 'help@permit.io');
 }
-type gitConfig = {
+type GitConfig = {
 	url: string;
 	mainBranchName: string;
 	credentials: {
@@ -49,9 +48,9 @@ type gitConfig = {
 };
 
 async function configurePermit(
-	accessToken: string,
+	apiKey: string,
 	projectKey: string,
-	gitconfig: gitConfig,
+	gitconfig: GitConfig,
 ) {
 	const endpoint = `v2/projects/${projectKey}/repos`;
 	const body = {
@@ -64,25 +63,30 @@ async function configurePermit(
 		},
 		key: gitconfig.key,
 	};
-	const options: RequestInit = {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${accessToken}`,
-		},
-		body: JSON.stringify(body),
-	};
-	const resp = await fetch(`${PERMIT_API_URL}/${endpoint}`, options);
-	const response = await resp.json();
-	if (resp.status === 422) {
-		throw new Error('Validation Error');
+	const response = await apiCall(
+		endpoint,
+		apiKey,
+		'',
+		'POST',
+		JSON.stringify(body),
+	);
+	if (response.status === 422) {
+		throw new Error('Validation Error in Configuring Permit');
 	}
-	const gitConfigResponse = response;
-	return {
-		id: gitConfigResponse.id,
-		key: gitConfigResponse.key,
-		status: gitConfigResponse.status,
-	};
+	if (response.status === 200) {
+		const gitConfigResponse = response.response as {
+			id: string;
+			key: string;
+			status: string;
+		};
+		return {
+			id: gitConfigResponse.id,
+			key: gitConfigResponse.key,
+			status: gitConfigResponse.status,
+		};
+	} else {
+		throw new Error('Invalid Configuration ' + response);
+	}
 }
 
 async function activateRepo(
@@ -108,5 +112,5 @@ export {
 	generateSSHKey,
 	configurePermit,
 	activateRepo,
-	gitConfig,
+	GitConfig,
 };

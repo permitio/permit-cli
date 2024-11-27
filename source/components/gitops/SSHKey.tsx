@@ -2,11 +2,14 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import { generateSSHKey } from '../../lib/gitops/utils.js';
+import clipboard from 'clipboardy';
 
 type Props = {
 	onSSHKeySubmit: (sshKey: string, sshUrl: string) => void;
 	onError: (error: string) => void;
 };
+const SSHHelperMessage =
+	'Go to https://github.com/{{organization}}/{{repository}}/settings/keys/new and create your new SSH key. You can also refer to https://docs.permit.io/integrations/gitops/github#create-a-repository for more details\n';
 
 const SSHKey: React.FC<Props> = ({ onSSHKeySubmit, onError }) => {
 	const [sshUrl, setSshUrl] = useState<string>('');
@@ -17,6 +20,7 @@ const SSHKey: React.FC<Props> = ({ onSSHKeySubmit, onError }) => {
 	useEffect(() => {
 		const key = generateSSHKey();
 		setSshKey(key);
+		clipboard.writeSync(key.publicKey);
 	}, []);
 	const handleSSHSubmit = useCallback(
 		(sshUrl: string) => {
@@ -37,10 +41,13 @@ const SSHKey: React.FC<Props> = ({ onSSHKeySubmit, onError }) => {
 	return (
 		<>
 			<Box margin={1}>
-				<Text color={'yellow'}>SSH Key Generated.</Text>
+				<Text>{SSHHelperMessage}</Text>
+			</Box>
+			<Box margin={1}>
+				<Text>SSH Key Generated.</Text>
 			</Box>
 			<Box>
-				<Text color={'yellow'}>
+				<Text>
 					{' '}
 					Copy The Public Key to Github: {'\n'}
 					{sshKey.publicKey}

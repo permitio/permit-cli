@@ -21,6 +21,7 @@
 		"dist"
 	],
 	"dependencies": {
+		"clipboardy": "^4.0.0",
 		"fuse.js": "^7.0.0",
 		"ink": "^5.0.1",
 		"ink-ascii": "^0.0.4",
@@ -39,9 +40,7 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.14.0",
-		"@jest/globals": "^29.7.0",
 		"@sindresorhus/tsconfig": "^3.0.1",
-		"@types/jest": "^29.5.14",
 		"@types/react": "^18.0.32",
 		"@typescript-eslint/eslint-plugin": "^8.12.2",
 		"@typescript-eslint/parser": "^8.12.2",

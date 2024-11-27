@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from 'ink-testing-library';
 import SelectProject from '../source/components/gitops/SelectProject.js';
-import PolicyName from '../source/components/gitops/RepositoryKey.js';
+import RepositoryKey from '../source/components/gitops/RepositoryKey.js';
 import SSHKey from '../source/components/gitops/SSHKey.js';
 import BranchName from '../source/components/gitops/BranchName.js';
 import Activate from '../source/components/gitops/Activate.js';
@@ -119,68 +119,68 @@ describe('Select Project Component', () => {
 	});
 });
 
-describe('Policy Name Component', () => {
-	it('should call onPolicyNameSubmit with the correct value', async () => {
-		const onPolicyNameSubmit = vi.fn();
+describe('RepositoryKey  Component', () => {
+	it('should call onRepoKeySubmit with the correct value', async () => {
+		const onRepoKeySubmit = vi.fn();
 		const onError = vi.fn();
 		const projectName = 'project1';
 		const accessToken = 'permit_key_'.concat('a'.repeat(97));
 		const { stdin, lastFrame } = render(
-			<PolicyName
+			<RepositoryKey
 				projectName={projectName}
-				accessToken={accessToken}
-				onRepoKeySubmit={onPolicyNameSubmit}
+				apiKey={accessToken}
+				onRepoKeySubmit={onRepoKeySubmit}
 				onError={onError}
 			/>,
 		);
 		await delay(50);
 		const frameString = lastFrame()?.toString() ?? '';
 		expect(frameString).toMatch(/Enter Your RepositoryKey :/);
-		const policyName = 'policy1';
+		const repoKey = 'repo3';
 		await delay(50);
-		stdin.write(policyName);
+		stdin.write(repoKey);
 		await delay(50);
 		stdin.write(enter);
 		await delay(50);
 
-		expect(onPolicyNameSubmit).toHaveBeenCalledOnce();
-		expect(onPolicyNameSubmit).toHaveBeenCalledWith(policyName);
+		expect(onRepoKeySubmit).toHaveBeenCalledOnce();
+		expect(onRepoKeySubmit).toHaveBeenCalledWith(repoKey);
 	});
-	it("should call onError with 'Policy Name is required' for empty value", async () => {
-		const onPolicyNameSubmit = vi.fn();
+	it("should call onError with 'RepoKey is required' for empty value", async () => {
+		const onRepoKeySubmit = vi.fn();
 		const onError = vi.fn();
 		const projectName = 'project1';
 		const accessToken = 'permit_key_'.concat('a'.repeat(97));
 		const { stdin, lastFrame } = render(
-			<PolicyName
+			<RepositoryKey
 				projectName={projectName}
-				accessToken={accessToken}
-				onRepoKeySubmit={onPolicyNameSubmit}
+				apiKey={accessToken}
+				onRepoKeySubmit={onRepoKeySubmit}
 				onError={onError}
 			/>,
 		);
 		await delay(50);
 		const frameString = lastFrame()?.toString() ?? '';
 		expect(frameString).toMatch(/Enter Your RepositoryKey :/);
-		const policyName = '';
+		const repoKey = '';
 		await delay(50);
-		stdin.write(policyName);
+		stdin.write(repoKey);
 		await delay(50);
 		stdin.write(enter);
 		await delay(50);
 		expect(onError).toHaveBeenCalledOnce();
 		expect(onError).toHaveBeenCalledWith('Repository Key is required');
 	});
-	it('Invalid Policy Name  Error ', async () => {
-		const onPolicyNameSubmit = vi.fn();
+	it('Invalid RepoKey Error ', async () => {
+		const onRepoKeySubmit = vi.fn();
 		const onError = vi.fn();
 		const projectName = 'project1';
 		const accessToken = 'permit_key_'.concat('a'.repeat(97));
 		const { stdin, lastFrame } = render(
-			<PolicyName
+			<RepositoryKey
 				projectName={projectName}
-				accessToken={accessToken}
-				onRepoKeySubmit={onPolicyNameSubmit}
+				apiKey={accessToken}
+				onRepoKeySubmit={onRepoKeySubmit}
 				onError={onError}
 			/>,
 		);
@@ -188,9 +188,9 @@ describe('Policy Name Component', () => {
 		await delay(100);
 		const frameString = lastFrame()?.toString() ?? '';
 		expect(frameString).toMatch(/Enter Your RepositoryKey :/);
-		const policyName = 'Invalid Policy Name';
+		const repoKey = 'Invalid RepoKey';
 		await delay(50);
-		stdin.write(policyName);
+		stdin.write(repoKey);
 		await delay(50);
 		stdin.write(enter);
 		await delay(50);
@@ -199,25 +199,25 @@ describe('Policy Name Component', () => {
 			'Repository Key should contain only alphanumeric characters, hyphens and underscores',
 		);
 	});
-	it('Existing policy name', async () => {
-		const onPolicyNameSubmit = vi.fn();
+	it('Existing repoKey name', async () => {
+		const onRepoKeySubmit = vi.fn();
 		const onError = vi.fn();
 		const projectName = 'project1';
 		const accessToken = 'permit_key_'.concat('a'.repeat(97));
 		const { stdin, lastFrame } = render(
-			<PolicyName
+			<RepositoryKey
 				projectName={projectName}
-				accessToken={accessToken}
-				onRepoKeySubmit={onPolicyNameSubmit}
+				apiKey={accessToken}
+				onRepoKeySubmit={onRepoKeySubmit}
 				onError={onError}
 			/>,
 		);
 		await delay(50);
 		const frameString = lastFrame()?.toString() ?? '';
 		expect(frameString).toMatch(/Enter Your RepositoryKey :/);
-		const policyName = 'repo1';
+		const repoKey = 'repo1';
 		await delay(50);
-		stdin.write(policyName);
+		stdin.write(repoKey);
 		await delay(50);
 		stdin.write(enter);
 		await delay(100);
@@ -354,7 +354,7 @@ describe('Activate Component', () => {
 				username: 'git',
 				private_key: 'private_key',
 			},
-			key: 'policy1',
+			key: 'repo1',
 		};
 		const { stdin, lastFrame } = render(
 			<Activate
@@ -386,7 +386,7 @@ describe('Activate Component', () => {
 				username: 'git',
 				private_key: 'private_key',
 			},
-			key: 'policy1',
+			key: 'repo1',
 		};
 		activateRepo.mockRejectedValueOnce(new Error('Invalid Repo Status'));
 		const { stdin, lastFrame } = render(
@@ -420,7 +420,7 @@ describe('Activate Component', () => {
 				username: 'git',
 				private_key: 'private_key',
 			},
-			key: 'policy1',
+			key: 'repo1',
 		};
 		const { stdin, lastFrame } = render(
 			<Activate
@@ -451,7 +451,9 @@ describe('GiHub Complete Flow', () => {
 		const frameString = lastFrame()?.toString() ?? '';
 		expect(frameString).toMatch(/Loading Token/);
 		await delay(100);
-		expect(lastFrame()?.toString()).toMatch(/GitOps Configuration Wizard - GitHub/);
+		expect(lastFrame()?.toString()).toMatch(
+			/GitOps Configuration Wizard - GitHub/,
+		);
 		await delay(50);
 		stdin.write(arrowDown);
 		await delay(50);
@@ -459,7 +461,7 @@ describe('GiHub Complete Flow', () => {
 		await delay(50);
 		expect(lastFrame()?.toString()).toMatch(/Enter Your RepositoryKey :/);
 		await delay(50);
-		stdin.write('policy1');
+		stdin.write('repo3');
 		await delay(50);
 		stdin.write(enter);
 		await delay(50);
@@ -484,7 +486,7 @@ describe('GiHub Complete Flow', () => {
 			/Your GitOps is configured and activated sucessfully/,
 		);
 	});
-	it('should call without value for the props', async() => {
+	it('should call without value for the props', async () => {
 		const { stdin, lastFrame } = render(
 			<GitHub options={{ key: undefined }} />,
 		);

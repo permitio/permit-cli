@@ -1,18 +1,18 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import { getRepoList } from '../../lib/gitops/utils.js';
 import Spinner from 'ink-spinner';
 
 type Props = {
-	accessToken: string;
+	apiKey: string;
 	projectName: string;
 	onRepoKeySubmit: (repoKey: string) => void;
 	onError: (error: string) => void;
 };
 
 const RepositoryKey: React.FC<Props> = ({
-	accessToken,
+	apiKey,
 	projectName,
 	onRepoKeySubmit,
 	onError,
@@ -20,7 +20,6 @@ const RepositoryKey: React.FC<Props> = ({
 	const [repoKey, setRepoKey] = useState<string>('');
 	const [repolist, setRepoList] = useState<string[]>([]);
 	const [loading, setLoading] = useState<boolean>(true);
-	const [isFetched, setIsFetched] = useState<boolean>(false);
 	const Validate = async (repoKey: string): Promise<string> => {
 		if (repoKey.length <= 1) {
 			return 'Repository Key is required';
@@ -32,22 +31,21 @@ const RepositoryKey: React.FC<Props> = ({
 		return '';
 	};
 
-	const fetchRepoList = async () => {
+	const fetchRepoList = useCallback(async () => {
 		try {
-			const repos = await getRepoList(accessToken, projectName);
+			const repos = await getRepoList(apiKey, projectName);
 			const tempRepoList = repos.map(repo => repo.key);
 			setRepoList(tempRepoList);
-			setIsFetched(true);
 		} catch (error) {
 			onError(error instanceof Error ? error.message : String(error));
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [setRepoList, setLoading, onError, apiKey, projectName]);
 
-	if (!isFetched) {
+	useEffect(() => {
 		fetchRepoList();
-	}
+	}, [fetchRepoList]);
 	const handleSubmit = useCallback(
 		async (repoKey: string) => {
 			const isRepositoryKeyAlreadyPresent = (repoKey: string): boolean => {

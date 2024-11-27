@@ -14,6 +14,16 @@ type ActivateSelect = {
 	label: string;
 	value: boolean;
 };
+const activateItemSelect = [
+	{
+		label: 'Yes',
+		value: true,
+	},
+	{
+		label: 'No',
+		value: false,
+	},
+];
 
 const Activate: React.FC<Props> = ({
 	apiKey,
@@ -22,17 +32,6 @@ const Activate: React.FC<Props> = ({
 	onActivate,
 	onError,
 }) => {
-	const activateItemSelect = [
-		{
-			label: 'Yes',
-			value: true,
-		},
-		{
-			label: 'No',
-			value: false,
-		},
-	];
-
 	const handleActivateSelect = async (activate: ActivateSelect) => {
 		if (activate.value) {
 			try {
@@ -49,9 +48,9 @@ const Activate: React.FC<Props> = ({
 	return (
 		<>
 			<Box margin={1}>
-				<Box margin={1}>
-					<Text>Do you want to activate the repository?{'\n'}</Text>
-				</Box>
+				<Text>Do you want to activate the repository?{'\n'}</Text>
+			</Box>
+			<Box margin={1}>
 				<SelectInput
 					items={activateItemSelect}
 					onSelect={handleActivateSelect}

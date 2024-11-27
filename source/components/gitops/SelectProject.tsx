@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { getProjectList } from '../../lib/gitops/utils.js';
 import { Text } from 'ink';
 import SelectInput from 'ink-select-input';
@@ -34,9 +34,9 @@ const SelectProject: React.FC<Props> = ({
 		}
 	}, [accessToken, onError]);
 
-	if (loading) {
+	useEffect(() => {
 		retriveProject();
-	}
+	}, [retriveProject]);
 
 	return (
 		<>
