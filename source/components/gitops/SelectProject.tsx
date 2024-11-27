@@ -4,13 +4,13 @@ import { Text } from 'ink';
 import SelectInput from 'ink-select-input';
 
 type Props = {
-	accessToken: string;
+	apiKey: string;
 	onProjectSubmit: (project: string) => void;
 	onError: (error: string) => void;
 };
 
 const SelectProject: React.FC<Props> = ({
-	accessToken,
+	apiKey,
 	onProjectSubmit,
 	onError,
 }) => {
@@ -21,7 +21,7 @@ const SelectProject: React.FC<Props> = ({
 
 	const retriveProject = useCallback(async () => {
 		try {
-			const projects = await getProjectList(accessToken);
+			const projects = await getProjectList(apiKey);
 			setProjects(
 				projects.map(project => ({
 					label: project.name,
@@ -32,7 +32,7 @@ const SelectProject: React.FC<Props> = ({
 		} catch (error) {
 			onError(error instanceof Error ? error.message : String(error));
 		}
-	}, [accessToken, onError]);
+	}, [apiKey, onError]);
 
 	useEffect(() => {
 		retriveProject();

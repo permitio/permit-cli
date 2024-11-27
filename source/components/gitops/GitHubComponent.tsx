@@ -61,7 +61,7 @@ const GitHubComponent: React.FC<Props> = ({ authKey }) => {
 
 			{state === 'project' && (
 				<SelectProject
-					accessToken={ApiKey}
+					apiKey={ApiKey}
 					onError={(errorMessage: string) => {
 						setError(errorMessage);
 						setState('error');

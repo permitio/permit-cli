@@ -90,13 +90,13 @@ async function configurePermit(
 }
 
 async function activateRepo(
-	accessToken: string,
+	apiKey: string,
 	projectKey: string,
 	repoId: string,
 ): Promise<boolean> {
 	const activateResponse = await apiCall(
 		`v2/projects/${projectKey}/repos/${repoId}/activate`,
-		accessToken,
+		apiKey,
 		'',
 		'PUT',
 	);

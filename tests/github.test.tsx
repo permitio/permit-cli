@@ -56,7 +56,7 @@ describe('Select Project Component', () => {
 		const accessKey = 'permit_key_'.concat('a'.repeat(97));
 		const { stdin, lastFrame } = render(
 			<SelectProject
-				accessToken={accessKey}
+				apiKey={accessKey}
 				onProjectSubmit={onProjectSubmit}
 				onError={onError}
 			/>,
@@ -72,7 +72,7 @@ describe('Select Project Component', () => {
 		const accessKey = 'permit_key_'.concat('a'.repeat(97));
 		const { stdin, lastFrame } = render(
 			<SelectProject
-				accessToken={accessKey}
+				apiKey={accessKey}
 				onProjectSubmit={onProjectSubmit}
 				onError={onError}
 			/>,
@@ -104,7 +104,7 @@ describe('Select Project Component', () => {
 
 		const { stdin, lastFrame } = render(
 			<SelectProject
-				accessToken={accessKey}
+				apiKey={accessKey}
 				onProjectSubmit={onProjectSubmit}
 				onError={onError}
 			/>,
