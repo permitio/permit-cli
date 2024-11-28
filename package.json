@@ -15,6 +15,7 @@
 		"lint": "eslint \"source/**/*.{js,ts,tsx}\"",
 		"lint:fix": "eslint \"source/**/*.{js,ts,tsx}\" --fix",
 		"test": "prettier --check ./source && npx vitest run",
+		"coverage": "npx vitest run --coverage",
 		"simple-check": "npx tsx ./source/cli.tsx pdp check -u filip@permit.io -a create -r task"
 	},
 	"files": [

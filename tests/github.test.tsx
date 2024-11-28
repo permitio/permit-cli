@@ -100,7 +100,7 @@ describe('Select Project Component', () => {
 		const accessKey = 'permit_key_'.concat('a'.repeat(97));
 
 		// Mock error response
-		getProjectList.mockRejectedValueOnce(new Error('Failed to fetch projects'));
+		(getProjectList as any).mockRejectedValueOnce(new Error('Failed to fetch projects'));
 
 		const { stdin, lastFrame } = render(
 			<SelectProject
@@ -388,7 +388,7 @@ describe('Activate Component', () => {
 			},
 			key: 'repo1',
 		};
-		activateRepo.mockRejectedValueOnce(new Error('Invalid Repo Status'));
+		(activateRepo as any).mockRejectedValueOnce(new Error('Invalid Repo Status'));
 		const { stdin, lastFrame } = render(
 			<Activate
 				apiKey={accessToken}
