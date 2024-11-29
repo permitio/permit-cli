@@ -25,6 +25,7 @@ export const apiCall = async (
 			Origin: 'https://app.permit.io',
 			Authorization: `Bearer ${token}`,
 			Cookie: cookie ?? '',
+			'Content-Type': 'application/json',
 		},
 	};
 

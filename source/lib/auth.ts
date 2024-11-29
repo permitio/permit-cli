@@ -45,7 +45,7 @@ export const saveAuthToken = async (token: string): Promise<string> => {
 		);
 		return '';
 	} catch (error) {
-		return error as string;
+		return error instanceof Error ? error.message : String(error);
 	}
 };
 
