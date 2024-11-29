@@ -1,5 +1,6 @@
 // tests/utils/attributes.test.ts
 import { parseAttributes } from '../../source/utils/attributes';
+import { describe, it, expect } from 'vitest';
 
 describe('parseAttributes', () => {
     it('should parse string attributes', () => {
