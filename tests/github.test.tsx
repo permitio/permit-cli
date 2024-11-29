@@ -4,12 +4,10 @@ import SelectProject from '../source/components/gitops/SelectProject.js';
 import RepositoryKey from '../source/components/gitops/RepositoryKey.js';
 import SSHKey from '../source/components/gitops/SSHKey.js';
 import BranchName from '../source/components/gitops/BranchName.js';
-import Activate from '../source/components/gitops/Activate.js';
 import GitHub from '../source/commands/gitops/create/github.js';
 import delay from 'delay';
 import { vi, describe, it, expect } from 'vitest';
 import {
-	activateRepo,
 	configurePermit,
 	generateSSHKey,
 	getProjectList,
@@ -100,7 +98,9 @@ describe('Select Project Component', () => {
 		const accessKey = 'permit_key_'.concat('a'.repeat(97));
 
 		// Mock error response
-		(getProjectList as any).mockRejectedValueOnce(new Error('Failed to fetch projects'));
+		(getProjectList as any).mockRejectedValueOnce(
+			new Error('Failed to fetch projects'),
+		);
 
 		const { stdin, lastFrame } = render(
 			<SelectProject
@@ -340,109 +340,6 @@ describe('Branch Name component', () => {
 	});
 });
 
-describe('Activate Component', () => {
-	it('should call onActivate with the correct value', async () => {
-		const onActivate = vi.fn();
-		const onError = vi.fn();
-		const accessToken = 'permit_key_'.concat('a'.repeat(97));
-		const projectKey = 'proj1';
-		const gitConfig = {
-			url: 'git@example.com/proj1.git',
-			main_branch_name: 'main',
-			credentials: {
-				auth_type: 'ssh',
-				username: 'git',
-				private_key: 'private_key',
-			},
-			key: 'repo1',
-		};
-		const { stdin, lastFrame } = render(
-			<Activate
-				apiKey={accessToken}
-				projectKey={projectKey}
-				repoKey="repo1"
-				onActivate={onActivate}
-				onError={onError}
-			/>,
-		);
-		const frameString = lastFrame()?.toString() ?? '';
-		expect(frameString).toMatch(/Do you want to activate the repository?/);
-		await delay(50);
-		stdin.write(enter);
-		await delay(50);
-		expect(onActivate).toHaveBeenCalledOnce();
-		expect(onActivate).toHaveBeenCalledWith(true);
-	});
-	it("should call onError with 'Invalid Repo Status' for incorrect value", async () => {
-		const onActivate = vi.fn();
-		const onError = vi.fn();
-		const accessToken = 'permit_key_'.concat('a'.repeat(97));
-		const projectKey = 'proj1';
-		const gitConfig = {
-			url: 'git@example.com/proj1.git',
-			main_branch_name: 'main',
-			credentials: {
-				auth_type: 'ssh',
-				username: 'git',
-				private_key: 'private_key',
-			},
-			key: 'repo1',
-		};
-		(activateRepo as any).mockRejectedValueOnce(new Error('Invalid Repo Status'));
-		const { stdin, lastFrame } = render(
-			<Activate
-				apiKey={accessToken}
-				projectKey={projectKey}
-				repoKey="repo1"
-				onActivate={onActivate}
-				onError={onError}
-			/>,
-		);
-		const frameString = lastFrame()?.toString() ?? '';
-		expect(frameString).toMatch(/Do you want to activate the repository?/);
-		await delay(50);
-		stdin.write(enter);
-		await delay(50);
-		expect(onError).toHaveBeenCalledOnce();
-		expect(onError).toHaveBeenCalledWith('Invalid Repo Status');
-	});
-
-	it('activate value false', async () => {
-		const onActivate = vi.fn();
-		const onError = vi.fn();
-		const accessToken = 'permit_key_'.concat('a'.repeat(97));
-		const projectKey = 'proj1';
-		const gitConfig = {
-			url: 'git@example.com/proj1.git',
-			main_branch_name: 'main',
-			credentials: {
-				auth_type: 'ssh',
-				username: 'git',
-				private_key: 'private_key',
-			},
-			key: 'repo1',
-		};
-		const { stdin, lastFrame } = render(
-			<Activate
-				apiKey={accessToken}
-				projectKey={projectKey}
-				repoKey="repo1"
-				onActivate={onActivate}
-				onError={onError}
-			/>,
-		);
-		const frameString = lastFrame()?.toString() ?? '';
-		expect(frameString).toMatch(/Do you want to activate the repository?/);
-		await delay(50);
-		stdin.write(arrowDown);
-		await delay(50);
-		stdin.write(enter);
-		await delay(50);
-		expect(onActivate).toHaveBeenCalledOnce();
-		expect(onActivate).toHaveBeenCalledWith(false);
-	});
-});
-
 describe('GiHub Complete Flow', () => {
 	it('should complete the flow', async () => {
 		const { stdin, lastFrame } = render(
@@ -477,13 +374,7 @@ describe('GiHub Complete Flow', () => {
 		stdin.write(enter);
 		await delay(50);
 		expect(lastFrame()?.toString()).toMatch(
-			/Do you want to activate the repository?/,
-		);
-		await delay(50);
-		stdin.write(enter);
-		await delay(50);
-		expect(lastFrame()?.toString()).toMatch(
-			/Your GitOps is configured and activated sucessfully/,
+			/Your GitOps is configured successfully and will be activated once validated/,
 		);
 	});
 	it('should call without value for the props', async () => {

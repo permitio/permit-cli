@@ -3,14 +3,17 @@ import SelectProject from './SelectProject.js';
 import RepositoryKey from './RepositoryKey.js';
 import SSHKey from './SSHKey.js';
 import BranchName from './BranchName.js';
-import Activate from './Activate.js';
 import { Box, Text } from 'ink';
 import { configurePermit, GitConfig } from '../../lib/gitops/utils.js';
 import { useAuth } from '../AuthProvider.js';
 type Props = {
 	authKey: string | undefined;
+	inactivateWhenValidated: boolean | undefined;
 };
-const GitHubComponent: React.FC<Props> = ({ authKey }) => {
+const GitHubComponent: React.FC<Props> = ({
+	authKey,
+	inactivateWhenValidated,
+}) => {
 	const [error, setError] = useState<string>('');
 	const [projectKey, setProjectKey] = useState<string>('');
 	const [doneMessage, setDoneMessage] = useState<string>('');
@@ -23,6 +26,7 @@ const GitHubComponent: React.FC<Props> = ({ authKey }) => {
 			privateKey: '',
 		},
 		key: '',
+		activateWhenValidated: !inactivateWhenValidated,
 	});
 	const [ApiKey, setApiKey] = useState<string>('');
 	const [state, setState] = useState<
@@ -31,7 +35,6 @@ const GitHubComponent: React.FC<Props> = ({ authKey }) => {
 		| 'sshKey'
 		| 'branch'
 		| 'project'
-		| 'activate'
 		| 'done'
 		| 'error'
 	>('apiKey');
@@ -138,35 +141,20 @@ const GitHubComponent: React.FC<Props> = ({ authKey }) => {
 							setState('error');
 							return;
 						}
-						setState('activate');
+						setState('done');
+						if (gitConfig.activateWhenValidated) {
+							setDoneMessage(
+								'Your GitOps is configured successfully and will be activated once validated',
+							);
+							return;
+						}
+						setDoneMessage(
+							'Your GitOps is configured succesffuly. To complete the setup, remember to activate it later',
+						);
 					}}
 				/>
 			)}
-			{state === 'activate' && (
-				<>
-					<Activate
-						apiKey={ApiKey}
-						projectKey={projectKey}
-						repoKey={gitConfig.key}
-						onError={errormessage => {
-							setError(errormessage);
-							setState('error');
-						}}
-						onActivate={isConfigured => {
-							if (isConfigured) {
-								setDoneMessage(
-									'Your GitOps is configured and activated sucessfully',
-								);
-							} else {
-								setDoneMessage(
-									'Your GitOps is configured successfully. To complete the setup, remember to activate it later.',
-								);
-							}
-							setState('done');
-						}}
-					/>
-				</>
-			)}
+
 			{state === 'done' && (
 				<Box margin={1}>
 					<Text color={'green'}>{doneMessage}</Text>
