@@ -1,17 +1,23 @@
-import { describe, vi, it, expect } from "vitest";
-import * as api from "../../source/lib/api";
+import { describe, vi, it, expect } from 'vitest';
+import * as api from '../../source/lib/api';
 global.fetch = vi.fn();
-describe("API", () => {
-    it("should call the apiCall", async()=>{
-        (fetch as any).mockResolvedValueOnce({
-            headers: {},
-            status: 200,
-            json: async () =>({id: "testId", name: "testName"})
-        });
-        const response = await api.apiCall("testEndpoint", "testToken", "testCookie", "GET", "testBody");
-        expect(response.status).toBe(200);
-        expect(response.response.id).toBe("testId");
-        expect(response.response.name).toBe("testName");
-        expect(response.headers).toEqual({});
-    })
-})
+describe('API', () => {
+	it('should call the apiCall', async () => {
+		(fetch as any).mockResolvedValueOnce({
+			headers: {},
+			status: 200,
+			json: async () => ({ id: 'testId', name: 'testName' }),
+		});
+		const response = await api.apiCall(
+			'testEndpoint',
+			'testToken',
+			'testCookie',
+			'GET',
+			'testBody',
+		);
+		expect(response.status).toBe(200);
+		expect(response.response.id).toBe('testId');
+		expect(response.response.name).toBe('testName');
+		expect(response.headers).toEqual({});
+	});
+});

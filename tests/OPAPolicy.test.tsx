@@ -11,15 +11,16 @@ describe('OPA Policy Command', () => {
 		const options = {
 			serverUrl: 'http://localhost:8181',
 			keyAccount: 'testAccount',
-			apiKey: "permit_key_".concat("a".repeat(97)),
+			apiKey: 'permit_key_'.concat('a'.repeat(97)),
 		};
 		(fetch as any).mockResolvedValueOnce({
-			ok:true,
-			json:async ()=> ({
-				result:[
-						{ id: 'policy1', name: 'policyName1' },
-						{ id: 'policy2', name: 'policyName2' },
-					]}),
+			ok: true,
+			json: async () => ({
+				result: [
+					{ id: 'policy1', name: 'policyName1' },
+					{ id: 'policy2', name: 'policyName2' },
+				],
+			}),
 			status: 200,
 		});
 		const { stdin, lastFrame } = render(<Policy options={options} />);
@@ -31,7 +32,6 @@ describe('OPA Policy Command', () => {
 		expect(lastFrame()?.toString()).toMatch('policy1');
 		expect(lastFrame()?.toString()).toMatch('policy2');
 		stdin.write(enter);
-	
 	});
 	it('should render the policy command with error', async () => {
 		const options = {

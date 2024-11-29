@@ -87,7 +87,7 @@ async function configurePermit(
 			status: gitConfigResponse.status,
 		};
 	} else {
-		throw new Error('Invalid Configuration ' + response);
+		throw new Error('Invalid Configuration ');
 	}
 }
 
