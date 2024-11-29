@@ -45,6 +45,7 @@ type GitConfig = {
 		privateKey: string;
 	};
 	key: string;
+	activateWhenValidated: boolean;
 };
 
 async function configurePermit(
@@ -62,6 +63,7 @@ async function configurePermit(
 			private_key: gitconfig.credentials.privateKey,
 		},
 		key: gitconfig.key,
+		activate_when_validated: gitconfig.activateWhenValidated,
 	};
 	const response = await apiCall(
 		endpoint,
@@ -89,28 +91,10 @@ async function configurePermit(
 	}
 }
 
-async function activateRepo(
-	apiKey: string,
-	projectKey: string,
-	repoId: string,
-): Promise<boolean> {
-	const activateResponse = await apiCall(
-		`v2/projects/${projectKey}/repos/${repoId}/activate`,
-		apiKey,
-		'',
-		'PUT',
-	);
-	if (activateResponse.status === 400) {
-		throw new Error('Invalid Repo Status');
-	}
-	return true;
-}
-
 export {
 	getProjectList,
 	getRepoList,
 	generateSSHKey,
 	configurePermit,
-	activateRepo,
 	GitConfig,
 };

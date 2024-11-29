@@ -15,6 +15,15 @@ export const options = zod.object({
 				alias: 'k',
 			}),
 		),
+	inactive: zod
+		.boolean()
+		.optional()
+		.describe(
+			option({
+				description: 'Do not activate the repository When Validated',
+				alias: 'i',
+			}),
+		),
 });
 
 type Props = {
@@ -24,7 +33,10 @@ type Props = {
 export default function GitHub({ options }: Props) {
 	return (
 		<AuthProvider>
-			<GitHubComponent authKey={options.key} />
+			<GitHubComponent
+				authKey={options.key}
+				inactivateWhenValidated={options.inactive}
+			/>
 		</AuthProvider>
 	);
 }
