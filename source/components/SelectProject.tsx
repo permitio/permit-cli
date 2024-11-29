@@ -42,6 +42,10 @@ const SelectProject: React.FC<Props> = ({
 				return;
 			}
 
+			if (projects.length === 1 && projects[0]) {
+				onComplete({ label: projects[0].name, value: projects[0].id });
+			}
+
 			setProjects(
 				projects.map(project => ({ label: project.name, value: project.id })),
 			);

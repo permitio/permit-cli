@@ -45,6 +45,10 @@ const SelectEnvironment: React.FC<Props> = ({
 				return;
 			}
 
+			if (environments.length === 1 && environments[0]) {
+				onComplete({ label: environments[0].name, value: environments[0].id });
+			}
+
 			setEnvironments(
 				environments.map(env => ({ label: env.name, value: env.id })),
 			);

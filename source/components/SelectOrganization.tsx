@@ -62,6 +62,13 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 				}
 			}
 
+			if (orgs.length === 1 && orgs[0]) {
+				onComplete({
+					label: orgs[0].name,
+					value: orgs[0].id,
+				});
+			}
+
 			setOrgs(
 				orgs.map((org: Organization) => ({
 					label: org.name,

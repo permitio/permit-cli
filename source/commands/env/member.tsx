@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Text } from 'ink';
 import Spinner from 'ink-spinner';
 import { option } from 'pastel';
+import { TextInput } from '@inkjs/ui';
 
 import { TokenType, tokenType } from '../../lib/auth.js';
 import zod from 'zod';
 import { type infer as zInfer } from 'zod';
 import { ApiKeyScope, useApiKeyApi } from '../../hooks/useApiKeyApi.js';
-import { Form, FormProps } from 'ink-form';
+import SelectInput from 'ink-select-input';
 import { useMemberApi } from '../../hooks/useMemberApi.js';
 import EnvironmentSelection, {
 	ActiveState,
@@ -33,10 +34,11 @@ interface MemberInviteResult {
 
 export default function Member({ options: { key: apiKey } }: Props) {
 	const [error, setError] = React.useState<string | null>(null);
-	const [state, setState] = useState<'loading' | 'selecting' | 'done'>(
-		'loading',
-	);
+	const [state, setState] = useState<
+		'loading' | 'selecting' | 'input-email' | 'input-role' | 'done'
+	>('loading');
 	const [keyScope, setKeyScope] = useState<ApiKeyScope | null>(null);
+	const [email, setEmail] = useState<string | null>(null);
 
 	const { getApiKeyScope } = useApiKeyApi();
 	const { inviteNewMember } = useMemberApi();
@@ -49,32 +51,6 @@ export default function Member({ options: { key: apiKey } }: Props) {
 			value: 'read',
 		},
 	];
-
-	const form: FormProps = {
-		form: {
-			title: 'Invite a user to your environment',
-			sections: [
-				{
-					title: 'Member Email',
-					fields: [
-						{
-							type: 'string',
-							name: 'memberEmail',
-							label: 'Email of the member to invite',
-							required: true,
-						},
-						{
-							type: 'select',
-							name: 'memberRole',
-							label: 'Select Role',
-							options: rolesOptions,
-							required: true,
-						},
-					],
-				},
-			],
-		},
-	};
 
 	useEffect(() => {
 		if (error || state === 'done') {
@@ -104,8 +80,7 @@ export default function Member({ options: { key: apiKey } }: Props) {
 		setState('selecting');
 	}, [apiKey]);
 
-	const handleMemberInvite = (result: object) => {
-		const memberInvite = result as MemberInviteResult;
+	const handleMemberInvite = async (memberInvite: MemberInviteResult) => {
 		const requestBody = {
 			email: memberInvite.memberEmail,
 			permissions: [
@@ -117,14 +92,12 @@ export default function Member({ options: { key: apiKey } }: Props) {
 			],
 		};
 
-		(async () => {
-			const { error } = await inviteNewMember(apiKey ?? '', requestBody);
-			if (error) {
-				setError(error);
-				return;
-			}
-			setState('done');
-		})();
+		const { error } = await inviteNewMember(apiKey ?? '', requestBody);
+		if (error) {
+			setError(error);
+			return;
+		}
+		setState('done');
 	};
 
 	const onEnvironmentSelectSuccess = (
@@ -135,6 +108,7 @@ export default function Member({ options: { key: apiKey } }: Props) {
 	) => {
 		if (keyScope && keyScope.environment_id !== environment.value) {
 			setKeyScope({ ...keyScope, environment_id: environment.value });
+			setState('input-email');
 		}
 	};
 
@@ -154,8 +128,31 @@ export default function Member({ options: { key: apiKey } }: Props) {
 					onError={setError}
 				/>
 			)}
-			{apiKey && state === 'selecting' && keyScope?.environment_id && (
-				<Form {...form} onSubmit={handleMemberInvite} />
+			{apiKey && state === 'input-email' && keyScope?.environment_id && (
+				<>
+					<Text>User EmailId: </Text>
+					<TextInput
+						placeholder="Enter User Email"
+						onSubmit={email_input => {
+							setEmail(email_input);
+							setState('input-role');
+						}}
+					/>
+				</>
+			)}
+			{apiKey && state === 'input-role' && keyScope?.environment_id && (
+				<>
+					<Text>Select a scope</Text>
+					<SelectInput
+						items={rolesOptions}
+						onSelect={role =>
+							handleMemberInvite({
+								memberEmail: email ?? '',
+								memberRole: role.value,
+							})
+						}
+					/>
+				</>
 			)}
 			{state === 'done' && <Text>User Invited Successfully !</Text>}
 			{error && <Text>{error}</Text>}
