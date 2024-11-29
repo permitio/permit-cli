@@ -27,7 +27,6 @@ export const tokenType = (token: string): TokenType => {
 	if (token.split('.').length === 3) {
 		return TokenType.AccessToken;
 	}
-
 	return TokenType.Invalid;
 };
 
