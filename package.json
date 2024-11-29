@@ -14,28 +14,29 @@
 		"dev": " NODE_NO_WARNINGS=1 tsc --watch",
 		"lint": "eslint \"source/**/*.{js,ts,tsx}\"",
 		"lint:fix": "eslint \"source/**/*.{js,ts,tsx}\" --fix",
-		"test": "prettier --check ./source && npx tsx --test test*.tsx",
+		"test": "prettier --check ./source && vitest run --coverage",
 		"simple-check": "npx tsx ./source/cli.tsx pdp check -u filip@permit.io -a create -r task"
 	},
 	"files": [
 		"dist"
 	],
 	"dependencies": {
+		"clipboardy": "^4.0.0",
 		"delay": "^6.0.0",
 		"fuse.js": "^7.0.0",
 		"ink": "^5.1.0",
 		"ink-ascii": "^0.0.4",
 		"ink-big-text": "^2.0.0",
-		"ink-form": "^2.0.1",
 		"ink-gradient": "^3.0.0",
 		"ink-select-input": "^6.0.0",
 		"ink-spinner": "^5.0.0",
+		"ink-text-input": "^6.0.0",
 		"keytar": "^7.9.0",
+		"micro-key-producer": "^0.7.2",
 		"open": "^10.1.0",
 		"pastel": "^3.0.0",
 		"permitio": "^2.7.2",
 		"react": "^18.2.0",
-		"vitest": "^2.1.5",
 		"zod": "^3.21.4"
 	},
 	"devDependencies": {
@@ -44,7 +45,10 @@
 		"@types/react": "^18.0.32",
 		"@typescript-eslint/eslint-plugin": "^8.12.2",
 		"@typescript-eslint/parser": "^8.12.2",
+		"@vitest/coverage-istanbul": "^2.1.5",
+		"@vitest/coverage-v8": "^2.1.5",
 		"chalk": "^5.2.0",
+		"delay": "^6.0.0",
 		"eslint": "^9.13.0",
 		"eslint-config-prettier": "^9.1.0",
 		"eslint-config-xo-react": "^0.27.0",
@@ -55,10 +59,12 @@
 		"eslint-plugin-sonarjs": "^2.0.4",
 		"globals": "^15.11.0",
 		"ink-testing-library": "^4.0.0",
+		"jsdom": "^25.0.1",
 		"parser": "^0.1.4",
 		"prettier": "^3.3.3",
 		"ts-node": "^10.9.1",
 		"typescript": "^5.6.3",
-		"typescript-eslint": "^8.11.0"
+		"typescript-eslint": "^8.11.0",
+		"vitest": "^2.1.5"
 	}
 }
