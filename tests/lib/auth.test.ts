@@ -1,17 +1,18 @@
 import { describe, vi, it, expect } from 'vitest';
 import * as auth from '../../source/lib/auth';
 import pkg from 'keytar';
-import delay from 'delay';
+import * as http from 'http';
 import {
 	KEYSTORE_PERMIT_SERVICE_NAME,
 	DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
 } from '../../source/config';
-import http from 'http';
 import open from 'open';
-import { randomBytes, createHash } from 'crypto';
 
-vi.mock('node:http', () => ({
-	createServer: vi.fn(),
+vi.mock('http', () => ({
+	createServer: vi.fn().mockReturnValue({
+		listen: vi.fn(),
+		close: vi.fn(),
+	}),
 }));
 vi.mock('open', () => ({
 	default: vi.fn(),
@@ -24,8 +25,6 @@ vi.mock('node:crypto', () => ({
 		digest: vi.fn(() => Buffer.from('mock-hash')),
 	})),
 }));
-
-global.fetch = vi.fn();
 
 describe('Token Type', () => {
 	it('Should return correct token type', async () => {
@@ -84,5 +83,11 @@ describe('Clean Auth Token', () => {
 			DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
 		);
 		expect(result).toBeNull();
+	});
+});
+describe('Browser Auth', () => {
+	it('Should open browser', async () => {
+		await auth.browserAuth();
+		expect(open).toHaveBeenCalled();
 	});
 });
