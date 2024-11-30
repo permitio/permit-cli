@@ -7,29 +7,65 @@ import Spinner from 'ink-spinner';
 import { keyAccountOption } from '../../options/keychain.js';
 import * as keytar from 'keytar';
 import { inspect } from 'util';
+import { parseAttributes } from '../../utils/attributes.js';
 
 export const options = zod.object({
 	user: zod
 		.string()
+		.min(1, 'User identifier cannot be empty')
 		.describe(
-			option({ description: 'Unique Identity to check for', alias: 'u' }),
+			option({
+				description: 'Unique Identity to check for (Required)',
+				alias: 'u',
+			}),
+		),
+	userAttributes: zod
+		.string()
+		.optional()
+		.describe(
+			option({
+				description:
+					'User attributes in format key1:value1,key2:value2 (Optional)',
+				alias: 'ua',
+			}),
 		),
 	resource: zod
 		.string()
-		.describe(option({ description: 'Resource being accessed', alias: 'r' })),
-	action: zod.string().describe(
-		option({
-			description: 'Action being performed on the resource by the user',
-			alias: 'a',
-		}),
-	),
+		.min(1, 'Resource cannot be empty')
+		.describe(
+			option({
+				description: 'Resource being accessed (Required)',
+				alias: 'r',
+			}),
+		),
+	resourceAttributes: zod
+		.string()
+		.optional()
+		.describe(
+			option({
+				description:
+					'Resource attributes in format key1:value1,key2:value2 (Optional)',
+				alias: 'ra',
+			}),
+		),
+	action: zod
+		.string()
+		.min(1, 'Action cannot be empty')
+		.describe(
+			option({
+				description:
+					'Action being performed on the resource by the user (Required)',
+				alias: 'a',
+			}),
+		),
 	tenant: zod
 		.string()
 		.optional()
 		.default('default')
 		.describe(
 			option({
-				description: 'the tenant the resource belongs to',
+				description:
+					'The tenant the resource belongs to (Optional, defaults to "default")',
 				alias: 't',
 			}),
 		),
@@ -37,7 +73,8 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description: 'The URL of the PDP service. Default to the cloud PDP.',
+				description:
+					'The URL of the PDP service. Default to the cloud PDP. (Optional)',
 			}),
 		),
 	apiKey: zod
@@ -45,7 +82,8 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description: 'The API key for the Permit env, project or Workspace',
+				description:
+					'The API key for the Permit env, project or Workspace (Optional)',
 			}),
 		),
 	keyAccount: keyAccountOption,
@@ -61,37 +99,59 @@ interface AllowedResult {
 
 export default function Check({ options }: Props) {
 	const [error, setError] = React.useState('');
-	// result of API
 	const [res, setRes] = React.useState<AllowedResult>({ allow: undefined });
 
 	const queryPDP = async (apiKey: string) => {
-		const response = await fetch(`${options.pdpurl || CLOUD_PDP_URL}/allowed`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
-			},
-			body: JSON.stringify({
-				user: { key: options.user },
-				resource: {
-					type: options.resource.includes(':')
-						? options.resource.split(':')[0]
-						: options.resource,
-					key: options.resource.includes(':')
-						? options.resource.split(':')[1]
-						: '',
-					tenant: options.tenant,
+		try {
+			const userAttrs = options.userAttributes
+				? parseAttributes(options.userAttributes)
+				: {};
+			const resourceAttrs = options.resourceAttributes
+				? parseAttributes(options.resourceAttributes)
+				: {};
+
+			const response = await fetch(
+				`${options.pdpurl || CLOUD_PDP_URL}/allowed`,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+					},
+					body: JSON.stringify({
+						user: {
+							key: options.user,
+							...userAttrs,
+						},
+						resource: {
+							type: options.resource.includes(':')
+								? options.resource.split(':')[0]
+								: options.resource,
+							key: options.resource.includes(':')
+								? options.resource.split(':')[1]
+								: '',
+							tenant: options.tenant,
+							...resourceAttrs,
+						},
+						action: options.action,
+					}),
 				},
-				action: options.action,
-			}),
-		});
+			);
 
-		if (!response.ok) {
-			setError(await response.text());
-			return;
+			if (!response.ok) {
+				const errorText = await response.text();
+				setError(errorText);
+				return;
+			}
+
+			setRes(await response.json());
+		} catch (err) {
+			if (err instanceof Error) {
+				setError(err.message);
+			} else {
+				setError(String(err));
+			}
 		}
-
-		setRes(await response.json());
 	};
 
 	React.useEffect(() => {
@@ -109,10 +169,15 @@ export default function Check({ options }: Props) {
 
 	return (
 		<>
+			{/* The following text adheres to react/no-unescaped-entities rule */}
 			<Text>
-				Checking user=&quot;{options.user}&quot; action={options.action}{' '}
-				resource=
-				{options.resource} at tenant={options.tenant}
+				Checking user=&quot;{options.user}&quot;
+				{options.userAttributes && ` with attributes=${options.userAttributes}`}
+				action={options.action} resource=
+				{options.resource}
+				{options.resourceAttributes &&
+					` with attributes=${options.resourceAttributes}`}
+				at tenant={options.tenant}
 			</Text>
 			{res.allow === true && (
 				<>
@@ -129,10 +194,10 @@ export default function Check({ options }: Props) {
 				</>
 			)}
 			{res.allow === false && <Text color={'red'}> DENIED</Text>}
-			{res.allow === undefined && error === null && <Spinner type="dots" />}
+			{res.allow === undefined && error === '' && <Spinner type="dots" />}
 			{error && (
 				<Box>
-					<Text color="red">Request failed: {JSON.stringify(error)}</Text>
+					<Text color="red">Request failed: {error}</Text>
 					<Newline />
 					<Text>{JSON.stringify(res)}</Text>
 				</Box>
