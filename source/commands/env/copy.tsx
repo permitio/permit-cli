@@ -48,8 +48,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:
-					'Environment Id to copy from, (Defaults to the current selected environment)',
+				description: 'Environment Id to copy from',
 			}),
 		),
 	conflictStrategy: zod
@@ -87,11 +86,12 @@ export default function Copy({
 }: Props) {
 	const [error, setError] = React.useState<string | null>(null);
 	const [authToken, setAuthToken] = React.useState<string | null>(null);
-	const [state, setState] = useState<'loading' | 'selecting' | 'done'>(
-		'loading',
-	);
+	const [state, setState] = useState<
+		'loading' | 'selecting-id' | 'selecting-name' | 'done'
+	>('loading');
 	const [projectFrom, setProjectFrom] = useState<string | null>(null);
-	const [envTo, setEnvTo] = useState<string | null>(null);
+	const [envToId, setEnvToId] = useState<string | null>(null);
+	const [envToName, setEnvToName] = useState<string | undefined>(envName);
 	const [envFrom, setEnvFrom] = useState<string | null>(null);
 
 	const { getApiKeyScope } = useApiKeyApi();
@@ -148,17 +148,17 @@ export default function Copy({
 			setState('done');
 		};
 
-		if ((envName || envTo) && envFrom) {
+		if ((envToName || envToId) && envFrom) {
 			handleEnvCopy({
-				newEnvKey: envName,
-				newEnvName: envName,
+				newEnvKey: envToName,
+				newEnvName: envToName,
 				newEnvDescription: envDescription,
-				existingEnvId: envTo,
+				existingEnvId: envToId,
 				scope: scope,
 				conflictStrategy: conflictStrategy,
 			});
 		}
-	}, [envTo, existing, envName, envFrom]);
+	}, [envToId, existing, envToName, envFrom]);
 
 	useEffect(() => {
 		// Step 1, we use the API Key provided by the user &
@@ -192,7 +192,11 @@ export default function Copy({
 		_secret: string,
 	) => {
 		setEnvFrom(environment_id.value);
-		setState('selecting');
+		if (existing) {
+			setState('selecting-id');
+		} else if (!envToName) {
+			setState('selecting-name');
+		}
 	};
 
 	return (
@@ -208,17 +212,21 @@ export default function Copy({
 					/>
 				</>
 			)}
-			{authToken &&
-				state === 'selecting' &&
-				existing &&
-				!envTo &&
-				!envName &&
-				envFrom && (
-					<>
-						<Text>Input the existing EnvironmentId to copy to.</Text>
-						<TextInput onSubmit={setEnvTo} placeholder={'Enter Id here...'} />
-					</>
-				)}
+			{authToken && state === 'selecting-id' && envFrom && (
+				<>
+					<Text>Input the existing EnvironmentId to copy to.</Text>
+					<TextInput onSubmit={setEnvToId} placeholder={'Enter Id here...'} />
+				</>
+			)}
+			{authToken && state === 'selecting-name' && envFrom && (
+				<>
+					<Text>Input the new Environment name to copy to.</Text>
+					<TextInput
+						onSubmit={setEnvToName}
+						placeholder={'Enter name here...'}
+					/>
+				</>
+			)}
 			{state === 'done' && <Text>Environment copied successfully</Text>}
 			{error && <Text>{error}</Text>}
 		</>
