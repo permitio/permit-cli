@@ -10,6 +10,7 @@ import { useEnvironmentApi } from '../../hooks/useEnvironmentApi.js';
 import EnvironmentSelection, {
 	ActiveState,
 } from '../../components/EnvironmentSelection.js';
+import SelectInput from 'ink-select-input';
 
 export const options = zod.object({
 	key: zod.string().describe(
@@ -43,14 +44,6 @@ export const options = zod.object({
 				description: 'Description for the new environment to copy to',
 			}),
 		),
-	scope: zod
-		.string()
-		.optional()
-		.describe(
-			option({
-				description: 'Environment Id to copy from',
-			}),
-		),
 	conflictStrategy: zod
 		.string()
 		.optional()
@@ -71,28 +64,31 @@ interface EnvCopyBody {
 	newEnvName?: string | null;
 	newEnvDescription?: string | null;
 	conflictStrategy?: string | null;
-	scope?: string | null;
 }
 
 export default function Copy({
-	options: {
-		key: apiKey,
-		existing,
-		envName,
-		envDescription,
-		scope,
-		conflictStrategy,
-	},
+	options: { key: apiKey, existing, envName, envDescription, conflictStrategy },
 }: Props) {
 	const [error, setError] = React.useState<string | null>(null);
 	const [authToken, setAuthToken] = React.useState<string | null>(null);
 	const [state, setState] = useState<
-		'loading' | 'selecting-id' | 'selecting-name' | 'done'
+		| 'loading'
+		| 'selecting-id'
+		| 'selecting-name'
+		| 'selecting-description'
+		| 'selecting-strategy'
+		| 'done'
 	>('loading');
 	const [projectFrom, setProjectFrom] = useState<string | null>(null);
 	const [envToId, setEnvToId] = useState<string | null>(null);
 	const [envToName, setEnvToName] = useState<string | undefined>(envName);
 	const [envFrom, setEnvFrom] = useState<string | null>(null);
+	const [envToDescription, setEnvToDescription] = useState<string | undefined>(
+		envDescription,
+	);
+	const [envToConflictStrategy, setEnvToConflictStrategy] = useState<
+		string | undefined
+	>(conflictStrategy);
 
 	const { getApiKeyScope } = useApiKeyApi();
 	const { copyEnvironment } = useEnvironmentApi();
@@ -121,19 +117,12 @@ export default function Copy({
 					},
 				};
 			}
-			if (conflictStrategy) {
+			if (envToConflictStrategy) {
 				body = {
 					...body,
-					conflict_strategy: envCopyBody.conflictStrategy ?? '',
+					conflict_strategy: envCopyBody.conflictStrategy ?? 'fail',
 				};
 			}
-			if (scope) {
-				body = {
-					...body,
-					scope: envCopyBody.scope ?? '',
-				};
-			}
-
 			const { error } = await copyEnvironment(
 				projectFrom ?? '',
 				envFrom ?? '',
@@ -148,17 +137,26 @@ export default function Copy({
 			setState('done');
 		};
 
-		if ((envToName || envToId) && envFrom) {
+		if (
+			((envToName && envToDescription && envToConflictStrategy) || envToId) &&
+			envFrom
+		) {
 			handleEnvCopy({
 				newEnvKey: envToName,
 				newEnvName: envToName,
-				newEnvDescription: envDescription,
+				newEnvDescription: envToDescription,
 				existingEnvId: envToId,
-				scope: scope,
-				conflictStrategy: conflictStrategy,
+				conflictStrategy: envToConflictStrategy,
 			});
 		}
-	}, [envToId, existing, envToName, envFrom]);
+	}, [
+		envToId,
+		existing,
+		envToName,
+		envFrom,
+		envToDescription,
+		envToConflictStrategy,
+	]);
 
 	useEffect(() => {
 		// Step 1, we use the API Key provided by the user &
@@ -222,11 +220,43 @@ export default function Copy({
 				<>
 					<Text>Input the new Environment name to copy to.</Text>
 					<TextInput
-						onSubmit={setEnvToName}
+						onSubmit={name => {
+							setEnvToName(name);
+							setState('selecting-description');
+						}}
 						placeholder={'Enter name here...'}
 					/>
 				</>
 			)}
+			{authToken && state === 'selecting-description' && !envToDescription && (
+				<>
+					<Text>Input the new Environment Description.</Text>
+					<TextInput
+						onSubmit={description => {
+							setEnvToDescription(description);
+							setState('selecting-strategy');
+						}}
+						placeholder={'Enter description here...'}
+					/>
+				</>
+			)}
+			{authToken &&
+				state === 'selecting-strategy' &&
+				!envToConflictStrategy && (
+					<>
+						<Text>Select the conflict strategy</Text>
+						<SelectInput
+							onSelect={strategy => {
+								setEnvToConflictStrategy(strategy.value);
+							}}
+							items={[
+								{ label: 'fail', value: 'fail' },
+								{ label: 'overwrite', value: 'overwrite' },
+							]}
+						/>
+					</>
+				)}
+
 			{state === 'done' && <Text>Environment copied successfully</Text>}
 			{error && <Text>{error}</Text>}
 		</>
