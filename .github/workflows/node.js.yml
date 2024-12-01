@@ -28,4 +28,7 @@ jobs:
       - run: npm ci
       - run: npm run build --if-present
       - run: npm run lint
-      - run: npm run test
+      - name: Testing 
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          run: npm run test
