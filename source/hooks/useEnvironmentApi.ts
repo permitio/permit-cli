@@ -1,4 +1,5 @@
 import { apiCall } from '../lib/api.js';
+import { useMemo } from 'react';
 
 type Environment = {
 	key: string;
@@ -58,9 +59,12 @@ export const useEnvironmentApi = () => {
 		);
 	};
 
-	return {
-		getEnvironments,
-		getEnvironment,
-		copyEnvironment,
-	};
+	return useMemo(
+		() => ({
+			getEnvironments,
+			getEnvironment,
+			copyEnvironment,
+		}),
+		[],
+	);
 };

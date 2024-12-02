@@ -1,4 +1,5 @@
 import { apiCall } from '../lib/api.js';
+import { useMemo } from 'react';
 
 export type Role = {
 	id: string; // UUID: Unique id of the role
@@ -30,7 +31,10 @@ export const useRolesApi = () => {
 		);
 	};
 
-	return {
-		getRoles,
-	};
+	return useMemo(
+		() => ({
+			getRoles,
+		}),
+		[],
+	);
 };

@@ -159,6 +159,10 @@ export default function Copy({
 		envFrom,
 		envToDescription,
 		envToConflictStrategy,
+		envName,
+		copyEnvironment,
+		projectFrom,
+		apiKey,
 	]);
 
 	useEffect(() => {
@@ -184,7 +188,7 @@ export default function Copy({
 			setError('Invalid API Key. Please provide a valid API Key.');
 			return;
 		}
-	}, [apiKey]);
+	}, [apiKey, getApiKeyScope]);
 
 	const handleEnvFromSelection = (
 		_organisation_id: ActiveState,

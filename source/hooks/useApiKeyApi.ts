@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { apiCall } from '../lib/api.js';
 
 export interface ApiKeyScope {
@@ -24,8 +25,11 @@ export const useApiKeyApi = () => {
 		return await apiCall<ApiKeyScope>(`v2/api-key/scope`, accessToken);
 	};
 
-	return {
-		getProjectEnvironmentApiKey,
-		getApiKeyScope,
-	};
+	return useMemo(
+		() => ({
+			getProjectEnvironmentApiKey,
+			getApiKeyScope,
+		}),
+		[],
+	);
 };

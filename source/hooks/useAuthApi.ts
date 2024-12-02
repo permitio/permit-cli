@@ -1,4 +1,5 @@
 import { apiCall } from '../lib/api.js';
+import { useMemo } from 'react';
 
 export const useAuthApi = () => {
 	const authSwitchOrgs = async (
@@ -18,8 +19,11 @@ export const useAuthApi = () => {
 		return await apiCall('v2/auth/login', token ?? '', '', 'POST');
 	};
 
-	return {
-		authSwitchOrgs,
-		getLogin,
-	};
+	return useMemo(
+		() => ({
+			authSwitchOrgs,
+			getLogin,
+		}),
+		[],
+	);
 };

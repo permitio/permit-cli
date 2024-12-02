@@ -55,7 +55,7 @@ const LoginFlow: React.FC<LoginFlowProps> = ({
 		setLoading(true);
 		authenticateUser();
 		setLoading(false);
-	}, [apiKey]);
+	}, [apiKey, getLogin, onError, onSuccess]);
 
 	return loading ? (
 		<Text>

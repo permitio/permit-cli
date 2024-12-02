@@ -55,7 +55,7 @@ const SelectProject: React.FC<Props> = ({
 		fetchProjects();
 
 		setLoading(false);
-	}, [accessToken, cookie]);
+	}, [accessToken, cookie, getProjects, onComplete, onError]);
 
 	return loading ? (
 		<Text>

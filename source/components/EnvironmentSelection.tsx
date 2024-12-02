@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import SelectOrganization from './SelectOrganization.js';
 import SelectProject from './SelectProject.js';
 import SelectEnvironment from './SelectEnvironment.js';
@@ -52,6 +52,9 @@ const EnvironmentSelection: React.FC<Props> = ({
 	const { getEnvironment } = useEnvironmentApi();
 	const { getOrg } = useOrganisationApi();
 
+	const stableOnComplete = useCallback(onComplete, [onComplete]);
+	const stableOnError = useCallback(onError, [onError]);
+
 	useEffect(() => {
 		// No need to verify scope on browser login
 		if (!cookie) {
@@ -69,7 +72,7 @@ const EnvironmentSelection: React.FC<Props> = ({
 					} else {
 						errorMsg = `Error while getting scopes for the ApiKey: ${error}`;
 					}
-					onError(errorMsg);
+					stableOnError(errorMsg);
 					return;
 				}
 				if (scope.environment_id && scope.project_id) {
@@ -85,7 +88,7 @@ const EnvironmentSelection: React.FC<Props> = ({
 						accessToken,
 						cookie,
 					);
-					onComplete(
+					stableOnComplete(
 						{ label: organization.name, value: organization.id },
 						{
 							label: '',
@@ -101,48 +104,76 @@ const EnvironmentSelection: React.FC<Props> = ({
 		} else {
 			setState('workspace');
 		}
-	}, [accessToken]);
+	}, [
+		accessToken,
+		cookie,
+		getApiKeyScope,
+		getEnvironment,
+		getOrg,
+		stableOnError,
+		stableOnComplete,
+	]);
 
-	async function handleSelectActiveOrganization(organization: ActiveState) {
-		if (cookie) {
-			const { headers, error } = await authSwitchOrgs(
-				organization.value,
-				accessToken,
+	const handleSelectActiveOrganization = useCallback(
+		async (organization: ActiveState) => {
+			if (cookie) {
+				const { headers, error } = await authSwitchOrgs(
+					organization.value,
+					accessToken,
+					cookie,
+				);
+
+				if (error) {
+					stableOnError(`Error while selecting active workspace: ${error}`);
+					return;
+				}
+
+				let newCookie = headers.getSetCookie()[0] ?? '';
+				setEnvCookie(newCookie);
+			}
+			setActiveOrganization(organization);
+			setState('project');
+		},
+		[accessToken, authSwitchOrgs, cookie, stableOnError],
+	);
+
+	const handleSelectActiveProject = useCallback((project: ActiveState) => {
+		setActiveProject(project);
+		setState('environment');
+	}, []);
+
+	const handleSelectActiveEnvironment = useCallback(
+		async (environment: ActiveState) => {
+			const { response, error } = await getProjectEnvironmentApiKey(
+				activeProject.value,
+				environment.value,
 				cookie,
+				accessToken,
 			);
 
 			if (error) {
-				onError(`Error while selecting active workspace: ${error}`);
+				stableOnError(`Error while getting Environment Secret: ${error}`);
 				return;
 			}
 
-			let newCookie = headers.getSetCookie()[0] ?? '';
-			setEnvCookie(newCookie);
-		}
-		setActiveOrganization(organization);
-		setState('project');
-	}
-
-	function handleSelectActiveProject(project: ActiveState) {
-		setActiveProject(project);
-		setState('environment');
-	}
-
-	async function handleSelectActiveEnvironment(environment: ActiveState) {
-		const { response, error } = await getProjectEnvironmentApiKey(
-			activeProject.value,
-			environment.value,
-			cookie,
+			setState('done');
+			stableOnComplete(
+				activeOrganization,
+				activeProject,
+				environment,
+				response.secret,
+			);
+		},
+		[
 			accessToken,
-		);
-
-		if (error) {
-			onError(`Error while getting Environment Secret: ${error}`);
-			return;
-		}
-		setState('done');
-		onComplete(activeOrganization, activeProject, environment, response.secret);
-	}
+			activeOrganization,
+			activeProject,
+			cookie,
+			getProjectEnvironmentApiKey,
+			stableOnComplete,
+			stableOnError,
+		],
+	);
 
 	return (
 		<>
@@ -154,7 +185,7 @@ const EnvironmentSelection: React.FC<Props> = ({
 					accessToken={accessToken}
 					cookie={envCookie}
 					onComplete={handleSelectActiveOrganization}
-					onError={onError}
+					onError={stableOnError}
 					workspace={workspace}
 				/>
 			)}
@@ -164,7 +195,7 @@ const EnvironmentSelection: React.FC<Props> = ({
 					accessToken={accessToken}
 					cookie={envCookie}
 					onComplete={handleSelectActiveProject}
-					onError={onError}
+					onError={stableOnError}
 				/>
 			)}
 
@@ -174,7 +205,7 @@ const EnvironmentSelection: React.FC<Props> = ({
 					cookie={envCookie}
 					activeProject={activeProject}
 					onComplete={handleSelectActiveEnvironment}
-					onError={onError}
+					onError={stableOnError}
 				/>
 			)}
 		</>

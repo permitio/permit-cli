@@ -1,4 +1,5 @@
 import { apiCall } from '../lib/api.js';
+import { useMemo } from 'react';
 
 export const useMemberApi = () => {
 	const inviteNewMember = async (authToken: string, body: object) => {
@@ -11,7 +12,10 @@ export const useMemberApi = () => {
 		);
 	};
 
-	return {
-		inviteNewMember,
-	};
+	return useMemo(
+		() => ({
+			inviteNewMember,
+		}),
+		[],
+	);
 };

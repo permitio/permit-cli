@@ -1,4 +1,5 @@
 import { apiCall } from '../lib/api.js';
+import { useMemo } from 'react';
 
 type Project = {
 	key: string;
@@ -18,7 +19,10 @@ export const useProjectAPI = () => {
 		return await apiCall<Project[]>('v2/projects', accessToken, cookie);
 	};
 
-	return {
-		getProjects,
-	};
+	return useMemo(
+		() => ({
+			getProjects,
+		}),
+		[],
+	);
 };

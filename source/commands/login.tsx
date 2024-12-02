@@ -64,21 +64,17 @@ export default function Login({ options: { key, workspace } }: Props) {
 		setState('env');
 	};
 
-	const onError = (error: string) => {
-		setError(error);
-	};
-
 	return (
 		<>
 			{state == 'login' && (
-				<LoginFlow apiKey={key} onSuccess={onLoginSuccess} onError={onError} />
+				<LoginFlow apiKey={key} onSuccess={onLoginSuccess} onError={setError} />
 			)}
 			{state === 'env' && (
 				<EnvironmentSelection
 					accessToken={accessToken}
 					cookie={cookie}
 					onComplete={onEnvironmentSelectSuccess}
-					onError={onError}
+					onError={setError}
 					workspace={workspace}
 				/>
 			)}

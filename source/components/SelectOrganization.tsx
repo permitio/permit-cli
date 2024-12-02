@@ -36,7 +36,6 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 	useEffect(() => {
 		const fetchOrgs = async () => {
 			const { response: orgs, error } = await getOrgs(accessToken, cookie);
-
 			if (error) {
 				onError(
 					`Failed to load organizations. Reason: ${error}. Please check your network connection or credentials and try again.`,
@@ -80,7 +79,7 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 
 		fetchOrgs();
 		setLoading(false);
-	}, [accessToken, cookie]);
+	}, [accessToken, cookie, getOrgs, onComplete, onError, workspace]);
 
 	return (
 		<>

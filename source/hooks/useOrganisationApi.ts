@@ -1,4 +1,5 @@
 import { apiCall } from '../lib/api.js';
+import { useMemo } from 'react';
 
 export interface UsageLimits {
 	mau: number;
@@ -36,8 +37,11 @@ export const useOrganisationApi = () => {
 		);
 	};
 
-	return {
-		getOrgs,
-		getOrg,
-	};
+	return useMemo(
+		() => ({
+			getOrgs,
+			getOrg,
+		}),
+		[],
+	);
 };

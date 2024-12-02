@@ -55,7 +55,15 @@ const SelectEnvironment: React.FC<Props> = ({
 		};
 		fetchEnvironments();
 		setState(false);
-	}, [accessToken, cookie]);
+	}, [
+		accessToken,
+		activeProject.label,
+		activeProject.value,
+		cookie,
+		getEnvironments,
+		onComplete,
+		onError,
+	]);
 
 	return (
 		<>

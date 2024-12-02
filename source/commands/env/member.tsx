@@ -17,8 +17,7 @@ import EnvironmentSelection, {
 export const options = zod.object({
 	key: zod.string().describe(
 		option({
-			description:
-				'(Optional) API Key to be used for the environment selection',
+			description: 'API Key to be used for the environment selection',
 		}),
 	),
 });
@@ -78,7 +77,7 @@ export default function Member({ options: { key: apiKey } }: Props) {
 			return;
 		}
 		setState('selecting');
-	}, [apiKey]);
+	}, [apiKey, getApiKeyScope]);
 
 	const handleMemberInvite = async (memberInvite: MemberInviteResult) => {
 		const requestBody = {
