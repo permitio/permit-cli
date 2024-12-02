@@ -104,7 +104,6 @@ export default function Member({ options: { key: apiKey } }: Props) {
 		_organisation: ActiveState,
 		_project: ActiveState,
 		environment: ActiveState,
-		_secret: string,
 	) => {
 		if (keyScope && keyScope.environment_id !== environment.value) {
 			setKeyScope({ ...keyScope, environment_id: environment.value });

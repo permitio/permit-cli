@@ -77,6 +77,7 @@ export default function Copy({
 		| 'selecting-name'
 		| 'selecting-description'
 		| 'selecting-strategy'
+		| 'copying'
 		| 'done'
 	>('loading');
 	const [projectFrom, setProjectFrom] = useState<string | null>(null);
@@ -138,7 +139,9 @@ export default function Copy({
 		};
 
 		if (
-			((envToName && envToDescription && envToConflictStrategy) || envToId) &&
+			((envToName && envToDescription && envToConflictStrategy) ||
+				envName ||
+				envToId) &&
 			envFrom
 		) {
 			handleEnvCopy({
@@ -187,12 +190,11 @@ export default function Copy({
 		_organisation_id: ActiveState,
 		_project_id: ActiveState,
 		environment_id: ActiveState,
-		_secret: string,
 	) => {
 		setEnvFrom(environment_id.value);
 		if (existing) {
 			setState('selecting-id');
-		} else if (!envToName) {
+		} else if (!envName) {
 			setState('selecting-name');
 		}
 	};
@@ -228,7 +230,7 @@ export default function Copy({
 					/>
 				</>
 			)}
-			{authToken && state === 'selecting-description' && !envToDescription && (
+			{authToken && state === 'selecting-description' && (
 				<>
 					<Text>Input the new Environment Description.</Text>
 					<TextInput
@@ -240,22 +242,21 @@ export default function Copy({
 					/>
 				</>
 			)}
-			{authToken &&
-				state === 'selecting-strategy' &&
-				!envToConflictStrategy && (
-					<>
-						<Text>Select the conflict strategy</Text>
-						<SelectInput
-							onSelect={strategy => {
-								setEnvToConflictStrategy(strategy.value);
-							}}
-							items={[
-								{ label: 'fail', value: 'fail' },
-								{ label: 'overwrite', value: 'overwrite' },
-							]}
-						/>
-					</>
-				)}
+			{authToken && state === 'selecting-strategy' && (
+				<>
+					<Text>Select the conflict strategy</Text>
+					<SelectInput
+						onSelect={strategy => {
+							setEnvToConflictStrategy(strategy.value);
+							setState('copying');
+						}}
+						items={[
+							{ label: 'fail', value: 'fail' },
+							{ label: 'overwrite', value: 'overwrite' },
+						]}
+					/>
+				</>
+			)}
 
 			{state === 'done' && <Text>Environment copied successfully</Text>}
 			{error && <Text>{error}</Text>}

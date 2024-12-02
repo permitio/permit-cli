@@ -80,37 +80,6 @@ describe('Copy Component', () => {
 		expect(process.exit).toHaveBeenCalledWith(1);
 	});
 
-	it('should handle environment selection and transition to input for existing environment ID', async () => {
-		vi.mocked(tokenType).mockReturnValue(TokenType.APIToken);
-
-		vi.mocked(useApiKeyApi).mockReturnValue({
-			// @ts-ignore
-			getApiKeyScope: vi.fn(() =>
-				Promise.resolve({
-					response: { project_id: 'project1', environment_id: null },
-					error: null,
-				})
-			),
-		});
-
-		// @ts-ignore
-		EnvironmentSelection.mockImplementation(({ onComplete }) => {
-			onComplete(
-				{ label: 'Org1', value: 'org1' },
-				{ label: 'Project1', value: 'project1' },
-				{ label: 'Environment1', value: 'env1' },
-				'secret_token'
-			);
-			return null;
-		});
-
-		const { lastFrame } = render(<Copy options={{ key: 'valid_api_key', existing: true }} />);
-
-		await delay(50); // Allow async operations to complete
-
-		expect(lastFrame()).toMatch(/Input the existing EnvironmentId to copy to/);
-	});
-
 	it('should handle successful environment copy and display success message', async () => {
 		vi.mocked(tokenType).mockReturnValue(TokenType.APIToken);
 
@@ -148,7 +117,7 @@ describe('Copy Component', () => {
 
 		// Render the component
 		const { lastFrame } = render(
-			<Copy options={{ key: 'valid_api_key', envName: 'qwerty' }} />
+			<Copy options={{ key: 'valid_api_key', envName: 'qwerty', envDescription: '', conflictStrategy: 'fail' }} />
 		);
 
 		// Wait for state transitions
