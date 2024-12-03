@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Text } from 'ink';
 import { type infer as zInfer, object, string } from 'zod';
 import { option } from 'pastel';
@@ -39,18 +39,21 @@ export default function Login({ options: { key, workspace } }: Props) {
 	const [organization, setOrganization] = useState<string>('');
 	const [environment, setEnvironment] = useState<string>('');
 
-	const onEnvironmentSelectSuccess = async (
-		organisation: ActiveState,
-		_project: ActiveState,
-		environment: ActiveState,
-		secret: string,
-	) => {
-		setOrganization(organisation.label);
-		setEnvironment(environment.label);
-		await saveAuthToken(secret);
-		setState('done');
-		process.exit(1);
-	};
+	const onEnvironmentSelectSuccess = useCallback(
+		async (
+			organisation: ActiveState,
+			_project: ActiveState,
+			environment: ActiveState,
+			secret: string,
+		) => {
+			setOrganization(organisation.label);
+			setEnvironment(environment.label);
+			await saveAuthToken(secret);
+			setState('done');
+			process.exit(1);
+		},
+		[],
+	);
 
 	useEffect(() => {
 		if (error) {
@@ -58,11 +61,11 @@ export default function Login({ options: { key, workspace } }: Props) {
 		}
 	}, [error]);
 
-	const onLoginSuccess = (accessToken: string, cookie: string) => {
+	const onLoginSuccess = useCallback((accessToken: string, cookie: string) => {
 		setAccessToken(accessToken);
 		setCookie(cookie);
 		setState('env');
-	};
+	}, []);
 
 	return (
 		<>
