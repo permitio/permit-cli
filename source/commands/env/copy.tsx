@@ -144,6 +144,7 @@ export default function Copy({
 				envToId) &&
 			envFrom
 		) {
+			setState('copying');
 			handleEnvCopy({
 				newEnvKey: envToName,
 				newEnvName: envToName,
