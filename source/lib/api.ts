@@ -1,6 +1,7 @@
 import { PERMIT_API_URL } from '../config.js';
 
 interface ApiResponseData {
+    [x: string]: any;
 	id?: string;
 	name?: string;
 }
