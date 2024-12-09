@@ -1,0 +1,238 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReBAC Graph</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
+    <script src="https://unpkg.com/cytoscape-dagre/cytoscape-dagre.js"></script>
+    <style>
+       body {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    height: 100vh;
+    background-color: #1e1e1e;
+    font-family: Arial, sans-serif;
+    color: #ffffff;
+}
+
+#title {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffffff;
+    height: 40px; /* Fixed height for the title */
+    line-height: 40px; /* Vertically center the text */
+    background-color: #1e1e1e;
+}
+
+#cy {
+    flex: 1; /* The graph takes the remaining space */
+    width: 100%;
+    background-color: #000000;
+    padding: 10px;
+}
+
+    </style>
+</head>
+<body>
+    <div id="title">Permit ReBAC Graph</div>
+    <div id="cy"></div>
+    <script>
+        const graphData = {
+  "nodes": [
+    {
+      "data": {
+        "id": "031b5cbf811b47569756c311cda60303",
+        "label": "Resource: hii"
+      }
+    },
+    {
+      "data": {
+        "id": "1b75f6752452425aa4a49ce44b77af3f",
+        "label": "Resource: king"
+      }
+    },
+    {
+      "data": {
+        "id": "2a443416a3e1407e9e26c620204ff504",
+        "label": "Resource: queen"
+      }
+    },
+    {
+      "data": {
+        "id": "64468910937e41c9999d491788221fe8",
+        "label": "Resource: hii"
+      }
+    },
+    {
+      "data": {
+        "id": "8468341e1afd4275a773cfd069631e0a",
+        "label": "Resource: king"
+      }
+    },
+    {
+      "data": {
+        "id": "97fcc6bb2c534106bffbea436218f970",
+        "label": "Resource: king"
+      }
+    },
+    {
+      "data": {
+        "id": "bd6457c59435419bb8b503dd92252310",
+        "label": "Resource: hii"
+      }
+    },
+    {
+      "data": {
+        "id": "d747ace5fcee4e78b2710374c6c2dbbf",
+        "label": "Resource: hii"
+      }
+    },
+    {
+      "data": {
+        "id": "f95e720a1ce34e649bf7cf261ebdb555",
+        "label": "Resource: hii"
+      }
+    },
+    {
+      "data": {
+        "id": "king:king",
+        "label": "Resource: king:king"
+      }
+    },
+    {
+      "data": {
+        "id": "king:react",
+        "label": "Resource: king:react"
+      }
+    },
+    {
+      "data": {
+        "id": "6784",
+        "label": "User: 6784"
+      }
+    },
+    {
+      "data": {
+        "id": "role:HarshitChourasiya",
+        "label": "Role: HarshitChourasiya"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "source": "1b75f6752452425aa4a49ce44b77af3f",
+        "target": "king:king",
+        "label": "owner → king:king"
+      }
+    },
+    {
+      "data": {
+        "source": "1b75f6752452425aa4a49ce44b77af3f",
+        "target": "king:king",
+        "label": "parent → king:king"
+      }
+    },
+    {
+      "data": {
+        "source": "2a443416a3e1407e9e26c620204ff504",
+        "target": "king:king",
+        "label": "parent → king:king"
+      }
+    },
+    {
+      "data": {
+        "source": "8468341e1afd4275a773cfd069631e0a",
+        "target": "king:react",
+        "label": "owner → king:react"
+      }
+    },
+    {
+      "data": {
+        "source": "97fcc6bb2c534106bffbea436218f970",
+        "target": "king:react",
+        "label": "owner → king:react"
+      }
+    },
+    {
+      "data": {
+        "source": "6784",
+        "target": "role:HarshitChourasiya",
+        "label": "Assigned role"
+      }
+    },
+    {
+      "data": {
+        "source": "role:HarshitChourasiya",
+        "target": "1b75f6752452425aa4a49ce44b77af3f",
+        "label": "Grants access"
+      }
+    }
+  ]
+};
+        cytoscape.use(cytoscapeDagre);
+
+        const cy = cytoscape({
+            container: document.getElementById('cy'),
+            elements: [...graphData.nodes, ...graphData.edges],
+           style: [
+    {
+    selector: 'edge',
+style: {
+    'line-color': '#00ffff',
+    'width': 2,
+    'target-arrow-shape': 'triangle',
+    'target-arrow-color': '#00ffff',
+    'curve-style': 'taxi', // Correct taxi style
+    'taxi-turn': 30, // Adjust turn distance for better visualization
+    'taxi-direction': 'downward', // Controls edge direction
+    'taxi-turn-min-distance': 20, // Ensures proper separation for multiple edges
+    'label': 'data(label)', // Add labels properly
+    'color': '#ffffff',
+    'font-size': 12,
+    'text-background-color': '#1e1e1e',
+    'text-background-opacity': 0.7,
+    'text-margin-y': -5,
+},
+
+},
+
+    {
+        selector: 'node',
+        style: {
+            'background-color': '#2b2b2b',
+            'border-color': '#00ffff',
+            'border-width': 1,
+            'shape': 'round-rectangle',
+            'label': 'data(label)',
+            'color': '#ffffff',
+            'font-size': 14,
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'width': 'label',
+            'height': 'label',
+            'padding': 30,
+        },
+    },
+],
+            layout: {
+    name: 'dagre',
+    rankDir: 'LR', // Left-to-Right layout
+    nodeSep: 70, // Spacing between nodes
+    edgeSep: 50, // Spacing between edges
+    rankSep: 150, // Spacing between ranks (hierarchical levels)
+    animate: true, // Animate the layout rendering
+    fit: true, // Fit graph to the viewport
+    padding: 20, // Padding around the graph
+    directed: true, // Keep edges directed
+    spacingFactor: 1.5, // Increase spacing between elements
+},
+        });
+    </script>
+</body>
+</html>
