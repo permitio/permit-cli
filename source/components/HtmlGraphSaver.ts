@@ -3,8 +3,8 @@ import { resolve } from 'path';
 import open from 'open';
 
 export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
-    const outputHTMLPath = resolve(process.cwd(), 'permit-graph.html');
-    const htmlTemplate = `
+	const outputHTMLPath = resolve(process.cwd(), 'permit-graph.html');
+	const htmlTemplate = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -111,7 +111,7 @@ style: {
 </body>
 </html>
 `;
-    writeFileSync(outputHTMLPath, htmlTemplate, 'utf8');
-    console.log(`Graph saved as: ${outputHTMLPath}`);
-    open(outputHTMLPath);
+	writeFileSync(outputHTMLPath, htmlTemplate, 'utf8');
+	console.log(`Graph saved as: ${outputHTMLPath}`);
+	open(outputHTMLPath);
 };

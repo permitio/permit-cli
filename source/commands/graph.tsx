@@ -5,19 +5,23 @@ import { type infer as zInfer, object, string } from 'zod';
 import { option } from 'pastel';
 
 export const options = object({
-    apiKey: string()
-        .optional()
-        .describe(option({ description: 'The API key for the Permit env, project or Workspace' })),
+	apiKey: string()
+		.optional()
+		.describe(
+			option({
+				description: 'The API key for the Permit env, project or Workspace',
+			}),
+		),
 });
 
 type Props = {
-    options: zInfer<typeof options>;
+	options: zInfer<typeof options>;
 };
 
 export default function graph({ options }: Props) {
-    return (
-        <AuthProvider>
-            <Graph options={options} />
-        </AuthProvider>
-    );
+	return (
+		<AuthProvider>
+			<Graph options={options} />
+		</AuthProvider>
+	);
 }
