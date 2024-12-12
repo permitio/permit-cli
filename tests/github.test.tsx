@@ -384,5 +384,68 @@ describe('GiHub Complete Flow', () => {
 		await delay(50);
 		const frameString = lastFrame()?.toString() ?? '';
 		expect(frameString).toMatch(/GitOps Configuration Wizard - GitHub/);
+
+
+		await delay(50);
+		stdin.write(arrowDown);
+		await delay(50);
+		stdin.write(enter);
+		await delay(50);
+		expect(lastFrame()?.toString()).toMatch(/Enter Your RepositoryKey :/);
+		await delay(50);
+		stdin.write('repo3');
+		await delay(50);
+		stdin.write(enter);
+		await delay(50);
+		expect(lastFrame()?.toString()).toMatch(/SSH Key Generated./);
+		await delay(50);
+		stdin.write('git@github.com:user/repository.git');
+		await delay(50);
+		stdin.write(enter);
+		expect(lastFrame()?.toString()).toMatch(/Enter the Branch Name:/);
+		await delay(50);
+		stdin.write('main');
+		await delay(50);
+		stdin.write(enter);
+		await delay(50);
+		expect(lastFrame()?.toString()).toMatch(
+			'Invalid configuration. Please check the configuration and try again.',
+		);
+	});
+	it('should work with inactive argument', async () => {
+		const { stdin, lastFrame } = render(
+			<GitHub options={{ key: demoPermitKey, inactive: true }} />,
+		);
+		const frameString = lastFrame()?.toString() ?? '';
+		expect(frameString).toMatch(/Loading Token/);
+		await delay(100);
+		expect(lastFrame()?.toString()).toMatch(
+			/GitOps Configuration Wizard - GitHub/,
+		);
+		await delay(50);
+		stdin.write(arrowDown);
+		await delay(50);
+		stdin.write(enter);
+		await delay(50);
+		expect(lastFrame()?.toString()).toMatch(/Enter Your RepositoryKey :/);
+		await delay(50);
+		stdin.write('repo3');
+		await delay(50);
+		stdin.write(enter);
+		await delay(50);
+		expect(lastFrame()?.toString()).toMatch(/SSH Key Generated./);
+		await delay(50);
+		stdin.write('git@github.com:user/repository.git');
+		await delay(50);
+		stdin.write(enter);
+		expect(lastFrame()?.toString()).toMatch(/Enter the Branch Name:/);
+		await delay(50);
+		stdin.write('main');
+		await delay(50);
+		stdin.write(enter);
+		await delay(50);
+		expect(lastFrame()?.toString()).toMatch(
+			/Your GitOps is configured succesffuly. To complete the setup, remember to activate it later/,
+		);
 	});
 });
