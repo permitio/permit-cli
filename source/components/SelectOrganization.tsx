@@ -10,7 +10,7 @@ import {
 
 type SelectOrganizationProps = {
 	accessToken: string;
-	cookie: string;
+	cookie?: string | null;
 	onComplete: (organization: ActiveState) => void;
 	workspace?: string;
 	onError: (error: string) => void;
@@ -35,7 +35,10 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 
 	useEffect(() => {
 		const fetchOrgs = async () => {
-			const { response: orgs, error } = await getOrgs(accessToken, cookie);
+			const { response: orgs, error } = await getOrgs(
+				accessToken,
+				cookie ?? '',
+			);
 			if (error) {
 				onError(
 					`Failed to load organizations. Reason: ${error}. Please check your network connection or credentials and try again.`,
@@ -66,15 +69,15 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 					label: orgs[0].name,
 					value: orgs[0].id,
 				});
+			} else {
+				setOrgs(
+					orgs.map((org: Organization) => ({
+						label: org.name,
+						value: org.id,
+					})),
+				);
+				setLoading(false);
 			}
-
-			setOrgs(
-				orgs.map((org: Organization) => ({
-					label: org.name,
-					value: org.id,
-				})),
-			);
-			setLoading(false);
 		};
 
 		fetchOrgs();

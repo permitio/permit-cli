@@ -7,7 +7,7 @@ import { useEnvironmentApi } from '../hooks/useEnvironmentApi.js';
 
 type Props = {
 	accessToken: string;
-	cookie: string;
+	cookie?: string | null;
 	activeProject: ActiveState;
 	onComplete: (environment: ActiveState) => void;
 	onError: (error: string) => void;

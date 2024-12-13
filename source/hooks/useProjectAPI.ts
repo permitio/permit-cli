@@ -15,7 +15,7 @@ type Project = {
 };
 
 export const useProjectAPI = () => {
-	const getProjects = async (accessToken: string, cookie: string) => {
+	const getProjects = async (accessToken: string, cookie?: string | null) => {
 		return await apiCall<Project[]>('v2/projects', accessToken, cookie);
 	};
 

@@ -28,9 +28,18 @@ export const options = object({
 
 type Props = {
 	readonly options: zInfer<typeof options>;
+	loginSuccess?: (
+		organisation: ActiveState,
+		project: ActiveState,
+		environment: ActiveState,
+		secret: string,
+	) => void;
 };
 
-export default function Login({ options: { key, workspace } }: Props) {
+export default function Login({
+	options: { key, workspace },
+	loginSuccess,
+}: Props) {
 	const [state, setState] = useState<'login' | 'env' | 'done'>('login');
 	const [accessToken, setAccessToken] = useState<string>('');
 	const [cookie, setCookie] = useState<string>('');
@@ -42,24 +51,28 @@ export default function Login({ options: { key, workspace } }: Props) {
 	const onEnvironmentSelectSuccess = useCallback(
 		async (
 			organisation: ActiveState,
-			_project: ActiveState,
+			project: ActiveState,
 			environment: ActiveState,
 			secret: string,
 		) => {
 			setOrganization(organisation.label);
 			setEnvironment(environment.label);
 			await saveAuthToken(secret);
-			setState('done');
-			process.exit(1);
+			if (loginSuccess) {
+				loginSuccess(organisation, project, environment, secret);
+				return;
+			} else {
+				setState('done');
+			}
 		},
-		[],
+		[loginSuccess],
 	);
 
 	useEffect(() => {
-		if (error) {
+		if (error || state === 'done') {
 			process.exit(1);
 		}
-	}, [error]);
+	}, [error, state]);
 
 	const onLoginSuccess = useCallback((accessToken: string, cookie: string) => {
 		setAccessToken(accessToken);
@@ -83,7 +96,7 @@ export default function Login({ options: { key, workspace } }: Props) {
 			)}
 			{state === 'done' && (
 				<Text>
-					Logged in as {organization} with selected environment as {environment}
+					Logged in to {organization} with selected environment as {environment}
 				</Text>
 			)}
 			{error && <Text>{error}</Text>}

@@ -7,7 +7,7 @@ import { useProjectAPI } from '../hooks/useProjectAPI.js';
 
 type Props = {
 	accessToken: string;
-	cookie: string;
+	cookie?: string | null;
 	onComplete: (project: ActiveState) => void;
 	onError: (error: string) => void;
 };

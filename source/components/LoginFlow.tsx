@@ -1,13 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Text } from 'ink';
 import Spinner from 'ink-spinner';
-import {
-	browserAuth,
-	authCallbackServer,
-	tokenType,
-	TokenType,
-} from '../lib/auth.js';
+import { browserAuth, authCallbackServer } from '../lib/auth.js';
 import { useAuthApi } from '../hooks/useAuthApi.js';
+import { useApiKeyApi } from '../hooks/useApiKeyApi.js';
 
 type LoginFlowProps = {
 	apiKey?: string;
@@ -23,10 +19,11 @@ const LoginFlow: React.FC<LoginFlowProps> = ({
 	const [loading, setLoading] = useState<boolean>(true);
 
 	const { getLogin } = useAuthApi();
+	const { validateApiKey } = useApiKeyApi();
 
 	useEffect(() => {
 		const authenticateUser = async () => {
-			if (apiKey && tokenType(apiKey) === TokenType.APIToken) {
+			if (apiKey && validateApiKey(apiKey)) {
 				onSuccess(apiKey, '');
 			} else if (apiKey) {
 				onError(
@@ -55,7 +52,7 @@ const LoginFlow: React.FC<LoginFlowProps> = ({
 		setLoading(true);
 		authenticateUser();
 		setLoading(false);
-	}, [apiKey, getLogin, onError, onSuccess]);
+	}, [apiKey, getLogin, onError, onSuccess, validateApiKey]);
 
 	return loading ? (
 		<Text>

@@ -15,7 +15,7 @@ export interface ActiveState {
 
 type Props = {
 	accessToken: string;
-	cookie: string;
+	cookie?: string | null;
 	workspace?: string;
 	onComplete: (
 		organisation: ActiveState,
@@ -45,7 +45,9 @@ const EnvironmentSelection: React.FC<Props> = ({
 		useState<ActiveState>(defaultActiveState);
 	const [activeProject, setActiveProject] =
 		useState<ActiveState>(defaultActiveState);
-	const [envCookie, setEnvCookie] = useState<string>(cookie);
+	const [envCookie, setEnvCookie] = useState<string | undefined>(undefined);
+
+	const isBrowserMode = !!cookie;
 
 	const { authSwitchOrgs } = useAuthApi();
 	const { getProjectEnvironmentApiKey, getApiKeyScope } = useApiKeyApi();
@@ -116,7 +118,7 @@ const EnvironmentSelection: React.FC<Props> = ({
 
 	const handleSelectActiveOrganization = useCallback(
 		async (organization: ActiveState) => {
-			if (cookie) {
+			if (isBrowserMode) {
 				const { headers, error } = await authSwitchOrgs(
 					organization.value,
 					accessToken,
@@ -134,7 +136,7 @@ const EnvironmentSelection: React.FC<Props> = ({
 			setActiveOrganization(organization);
 			setState('project');
 		},
-		[accessToken, authSwitchOrgs, cookie, stableOnError],
+		[accessToken, authSwitchOrgs, cookie, isBrowserMode, stableOnError],
 	);
 
 	const handleSelectActiveProject = useCallback((project: ActiveState) => {
@@ -147,7 +149,7 @@ const EnvironmentSelection: React.FC<Props> = ({
 			const { response, error } = await getProjectEnvironmentApiKey(
 				activeProject.value,
 				environment.value,
-				cookie,
+				cookie ?? '',
 				accessToken,
 			);
 
@@ -183,14 +185,14 @@ const EnvironmentSelection: React.FC<Props> = ({
 			{state === 'workspace' && (
 				<SelectOrganization
 					accessToken={accessToken}
-					cookie={envCookie}
+					cookie={cookie}
 					onComplete={handleSelectActiveOrganization}
 					onError={stableOnError}
 					workspace={workspace}
 				/>
 			)}
 
-			{state === 'project' && (
+			{state === 'project' && (isBrowserMode ? envCookie : true) && (
 				<SelectProject
 					accessToken={accessToken}
 					cookie={envCookie}
@@ -199,7 +201,7 @@ const EnvironmentSelection: React.FC<Props> = ({
 				/>
 			)}
 
-			{state === 'environment' && (
+			{state === 'environment' && (isBrowserMode ? envCookie : true) && (
 				<SelectEnvironment
 					accessToken={accessToken}
 					cookie={envCookie}

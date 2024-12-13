@@ -21,7 +21,7 @@ export const useEnvironmentApi = () => {
 	const getEnvironments = async (
 		projectId: string,
 		accessToken: string,
-		cookie: string | null,
+		cookie?: string | null,
 	) => {
 		return await apiCall<Environment[]>(
 			`v2/projects/${projectId}/envs`,
@@ -34,7 +34,7 @@ export const useEnvironmentApi = () => {
 		projectId: string,
 		environmentId: string,
 		accessToken: string,
-		cookie: string | null,
+		cookie?: string | null,
 	) => {
 		return await apiCall<Environment>(
 			`v2/projects/${projectId}/envs/${environmentId}`,

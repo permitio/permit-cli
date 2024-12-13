@@ -41,8 +41,8 @@ export const apiCall = async <T = any>(
 		const res = await fetch(`${PERMIT_API_URL}/${endpoint}`, options);
 
 		if (!res.ok) {
-			const errorText = await res.text();
-			defaultResponse.error = `Request failed with status ${res.status}: ${errorText}`;
+			const errorText = await res.json();
+			defaultResponse.error = `Request failed with status ${res.status}: ${errorText.message ?? errorText.detail}`;
 			defaultResponse.status = res.status;
 		} else {
 			const response = await res.json();
