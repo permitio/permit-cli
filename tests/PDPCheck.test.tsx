@@ -25,7 +25,9 @@ describe('PDP Check Component', () => {
 		};
 
 		const { lastFrame } = render(<Check options={options} />);
-		expect(lastFrame()).toContain(`Checking user="testUser"action=testAction resource=testResourceat tenant=testTenant`);
+		expect(lastFrame()).toContain(
+			`Checking user="testUser"action=testAction resource=testResourceat tenant=testTenant`,
+		);
 		await delay(50);
 		expect(lastFrame()?.toString()).toContain('ALLOWED');
 	});
@@ -43,7 +45,9 @@ describe('PDP Check Component', () => {
 		};
 
 		const { lastFrame } = render(<Check options={options} />);
-		expect(lastFrame()).toContain(`Checking user="testUser"action=testAction resource=testResourceat tenant=testTenant`);
+		expect(lastFrame()).toContain(
+			`Checking user="testUser"action=testAction resource=testResourceat tenant=testTenant`,
+		);
 		await delay(50);
 		expect(lastFrame()?.toString()).toContain('DENIED');
 	});
@@ -61,7 +65,9 @@ describe('PDP Check Component', () => {
 		};
 
 		const { lastFrame } = render(<Check options={options} />);
-		expect(lastFrame()).toContain(`Checking user="testUser"action=testAction resource=testResourceat tenant=testTenant`);
+		expect(lastFrame()).toContain(
+			`Checking user="testUser"action=testAction resource=testResourceat tenant=testTenant`,
+		);
 		await delay(50);
 		expect(lastFrame()?.toString()).toContain('Error');
 	});
@@ -79,7 +85,8 @@ describe('PDP Check Component', () => {
 		};
 
 		const { lastFrame } = render(<Check options={options} />);
-		expect(lastFrame()).toContain(`Checking user="testUser"action=testAction resource=testResourceType: testRecsourceKeyat
+		expect(lastFrame())
+			.toContain(`Checking user="testUser"action=testAction resource=testResourceType: testRecsourceKeyat
 tenant=testTenant`);
 		await delay(50);
 		expect(lastFrame()?.toString()).toContain('ALLOWED');

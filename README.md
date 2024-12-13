@@ -25,11 +25,11 @@ Based on [Pastel](https://github.com/vadimdemedes/create-pastel-app)
 - run `npx tsx ./source/cli.tsx`
 
 ### Writing Tests
-Permit CLI uses [`vitest`](https://vitest.dev/) as a tool for writing tests. It also uses [`ink-testing-library`](https://github.com/vadimdemedes/ink-testing-library) to render the `Ink` components. 
+
+Permit CLI uses [`vitest`](https://vitest.dev/) as a tool for writing tests. It also uses [`ink-testing-library`](https://github.com/vadimdemedes/ink-testing-library) to render the `Ink` components.
 
 - run `npx vitest` for testing
 - run `npx vitest --coverage` for code coverage.
-
 
 ## CLI
 

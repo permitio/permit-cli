@@ -21,9 +21,11 @@ describe('SelectOrganization Component', () => {
 					{ id: 'org2', name: 'Organization 2' },
 				],
 				error: null,
-			})
+			}),
 		);
-		(useOrganisationApi as ReturnType<typeof vi.fn>).mockReturnValue({ getOrgs: mockGetOrgs });
+		(useOrganisationApi as ReturnType<typeof vi.fn>).mockReturnValue({
+			getOrgs: mockGetOrgs,
+		});
 
 		const { lastFrame } = render(
 			<SelectOrganization
@@ -31,7 +33,7 @@ describe('SelectOrganization Component', () => {
 				cookie="test_cookie"
 				onComplete={vi.fn()}
 				onError={vi.fn()}
-			/>
+			/>,
 		);
 
 		expect(lastFrame()).toMatch(/Loading Organizations.../);
@@ -45,9 +47,11 @@ describe('SelectOrganization Component', () => {
 					{ id: 'org2', name: 'Organization 2' },
 				],
 				error: null,
-			})
+			}),
 		);
-		(useOrganisationApi as ReturnType<typeof vi.fn>).mockReturnValue({ getOrgs: mockGetOrgs });
+		(useOrganisationApi as ReturnType<typeof vi.fn>).mockReturnValue({
+			getOrgs: mockGetOrgs,
+		});
 
 		const onComplete = vi.fn();
 		const { stdin, lastFrame } = render(
@@ -56,7 +60,7 @@ describe('SelectOrganization Component', () => {
 				cookie="test_cookie"
 				onComplete={onComplete}
 				onError={vi.fn()}
-			/>
+			/>,
 		);
 
 		await delay(50); // Allow async operation to complete
@@ -72,7 +76,10 @@ describe('SelectOrganization Component', () => {
 		await delay(50);
 
 		expect(onComplete).toHaveBeenCalledOnce();
-		expect(onComplete).toHaveBeenCalledWith({ label: 'Organization 2', value: 'org2' });
+		expect(onComplete).toHaveBeenCalledWith({
+			label: 'Organization 2',
+			value: 'org2',
+		});
 	});
 
 	it('should handle errors when fetching organizations fails', async () => {
@@ -80,9 +87,11 @@ describe('SelectOrganization Component', () => {
 			Promise.resolve({
 				response: null,
 				error: 'Network error',
-			})
+			}),
 		);
-		(useOrganisationApi as ReturnType<typeof vi.fn>).mockReturnValue({ getOrgs: mockGetOrgs });
+		(useOrganisationApi as ReturnType<typeof vi.fn>).mockReturnValue({
+			getOrgs: mockGetOrgs,
+		});
 
 		const onError = vi.fn();
 		render(
@@ -90,14 +99,15 @@ describe('SelectOrganization Component', () => {
 				accessToken="test_token"
 				cookie="test_cookie"
 				onComplete={vi.fn()}
-				onError={onError} />,
+				onError={onError}
+			/>,
 		);
 
 		await delay(50); // Allow async operation to complete
 
 		expect(onError).toHaveBeenCalledOnce();
 		expect(onError).toHaveBeenCalledWith(
-			'Failed to load organizations. Reason: Network error. Please check your network connection or credentials and try again.'
+			'Failed to load organizations. Reason: Network error. Please check your network connection or credentials and try again.',
 		);
 	});
 
@@ -109,9 +119,11 @@ describe('SelectOrganization Component', () => {
 					{ id: 'org2', name: 'Organization 2' },
 				],
 				error: null,
-			})
+			}),
 		);
-		(useOrganisationApi as ReturnType<typeof vi.fn>).mockReturnValue({ getOrgs: mockGetOrgs });
+		(useOrganisationApi as ReturnType<typeof vi.fn>).mockReturnValue({
+			getOrgs: mockGetOrgs,
+		});
 
 		const onComplete = vi.fn();
 		const { lastFrame } = render(
@@ -121,13 +133,16 @@ describe('SelectOrganization Component', () => {
 				workspace="Organization 1"
 				onComplete={onComplete}
 				onError={vi.fn()}
-			/>
+			/>,
 		);
 
 		await delay(50); // Allow async operation to complete
 
 		expect(onComplete).toHaveBeenCalledOnce();
-		expect(onComplete).toHaveBeenCalledWith({ label: 'Organization 1', value: 'org1' });
+		expect(onComplete).toHaveBeenCalledWith({
+			label: 'Organization 1',
+			value: 'org1',
+		});
 		expect(lastFrame()).not.toMatch(/Select an organization/);
 	});
 
@@ -139,9 +154,11 @@ describe('SelectOrganization Component', () => {
 					{ id: 'org2', name: 'Organization 2' },
 				],
 				error: null,
-			})
+			}),
 		);
-		(useOrganisationApi as ReturnType<typeof vi.fn>).mockReturnValue({ getOrgs: mockGetOrgs });
+		(useOrganisationApi as ReturnType<typeof vi.fn>).mockReturnValue({
+			getOrgs: mockGetOrgs,
+		});
 
 		const onError = vi.fn();
 		const { lastFrame } = render(
@@ -151,14 +168,14 @@ describe('SelectOrganization Component', () => {
 				workspace="Unknown Organization"
 				onComplete={vi.fn()}
 				onError={onError}
-			/>
+			/>,
 		);
 
 		await delay(50); // Allow async operation to complete
 
 		expect(onError).toHaveBeenCalledOnce();
 		expect(onError).toHaveBeenCalledWith(
-			'Organization "Unknown Organization" not found. Please ensure the name is correct and try again.'
+			'Organization "Unknown Organization" not found. Please ensure the name is correct and try again.',
 		);
 		expect(lastFrame()).not.toMatch(/Select an organization/);
 	});

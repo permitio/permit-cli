@@ -5,11 +5,11 @@ describe('API', () => {
 	it('should call the apiCall', async () => {
 		(fetch as any).mockResolvedValueOnce({
 			headers: {},
-			ok:true,
+			ok: true,
 			status: 200,
 			json: async () => ({ id: 'testId', name: 'testName' }),
 		});
-		const response = await api.apiCall<{id:string,name:string}>(
+		const response = await api.apiCall<{ id: string; name: string }>(
 			'testEndpoint',
 			'testToken',
 			'testCookie',

@@ -26,7 +26,7 @@ vi.mock('../source/components/EnvironmentSelection.js', () => ({
 
 beforeEach(() => {
 	vi.restoreAllMocks();
-	vi.spyOn(process, 'exit').mockImplementation((code) => {
+	vi.spyOn(process, 'exit').mockImplementation(code => {
 		console.warn(`Mocked process.exit(${code}) called`);
 	});
 });
@@ -40,32 +40,38 @@ const enter = '\r';
 describe('Member Component', () => {
 	it('should handle successful member invite flow', async () => {
 		vi.mocked(useApiKeyApi).mockReturnValue({
-			validateApiKeyScope: vi.fn(() => Promise.resolve({
-				valid: true,
-				scope: {
-					organization_id: 'org1',
-					project_id: 'proj1',
-				},
-				error: null,
-			})),
+			validateApiKeyScope: vi.fn(() =>
+				Promise.resolve({
+					valid: true,
+					scope: {
+						organization_id: 'org1',
+						project_id: 'proj1',
+					},
+					error: null,
+				}),
+			),
 		});
 
 		vi.mocked(useMemberApi).mockReturnValue({
-			inviteNewMember: vi.fn(() => Promise.resolve({
-				error: null,
-			})),
+			inviteNewMember: vi.fn(() =>
+				Promise.resolve({
+					error: null,
+				}),
+			),
 		});
 
 		vi.mocked(EnvironmentSelection).mockImplementation(({ onComplete }) => {
 			onComplete(
 				{ label: 'Org1', value: 'org1' },
 				{ label: 'Proj1', value: 'proj1' },
-				{ label: 'Env1', value: 'env1' }
+				{ label: 'Env1', value: 'env1' },
 			);
 			return null;
 		});
 
-		const { lastFrame, stdin } = render(<Member options={{ key: 'valid_api_key' }} />);
+		const { lastFrame, stdin } = render(
+			<Member options={{ key: 'valid_api_key' }} />,
+		);
 
 		await delay(50); // Allow environment selection
 
@@ -81,13 +87,17 @@ describe('Member Component', () => {
 
 	it('should handle invalid API key gracefully', async () => {
 		vi.mocked(useApiKeyApi).mockReturnValue({
-			validateApiKeyScope: vi.fn(() => Promise.resolve({
-				valid: false,
-				error: 'Invalid API Key',
-			})),
+			validateApiKeyScope: vi.fn(() =>
+				Promise.resolve({
+					valid: false,
+					error: 'Invalid API Key',
+				}),
+			),
 		});
 
-		const { lastFrame } = render(<Member options={{ key: 'invalid_api_key' }} />);
+		const { lastFrame } = render(
+			<Member options={{ key: 'invalid_api_key' }} />,
+		);
 
 		await delay(50); // Allow async operations to complete
 

@@ -31,7 +31,7 @@ vi.mock('../source/lib/auth.js', () => ({
 
 beforeEach(() => {
 	vi.restoreAllMocks();
-	vi.spyOn(process, 'exit').mockImplementation((code) => {
+	vi.spyOn(process, 'exit').mockImplementation(code => {
 		console.warn(`Mocked process.exit(${code}) called`);
 	});
 });
@@ -49,7 +49,9 @@ describe('Select Component', () => {
 
 	it('should redirect to login when no API key is provided', async () => {
 		// Mock the Login component
-		vi.mocked(Login).mockImplementation(() => <Text>Mocked Login Component</Text>);
+		vi.mocked(Login).mockImplementation(() => (
+			<Text>Mocked Login Component</Text>
+		));
 
 		const { lastFrame } = render(<Select options={{}} />);
 
@@ -65,11 +67,15 @@ describe('Select Component', () => {
 			validateApiKey: vi.fn(() => false),
 		});
 
-		const { lastFrame } = render(<Select options={{ key: 'invalid_api_key' }} />);
+		const { lastFrame } = render(
+			<Select options={{ key: 'invalid_api_key' }} />,
+		);
 
 		await delay(50); // Allow state transitions to occur
 
-		expect(lastFrame()).toMatch(/Invalid API Key. Please provide a valid API Key./);
+		expect(lastFrame()).toMatch(
+			/Invalid API Key. Please provide a valid API Key./,
+		);
 		expect(process.exit).toHaveBeenCalledWith(1);
 	});
 
@@ -88,7 +94,7 @@ describe('Select Component', () => {
 				{ label: 'Org1', value: 'org1' },
 				{ label: 'Proj1', value: 'proj1' },
 				{ label: 'Env1', value: 'env1' },
-				'secret_token'
+				'secret_token',
 			);
 			return null;
 		});
