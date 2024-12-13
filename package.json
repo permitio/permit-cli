@@ -22,8 +22,9 @@
 	],
 	"dependencies": {
 		"clipboardy": "^4.0.0",
+		"delay": "^6.0.0",
 		"fuse.js": "^7.0.0",
-		"ink": "^5.0.1",
+		"ink": "^5.1.0",
 		"ink-ascii": "^0.0.4",
 		"ink-big-text": "^2.0.0",
 		"ink-gradient": "^3.0.0",
