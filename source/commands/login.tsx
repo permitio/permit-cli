@@ -7,13 +7,14 @@ import LoginFlow from '../components/LoginFlow.js';
 import EnvironmentSelection, {
 	ActiveState,
 } from '../components/EnvironmentSelection.js';
+import i18next from 'i18next';
 
 export const options = object({
 	key: string()
 		.optional()
 		.describe(
 			option({
-				description: 'Use API key instead of user authentication',
+				description: i18next.t('useApiKeyDescription'),
 				alias: 'k',
 			}),
 		),
@@ -21,7 +22,7 @@ export const options = object({
 		.optional()
 		.describe(
 			option({
-				description: 'Use predefined workspace to Login',
+				description: i18next.t('useWorkspaceDescription'),
 			}),
 		),
 });
@@ -96,7 +97,10 @@ export default function Login({
 			)}
 			{state === 'done' && (
 				<Text>
-					Logged in to {organization} with selected environment as {environment}
+					{i18next.t('loggedInMessage', {
+						organization,
+						environment,
+					})}
 				</Text>
 			)}
 			{error && <Text>{error}</Text>}
