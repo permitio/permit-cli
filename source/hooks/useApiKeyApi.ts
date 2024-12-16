@@ -8,6 +8,30 @@ export interface ApiKeyScope {
 	environment_id: string | null;
 }
 
+type MemberAccessObj = 'org' | 'project' | 'env';
+type MemberAccessLevel = 'admin' | 'write' | 'read' | 'no_access';
+type APIKeyOwnerType = 'pdp_config' | 'member' | 'elements';
+
+interface ApiKeyResponse {
+	organization_id: string; // UUID
+	project_id?: string; // UUID (optional)
+	environment_id?: string; // UUID (optional)
+	object_type?: MemberAccessObj; // Default: "env"
+	access_level?: MemberAccessLevel; // Default: "admin"
+	owner_type: APIKeyOwnerType;
+	name?: string;
+	id: string; // UUID
+	secret?: string;
+	created_at: string;
+	last_used_at?: string; // date-time
+}
+
+interface PaginatedApiKeyResponse {
+	data: ApiKeyResponse[];
+	total_count: number; // >= 0
+	page_count?: number; // Default: 0
+}
+
 export const useApiKeyApi = () => {
 	const getProjectEnvironmentApiKey = async (
 		projectId: string,
@@ -24,6 +48,31 @@ export const useApiKeyApi = () => {
 
 	const getApiKeyScope = async (accessToken: string) => {
 		return await apiCall<ApiKeyScope>(`v2/api-key/scope`, accessToken);
+	};
+
+	const getApiKeyList = async (
+		objectType: MemberAccessObj,
+		accessToken: string,
+		cookie?: string | null,
+		projectId?: string | null,
+	) => {
+		return await apiCall<PaginatedApiKeyResponse>(
+			`v2/api-key?object_type=${objectType}${projectId ? '&proj_id=' + projectId : ''}`,
+			accessToken,
+			cookie ?? '',
+		);
+	};
+
+	const getApiKeyById = async (
+		apiKeyId: string,
+		accessToken: string,
+		cookie?: string | null,
+	) => {
+		return await apiCall<ApiKeyResponse>(
+			`v2/api-key/${apiKeyId}`,
+			accessToken,
+			cookie ?? '',
+		);
 	};
 
 	const validateApiKey = useCallback((apiKey: string) => {
@@ -80,6 +129,8 @@ export const useApiKeyApi = () => {
 		() => ({
 			getProjectEnvironmentApiKey,
 			getApiKeyScope,
+			getApiKeyList,
+			getApiKeyById,
 			validateApiKeyScope,
 			validateApiKey,
 		}),
