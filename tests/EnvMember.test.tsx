@@ -80,7 +80,7 @@ describe('Member Component', () => {
 		stdin.write(enter);
 		await delay(50);
 		stdin.write(enter);
-		await delay(50); // Allow role selection
+		await delay(100); // Allow role selection
 
 		expect(lastFrame()).toMatch(/User Invited Successfully/);
 	});
