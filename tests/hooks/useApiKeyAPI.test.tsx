@@ -55,7 +55,7 @@ describe('useApiKeyApi', () => {
 		const { lastFrame } = render(<TestComponent />);
 		await vi.waitFor(() => {
 			const frame = lastFrame();
-			expect(frame).toBe(`{"data":"mock-data"}`);
+			expect(frame).toBe('{"data":"mock-data"}');
 		});
 
 		expect(apiCall).toHaveBeenCalledWith(
@@ -100,16 +100,16 @@ describe('useApiKeyApi', () => {
 
 		expect(apiCall).toHaveBeenCalledWith('v2/api-key/scope', accessToken);
 	});
-	it('validates a project level API Key', async () => {
-		// Mocking the valid API key behavior
+
+	it('validates a valid API key', async () => {
 		(tokenType as vi.Mock).mockReturnValue(TokenType.APIToken);
 
-		// Mocking getApiKeyScope for a project-level API key
 		const mockScope = {
 			organization_id: 'org-id',
 			project_id: 'project-id',
 			environment_id: null,
 		};
+
 		(apiCall as vi.Mock).mockResolvedValue({
 			response: mockScope,
 			error: null,
@@ -121,10 +121,7 @@ describe('useApiKeyApi', () => {
 
 			React.useEffect(() => {
 				const validateScope = async () => {
-					const data = await validateApiKeyScope(
-						'permit_key_'.concat('a'.repeat(96)),
-						'project',
-					);
+					const data = await validateApiKeyScope('valid-api-key', 'project');
 					setResult(JSON.stringify(data));
 				};
 				validateScope();
@@ -134,26 +131,19 @@ describe('useApiKeyApi', () => {
 		};
 
 		const { lastFrame } = render(<TestComponent />);
-		let frame: string | null = null;
-
 		await vi.waitFor(() => {
-			frame = lastFrame();
-			if (!frame) {
-				throw new Error('Frame is not ready yet');
-			}
+			const frame = lastFrame();
+			expect(frame)
+				.toBe(`{"valid":true,"scope":{"organization_id":"org-id","project_id":"project-id","environment_id":null},"
+error":null}`);
 		});
 
-		// Verify the result with the expected output
-		const expectedOutput = `{"valid":true,"scope":{"organization_id":"org-id","project_id":"project-id","environment_id":null},"
-error":null}`;
-		expect(frame).toBe(expectedOutput);
+		expect(apiCall).toHaveBeenCalledWith('v2/api-key/scope', 'valid-api-key');
 	});
 
-	it('invalidates an incorrect project level API Key', async () => {
-		// Mocking the invalid API key behavior
+	it('invalidates an incorrect API key', async () => {
 		(tokenType as vi.Mock).mockReturnValue(TokenType.Invalid);
 
-		// Mocking getApiKeyScope for an invalid API key
 		(apiCall as vi.Mock).mockResolvedValue({
 			response: null,
 			error: 'Invalid API Key',
@@ -165,7 +155,7 @@ error":null}`;
 
 			React.useEffect(() => {
 				const validateScope = async () => {
-					const data = await validateApiKeyScope('invalid_key', 'project');
+					const data = await validateApiKeyScope('invalid-key', 'project');
 					setResult(JSON.stringify(data));
 				};
 				validateScope();
@@ -175,22 +165,15 @@ error":null}`;
 		};
 
 		const { lastFrame } = render(<TestComponent />);
-		let frame: string | null = null;
-
 		await vi.waitFor(() => {
-			frame = lastFrame();
-			if (!frame) {
-				throw new Error('Frame is not ready yet');
-			}
+			const frame = lastFrame();
+			expect(frame).toBe(
+				'{"valid":false,"scope":null,"error":"Please provide a valid api key"}',
+			);
 		});
-
-		// Verify the result with the expected output when the API key is invalid
-		const expectedOutput =
-			'{"valid":false,"scope":null,"error":"Please provide a valid api key"}';
-		expect(frame).toBe(expectedOutput);
 	});
 
-	it('Validates an API key scope correctly', async () => {
+	it('validates an API key scope for organization level', async () => {
 		const apiKey = 'valid-api-key';
 		const mockScope = {
 			organization_id: 'org-id',
@@ -219,16 +202,16 @@ error":null}`;
 		const { lastFrame } = render(<TestComponent />);
 		await vi.waitFor(() => {
 			const frame = lastFrame();
-			const expectedOutput = `{"valid":true,"scope":{"organization_id":"org-id","project_id":null,"environment_id":null},"error":n
-ull}`;
-
-			expect(frame).toBe(expectedOutput);
+			expect(frame).toBe(
+				`{"valid":true,"scope":{"organization_id":"org-id","project_id":null,"environment_id":null},"error":n
+ull}`,
+			);
 		});
 
 		expect(apiCall).toHaveBeenCalledWith('v2/api-key/scope', apiKey);
 	});
 
-	it('Handles invalid API key in validateApiKeyScope', async () => {
+	it('handles invalid API key in validateApiKeyScope', async () => {
 		const apiKey = 'invalid-api-key';
 
 		(apiCall as any).mockResolvedValue({
@@ -255,10 +238,9 @@ ull}`;
 		const { lastFrame } = render(<TestComponent />);
 		await vi.waitFor(() => {
 			const frame = lastFrame();
-			const expectedOutput =
-				'{"valid":false,"scope":null,"error":"Please provide a valid api key"}';
-
-			expect(frame).toBe(expectedOutput);
+			expect(frame).toBe(
+				'{"valid":false,"scope":null,"error":"Please provide a valid api key"}',
+			);
 		});
 	});
 });
