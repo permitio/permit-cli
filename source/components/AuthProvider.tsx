@@ -113,7 +113,7 @@ export function AuthProvider({
 					error,
 				} = await validateApiKeyScope(key ?? '', scope ?? 'environment');
 				if (!valid || error) {
-					setError('Invalid Key Provided');
+					setError(error ?? 'Invalid Key Provided');
 				} else {
 					setAuthToken(key ?? '');
 					setCurrentScope(keyScope);
