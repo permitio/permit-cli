@@ -73,7 +73,7 @@ describe('Member Component', () => {
 			<Member options={{ key: 'valid_api_key' }} />,
 		);
 
-		await delay(50); // Allow environment selection
+		await delay(100); // Allow environment selection
 
 		stdin.write('user@example.com\n');
 		await delay(50);
