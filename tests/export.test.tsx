@@ -1,7 +1,7 @@
 import { expect, vi, describe, it, beforeEach, afterEach } from 'vitest';
 import React from 'react';
 import { render, cleanup } from 'ink-testing-library';
-import Export from '../source/commands/env/export.js';
+import Export from '../source/commands/env/export/index.js';
 import { Permit } from 'permitio';
 import * as fs from 'node:fs/promises';
 import type { useApiKeyApi } from '../source/hooks/useApiKeyApi';
@@ -208,29 +208,30 @@ describe('Export Command', () => {
 	});
 
 	it('handles resource fetch error with warning', async () => {
-		const mockError = new Error('Failed to fetch resources');
-		const mockPermit = {
-			api: {
-				resources: { list: vi.fn().mockRejectedValue(mockError) },
-				roles: { list: vi.fn().mockResolvedValue([]) },
-				resourceAttributes: { list: vi.fn().mockResolvedValue([]) },
-				resourceRelations: { list: vi.fn().mockResolvedValue([]) },
-				conditionSets: { list: vi.fn().mockResolvedValue([]) },
-				conditionSetRules: { list: vi.fn().mockResolvedValue([]) },
-			},
-		};
-		vi.mocked(Permit).mockImplementation(() => mockPermit as any);
-
-		const { lastFrame, unmount } = render(
-			<Export options={{ key: 'test-key' }} />,
-		);
-
-		await vi.waitFor(() => {
-			expect(lastFrame()).toContain('Failed to export configuration');
-		});
-
-		unmount();
-	});
+    const mockError = new Error('Failed to fetch resources');
+    const mockPermit = {
+      api: {
+        resources: { list: vi.fn().mockRejectedValue(mockError) },
+        roles: { list: vi.fn().mockResolvedValue([]) },
+        resourceAttributes: { list: vi.fn().mockResolvedValue([]) },
+        resourceRelations: { list: vi.fn().mockResolvedValue([]) },
+        conditionSets: { list: vi.fn().mockResolvedValue([]) },
+        conditionSetRules: { list: vi.fn().mockResolvedValue([]) },
+      },
+    };
+    vi.mocked(Permit).mockImplementation(() => mockPermit as any);
+  
+    const { lastFrame, unmount } = render(
+      <Export options={{ key: 'test-key' }} />,
+    );
+  
+    await vi.waitFor(() => {
+      console.log('Last frame content:', lastFrame());
+      expect(lastFrame()).toContain('Failed to export configuration');
+    });
+  
+    unmount();
+  });
 
 	it('displays spinner and status during export', async () => {
 		const { lastFrame, frames, unmount } = render(
