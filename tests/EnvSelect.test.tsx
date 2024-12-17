@@ -105,4 +105,66 @@ describe('Select Component', () => {
 
 		expect(lastFrame()).toMatch(/Environment: Env1 selected successfully/);
 	});
+	it('should handle environment selection failure', async () => {
+		// Mock validateApiKey to return true
+		vi.mocked(useApiKeyApi).mockReturnValue({
+			validateApiKey: vi.fn(() => true),
+		});
+
+		// Mock saveAuthToken
+		vi.mocked(saveAuthToken).mockRejectedValueOnce('Failed to save token');
+
+		// Mock EnvironmentSelection component
+		vi.mocked(EnvironmentSelection).mockImplementation(({ onComplete }) => {
+			onComplete(
+				{ label: 'Org1', value: 'org1' },
+				{ label: 'Proj1', value: 'proj1' },
+				{ label: 'Env1', value: 'env1' },
+				'secret_token',
+			);
+			return null;
+		});
+
+		const { lastFrame } = render(<Select options={{ key: 'valid_api_key' }} />);
+
+		await delay(100); // Allow async operations to complete
+
+		expect(lastFrame()).toMatch(/Failed to save token/);
+		expect(process.exit).toHaveBeenCalledWith(1);
+	});
+	it('handle login successs', async () => {
+		vi.mocked(useApiKeyApi).mockReturnValue({
+			validateApiKey: vi.fn(() => true),
+		});
+		vi.mocked(EnvironmentSelection).mockImplementation(({ onComplete }) => {
+			onComplete(
+				{ label: 'Org1', value: 'org1' },
+				{ label: 'Proj1', value: 'proj1' },
+				{ label: 'Env1', value: 'env1' },
+				'secret_token',
+			);
+			return null;
+		});
+		const { lastFrame } = render(<Select options={{ key: 'valid_api_key' }} />);
+		await delay(100); // Allow async operations to complete
+		expect(lastFrame()).toMatch(/Environment: Env1 selected successfully/);
+	});
+	it('handle complete enviroment selection process', async () => {
+		vi.mocked(useApiKeyApi).mockReturnValue({
+			validateApiKey: vi.fn(() => true),
+		});
+		vi.mocked(saveAuthToken).mockResolvedValueOnce();
+		vi.mocked(EnvironmentSelection).mockImplementation(({ onComplete }) => {
+			onComplete(
+				{ label: 'Org1', value: 'org1' },
+				{ label: 'Proj1', value: 'proj1' },
+				{ label: 'Env1', value: 'env1' },
+				'secret_token',
+			);
+			return null;
+		});
+		const { lastFrame } = render(<Select options={{ key: 'valid_api_key' }} />);
+		await delay(100); // Allow async operations to complete
+		expect(lastFrame()).toMatch(/Environment: Env1 selected successfully/);
+	});
 });
