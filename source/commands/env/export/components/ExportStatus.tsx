@@ -13,6 +13,16 @@ export const ExportStatus: React.FC<ExportStatusProps> = ({ state, file }) => {
 		return (
 			<>
 				<Text color="red">Error: {state.error}</Text>
+				{state.warnings.length > 0 && (
+					<>
+						<Text color="yellow">Warnings:</Text>
+						{state.warnings.map((warning, i) => (
+							<Text key={i} color="yellow">
+								- {warning}
+							</Text>
+						))}
+					</>
+				)}
 			</>
 		);
 	}
@@ -32,6 +42,16 @@ export const ExportStatus: React.FC<ExportStatusProps> = ({ state, file }) => {
 		<>
 			<Text color="green">Export completed successfully!</Text>
 			{file && <Text>HCL content has been saved to: {file}</Text>}
+			{state.warnings.length > 0 && (
+				<>
+					<Text color="yellow">Warnings during export:</Text>
+					{state.warnings.map((warning, i) => (
+						<Text key={i} color="yellow">
+							- {warning}
+						</Text>
+					))}
+				</>
+			)}
 		</>
 	);
 };
