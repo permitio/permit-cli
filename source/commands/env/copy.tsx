@@ -10,12 +10,13 @@ import EnvironmentSelection, {
 	ActiveState,
 } from '../../components/EnvironmentSelection.js';
 import { cleanKey } from '../../lib/env/copy/utils.js';
+import i18next from 'i18next';
+
 
 export const options = zod.object({
 	key: zod.string().describe(
 		option({
-			description:
-				'API Key to be used for the environment copying (should be at least a project level key)',
+			description:i18next.t('copy.apiKeyDescription'),
 		}),
 	),
 	from: zod
@@ -23,8 +24,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:
-					'Optional: Set the environment ID to copy from. In case not set, the CLI lets you select one.',
+				description:i18next.t('copy.fromDescription'),
 			}),
 		),
 	name: zod
@@ -32,8 +32,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:
-					'Optional: The environment name to copy to. In case not set, the CLI will ask you for one.',
+				description:i18next.t('copy.nameDescription'),
 			}),
 		),
 	description: zod
@@ -41,8 +40,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:
-					'Optional: The new environment description. In case not set, the CLI will ask you for it.',
+				description:i18next.t('copy.descriptionDescription'),
 			}),
 		),
 	to: zod
@@ -50,8 +48,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:
-					"Optional: Copy the environment to an existing environment. In case this variable is set, the 'name' and 'description' variables will be ignored.",
+				description:i18next.t('copy.toDescription'),
 			}),
 		),
 	conflictStrategy: zod
@@ -60,8 +57,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:
-					"Optional: Set the environment conflict strategy. In case not set, will use 'fail'.",
+				description:i18next.t('copy.conflictStrategyDescription'),
 			}),
 		),
 });

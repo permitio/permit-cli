@@ -11,6 +11,7 @@ import zod from 'zod';
 import { type infer as zInfer } from 'zod';
 import Login from '../login.js';
 import { useApiKeyApi } from '../../hooks/useApiKeyApi.js';
+import i18next from 'i18next';
 
 export const options = zod.object({
 	key: zod
@@ -18,8 +19,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:
-					'Optional: API Key to be used for the environment selection. In case not provided, CLI will redirect you to the Login.',
+				description: i18next.t('select.apiKeyDescription'),
 			}),
 		),
 });

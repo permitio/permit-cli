@@ -1,0 +1,50 @@
+{
+    "translation": {
+      "keyAccountDescription": "A string (e.g., the Permit Environment or Project key) to act as the account under which this will be saved in the machine's secure key-chain.",
+      "useApiKeyDescription": "Use API key instead of user authentication.",
+      "useWorkspaceDescription": "Use a predefined workspace to log in.",
+      "loggedInMessage": "Logged in to {{organization}} with the selected environment as {{environment}}.",
+      "copy": {
+        "apiKeyDescription": "API Key to be used for the environment copy operation (should be at least a project-level key).",
+        "fromDescription": "Optional: Set the environment ID to copy from. If not set, the CLI will prompt you to select one.",
+        "nameDescription": "Optional: The environment name to copy to. If not set, the CLI will ask you for one.",
+        "descriptionDescription": "Optional: The new environment description. If not set, the CLI will ask you for it.",
+        "toDescription": "Optional: Copy the environment to an existing environment. If this variable is set, the 'name' and 'description' variables will be ignored.",
+        "conflictStrategyDescription": "Optional: Set the environment conflict strategy. If not set, the default will be 'fail'."
+      },
+      "member": {
+        "apiKeyDescription": "An API key to perform the invite. A project or organization-level API key is required to invite members to the account.",
+        "environmentDescription": "Optional: ID of the environment you want to add a member to. If not set, the CLI will prompt you to select one.",
+        "projectDescription": "Optional: ID of the project you want to add a member to.",
+        "emailDescription": "Optional: Email address of the user you want to invite. If not set, the CLI will ask you for it.",
+        "roleDescription": "Optional: The role of the user."
+      },
+      "select": {
+        "apiKeyDescription": "Optional: API Key to be used for the environment selection. If not provided, the CLI will redirect you to the login page."
+      },
+      "github": {
+        "apiKeyDescription": "The API key for the Permit Environment Organization or Project.",
+        "inactiveDescription": "Do not activate the repository when validated."
+      },
+      "policy": {
+        "serverUrlDescription": "The OPA server URL.",
+        "apiKeyDescription": "The API key for the OPA Server and Permit environment, project, or workspace.",
+        "keyAccountDescription": "A string (e.g., the Permit Environment or Project key) to act as the account under which this will be saved in the machine's secure key-chain."
+      },
+      "check": {
+        "userDescription": "Unique identity to check for (Required).",
+        "userAttributesDescription": "User attributes in the format key1:value1,key2:value2 (Optional).",
+        "resourceDescription": "Resource being accessed (Required).",
+        "resourceAttributesDescription": "Resource attributes in the format key1:value1,key2:value2 (Optional).",
+        "actionDescription": "Action being performed on the resource by the user (Required).",
+        "tenantDescription": "The tenant the resource belongs to (Optional, defaults to 'default').",
+        "pdpurlDescription": "The URL of the PDP service. Defaults to the cloud PDP. (Optional).",
+        "apiKeyDescription": "The API key for the Permit environment, project, or workspace (Optional).",
+        "keyAccountDescription": "A string (e.g., the Permit Environment or Project key) to act as the account under which this will be saved in the machine's secure key-chain."
+      },
+      "run": {
+        "opaKeyDescription": "Expose OPA port from the PDP."
+      }
+    }
+  }
+  

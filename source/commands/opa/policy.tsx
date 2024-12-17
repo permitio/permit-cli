@@ -8,6 +8,7 @@ import { inspect } from 'util';
 import { loadAuthToken } from '../../lib/auth.js';
 import { TextInput, Select } from '@inkjs/ui';
 import Fuse from 'fuse.js';
+import i18next from 'i18next';
 
 export const options = zod.object({
 	serverUrl: zod
@@ -15,7 +16,7 @@ export const options = zod.object({
 		.default('http://localhost:8181')
 		.describe(
 			option({
-				description: 'The OPA server URL',
+				description:i18next.t('policy.serverUrlDescription'),
 				alias: 's',
 			}),
 		),
@@ -24,8 +25,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:
-					'The API key for the OPA Server and Permit env, project or Workspace',
+				description:i18next.t('policy.apiKeyDescription'),
 			}),
 		),
 	keyAccount: keyAccountOption,

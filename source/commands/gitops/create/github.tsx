@@ -3,6 +3,7 @@ import zod from 'zod';
 import { option } from 'pastel';
 import { AuthProvider } from '../../../components/AuthProvider.js';
 import GitHubComponent from '../../../components/gitops/GitHubComponent.js';
+import i18next from 'i18next';
 
 export const options = zod.object({
 	key: zod
@@ -10,8 +11,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:
-					'The API key for the permit Environment Organization or Project',
+				description:i18next.t("github.apiKeyDescription"),
 				alias: 'k',
 			}),
 		),
@@ -20,7 +20,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description: 'Do not activate the repository When Validated',
+				description:i18next.t("github.inactiveDescription"),
 				alias: 'i',
 			}),
 		),

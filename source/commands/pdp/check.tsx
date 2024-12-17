@@ -8,6 +8,7 @@ import { keyAccountOption } from '../../options/keychain.js';
 import * as keytar from 'keytar';
 import { inspect } from 'util';
 import { parseAttributes } from '../../utils/attributes.js';
+import i18next from 'i18next';
 
 export const options = zod.object({
 	user: zod
@@ -15,7 +16,7 @@ export const options = zod.object({
 		.min(1, 'User identifier cannot be empty')
 		.describe(
 			option({
-				description: 'Unique Identity to check for (Required)',
+				description:i18next.t('check.userDescription'),
 				alias: 'u',
 			}),
 		),
@@ -24,8 +25,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:
-					'User attributes in format key1:value1,key2:value2 (Optional)',
+				description:i18next.t('check.userAttributesDescription'),
 				alias: 'ua',
 			}),
 		),
@@ -34,7 +34,7 @@ export const options = zod.object({
 		.min(1, 'Resource cannot be empty')
 		.describe(
 			option({
-				description: 'Resource being accessed (Required)',
+				description:i18next.t('check.resourceDescription'),
 				alias: 'r',
 			}),
 		),
@@ -43,8 +43,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:
-					'Resource attributes in format key1:value1,key2:value2 (Optional)',
+				description:i18next.t('check.resourceAttributesDescription'),
 				alias: 'ra',
 			}),
 		),
@@ -53,8 +52,7 @@ export const options = zod.object({
 		.min(1, 'Action cannot be empty')
 		.describe(
 			option({
-				description:
-					'Action being performed on the resource by the user (Required)',
+				description:i18next.t('check.actionDescription'),
 				alias: 'a',
 			}),
 		),
@@ -64,8 +62,7 @@ export const options = zod.object({
 		.default('default')
 		.describe(
 			option({
-				description:
-					'The tenant the resource belongs to (Optional, defaults to "default")',
+				description:i18next.t('check.tenantDescription'),
 				alias: 't',
 			}),
 		),
@@ -73,8 +70,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:
-					'The URL of the PDP service. Default to the cloud PDP. (Optional)',
+				description:i18next.t('check.pdpurlDescription'),
 			}),
 		),
 	apiKey: zod
@@ -82,8 +78,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:
-					'The API key for the Permit env, project or Workspace (Optional)',
+				description:i18next.t('check.apiKeyDescription'),
 			}),
 		),
 	keyAccount: keyAccountOption,

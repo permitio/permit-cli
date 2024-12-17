@@ -12,6 +12,7 @@ import { useMemberApi } from '../../hooks/useMemberApi.js';
 import EnvironmentSelection, {
 	ActiveState,
 } from '../../components/EnvironmentSelection.js';
+import i18next from 'i18next';
 
 const rolesOptions = [
 	{ label: 'Owner', value: 'admin' },
@@ -25,8 +26,7 @@ const rolesOptions = [
 export const options = zod.object({
 	key: zod.string().describe(
 		option({
-			description:
-				'An API key to perform the invite. A project or organization level API key is required to invite members to the account.',
+			description:i18next.t('member.apiKeyDescription'),
 		}),
 	),
 	environment: zod
@@ -34,8 +34,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:
-					'Optional: Id of the environment you want to add a member to. In case not set, the CLI will prompt you to select one.',
+				description:i18next.t('member.environmentDescription'),
 			}),
 		),
 	project: zod
@@ -43,7 +42,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description: 'Optional: Id of the project you want to add a member.',
+				description:i18next.t('member.projectDescription'),
 			}),
 		),
 	email: zod
@@ -51,8 +50,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:
-					'Optional: Email of the user you want to invite. In case not set, the CLI will ask you for it',
+				description:i18next.t('member.emailDescription'),
 			}),
 		),
 	role: zod
@@ -60,7 +58,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description: 'Optional: Role of the user',
+				description:i18next.t('member.roleDescription'),
 			}),
 		),
 });
