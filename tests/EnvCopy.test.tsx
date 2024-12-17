@@ -26,7 +26,7 @@ vi.mock('../source/components/EnvironmentSelection.js', () => ({
 
 beforeEach(() => {
 	vi.restoreAllMocks();
-	vi.spyOn(process, 'exit').mockImplementation((code) => {
+	vi.spyOn(process, 'exit').mockImplementation(code => {
 		console.warn(`Mocked process.exit(${code}) called`);
 	});
 });
@@ -38,19 +38,23 @@ afterEach(() => {
 describe('Copy Component', () => {
 	it('should handle successful environment copy flow using arguments', async () => {
 		vi.mocked(useApiKeyApi).mockReturnValue({
-			validateApiKeyScope: vi.fn(() => Promise.resolve({
-				valid: true,
-				scope: {
-					project_id: 'proj1',
-				},
-				error: null,
-			})),
+			validateApiKeyScope: vi.fn(() =>
+				Promise.resolve({
+					valid: true,
+					scope: {
+						project_id: 'proj1',
+					},
+					error: null,
+				}),
+			),
 		});
 
 		vi.mocked(useEnvironmentApi).mockReturnValue({
-			copyEnvironment: vi.fn(() => Promise.resolve({
-				error: null,
-			})),
+			copyEnvironment: vi.fn(() =>
+				Promise.resolve({
+					error: null,
+				}),
+			),
 		});
 
 		// @ts-ignore
@@ -63,7 +67,16 @@ describe('Copy Component', () => {
 			return null;
 		});
 
-		const { lastFrame } = render(<Copy options={{ key: 'valid_api_key', name: "NewEnvName", description: 'New Env Desc', conflictStrategy: 'fail' }} />);
+		const { lastFrame } = render(
+			<Copy
+				options={{
+					key: 'valid_api_key',
+					name: 'NewEnvName',
+					description: 'New Env Desc',
+					conflictStrategy: 'fail',
+				}}
+			/>,
+		);
 
 		await delay(100); // Allow name input
 		expect(lastFrame()).toMatch(/Environment copied successfully/);
@@ -71,10 +84,12 @@ describe('Copy Component', () => {
 
 	it('should handle invalid API key gracefully', async () => {
 		vi.mocked(useApiKeyApi).mockReturnValue({
-			validateApiKeyScope: vi.fn(() => Promise.resolve({
-				valid: false,
-				error: 'Invalid API Key',
-			})),
+			validateApiKeyScope: vi.fn(() =>
+				Promise.resolve({
+					valid: false,
+					error: 'Invalid API Key',
+				}),
+			),
 		});
 
 		const { lastFrame } = render(<Copy options={{ key: 'invalid_api_key' }} />);
@@ -87,19 +102,23 @@ describe('Copy Component', () => {
 
 	it('should handle successful environment copy flow using the wizard', async () => {
 		vi.mocked(useApiKeyApi).mockReturnValue({
-			validateApiKeyScope: vi.fn(() => Promise.resolve({
-				valid: true,
-				scope: {
-					project_id: 'proj1',
-				},
-				error: null,
-			})),
+			validateApiKeyScope: vi.fn(() =>
+				Promise.resolve({
+					valid: true,
+					scope: {
+						project_id: 'proj1',
+					},
+					error: null,
+				}),
+			),
 		});
 
 		vi.mocked(useEnvironmentApi).mockReturnValue({
-			copyEnvironment: vi.fn(() => Promise.resolve({
-				error: null,
-			})),
+			copyEnvironment: vi.fn(() =>
+				Promise.resolve({
+					error: null,
+				}),
+			),
 		});
 
 		vi.mocked(EnvironmentSelection).mockImplementation(({ onComplete }) => {
@@ -107,12 +126,14 @@ describe('Copy Component', () => {
 				{ label: 'Org1', value: 'org1' },
 				{ label: 'Proj1', value: 'proj1' },
 				{ label: 'Env1', value: 'env1' },
-				'secret'
+				'secret',
 			);
 			return null;
 		});
 
-		const { lastFrame, stdin } = render(<Copy options={{ key: 'valid_api_key', conflictStrategy: 'fail' }} />);
+		const { lastFrame, stdin } = render(
+			<Copy options={{ key: 'valid_api_key', conflictStrategy: 'fail' }} />,
+		);
 
 		await delay(50); // Allow environment selection
 

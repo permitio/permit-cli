@@ -33,7 +33,7 @@ describe('SelectProject Component', () => {
 				cookie="test_cookie"
 				onComplete={vi.fn()}
 				onError={vi.fn()}
-			/>
+			/>,
 		);
 
 		expect(lastFrame()).toMatch(/Loading Projects.../);
@@ -60,7 +60,7 @@ describe('SelectProject Component', () => {
 				cookie="test_cookie"
 				onComplete={onComplete}
 				onError={vi.fn()}
-			/>
+			/>,
 		);
 
 		await delay(50); // Allow async operation to complete
@@ -76,7 +76,10 @@ describe('SelectProject Component', () => {
 		await delay(50);
 
 		expect(onComplete).toHaveBeenCalledOnce();
-		expect(onComplete).toHaveBeenCalledWith({ label: 'Project 2', value: 'proj2' });
+		expect(onComplete).toHaveBeenCalledWith({
+			label: 'Project 2',
+			value: 'proj2',
+		});
 	});
 
 	it('should handle errors when fetching projects fails', async () => {
@@ -96,14 +99,15 @@ describe('SelectProject Component', () => {
 				accessToken="test_token"
 				cookie="test_cookie"
 				onComplete={vi.fn()}
-				onError={onError} />,
+				onError={onError}
+			/>,
 		);
 
 		await delay(50); // Allow async operation to complete
 
 		expect(onError).toHaveBeenCalledOnce();
 		expect(onError).toHaveBeenCalledWith(
-			'Failed to load projects. Reason: Network error. Please check your network connection or credentials and try again.'
+			'Failed to load projects. Reason: Network error. Please check your network connection or credentials and try again.',
 		);
 	});
 
@@ -125,7 +129,7 @@ describe('SelectProject Component', () => {
 				cookie="test_cookie"
 				onComplete={vi.fn()}
 				onError={onError}
-			/>
+			/>,
 		);
 
 		await delay(50); // Allow async operation to complete
