@@ -28,7 +28,6 @@ export const useExport = (apiKey: string) => {
 # Organization: ${scope?.organization_id || 'unknown'}
 ${generateProviderBlock(apiKey)}`;
 
-			// Order matters for dependencies
 			const generators = [
 				new ResourceGenerator(permit, warningCollector),
 				new RoleGenerator(permit, warningCollector),

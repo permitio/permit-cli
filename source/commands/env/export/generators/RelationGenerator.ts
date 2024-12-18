@@ -12,12 +12,10 @@ export class RelationGenerator implements HCLGenerator {
 
 	async generateHCL(): Promise<string> {
 		try {
-			let hcl = '\n# Resource Relations\n';
-
 			// First get all resources
 			const resources = await this.permit.api.resources.list();
 			if (!resources || !Array.isArray(resources)) {
-				return '';
+				return ''; // Return empty string when no resources, no header
 			}
 
 			// For each resource, get its relations
@@ -42,8 +40,11 @@ export class RelationGenerator implements HCLGenerator {
 			}
 
 			if (allRelations.length === 0) {
-				return '';
+				return ''; // Return empty string if no relations found, no header
 			}
+
+			// Add header only when we have relations to show
+			let hcl = '\n# Resource Relations\n';
 
 			// Remove duplicates based on relation key
 			const uniqueRelations = Array.from(
@@ -64,13 +65,13 @@ export class RelationGenerator implements HCLGenerator {
 					}
 
 					hcl += `resource "permitio_relation" "${createSafeId(relation.key)}" {
-  key = "${relation.key}"
-  name = "${relation.name || relation.key}"${
+	key = "${relation.key}"
+	name = "${relation.name || relation.key}"${
 		relation.description ? `\n  description = "${relation.description}"` : ''
 	}
-  subject_resource = "${relation.subject_resource}"
-  object_resource = "${relation.object_resource}"
-}\n`;
+	subject_resource = "${relation.subject_resource}"
+	object_resource = "${relation.object_resource}"
+  }\n`;
 				} catch (relationError) {
 					this.warningCollector.addWarning(
 						`Failed to export relation ${relation.key}: ${relationError}`,
