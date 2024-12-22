@@ -3,6 +3,8 @@ import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import { getRepoList } from '../../lib/gitops/utils.js';
 import Spinner from 'ink-spinner';
+import { getNamespaceIl18n } from '../../lib/i18n.js';
+const i18n = getNamespaceIl18n('gitops.create.github');
 
 type Props = {
 	apiKey: string;
@@ -22,11 +24,11 @@ const RepositoryKey: React.FC<Props> = ({
 	const [loading, setLoading] = useState<boolean>(true);
 	const Validate = async (repoKey: string): Promise<string> => {
 		if (repoKey.length <= 1) {
-			return 'Repository Key is required';
+			return i18n('missingRepoKey.error');
 		}
 		const regex = /^[A-Za-z0-9\-_]+$/;
 		if (!regex.test(repoKey)) {
-			return 'Repository Key should contain only alphanumeric characters, hyphens and underscores';
+			return i18n('invalidRepoKey.error');
 		}
 		return '';
 	};
@@ -50,7 +52,7 @@ const RepositoryKey: React.FC<Props> = ({
 		async (repoKey: string) => {
 			const isRepositoryKeyAlreadyPresent = (repoKey: string): boolean => {
 				if (repolist.includes(repoKey)) {
-					onError('RepositoryKey with this name already exists');
+					onError(i18n('duplicateRepoKey.error'));
 					return true;
 				}
 				return false;
@@ -77,7 +79,7 @@ const RepositoryKey: React.FC<Props> = ({
 			) : (
 				<Box>
 					<Box marginRight={1}>
-						<Text> Enter Your RepositoryKey : </Text>
+						<Text>{i18n('enterRepoKey.message')}</Text>
 						<TextInput
 							value={repoKey}
 							onChange={setRepoKey}

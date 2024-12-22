@@ -7,6 +7,8 @@ import LoginFlow from '../components/LoginFlow.js';
 import EnvironmentSelection, {
 	ActiveState,
 } from '../components/EnvironmentSelection.js';
+import { getNamespaceIl18n } from '../lib/i18n.js';
+const i18n = getNamespaceIl18n('login');
 
 export const options = object({
 	key: string()
@@ -96,7 +98,7 @@ export default function Login({
 			)}
 			{state === 'done' && (
 				<Text>
-					Logged in to {organization} with selected environment as {environment}
+					{i18n('loggedIn.message', { organization, environment })}
 				</Text>
 			)}
 			{error && <Text>{error}</Text>}

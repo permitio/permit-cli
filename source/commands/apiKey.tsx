@@ -3,6 +3,8 @@ import { Text, Newline } from 'ink';
 import zod from 'zod';
 import { keyAccountOption } from '../options/keychain.js';
 import { KEYSTORE_PERMIT_SERVICE_NAME } from '../config.js';
+import { getNamespaceIl18n } from '../lib/i18n.js';
+const i18n = getNamespaceIl18n('apiKey');
 
 import keytar from 'keytar';
 
@@ -42,13 +44,13 @@ export default function ApiKey({ args, options }: Props) {
 		keytar.setPassword(KEYSTORE_PERMIT_SERVICE_NAME, options.keyAccount, key);
 		return (
 			<Text>
-				<Text color="green">Key saved to secure key store.</Text>
+				<Text color="green">{i18n('apiKeySaved.message')}</Text>
 			</Text>
 		);
 	} else if (isValid && action === 'validate') {
 		return (
 			<Text>
-				<Text color="green">Key is valid.</Text>
+				<Text color="green">{i18n('apiKeyValid.message')}</Text>
 			</Text>
 		);
 	} else if (action === 'read') {
@@ -60,9 +62,9 @@ export default function ApiKey({ args, options }: Props) {
 	}
 	return (
 		<Text>
-			<Text color="red">Key is not valid.</Text>
+			<Text color="red">{i18n('apiKeyInvalid.message')}</Text>
 			<Newline />
-			<Text color="red">Provided key: {key}</Text>
+			<Text color="red">{i18n('apiKeyInvalidValue.message', { key })}</Text>
 		</Text>
 	);
 }

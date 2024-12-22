@@ -1,0 +1,8 @@
+{
+    "policy": {
+        "title": "Listing Policies on Opa Server={{serverUrl}}",
+        "subtitle": "Showing {{viewLength}} of {{policyItemsLength}} policies:",
+        "placeholder": "Type text to filter list",
+        "requestError.message": "Request failed: {{error}}"
+    }
+}

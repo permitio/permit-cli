@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { getProjectList } from '../../lib/gitops/utils.js';
 import { Text } from 'ink';
 import SelectInput from 'ink-select-input';
+import { getNamespaceIl18n } from '../../lib/i18n.js';
+const i18n = getNamespaceIl18n('gitops.create.github');
 
 type Props = {
 	apiKey: string;
@@ -40,10 +42,10 @@ const SelectProject: React.FC<Props> = ({
 
 	return (
 		<>
-			{loading && <Text>Loading projects...</Text>}
+			{loading && <Text>{i18n('loadingProjects.message')}</Text>}
 			{!loading && (
 				<>
-					<Text> Select Your Project: </Text>
+					<Text>{i18n('selectProject.message')}</Text>
 					<SelectInput
 						items={projects}
 						onSelect={project => {
