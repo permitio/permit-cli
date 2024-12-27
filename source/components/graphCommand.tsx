@@ -142,14 +142,29 @@ export default function Graph({ options }: Props) {
 				}));
 
 				const relationsMap = new Map<string, Relationship[]>();
+
 				resourceResponse.response['forEach']((resource: any) => {
 					const relationsData = resource.relationships || [];
 					relationsMap.set(
 						resource.id,
-						relationsData.map((relation: any) => ({
-							label: `${relation.relation} → ${relation.object}`,
-							value: relation.object || 'Unknown ID',
-						})),
+						relationsData.map((relation: any) => {
+							// Ensure relation.object follows the "resource#role" format
+							let formattedObject = relation.object || 'Unknown ID';
+							if (formattedObject.includes(':')) {
+								const [resourcePart, rolePart] = formattedObject.split(':');
+								formattedObject = `${resourcePart}#${rolePart}`;
+							}
+
+							// Convert relation.relation to uppercase
+							const relationLabel = relation.relation
+								? relation.relation.toUpperCase()
+								: 'UNKNOWN RELATION';
+
+							return {
+								label: `IS ${relationLabel} OF`,
+								value: formattedObject,
+							};
+						}),
 					);
 				});
 

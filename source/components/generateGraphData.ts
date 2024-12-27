@@ -23,7 +23,7 @@ export const generateGraphData = (
 	roleAssignments: RoleAssignment[],
 ) => {
 	const nodes = resources.map(resource => ({
-		data: { id: resource.id, label: `Resource: ${resource.label}` },
+		data: { id: resource.id, label: ` ${resource.label}` },
 	}));
 
 	const edges: { data: { source: string; target: string; label: string } }[] =
@@ -34,7 +34,7 @@ export const generateGraphData = (
 		relations.forEach(relation => {
 			if (!existingNodeIds.has(relation.value)) {
 				nodes.push({
-					data: { id: relation.value, label: `Resource: ${relation.value}` },
+					data: { id: relation.value, label: `${relation.value}` },
 				});
 				existingNodeIds.add(relation.value);
 			}
@@ -54,16 +54,16 @@ export const generateGraphData = (
 		// Add user nodes
 		if (!existingNodeIds.has(assignment.user)) {
 			nodes.push({
-				data: { id: assignment.user, label: `User: ${assignment.user}` },
+				data: { id: assignment.user, label: `${assignment.user}` },
 			});
 			existingNodeIds.add(assignment.user);
 		}
 
 		// Add role nodes
-		const roleNodeId = `role:${assignment.role}`;
+		const roleNodeId = `${assignment.role}`;
 		if (!existingNodeIds.has(roleNodeId)) {
 			nodes.push({
-				data: { id: roleNodeId, label: `Role: ${assignment.role}` },
+				data: { id: roleNodeId, label: ` ${assignment.role}` },
 			});
 			existingNodeIds.add(roleNodeId);
 		}
@@ -73,7 +73,7 @@ export const generateGraphData = (
 			data: {
 				source: assignment.user,
 				target: roleNodeId,
-				label: `Assigned role`,
+				label: `Assigned Role`,
 			},
 		});
 
@@ -82,7 +82,7 @@ export const generateGraphData = (
 			data: {
 				source: roleNodeId,
 				target: assignment.resourceInstance,
-				label: `Grants access`,
+				label: `Grants Access`,
 			},
 		});
 	});
