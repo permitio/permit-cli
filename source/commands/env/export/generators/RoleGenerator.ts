@@ -20,12 +20,12 @@ export class RoleGenerator implements HCLGenerator {
 				hcl += `resource "permitio_role" "${createSafeId(role.key)}" {
   key  = "${role.key}"
   name = "${role.name}"${
-					role.description ? `\n  description = "${role.description}"` : ''
-				}${
-					role.permissions && role.permissions.length > 0
-						? `\n  permissions = ${JSON.stringify(role.permissions)}`
-						: ''
-				}
+		role.description ? `\n  description = "${role.description}"` : ''
+	}${
+		role.permissions && role.permissions.length > 0
+			? `\n  permissions = ${JSON.stringify(role.permissions)}`
+			: ''
+	}
 }\n`;
 			}
 			return hcl;

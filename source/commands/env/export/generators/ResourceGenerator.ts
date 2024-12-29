@@ -14,7 +14,7 @@ export class ResourceGenerator implements HCLGenerator {
 		try {
 			const resources = await this.permit.api.resources.list();
 			const validResources = resources.filter(
-				(resource) => resource.key !== '__user'
+				resource => resource.key !== '__user',
 			);
 
 			if (validResources.length === 0) return '';
@@ -47,15 +47,17 @@ export class ResourceGenerator implements HCLGenerator {
 				([actionKey, action]) => `
     "${actionKey}" = {
       name = "${action.name}"${
-				action.description ? `\n      description = "${action.description}"` : ''
+				action.description
+					? `\n      description = "${action.description}"`
+					: ''
 			}
-    }`
+    }`,
 			)
 			.join('');
 	}
 
 	private generateAttributes(
-		attributes: Record<string, any> | undefined
+		attributes: Record<string, any> | undefined,
 	): string {
 		if (!attributes || Object.keys(attributes).length === 0) return '';
 
@@ -66,7 +68,7 @@ export class ResourceGenerator implements HCLGenerator {
       type = "${attr.type}"${
 				attr.description ? `\n      description = "${attr.description}"` : ''
 			}
-    }`
+    }`,
 			)
 			.join('')}
   }`;
