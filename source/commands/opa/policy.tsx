@@ -16,7 +16,7 @@ export const options = zod.object({
 		.default('http://localhost:8181')
 		.describe(
 			option({
-				description:i18next.t('policy.serverUrlDescription'),
+				description: i18next.t('policy.serverUrlDescription'),
 				alias: 's',
 			}),
 		),
@@ -25,7 +25,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:i18next.t('policy.apiKeyDescription'),
+				description: i18next.t('policy.apiKeyDescription'),
 			}),
 		),
 	keyAccount: keyAccountOption,

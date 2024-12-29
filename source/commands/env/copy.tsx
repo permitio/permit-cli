@@ -12,11 +12,10 @@ import EnvironmentSelection, {
 import { cleanKey } from '../../lib/env/copy/utils.js';
 import i18next from 'i18next';
 
-
 export const options = zod.object({
 	key: zod.string().describe(
 		option({
-			description:i18next.t('copy.apiKeyDescription'),
+			description: i18next.t('copy.apiKeyDescription'),
 		}),
 	),
 	from: zod
@@ -24,7 +23,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:i18next.t('copy.fromDescription'),
+				description: i18next.t('copy.fromDescription'),
 			}),
 		),
 	name: zod
@@ -32,7 +31,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:i18next.t('copy.nameDescription'),
+				description: i18next.t('copy.nameDescription'),
 			}),
 		),
 	description: zod
@@ -40,7 +39,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:i18next.t('copy.descriptionDescription'),
+				description: i18next.t('copy.descriptionDescription'),
 			}),
 		),
 	to: zod
@@ -48,7 +47,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:i18next.t('copy.toDescription'),
+				description: i18next.t('copy.toDescription'),
 			}),
 		),
 	conflictStrategy: zod
@@ -57,7 +56,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:i18next.t('copy.conflictStrategyDescription'),
+				description: i18next.t('copy.conflictStrategyDescription'),
 			}),
 		),
 });

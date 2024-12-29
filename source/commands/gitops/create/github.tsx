@@ -11,7 +11,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:i18next.t("github.apiKeyDescription"),
+				description: i18next.t('github.apiKeyDescription'),
 				alias: 'k',
 			}),
 		),
@@ -20,7 +20,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:i18next.t("github.inactiveDescription"),
+				description: i18next.t('github.inactiveDescription'),
 				alias: 'i',
 			}),
 		),

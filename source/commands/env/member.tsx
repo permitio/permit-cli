@@ -26,7 +26,7 @@ const rolesOptions = [
 export const options = zod.object({
 	key: zod.string().describe(
 		option({
-			description:i18next.t('member.apiKeyDescription'),
+			description: i18next.t('member.apiKeyDescription'),
 		}),
 	),
 	environment: zod
@@ -34,7 +34,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:i18next.t('member.environmentDescription'),
+				description: i18next.t('member.environmentDescription'),
 			}),
 		),
 	project: zod
@@ -42,7 +42,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:i18next.t('member.projectDescription'),
+				description: i18next.t('member.projectDescription'),
 			}),
 		),
 	email: zod
@@ -50,7 +50,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:i18next.t('member.emailDescription'),
+				description: i18next.t('member.emailDescription'),
 			}),
 		),
 	role: zod
@@ -58,7 +58,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:i18next.t('member.roleDescription'),
+				description: i18next.t('member.roleDescription'),
 			}),
 		),
 });

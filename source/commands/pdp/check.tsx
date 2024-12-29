@@ -16,7 +16,7 @@ export const options = zod.object({
 		.min(1, 'User identifier cannot be empty')
 		.describe(
 			option({
-				description:i18next.t('check.userDescription'),
+				description: i18next.t('check.userDescription'),
 				alias: 'u',
 			}),
 		),
@@ -25,7 +25,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:i18next.t('check.userAttributesDescription'),
+				description: i18next.t('check.userAttributesDescription'),
 				alias: 'ua',
 			}),
 		),
@@ -34,7 +34,7 @@ export const options = zod.object({
 		.min(1, 'Resource cannot be empty')
 		.describe(
 			option({
-				description:i18next.t('check.resourceDescription'),
+				description: i18next.t('check.resourceDescription'),
 				alias: 'r',
 			}),
 		),
@@ -43,7 +43,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:i18next.t('check.resourceAttributesDescription'),
+				description: i18next.t('check.resourceAttributesDescription'),
 				alias: 'ra',
 			}),
 		),
@@ -52,7 +52,7 @@ export const options = zod.object({
 		.min(1, 'Action cannot be empty')
 		.describe(
 			option({
-				description:i18next.t('check.actionDescription'),
+				description: i18next.t('check.actionDescription'),
 				alias: 'a',
 			}),
 		),
@@ -62,7 +62,7 @@ export const options = zod.object({
 		.default('default')
 		.describe(
 			option({
-				description:i18next.t('check.tenantDescription'),
+				description: i18next.t('check.tenantDescription'),
 				alias: 't',
 			}),
 		),
@@ -70,7 +70,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:i18next.t('check.pdpurlDescription'),
+				description: i18next.t('check.pdpurlDescription'),
 			}),
 		),
 	apiKey: zod
@@ -78,7 +78,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:i18next.t('check.apiKeyDescription'),
+				description: i18next.t('check.apiKeyDescription'),
 			}),
 		),
 	keyAccount: keyAccountOption,

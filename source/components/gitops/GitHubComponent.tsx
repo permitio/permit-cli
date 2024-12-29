@@ -6,10 +6,13 @@ import BranchName from './BranchName.js';
 import { Box, Text } from 'ink';
 import { configurePermit, GitConfig } from '../../lib/gitops/utils.js';
 import { useAuth } from '../AuthProvider.js';
+import i18next from 'i18next';
+
 type Props = {
 	authKey: string | undefined;
 	inactivateWhenValidated: boolean | undefined;
 };
+
 const GitHubComponent: React.FC<Props> = ({
 	authKey,
 	inactivateWhenValidated,
@@ -39,6 +42,7 @@ const GitHubComponent: React.FC<Props> = ({
 		| 'error'
 	>('apiKey');
 	const { authToken } = useAuth();
+
 	const apiKeyRender = useCallback(() => {
 		if (authKey) {
 			setApiKey(authKey);
@@ -53,15 +57,18 @@ const GitHubComponent: React.FC<Props> = ({
 			}
 		}
 	}, [authKey, setApiKey, setState, authToken]);
+
 	useEffect(() => {
 		apiKeyRender();
 	}, [apiKeyRender]);
+
 	return (
 		<>
 			<Box margin={1}>
-				<Text>GitOps Configuration Wizard - GitHub</Text>
+				<Text>{i18next.t('gitOpsWizard.title')}</Text> {/* Localized Title */}
 			</Box>
 
+			{/* Project Selection */}
 			{state === 'project' && (
 				<SelectProject
 					apiKey={ApiKey}
@@ -76,6 +83,7 @@ const GitHubComponent: React.FC<Props> = ({
 				/>
 			)}
 
+			{/* Repository Key Input */}
 			{state === 'repositoryKey' && (
 				<RepositoryKey
 					projectName={projectKey}
@@ -93,6 +101,8 @@ const GitHubComponent: React.FC<Props> = ({
 					}}
 				/>
 			)}
+
+			{/* SSH Key Input */}
 			{state === 'sshKey' && (
 				<SSHKey
 					onError={errormessage => {
@@ -112,6 +122,8 @@ const GitHubComponent: React.FC<Props> = ({
 					}}
 				/>
 			)}
+
+			{/* Branch Name Input */}
 			{state === 'branch' && (
 				<BranchName
 					onError={(errormessage: string) => {
@@ -130,9 +142,7 @@ const GitHubComponent: React.FC<Props> = ({
 								updatedGitConfig,
 							);
 							if (configResponse.status === 'invalid') {
-								setError(
-									'Invalid configuration. Please check the configuration and try again.',
-								);
+								setError(i18next.t('gitOpsWizard.invalidConfigError'));
 								setState('error');
 								return;
 							}
@@ -143,27 +153,27 @@ const GitHubComponent: React.FC<Props> = ({
 						}
 						setState('done');
 						if (gitConfig.activateWhenValidated) {
-							setDoneMessage(
-								'Your GitOps is configured successfully and will be activated once validated',
-							);
-							return;
+							setDoneMessage(i18next.t('gitOpsWizard.configSuccessValidated'));
+						} else {
+							setDoneMessage(i18next.t('gitOpsWizard.configSuccessPending'));
 						}
-						setDoneMessage(
-							'Your GitOps is configured succesffuly. To complete the setup, remember to activate it later',
-						);
 					}}
 				/>
 			)}
 
+			{/* Done Message */}
 			{state === 'done' && (
 				<Box margin={1}>
 					<Text color={'green'}>{doneMessage}</Text>
 				</Box>
 			)}
 
+			{/* Error Message */}
 			{state === 'error' && (
 				<Box margin={1}>
-					<Text color={'red'}>{'Error: ' + error}</Text>
+					<Text color={'red'}>
+						{i18next.t('gitOpsWizard.errorMessage', { error })}
+					</Text>
 				</Box>
 			)}
 		</>
