@@ -2,12 +2,7 @@ import { Permit } from 'permitio';
 import { HCLGenerator, WarningCollector } from '../types.js';
 import { createSafeId } from '../utils.js';
 
-// Define types for actions and attributes
-interface Action {
-	name: string;
-	description?: string;
-}
-
+// Define types for attributes
 interface Attribute {
 	type: string;
 	description?: string;
@@ -50,14 +45,16 @@ export class ResourceGenerator implements HCLGenerator {
 		}
 	}
 
-	private generateActions(actions: Record<string, Action>): string {
+	private generateActions(
+		actions: Record<string, { name?: string; description?: string }>,
+	): string {
 		if (Object.keys(actions).length === 0) return '';
 
 		return Object.entries(actions)
 			.map(
 				([actionKey, action]) => `
     "${actionKey}" = {
-      name = "${action.name}"${
+      name = "${action.name || 'Unnamed Action'}"${
 				action.description
 					? `\n      description = "${action.description}"`
 					: ''

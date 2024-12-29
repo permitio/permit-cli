@@ -36,15 +36,22 @@ export const ExportContent: React.FC<{ options: ExportOptions }> = ({
 					scope,
 				} = await validateApiKeyScope(key, 'environment');
 
-				if (!valid || scopeError) {
+				if (!valid || scopeError || !scope) {
 					setState({
 						status: '',
-						error: `Invalid API key: ${scopeError}`,
+						error: `Invalid API key: ${scopeError || 'No scope found'}`,
 						isComplete: true,
 						warnings: [],
 					});
 					return;
 				}
+
+				// Normalize the environment_id and project_id to match ExportScope
+				const normalizedScope = {
+					...scope,
+					environment_id: scope.environment_id || undefined,
+					project_id: scope.project_id || undefined,
+				};
 
 				if (!isSubscribed) return;
 
@@ -53,7 +60,7 @@ export const ExportContent: React.FC<{ options: ExportOptions }> = ({
 					status: 'Initializing export...',
 				}));
 
-				const { hcl, warnings } = await exportConfig(scope);
+				const { hcl, warnings } = await exportConfig(normalizedScope);
 
 				if (!isSubscribed) return;
 
