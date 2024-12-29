@@ -8,6 +8,13 @@ import { UserAttributesGenerator } from '../../generators/UserAttributesGenerato
 import { RelationGenerator } from '../../generators/RelationGenerator.js';
 import { ConditionSetGenerator } from '../../generators/ConditionSetGenerator.js';
 
+// Define a type for the `scope` parameter
+interface ExportScope {
+	environment_id?: string;
+	project_id?: string;
+	organization_id?: string;
+}
+
 export const useExport = (apiKey: string) => {
 	const [state, setState] = useState<ExportState>({
 		status: '',
@@ -18,7 +25,7 @@ export const useExport = (apiKey: string) => {
 
 	const permit = PermitSDK(apiKey);
 
-	const exportConfig = async (scope: any) => {
+	const exportConfig = async (scope: ExportScope) => {
 		try {
 			const warningCollector = createWarningCollector();
 
