@@ -7,6 +7,7 @@ import LoginFlow from '../components/LoginFlow.js';
 import EnvironmentSelection, {
 	ActiveState,
 } from '../components/EnvironmentSelection.js';
+import SignupComponent from '../components/signup/SignupComponent.js';
 
 export const options = object({
 	key: string()
@@ -40,7 +41,9 @@ export default function Login({
 	options: { key, workspace },
 	loginSuccess,
 }: Props) {
-	const [state, setState] = useState<'login' | 'env' | 'done'>('login');
+	const [state, setState] = useState<'login' | 'signup' | 'env' | 'done'>(
+		'login',
+	);
 	const [accessToken, setAccessToken] = useState<string>('');
 	const [cookie, setCookie] = useState<string>('');
 	const [error, setError] = useState<string | null>(null);
@@ -68,8 +71,15 @@ export default function Login({
 		[loginSuccess],
 	);
 
+	const onSignupSuccess = useCallback(() => {
+		setState('env');
+	}, []);
+
 	useEffect(() => {
-		if (error || state === 'done') {
+		if (error === 'NO_ORGANIZATIONS') {
+			setState('signup');
+			setError(null);
+		} else if (error || state === 'done') {
 			process.exit(1);
 		}
 	}, [error, state]);
@@ -94,12 +104,21 @@ export default function Login({
 					workspace={workspace}
 				/>
 			)}
+			{state === 'signup' && (
+				<>
+					<SignupComponent
+						accessToken={accessToken}
+						cookie={cookie}
+						onSuccess={onSignupSuccess}
+					/>
+				</>
+			)}
 			{state === 'done' && (
 				<Text>
 					Logged in to {organization} with selected environment as {environment}
 				</Text>
 			)}
-			{error && <Text>{error}</Text>}
+			{error && state !== 'signup' && <Text>{error}</Text>}
 		</>
 	);
 }
