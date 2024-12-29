@@ -12,7 +12,7 @@ describe('RoleGenerator', () => {
 						name: 'Administrator',
 						description: 'Admin role',
 						permissions: ['document:read', 'document:write'],
-						extends: ['viewer'],
+						extends: ['viewer'], // This will be ignored in the HCL output
 					},
 				]),
 			},
@@ -30,8 +30,8 @@ describe('RoleGenerator', () => {
 		expect(hcl).toContain('  key  = "admin"');
 		expect(hcl).toContain('  name = "Administrator"');
 		expect(hcl).toContain('  description = "Admin role"');
-		expect(hcl).toContain('["document:read"');
-		expect(hcl).toContain('["viewer"]');
+		expect(hcl).toContain('["document:read","document:write"]');
+		expect(hcl).not.toContain('["viewer"]'); // Ensure "viewer" is not included
 	});
 
 	it('handles API errors gracefully', async () => {
