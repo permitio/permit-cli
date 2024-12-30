@@ -64,6 +64,11 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 				}
 			}
 
+			if (orgs.length === 0) {
+				onError('NO_ORGANIZATIONS');
+				return;
+			}
+
 			if (orgs.length === 1 && orgs[0]) {
 				onComplete({
 					label: orgs[0].name,

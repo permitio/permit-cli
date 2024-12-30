@@ -21,6 +21,7 @@
 		"dist"
 	],
 	"dependencies": {
+		"@scaleway/random-name": "^5.1.1",
 		"clipboardy": "^4.0.0",
 		"delay": "^6.0.0",
 		"fuse.js": "^7.0.0",
