@@ -36,7 +36,7 @@ describe('SelectEnvironment Component', () => {
 				activeProject={activeProject}
 				onComplete={vi.fn()}
 				onError={vi.fn()}
-			/>
+			/>,
 		);
 
 		expect(lastFrame()).toMatch(/Loading Environments.../);
@@ -66,7 +66,7 @@ describe('SelectEnvironment Component', () => {
 				activeProject={activeProject}
 				onComplete={onComplete}
 				onError={vi.fn()}
-			/>
+			/>,
 		);
 
 		await delay(50); // Allow async operation to complete
@@ -82,7 +82,10 @@ describe('SelectEnvironment Component', () => {
 		await delay(50);
 
 		expect(onComplete).toHaveBeenCalledOnce();
-		expect(onComplete).toHaveBeenCalledWith({ label: 'Environment 2', value: 'env2' });
+		expect(onComplete).toHaveBeenCalledWith({
+			label: 'Environment 2',
+			value: 'env2',
+		});
 	});
 
 	it('should handle errors when fetching environments fails', async () => {
@@ -105,14 +108,15 @@ describe('SelectEnvironment Component', () => {
 				cookie="test_cookie"
 				activeProject={activeProject}
 				onComplete={vi.fn()}
-				onError={onError} />,
+				onError={onError}
+			/>,
 		);
 
 		await delay(50); // Allow async operation to complete
 
 		expect(onError).toHaveBeenCalledOnce();
 		expect(onError).toHaveBeenCalledWith(
-			'Failed to load environments for project "Project 1". Reason: Network error. Please check your network connection or credentials and try again.'
+			'Failed to load environments for project "Project 1". Reason: Network error. Please check your network connection or credentials and try again.',
 		);
 	});
 
@@ -137,7 +141,7 @@ describe('SelectEnvironment Component', () => {
 				activeProject={activeProject}
 				onComplete={vi.fn()}
 				onError={onError}
-			/>
+			/>,
 		);
 
 		await delay(50); // Allow async operation to complete
