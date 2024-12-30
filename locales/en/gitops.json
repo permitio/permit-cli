@@ -1,0 +1,23 @@
+{
+    "create": {
+        "github": {
+            "title": "GitOps Configuration Wizard - GitHub",
+            "invalidConfig.message": "Invalid configuration. Please check the configuration and try again.",
+            "activatedOnceValidated.message": "Your GitOps is configured successfully and will be activated once validated",
+            "success.message": "Your GitOps is configured succesffuly. To complete the setup, remember to activate it later.",
+            "invalidBranchName.message": "Please enter a valid branch name",
+            "enterBranchName.message": "Enter the Branch Name: ",
+            "missingRepoKey.error": "Repository Key is required",
+            "invalidRepoKey.error": "Repository Key should contain only alphanumeric characters, hyphens and underscores",
+            "duplicateRepoKey.error": "Repository Key with this name already exists",
+            "enterRepoKey.message": "Enter Your Repository Key: ",
+            "loadingProjects.message": "Loading projects...",
+            "selectProject.message": "Select Your Project: ",
+            "invalidSshUrl.error": "Please enter a valid SSH URL",
+            "sshKeyGenerated.message": "SSH Key Generated.",
+            "copySshKey.message": "Copy The Public Key to Github: ",
+            "enterSshUrl.message": "Enter the SSH URL of the Repo: ",
+            "sshHelper.message": "Go to {{url}} and create your new SSH key. You can also refer to {{moreDetailsUrl}} for more details\n"
+        }
+    }
+}

@@ -1,0 +1,6 @@
+{
+    "apiKeySaved.message": "Key saved to secure key store.",
+    "apiKeyValid.message": "Key is valid.",
+    "apiKeyInvalid.message": "Key is not valid.",
+    "apiKeyInvalidValue.message": "Provided key: {{key}}"
+}

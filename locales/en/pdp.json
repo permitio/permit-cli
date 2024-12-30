@@ -1,0 +1,16 @@
+{
+    "check": {
+        "user": "Checking user",
+        "attributes": "with attributes",
+        "action": "action",
+        "resource": "resource",
+        "tenant": "at tenant",
+        "status.allowed": "ALLOWED",
+        "status.denied": "DENIED",
+        "error.message": "Request failed: {{error}}"
+    },
+    "run": {
+        "title": "Run the following command from your terminal:",
+        "loading.message": "Loading command"
+    }
+}

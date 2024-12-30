@@ -8,6 +8,8 @@ import { keyAccountOption } from '../../options/keychain.js';
 import * as keytar from 'keytar';
 import { inspect } from 'util';
 import { parseAttributes } from '../../utils/attributes.js';
+import { getNamespaceIl18n } from '../../lib/i18n.js';
+const i18n = getNamespaceIl18n('pdp.check');
 
 export const options = zod.object({
 	user: zod
@@ -171,17 +173,17 @@ export default function Check({ options }: Props) {
 		<>
 			{/* The following text adheres to react/no-unescaped-entities rule */}
 			<Text>
-				Checking user=&quot;{options.user}&quot;
-				{options.userAttributes && ` with attributes=${options.userAttributes}`}
-				action={options.action} resource=
+				{i18n('user')}=&quot;{options.user}&quot;
+				{options.userAttributes && ` ${i18n('attributes')}=${options.userAttributes}`}
+				{i18n('action')}={options.action} {i18n('resource')}=
 				{options.resource}
 				{options.resourceAttributes &&
-					` with attributes=${options.resourceAttributes}`}
-				at tenant={options.tenant}
+					` ${i18n('attributes')}=${options.resourceAttributes}`}
+				{i18n('tenant')}={options.tenant}
 			</Text>
 			{res.allow === true && (
 				<>
-					<Text color={'green'}> ALLOWED </Text>
+					<Text color={'green'}>{i18n('status.allowed')}</Text>
 					<Box marginLeft={4}>
 						<Text>
 							{inspect(res, {
@@ -193,11 +195,11 @@ export default function Check({ options }: Props) {
 					</Box>
 				</>
 			)}
-			{res.allow === false && <Text color={'red'}> DENIED</Text>}
+			{res.allow === false && <Text color={'red'}>{i18n('status.denied')}</Text>}
 			{res.allow === undefined && error === '' && <Spinner type="dots" />}
 			{error && (
 				<Box>
-					<Text color="red">Request failed: {error}</Text>
+					<Text color="red">{i18n('error.message', { error })}</Text>
 					<Newline />
 					<Text>{JSON.stringify(res)}</Text>
 				</Box>

@@ -6,6 +6,8 @@ import BranchName from './BranchName.js';
 import { Box, Text } from 'ink';
 import { configurePermit, GitConfig } from '../../lib/gitops/utils.js';
 import { useAuth } from '../AuthProvider.js';
+import { getNamespaceIl18n } from '../../lib/i18n.js';
+const i18n = getNamespaceIl18n('gitops.create.github');
 type Props = {
 	authKey: string | undefined;
 	inactivateWhenValidated: boolean | undefined;
@@ -59,7 +61,7 @@ const GitHubComponent: React.FC<Props> = ({
 	return (
 		<>
 			<Box margin={1}>
-				<Text>GitOps Configuration Wizard - GitHub</Text>
+				<Text>{i18n('title')}</Text>
 			</Box>
 
 			{state === 'project' && (
@@ -131,7 +133,7 @@ const GitHubComponent: React.FC<Props> = ({
 							);
 							if (configResponse.status === 'invalid') {
 								setError(
-									'Invalid configuration. Please check the configuration and try again.',
+									i18n('invalidConfig.message'),
 								);
 								setState('error');
 								return;
@@ -144,12 +146,12 @@ const GitHubComponent: React.FC<Props> = ({
 						setState('done');
 						if (gitConfig.activateWhenValidated) {
 							setDoneMessage(
-								'Your GitOps is configured successfully and will be activated once validated',
+								i18n('activatedOnceValidated.message'),
 							);
 							return;
 						}
 						setDoneMessage(
-							'Your GitOps is configured succesffuly. To complete the setup, remember to activate it later',
+							i18n('success.message'),
 						);
 					}}
 				/>

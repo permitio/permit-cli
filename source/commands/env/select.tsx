@@ -11,6 +11,8 @@ import zod from 'zod';
 import { type infer as zInfer } from 'zod';
 import Login from '../login.js';
 import { useApiKeyApi } from '../../hooks/useApiKeyApi.js';
+import { getNamespaceIl18n } from '../../lib/i18n.js';
+const i18n = getNamespaceIl18n('env.select');
 
 export const options = zod.object({
 	key: zod
@@ -87,12 +89,12 @@ export default function Select({ options: { key: authToken } }: Props) {
 			{state === 'loading' && (
 				<Text>
 					<Spinner type={'dots'} />
-					Loading your environment
+					{i18n('loading.message')}
 				</Text>
 			)}
 			{state === 'login' && (
 				<>
-					<Text>No Key provided, Redirecting to Login...</Text>
+					<Text>{i18n('noKey.message')}</Text>
 					<Login options={{}} loginSuccess={loginSuccess} />
 				</>
 			)}
@@ -104,7 +106,7 @@ export default function Select({ options: { key: authToken } }: Props) {
 				/>
 			)}
 			{state === 'done' && environment && (
-				<Text>Environment: {environment} selected successfully</Text>
+				<Text>{i18n('success.message', { environment })}</Text>
 			)}
 			{error && <Text>{error}</Text>}
 		</>
