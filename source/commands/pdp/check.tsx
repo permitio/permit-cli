@@ -157,7 +157,11 @@ export default function Check({ options }: Props) {
 				queryPDP(apiKey);
 			})
 			.catch(reason => {
-				setError(reason);
+				if (reason instanceof Error) {
+					setError(reason.message);
+				} else {
+					setError(String(reason));
+				}
 			});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [options.keyAccount]);

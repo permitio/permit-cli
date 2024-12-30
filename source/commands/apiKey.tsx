@@ -34,7 +34,11 @@ export default function ApiKey({ args, options }: Props) {
 			keytar
 				.getPassword(KEYSTORE_PERMIT_SERVICE_NAME, options.keyAccount)
 				.then(value => setReadKey(value || ''))
-				.catch(reason => setReadKey(`-- Failed to read key- reason ${reason}`));
+				.catch(reason =>
+					setReadKey(
+						`-- Failed to read key- reason ${reason instanceof Error ? reason.message : String(reason)}`,
+					),
+				);
 		}
 	}, [action, options.keyAccount]);
 

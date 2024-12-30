@@ -37,7 +37,11 @@ describe('LoginFlow Component', () => {
 		const onError = vi.fn();
 
 		const { lastFrame } = render(
-			<LoginFlow apiKey="valid_api_key" onSuccess={onSuccess} onError={onError} />
+			<LoginFlow
+				apiKey="valid_api_key"
+				onSuccess={onSuccess}
+				onError={onError}
+			/>,
 		);
 
 		await delay(50); // Allow async operations to complete
@@ -54,14 +58,18 @@ describe('LoginFlow Component', () => {
 		const onError = vi.fn();
 
 		const { lastFrame } = render(
-			<LoginFlow apiKey="invalid_api_key" onSuccess={onSuccess} onError={onError} />
+			<LoginFlow
+				apiKey="invalid_api_key"
+				onSuccess={onSuccess}
+				onError={onError}
+			/>,
 		);
 
 		await delay(50); // Allow async operations to complete
 
 		expect(onSuccess).not.toHaveBeenCalled();
 		expect(onError).toHaveBeenCalledWith(
-			'Invalid API Key. Please provide a valid API Key or leave it blank to use browser authentication.'
+			'Invalid API Key. Please provide a valid API Key or leave it blank to use browser authentication.',
 		);
 		expect(lastFrame()).not.toMatch(/Logging in.../);
 	});
@@ -77,14 +85,16 @@ describe('LoginFlow Component', () => {
 						getSetCookie: () => ['cookie_value'],
 					},
 					error: null,
-				})
+				}),
 			),
 		});
 
 		const onSuccess = vi.fn();
 		const onError = vi.fn();
 
-		const { lastFrame } = render(<LoginFlow onSuccess={onSuccess} onError={onError} />);
+		const { lastFrame } = render(
+			<LoginFlow onSuccess={onSuccess} onError={onError} />,
+		);
 
 		await delay(50); // Allow async operations to complete
 
@@ -96,17 +106,23 @@ describe('LoginFlow Component', () => {
 
 	it('should handle browser authentication error and call onError', async () => {
 		vi.mocked(browserAuth).mockResolvedValue('verifier');
-		vi.mocked(authCallbackServer).mockRejectedValue(new Error('Callback failed'));
+		vi.mocked(authCallbackServer).mockRejectedValue(
+			new Error('Callback failed'),
+		);
 
 		const onSuccess = vi.fn();
 		const onError = vi.fn();
 
-		const { lastFrame } = render(<LoginFlow onSuccess={onSuccess} onError={onError} />);
+		const { lastFrame } = render(
+			<LoginFlow onSuccess={onSuccess} onError={onError} />,
+		);
 
 		await delay(50); // Allow async operations to complete
 
 		expect(onSuccess).not.toHaveBeenCalled();
-		expect(onError).toHaveBeenCalledWith('Unexpected error during authentication. Error: Callback failed');
+		expect(onError).toHaveBeenCalledWith(
+			'Unexpected error during authentication. Error: Callback failed',
+		);
 		expect(lastFrame()).not.toMatch(/Logging in.../);
 	});
 
@@ -119,20 +135,22 @@ describe('LoginFlow Component', () => {
 				Promise.resolve({
 					headers: null,
 					error: 'Network error',
-				})
+				}),
 			),
 		});
 
 		const onSuccess = vi.fn();
 		const onError = vi.fn();
 
-		const { lastFrame } = render(<LoginFlow onSuccess={onSuccess} onError={onError} />);
+		const { lastFrame } = render(
+			<LoginFlow onSuccess={onSuccess} onError={onError} />,
+		);
 
 		await delay(50); // Allow async operations to complete
 
 		expect(onSuccess).not.toHaveBeenCalled();
 		expect(onError).toHaveBeenCalledWith(
-			'Login failed. Reason: Network error. Please check your network connection and try again.'
+			'Login failed. Reason: Network error. Please check your network connection and try again.',
 		);
 		expect(lastFrame()).not.toMatch(/Logging in.../);
 	});
