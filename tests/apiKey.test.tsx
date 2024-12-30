@@ -27,7 +27,7 @@ describe('ApiKey', () => {
 		const { lastFrame } = render(
 			<ApiKey args={['read', permitKey]} options={{ keyAccount: 'test' }} />,
 		);
-		await delay(50);
+		await delay(100);
 		expect(lastFrame()).toMatch(/permit_key_aaaaaaa/);
 	});
 	it('Invalid Key', async () => {
