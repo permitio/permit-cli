@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { getProjectList } from '../../lib/gitops/utils.js';
 import { Text } from 'ink';
 import SelectInput from 'ink-select-input';
-import i18next from 'i18next';
 
 type Props = {
 	apiKey: string;
@@ -41,10 +40,10 @@ const SelectProject: React.FC<Props> = ({
 
 	return (
 		<>
-			{loading && <Text>{i18next.t('selectProjectgitops.loading')}</Text>}
+			{loading && <Text>Loading projects...</Text>}
 			{!loading && (
 				<>
-					<Text>{i18next.t('selectProjectgitops.prompt')}</Text>
+					<Text> Select Your Project: </Text>
 					<SelectInput
 						items={projects}
 						onSelect={project => {

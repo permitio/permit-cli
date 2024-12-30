@@ -1,143 +1,139 @@
 {
-  "translation": {
-    "keyAccountDescription": "A string (e.g., the Permit Environment or Project key) to act as the account under which this will be saved in the machine's secure key-chain.",
-    "useApiKeyDescription": "Use API key instead of user authentication.",
-    "useWorkspaceDescription": "Use a predefined workspace to log in.",
-    "loggedInMessage": "Logged in to {{organization}} with the selected environment as {{environment}}.",
-    "copy": {
-      "apiKeyDescription": "API Key to be used for the environment copy operation (should be at least a project-level key).",
-      "fromDescription": "Optional: Set the environment ID to copy from. If not set, the CLI will prompt you to select one.",
-      "nameDescription": "Optional: The environment name to copy to. If not set, the CLI will ask you for one.",
-      "descriptionDescription": "Optional: The new environment description. If not set, the CLI will ask you for it.",
-      "toDescription": "Optional: Copy the environment to an existing environment. If this variable is set, the 'name' and 'description' variables will be ignored.",
-      "conflictStrategyDescription": "Optional: Set the environment conflict strategy. If not set, the default will be 'fail'."
-    },
-    "member": {
-      "apiKeyDescription": "An API key to perform the invite. A project or organization-level API key is required to invite members to the account.",
-      "environmentDescription": "Optional: ID of the environment you want to add a member to. If not set, the CLI will prompt you to select one.",
-      "projectDescription": "Optional: ID of the project you want to add a member to.",
-      "emailDescription": "Optional: Email address of the user you want to invite. If not set, the CLI will ask you for it.",
-      "roleDescription": "Optional: The role of the user."
-    },
-    "select": {
-      "apiKeyDescription": "Optional: API Key to be used for the environment selection. If not provided, the CLI will redirect you to the login page."
-    },
-    "github": {
-      "apiKeyDescription": "The API key for the Permit Environment Organization or Project.",
-      "inactiveDescription": "Do not activate the repository when validated."
-    },
-    "policy": {
-      "serverUrlDescription": "The OPA server URL.",
-      "apiKeyDescription": "The API key for the OPA Server and Permit environment, project, or workspace.",
-      "keyAccountDescription": "A string (e.g., the Permit Environment or Project key) to act as the account under which this will be saved in the machine's secure key-chain."
-    },
-    "check": {
-      "userDescription": "Unique identity to check for (Required).",
-      "userAttributesDescription": "User attributes in the format key1:value1,key2:value2 (Optional).",
-      "resourceDescription": "Resource being accessed (Required).",
-      "resourceAttributesDescription": "Resource attributes in the format key1:value1,key2:value2 (Optional).",
-      "actionDescription": "Action being performed on the resource by the user (Required).",
-      "tenantDescription": "The tenant the resource belongs to (Optional, defaults to 'default').",
-      "pdpurlDescription": "The URL of the PDP service. Defaults to the cloud PDP. (Optional).",
-      "apiKeyDescription": "The API key for the Permit environment, project, or workspace (Optional).",
-      "keyAccountDescription": "A string (e.g., the Permit Environment or Project key) to act as the account under which this will be saved in the machine's secure key-chain."
-    },
-    "run": {
-      "opaKeyDescription": "Expose OPA port from the PDP."
-    },
-    "logout": {
-      "loading": "Cleaning session...",
-      "success": "Logged Out"
-    },
-    "indexMessage": {
-      "appTitle": "Permit CLI",
-      "helpMessage": "Run this command with --help for more information"
-    },
-    "apiKeyMessages": {
-      "keySaved": "Key saved to secure key store.",
-      "keyValid": "Key is valid.",
-      "keyNotValid": "Key is not valid.",
-      "providedKey": "Provided key: "
-    },
-    "info": {
-      "userProvidedApiKey": "User provided ApiKey has environment scope."
-    },
-    "error": {
-      "invalidApiKey": "Invalid ApiKey",
-      "apiKeyScopeError": "Error while getting scopes for the ApiKey",
-      "selectWorkspaceError": "Error while selecting active workspace",
-      "environmentSecretError": "Error while getting Environment Secret"
-    },
-    "loginFlow": {
-      "info": {
-        "loggingIn": "Logging in...",
-        "loginPrompt": "Login to Permit"
-      },
-      "error": {
-        "invalidApiKey": "Invalid API Key. Please provide a valid API Key or leave it blank to use browser authentication.",
-        "loginFailed": "Login failed. Reason:",
-        "networkIssue": "Please check your network connection and try again.",
-        "unexpectedError": "Unexpected error during authentication."
-      }
-    },
-    "pdpCommand": {
-      "runCommand": "Run the following command from your terminal:",
-      "loading": "Loading command"
-    },
-    "selectEnvironment": {
-      "loading": "Loading Environments...",
-      "selectPrompt": "Select an environment",
-      "failedToLoad": "Failed to load environments for project",
-      "errorReason": "Reason:",
-      "checkNetworkCredentials": "Please check your network connection or credentials and try again."
-    },
-    "selectOrganization": {
-      "loading": "Loading Organizations...",
-      "selectPrompt": "Select an organization",
-      "failedToLoad": "Failed to load organizations.",
-      "reason": "Reason",
-      "checkNetworkCredentials": "Please check your network connection or credentials and try again.",
-      "organizationNotFound": "Organization not found",
-      "verifyName": "Please ensure the name is correct and try again."
-    },
-    "selectProject": {
-      "loading": "Loading Projects...",
-      "selectPrompt": "Select a project",
-      "failedToLoad": "Failed to load projects.",
-      "reason": "Reason",
-      "checkNetworkCredentials": "Please check your network connection or credentials and try again."
-    },
-    "branchName": {
-      "prompt": "Enter the Branch Name: ",
-      "errorMessage": "Please enter a valid branch name"
-    },
-    "gitOpsWizard": {
-      "title": "GitOps Configuration Wizard - GitHub",
-      "invalidConfigError": "Invalid configuration. Please check the configuration and try again.",
-      "configSuccessValidated": "Your GitOps is configured successfully and will be activated once validated.",
-      "configSuccessPending": "Your GitOps is configured successfully. To complete the setup, remember to activate it later.",
-      "errorMessage": "Error: {{error}}"
-    },
-    "repositoryKey": {
-      "prompt": "Enter Your Repository Key:",
-      "error": {
-        "required": "Repository Key is required",
-        "invalid": "Repository Key should contain only alphanumeric characters, hyphens and underscores",
-        "exists": "Repository Key with this name already exists"
-      }
-    },
-    "selectProjectgitops": {
-      "loading": "Loading projects...",
-      "prompt": "Select Your Project:"
-    },
-    "sshKey": {
-      "helperMessage": "Go to https://github.com/{{organization}}/{{repository}}/settings/keys/new and create your new SSH key. You can also refer to https://docs.permit.io/integrations/gitops/github#create-a-repository for more details\n",
-      "generated": "SSH Key Generated.",
-      "copyPublicKey": "Copy The Public Key to Github: \n",
-      "sshUrlPrompt": "Enter the SSH URL of the Repo: ",
-      "error": {
-        "invalidUrl": "Please enter a valid SSH URL"
-      }
-    }
-  }
+	"keyAccountDescription": "A string (e.g., the Permit Environment or Project key) to act as the account under which this will be saved in the machine's secure key-chain.",
+	"useApiKeyDescription": "Use API key instead of user authentication.",
+	"useWorkspaceDescription": "Use a predefined workspace to log in.",
+	"loggedInMessage": "Logged in to {{organization}} with the selected environment as {{environment}}.",
+	"copy": {
+		"apiKeyDescription": "API Key to be used for the environment copy operation (should be at least a project-level key).",
+		"fromDescription": "Optional: Set the environment ID to copy from. If not set, the CLI will prompt you to select one.",
+		"nameDescription": "Optional: The environment name to copy to. If not set, the CLI will ask you for one.",
+		"descriptionDescription": "Optional: The new environment description. If not set, the CLI will ask you for it.",
+		"toDescription": "Optional: Copy the environment to an existing environment. If this variable is set, the 'name' and 'description' variables will be ignored.",
+		"conflictStrategyDescription": "Optional: Set the environment conflict strategy. If not set, the default will be 'fail'."
+	},
+	"member": {
+		"apiKeyDescription": "An API key to perform the invite. A project or organization-level API key is required to invite members to the account.",
+		"environmentDescription": "Optional: ID of the environment you want to add a member to. If not set, the CLI will prompt you to select one.",
+		"projectDescription": "Optional: ID of the project you want to add a member to.",
+		"emailDescription": "Optional: Email address of the user you want to invite. If not set, the CLI will ask you for it.",
+		"roleDescription": "Optional: The role of the user."
+	},
+	"select": {
+		"apiKeyDescription": "Optional: API Key to be used for the environment selection. If not provided, the CLI will redirect you to the login page."
+	},
+	"github": {
+		"apiKeyDescription": "The API key for the Permit Environment Organization or Project.",
+		"inactiveDescription": "Do not activate the repository when validated."
+	},
+	"policy": {
+		"serverUrlDescription": "The OPA server URL.",
+		"apiKeyDescription": "The API key for the OPA Server and Permit environment, project, or workspace.",
+		"keyAccountDescription": "A string (e.g., the Permit Environment or Project key) to act as the account under which this will be saved in the machine's secure key-chain."
+	},
+	"check": {
+		"userDescription": "Unique identity to check for (Required).",
+		"userAttributesDescription": "User attributes in the format key1:value1,key2:value2 (Optional).",
+		"resourceDescription": "Resource being accessed (Required).",
+		"resourceAttributesDescription": "Resource attributes in the format key1:value1,key2:value2 (Optional).",
+		"actionDescription": "Action being performed on the resource by the user (Required).",
+		"tenantDescription": "The tenant the resource belongs to (Optional, defaults to 'default').",
+		"pdpurlDescription": "The URL of the PDP service. Defaults to the cloud PDP. (Optional).",
+		"apiKeyDescription": "The API key for the Permit environment, project, or workspace (Optional).",
+		"keyAccountDescription": "A string (e.g., the Permit Environment or Project key) to act as the account under which this will be saved in the machine's secure key-chain."
+	},
+	"run": {
+		"opaKeyDescription": "Expose OPA port from the PDP."
+	},
+	"logout": {
+		"loading": "Cleaning session...",
+		"success": "Logged Out"
+	},
+	"indexMessage": {
+		"appTitle": "Permit CLI",
+		"helpMessage": "Run this command with --help for more information"
+	},
+	"apiKeyMessages": {
+		"keySaved": "Key saved to secure key store.",
+		"keyValid": "Key is valid.",
+		"keyNotValid": "Key is not valid.",
+		"providedKey": "Provided key: "
+	},
+	"info": {
+		"userProvidedApiKey": "User provided ApiKey has environment scope."
+	},
+	"error": {
+		"invalidApiKey": "Invalid ApiKey",
+		"apiKeyScopeError": "Error while getting scopes for the ApiKey",
+		"selectWorkspaceError": "Error while selecting active workspace",
+		"environmentSecretError": "Error while getting Environment Secret"
+	},
+	"loginFlow": {
+		"info": {
+			"loggingIn": "Logging in...",
+			"loginPrompt": "Login to Permit"
+		},
+		"error": {
+			"invalidApiKey": "Invalid API Key. Please provide a valid API Key or leave it blank to use browser authentication.",
+			"loginFailed": "Login failed. Reason:",
+			"networkIssue": "Please check your network connection and try again.",
+			"unexpectedError": "Unexpected error during authentication."
+		}
+	},
+	"pdpCommand": {
+		"runCommand": "Run the following command from your terminal:",
+		"loading": "Loading command"
+	},
+	"selectEnvironment": {
+		"loading": "Loading Environments...",
+		"selectPrompt": "Select an environment",
+		"failedToLoad": "Failed to load environments for project",
+		"errorReason": "Reason:",
+		"checkNetworkCredentials": "Please check your network connection or credentials and try again."
+	},
+	"selectOrganization": {
+		"loading": "Loading Organizations...",
+		"selectPrompt": "Select an organization",
+		"failedToLoad": "Failed to load organizations.",
+		"reason": "Reason",
+		"checkNetworkCredentials": "Please check your network connection or credentials and try again.",
+		"organizationNotFound": "Organization not found",
+		"verifyName": "Please ensure the name is correct and try again."
+	},
+	"selectProject": {
+		"loading": "Loading Projects...",
+		"selectPrompt": "Select a project",
+		"error": "Failed to load projects. Reason: {error}. Please check your network connection or credentials and try again."
+	},
+	"branchName": {
+		"prompt": "Enter the Branch Name: ",
+		"errorMessage": "Please enter a valid branch name"
+	},
+	"gitOpsWizard": {
+		"title": "GitOps Configuration Wizard - GitHub",
+		"invalidConfigError": "Invalid configuration. Please check the configuration and try again.",
+		"configSuccessValidated": "Your GitOps is configured successfully and will be activated once validated.",
+		"configSuccessPending": "Your GitOps is configured successfully. To complete the setup, remember to activate it later.",
+		"errorMessage": "Error: {{error}}"
+	},
+	"repositoryKey": {
+		"prompt": "Enter Your Repository Key:",
+		"error": {
+			"required": "Repository Key is required",
+			"invalid": "Repository Key should contain only alphanumeric characters, hyphens and underscores",
+			"exists": "Repository Key with this name already exists"
+		}
+	},
+	"selectProjectgitops": {
+		"loading": "Loading projects...",
+		"prompt": "Select Your Project:"
+	},
+	"sshKey": {
+		"helperMessage": "Go to https://github.com/{{organization}}/{{repository}}/settings/keys/new and create your new SSH key. You can also refer to https://docs.permit.io/integrations/gitops/github#create-a-repository for more details\n",
+		"generated": "SSH Key Generated.",
+		"copyPublicKey": "Copy The Public Key to Github: \n",
+		"sshUrlPrompt": "Enter the SSH URL of the Repo: ",
+		"error": {
+			"invalidUrl": "Please enter a valid SSH URL"
+		}
+	}
 }

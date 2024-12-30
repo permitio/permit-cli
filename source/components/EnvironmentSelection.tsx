@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Text } from 'ink';
 import SelectOrganization from './SelectOrganization.js';
 import SelectProject from './SelectProject.js';
 import SelectEnvironment from './SelectEnvironment.js';
@@ -7,7 +6,7 @@ import { useAuthApi } from '../hooks/useAuthApi.js';
 import { useApiKeyApi } from '../hooks/useApiKeyApi.js';
 import { useEnvironmentApi } from '../hooks/useEnvironmentApi.js';
 import { useOrganisationApi } from '../hooks/useOrganisationApi.js';
-import i18next from 'i18next';
+import { Text } from 'ink';
 
 export interface ActiveState {
 	label: string;
@@ -71,9 +70,9 @@ const EnvironmentSelection: React.FC<Props> = ({
 				if (error) {
 					let errorMsg;
 					if (status === 401) {
-						errorMsg = `${i18next.t('error.invalidApiKey')}, ${error}`;
+						errorMsg = `Invalid ApiKey, ${error}`;
 					} else {
-						errorMsg = `${i18next.t('error.apiKeyScopeError')}: ${error}`;
+						errorMsg = `Error while getting scopes for the ApiKey: ${error}`;
 					}
 					stableOnError(errorMsg);
 					return;
@@ -93,7 +92,10 @@ const EnvironmentSelection: React.FC<Props> = ({
 					);
 					stableOnComplete(
 						{ label: organization.name, value: organization.id },
-						{ label: '', value: environment.project_id },
+						{
+							label: '',
+							value: environment.project_id,
+						},
 						{ label: environment.name, value: environment.id },
 						accessToken,
 					);
@@ -124,7 +126,7 @@ const EnvironmentSelection: React.FC<Props> = ({
 				);
 
 				if (error) {
-					stableOnError(`${i18next.t('error.selectWorkspaceError')}: ${error}`);
+					stableOnError(`Error while selecting active workspace: ${error}`);
 					return;
 				}
 
@@ -152,7 +154,7 @@ const EnvironmentSelection: React.FC<Props> = ({
 			);
 
 			if (error) {
-				stableOnError(`${i18next.t('error.environmentSecretError')}: ${error}`);
+				stableOnError(`Error while getting Environment Secret: ${error}`);
 				return;
 			}
 
@@ -178,7 +180,7 @@ const EnvironmentSelection: React.FC<Props> = ({
 	return (
 		<>
 			{state === 'user-key' && (
-				<Text>{i18next.t('info.userProvidedApiKey')}</Text>
+				<Text>User provided ApiKey has environment scope.</Text>
 			)}
 			{state === 'workspace' && (
 				<SelectOrganization

@@ -7,7 +7,6 @@ import {
 	Organization,
 	useOrganisationApi,
 } from '../hooks/useOrganisationApi.js';
-import i18next from 'i18next';
 
 type SelectOrganizationProps = {
 	accessToken: string;
@@ -42,7 +41,7 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 			);
 			if (error) {
 				onError(
-					`${i18next.t('selectOrganization.failedToLoad')} ${i18next.t('selectOrganization.checkNetworkCredentials')}. ${i18next.t('selectOrganization.reason')}: ${error}`,
+					`Failed to load organizations. Reason: ${error}. Please check your network connection or credentials and try again.`,
 				);
 				return;
 			}
@@ -59,7 +58,7 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 					return;
 				} else {
 					onError(
-						`${i18next.t('selectOrganization.organizationNotFound')} "${workspace}". ${i18next.t('selectOrganization.verifyName')}`,
+						`Organization "${workspace}" not found. Please ensure the name is correct and try again.`,
 					);
 					return;
 				}
@@ -89,13 +88,13 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 		<>
 			{loading && (
 				<Text>
-					<Spinner type="dots" /> {i18next.t('selectOrganization.loading')}
+					<Spinner type="dots" /> Loading Organizations...
 				</Text>
 			)}
 
 			{!loading && orgs && (
 				<>
-					<Text>{i18next.t('selectOrganization.selectPrompt')}</Text>
+					<Text>Select an organization</Text>
 					<SelectInput items={orgs} onSelect={handleSelectOrganization} />
 				</>
 			)}
