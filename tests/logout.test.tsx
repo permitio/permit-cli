@@ -3,6 +3,13 @@ import React from 'react';
 import { render } from 'ink-testing-library';
 import Logout from '../source/commands/logout';
 import delay from 'delay';
+import * as keytar from 'keytar';
+
+vi.mock('keytar', () => ({
+	setPassword: vi.fn(),
+	getPassword: vi.fn(),
+	deletePassword: vi.fn(),
+}));
 
 describe('Logout', () => {
 	beforeEach(() => {

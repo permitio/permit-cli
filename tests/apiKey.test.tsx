@@ -1,8 +1,15 @@
 import React from 'react';
 import { render } from 'ink-testing-library';
 import ApiKey from '../source/commands/apiKey';
-import { describe, it, expect } from 'vitest';
+import { vi, describe, it, expect } from 'vitest';
 import delay from 'delay';
+import * as keytar from 'keytar';
+
+vi.mock('keytar', () => ({
+	setPassword: vi.fn(),
+	getPassword: vi.fn(),
+	deletePassword: vi.fn(),
+}));
 
 describe('ApiKey', () => {
 	it('Should save the key', () => {
@@ -13,7 +20,9 @@ describe('ApiKey', () => {
 		expect(lastFrame()).toMatch(/Key saved to secure key store./);
 	});
 	it('Should validate the key', () => {
+		const { getPassword } = keytar;
 		const permitKey = 'permit_key_'.concat('a'.repeat(97));
+		(getPassword as any).mockResolvedValueOnce(permitKey);
 		const { lastFrame } = render(
 			<ApiKey
 				args={['validate', permitKey]}
@@ -24,6 +33,8 @@ describe('ApiKey', () => {
 	});
 	it('Should read the key', async () => {
 		const permitKey = 'permit_key_'.concat('a'.repeat(97));
+		const { getPassword } = keytar;
+		(getPassword as any).mockResolvedValueOnce(permitKey);
 		const { lastFrame } = render(
 			<ApiKey args={['read', permitKey]} options={{ keyAccount: 'test' }} />,
 		);

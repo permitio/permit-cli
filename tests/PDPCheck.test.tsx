@@ -3,9 +3,12 @@ import { render } from 'ink-testing-library';
 import { describe, vi, it, expect, afterEach } from 'vitest';
 import delay from 'delay';
 import Check from '../source/commands/pdp/check';
+import * as keytar from 'keytar';
 
 global.fetch = vi.fn();
-
+vi.mock('keytar', () => ({
+	getPassword: vi.fn().mockResolvedValue('permit_key_a'.concat('a').repeat(97)),
+}));
 describe('PDP Check Component', () => {
 	afterEach(() => {
 		// Clear mock calls after each test
@@ -29,6 +32,7 @@ describe('PDP Check Component', () => {
 			`Checking user="testUser"action=testAction resource=testResourceat tenant=testTenant`,
 		);
 		await delay(50);
+		console.log(lastFrame());
 		expect(lastFrame()?.toString()).toContain('ALLOWED');
 	});
 	it('should render with the given options', async () => {
