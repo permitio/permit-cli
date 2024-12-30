@@ -16,6 +16,12 @@ import {
 import { loadAuthToken } from '../source/lib/auth.js';
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 
+
+vi.mock("clipboardy",()=> ({
+	default:{
+		writeSync: vi.fn(),
+	}
+}))
 vi.mock('../source/lib/auth.js', () => ({
 	loadAuthToken: vi.fn(() => demoPermitKey),
 }));
