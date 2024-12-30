@@ -35,7 +35,7 @@ type Props = {
 
 export default function GitHub({ options }: Props) {
 	return (
-		<AuthProvider>
+		<AuthProvider permit_key={options.key}>
 			<GitHubComponent
 				authKey={options.key}
 				inactivateWhenValidated={options.inactive}

@@ -16,6 +16,47 @@ vi.mock('keytar', () => {
 	return { ...keytar, default: keytar };
 });
 
+const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+
+vi.mock('../source/lib/auth.js', async () => {
+	const original = await vi.importActual('../source/lib/auth.js');
+	return {
+		...original,
+		loadAuthToken: vi.fn(() => demoPermitKey),
+	};
+});
+vi.mock('../source/hooks/useApiKeyApi', async() => {
+	const original = await vi.importActual('../source/hooks/useApiKeyApi');
+	return {
+		...original,
+		useApiKeyApi: () => ({
+			getApiKeyScope: vi.fn().mockResolvedValue({
+				response: {
+					environment_id: 'env1',
+					project_id: 'proj1',
+					organization_id: 'org1',
+				},
+				error: null,
+				status: 200,
+			}),
+			getProjectEnvironmentApiKey: vi.fn().mockResolvedValue({
+				response: { secret: 'test-secret' },
+				error: null,
+			}),
+			validateApiKeyScope: vi.fn().mockResolvedValue({
+				valid: true,
+				scope: {
+					environment_id: 'env1',
+					project_id: 'proj1',
+					organization_id: 'org1',
+				},
+				error: null
+			})
+		}),
+	}
+});
+
+
 describe('OPA Policy Command', () => {
 	it('should render the policy command', async () => {
 		const options = {
@@ -34,6 +75,9 @@ describe('OPA Policy Command', () => {
 			status: 200,
 		});
 		const { stdin, lastFrame } = render(<Policy options={options} />);
+		const frameString = lastFrame()?.toString() ?? '';
+		expect(frameString).toMatch(/Loading Token/);
+		await delay(100);
 		expect(lastFrame()?.toString()).toMatch(
 			'Listing Policies on Opa Server=http://localhost:8181',
 		);
@@ -50,6 +94,9 @@ describe('OPA Policy Command', () => {
 		};
 		(fetch as any).mockRejectedValueOnce(new Error('Error'));
 		const { lastFrame } = render(<Policy options={options} />);
+		const frameString = lastFrame()?.toString() ?? '';
+		expect(frameString).toMatch(/Loading Token/);
+		await delay(100);
 		expect(lastFrame()?.toString()).toMatch(
 			'Listing Policies on Opa Server=http://localhost:8181',
 		);
