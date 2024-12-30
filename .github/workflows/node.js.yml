@@ -25,6 +25,12 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
+
+      # Step to install libsecret
+      - name: Install libsecret
+        run: sudo apt-get update && sudo apt-get install -y libsecret-1-dev
+        # Comment: Required for secure credential storage by certain Node.js packages
+
       - run: npm ci
       - name: install depdencies
          run: |
@@ -32,3 +38,4 @@ jobs:
           sudo apt-get install -y libsecret-1-dev
       - run: npm run build --if-present
       - run: npm run lint
+      - run: npm run test
