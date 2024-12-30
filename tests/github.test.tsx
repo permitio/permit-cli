@@ -85,6 +85,18 @@ vi.mock('../source/hooks/useApiKeyApi', async() => {
 	}
 });
 
+vi.mock('keytar', async() => {
+	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+
+	// const original = await vi.importActual('keytar');
+	return {
+		// ...original,
+		setPassword: vi.fn().mockResolvedValue(demoPermitKey),
+		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
+		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
+	}
+});
+
 const enter = '\r';
 const arrowUp = '\u001B[A';
 const arrowDown = '\u001B[B';
