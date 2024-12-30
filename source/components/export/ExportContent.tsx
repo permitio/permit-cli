@@ -1,9 +1,10 @@
 import React from 'react';
-import { useApiKeyApi } from '../../../../hooks/useApiKeyApi.js';
-import { useAuth } from '../../../../components/AuthProvider.js';
-import { ExportOptions } from '../types.js';
+import { useApiKeyApi } from '../../hooks/useApiKeyApi.js';
+import { useAuth } from '../../components/AuthProvider.js';
+import { ExportOptions } from '../../commands/env/export/types.js'
 import { ExportStatus } from './ExportStatus.js';
-import { useExport } from './hooks/useExport.js';
+import { useExport } from '../../hooks/export/useExport.js';
+
 import fs from 'node:fs/promises';
 
 export const ExportContent: React.FC<{ options: ExportOptions }> = ({

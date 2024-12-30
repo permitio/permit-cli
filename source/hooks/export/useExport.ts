@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { PermitSDK } from './PermitSDK.js';
-import { ExportState } from '../../types.js';
-import { createWarningCollector, generateProviderBlock } from '../../utils.js';
-import { ResourceGenerator } from '../../generators/ResourceGenerator.js';
-import { RoleGenerator } from '../../generators/RoleGenerator.js';
-import { UserAttributesGenerator } from '../../generators/UserAttributesGenerator.js';
-import { RelationGenerator } from '../../generators/RelationGenerator.js';
-import { ConditionSetGenerator } from '../../generators/ConditionSetGenerator.js';
+import { ExportState } from '../../commands/env/export/types.js';
+import { createWarningCollector, generateProviderBlock } from '../../commands/env/export/utils.js';
+import { ResourceGenerator } from '../../commands/env/export/generators/ResourceGenerator.js';
+import { RoleGenerator } from '../../commands/env/export/generators/RoleGenerator.js';
+import { UserAttributesGenerator } from '../../commands/env/export/generators/UserAttributesGenerator.js';
+import { RelationGenerator } from '../../commands/env/export/generators/RelationGenerator.js';
+import { ConditionSetGenerator } from '../../commands/env/export/generators/ConditionSetGenerator.js';
 
 // Define a type for the `scope` parameter
 interface ExportScope {

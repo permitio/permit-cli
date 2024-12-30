@@ -2,7 +2,7 @@ import React from 'react';
 import { option } from 'pastel';
 import zod from 'zod';
 import { AuthProvider } from '../../../components/AuthProvider.js';
-import { ExportContent } from './components/ExportContent.js';
+import { ExportContent } from '../../../components/export/ExportContent.js';
 
 export const options = zod.object({
 	key: zod
