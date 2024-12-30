@@ -3,7 +3,6 @@ import { Text, Newline } from 'ink';
 import zod from 'zod';
 import { keyAccountOption } from '../options/keychain.js';
 import { KEYSTORE_PERMIT_SERVICE_NAME } from '../config.js';
-
 import * as keytar from 'keytar';
 
 export const args = zod.tuple([
