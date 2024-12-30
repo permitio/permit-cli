@@ -30,12 +30,14 @@ type AuthProviderProps = {
 	readonly children: ReactNode;
 	permit_key?: string | null;
 	scope?: 'organization' | 'project' | 'environment';
+	keyAccount?: string | null;
 };
 
 export function AuthProvider({
 	children,
 	permit_key: key,
 	scope,
+	keyAccount,
 }: AuthProviderProps) {
 	const { validateApiKeyScope, getApiKeyList, getApiKeyById, getApiKeyScope } =
 		useApiKeyApi();
@@ -68,18 +70,20 @@ export function AuthProvider({
 	}, [authToken, currentScope]);
 
 	useEffect(() => {
-		const fetchAuthToken = async () => {
+		const fetchAuthToken = async (
+			redirect_scope: 'organization' | 'project' | 'login',
+		) => {
 			try {
-				const token = await loadAuthToken();
-				setAuthToken(token);
+				const token = await loadAuthToken(keyAccount);
 				const { response, error } = await getApiKeyScope(token);
 				if (error) {
 					setError(error);
 					return;
 				}
+				setAuthToken(token);
 				setCurrentScope(response);
 			} catch {
-				setState('login');
+				setState(redirect_scope);
 			}
 		};
 
@@ -88,21 +92,20 @@ export function AuthProvider({
 				setState('validate');
 			} else {
 				if (scope === 'environment') {
-					setState('login');
-				} else if (scope === 'project') {
-					setState('project');
-				} else if (scope === 'organization') {
-					setState('organization');
+					fetchAuthToken('login');
+				} else if (scope === 'project' || scope === 'organization') {
+					fetchAuthToken(scope);
 				}
 			}
 		} else {
 			if (key) {
 				setState('validate');
 			} else {
-				fetchAuthToken();
+				fetchAuthToken('login');
 			}
 		}
-	}, [getApiKeyScope, key, scope]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [key, keyAccount, scope]);
 
 	useEffect(() => {
 		if (state === 'validate') {

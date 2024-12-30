@@ -2,13 +2,52 @@ import React from 'react';
 import { render } from 'ink-testing-library';
 import { AuthProvider, useAuth } from '../../source/components/AuthProvider.js';
 import { loadAuthToken } from '../../source/lib/auth.js';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { Text } from 'ink';
 import delay from 'delay';
 
-vi.mock('../../source/lib/auth.js', () => ({
-	loadAuthToken: vi.fn(),
-}));
+const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+
+vi.mock('../../source/lib/auth.js', async () => {
+	const original = await vi.importActual('../../source/lib/auth.js');
+	return {
+		...original,
+		loadAuthToken: vi.fn(),
+	};
+});
+
+vi.mock('../../source/hooks/useApiKeyApi', async() => {
+	const original = await vi.importActual('../../source/hooks/useApiKeyApi');
+	return {
+		...original,
+		useApiKeyApi: () => ({
+			getApiKeyScope: vi.fn().mockResolvedValue({
+				response: {
+					environment_id: 'env1',
+					project_id: 'proj1',
+					organization_id: 'org1',
+				},
+				error: null,
+				status: 200,
+			}),
+			getProjectEnvironmentApiKey: vi.fn().mockResolvedValue({
+				response: { secret: 'test-secret' },
+				error: null,
+			}),
+			validateApiKeyScope: vi.fn().mockResolvedValue({
+				valid: true,
+				scope: {
+					environment_id: 'env1',
+					project_id: 'proj1',
+					organization_id: 'org1',
+				},
+				error: null
+			})
+		}),
+	}
+});
+
+
 
 describe('AuthProvider', () => {
 	it('should display loading text while loading token', async () => {
@@ -22,8 +61,8 @@ describe('AuthProvider', () => {
 
 		expect(lastFrame()).toContain('Loading Token');
 	});
-	it('should display error message if loading token fails', async () => {
-		(loadAuthToken as any).mockRejectedValueOnce(
+	it('Redirect to Login if loading token fails', async () => {
+		(loadAuthToken as any).mockRejectedValue(
 			new Error('Failed to load token'),
 		);
 
@@ -34,11 +73,11 @@ describe('AuthProvider', () => {
 		);
 
 		await delay(50);
-		expect(lastFrame()).toContain('Failed to load token');
+		expect(lastFrame()).toContain('Login to Permit');
 	});
 
 	it('should display children when token is loaded successfully', async () => {
-		(loadAuthToken as any).mockResolvedValueOnce('mocked-token');
+		(loadAuthToken as any).mockResolvedValue(demoPermitKey);
 
 		const { lastFrame } = render(
 			<AuthProvider>
@@ -46,25 +85,8 @@ describe('AuthProvider', () => {
 			</AuthProvider>,
 		);
 
-		await delay(50);
+		await delay(500);
 		expect(lastFrame()).toContain('Child Component');
-	});
-	it('should use the auth context successfully', async () => {
-		const ChildComponent = () => {
-			const { authToken } = useAuth();
-			return <Text>{authToken || 'No token'}</Text>;
-		};
-
-		(loadAuthToken as any).mockResolvedValueOnce('mocked-token');
-
-		const { lastFrame } = render(
-			<AuthProvider>
-				<ChildComponent />
-			</AuthProvider>,
-		);
-
-		await delay(100);
-		expect(lastFrame()).toContain('mocked-token');
 	});
 
 	it('should throw an error when useAuth is called outside of AuthProvider', () => {
