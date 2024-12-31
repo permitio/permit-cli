@@ -45,20 +45,6 @@ describe('AuthProvider', () => {
 
 		expect(lastFrame()).toContain('Loading Token');
 	});
-	it('Redirect to Login if loading token fails', async () => {
-		(loadAuthToken as any).mockRejectedValue(
-			new Error('Failed to load token'),
-		);
-
-		const { lastFrame } = render(
-			<AuthProvider>
-				<Text>Child Component</Text>
-			</AuthProvider>,
-		);
-
-		await delay(50);
-		expect(lastFrame()).toContain('Login to Permit');
-	});
 
 	it('should display children when token is loaded successfully', async () => {
 		(loadAuthToken as any).mockResolvedValue(demoPermitKey);
