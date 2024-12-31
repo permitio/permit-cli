@@ -1,11 +1,11 @@
 import React from 'react';
 import { useApiKeyApi } from '../../hooks/useApiKeyApi.js';
 import { useAuth } from '../../components/AuthProvider.js';
-import { ExportOptions } from '../../commands/env/export/types.js'
+import { ExportOptions } from '../../commands/env/export/types.js';
 import { ExportStatus } from './ExportStatus.js';
 import { useExport } from '../../hooks/export/useExport.js';
-
 import fs from 'node:fs/promises';
+import { Text } from 'ink'; // Import Text component from Ink
 
 export const ExportContent: React.FC<{ options: ExportOptions }> = ({
 	options: { key: apiKey, file },
@@ -14,6 +14,7 @@ export const ExportContent: React.FC<{ options: ExportOptions }> = ({
 	const { authToken } = useAuth();
 	const key = apiKey || authToken;
 	const { state, setState, exportConfig } = useExport(key);
+	const [hclOutput, setHclOutput] = React.useState<string | null>(null);
 
 	React.useEffect(() => {
 		let isSubscribed = true;
@@ -81,7 +82,7 @@ export const ExportContent: React.FC<{ options: ExportOptions }> = ({
 						return;
 					}
 				} else {
-					console.log(hcl);
+					setHclOutput(hcl); // Store HCL output in state
 				}
 
 				if (!isSubscribed) return;
@@ -111,5 +112,14 @@ export const ExportContent: React.FC<{ options: ExportOptions }> = ({
 		};
 	}, [key, file, validateApiKeyScope]);
 
-	return <ExportStatus state={state} file={file} />;
+	return (
+		<>
+			<ExportStatus state={state} file={file} />
+			{!file && hclOutput && (
+				<Text>
+					<Text>{hclOutput}</Text> {/* Wrap HCL output in <Text> */}
+				</Text>
+			)}
+		</>
+	);
 };
