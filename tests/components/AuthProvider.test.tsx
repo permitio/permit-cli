@@ -243,7 +243,7 @@ describe('AuthProvider', () => {
 			json: async () => ({
 					secret: "secret",
 					project_id: "proj_id",
-					organization_id: "organization_id",
+					organization_id: "organization_id_",
 				}
 			)
 		})
