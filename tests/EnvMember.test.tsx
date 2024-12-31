@@ -24,6 +24,18 @@ vi.mock('../source/components/EnvironmentSelection.js', () => ({
 	default: vi.fn(),
 }));
 
+vi.mock('keytar', async() => {
+	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+
+	// const original = await vi.importActual('keytar');
+	return {
+		// ...original,
+		setPassword: vi.fn().mockResolvedValue(demoPermitKey),
+		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
+		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
+	}
+});
+
 beforeEach(() => {
 	vi.restoreAllMocks();
 	vi.spyOn(process, 'exit').mockImplementation(code => {
@@ -73,7 +85,7 @@ describe('Member Component', () => {
 			<Member options={{ key: 'valid_api_key' }} />,
 		);
 
-		await delay(50); // Allow environment selection
+		await delay(100); // Allow environment selection
 
 		stdin.write('user@example.com\n');
 		await delay(50);

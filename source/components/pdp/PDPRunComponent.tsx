@@ -1,13 +1,13 @@
 import React from 'react';
 import { Text } from 'ink';
 import Spinner from 'ink-spinner';
-import { useAuth } from './AuthProvider.js';
+import { useAuth } from '../AuthProvider.js';
 
 type Props = {
 	opa?: number;
 };
 
-export default function PDPCommand({ opa }: Props) {
+export default function PDPRunComponent({ opa }: Props) {
 	const { authToken } = useAuth();
 	return authToken ? (
 		<>
