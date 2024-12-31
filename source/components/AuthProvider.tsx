@@ -197,7 +197,7 @@ export function AuthProvider({
 			{(state === 'organization' || state === 'project') && (
 				<>
 					<LoginFlow onSuccess={onLoginSuccess} onError={setError} />
-					{internalAuthToken && cookie && (
+					{internalAuthToken && cookie && !organization && (
 						<SelectOrganization
 							accessToken={internalAuthToken}
 							onComplete={organization => setOrganization(organization.value)}
@@ -205,14 +205,18 @@ export function AuthProvider({
 							cookie={cookie}
 						/>
 					)}
-					{state === 'project' && internalAuthToken && cookie && (
-						<SelectProject
-							accessToken={internalAuthToken}
-							onComplete={project => setProject(project.value)}
-							cookie={cookie}
-							onError={setError}
-						/>
-					)}
+					{state === 'project' &&
+						internalAuthToken &&
+						cookie &&
+						organization &&
+						!project && (
+							<SelectProject
+								accessToken={internalAuthToken}
+								onComplete={project => setProject(project.value)}
+								cookie={cookie}
+								onError={setError}
+							/>
+						)}
 				</>
 			)}
 			{state === 'login' && (
