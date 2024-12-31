@@ -5,7 +5,7 @@ import { ExportOptions } from '../../commands/env/export/types.js';
 import { ExportStatus } from './ExportStatus.js';
 import { useExport } from '../../hooks/export/useExport.js';
 import fs from 'node:fs/promises';
-import { Text } from 'ink'; // Import Text component from Ink
+import { Text } from 'ink';
 
 export const ExportContent: React.FC<{ options: ExportOptions }> = ({
 	options: { key: apiKey, file },
@@ -119,6 +119,9 @@ export const ExportContent: React.FC<{ options: ExportOptions }> = ({
 				<Text>
 					<Text>{hclOutput}</Text> {/* Wrap HCL output in <Text> */}
 				</Text>
+			)}
+			{state.error && (
+				<Text color="red">{state.error}</Text>
 			)}
 		</>
 	);
