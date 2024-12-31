@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PermitSDK } from './PermitSDK.js';
+import { usePermitSDK } from './PermitSDK.js';
 import { ExportState } from '../../commands/env/export/types.js';
 import { createWarningCollector, generateProviderBlock } from '../../commands/env/export/utils.js';
 import { ResourceGenerator } from '../../commands/env/export/generators/ResourceGenerator.js';
@@ -23,7 +23,7 @@ export const useExport = (apiKey: string) => {
 		warnings: [],
 	});
 
-	const permit = PermitSDK(apiKey);
+	const permit = usePermitSDK(apiKey);
 
 	const exportConfig = async (scope: ExportScope) => {
 		try {

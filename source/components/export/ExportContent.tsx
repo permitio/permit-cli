@@ -1,4 +1,5 @@
 import React from 'react';
+import { useEffect, useState, FC } from 'react';
 import { useApiKeyApi } from '../../hooks/useApiKeyApi.js';
 import { useAuth } from '../../components/AuthProvider.js';
 import { ExportOptions } from '../../commands/env/export/types.js';
@@ -7,16 +8,16 @@ import { useExport } from '../../hooks/export/useExport.js';
 import fs from 'node:fs/promises';
 import { Text } from 'ink';
 
-export const ExportContent: React.FC<{ options: ExportOptions }> = ({
+export const ExportContent: FC<{ options: ExportOptions }> = ({
 	options: { key: apiKey, file },
 }) => {
 	const { validateApiKeyScope } = useApiKeyApi();
 	const { authToken } = useAuth();
 	const key = apiKey || authToken;
 	const { state, setState, exportConfig } = useExport(key);
-	const [hclOutput, setHclOutput] = React.useState<string | null>(null);
+	const [hclOutput, setHclOutput] = useState<string | null>(null);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		let isSubscribed = true;
 
 		const runExport = async () => {
