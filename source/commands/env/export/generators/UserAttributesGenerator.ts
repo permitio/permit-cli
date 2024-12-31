@@ -1,38 +1,48 @@
 import { Permit } from 'permitio';
 import { HCLGenerator, WarningCollector } from '../types.js';
 import { createSafeId } from '../utils.js';
+import Handlebars from 'handlebars';
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export class UserAttributesGenerator implements HCLGenerator {
-	name = 'user attributes';
+  name = 'user attributes';
+  private template: HandlebarsTemplateDelegate;
 
-	constructor(
-		private permit: Permit,
-		private warningCollector: WarningCollector,
-	) {}
+  constructor(
+    private permit: Permit,
+    private warningCollector: WarningCollector,
+  ) {
+    this.template = Handlebars.compile(
+      readFileSync(join(__dirname, '../templates/user-attribute.hcl'), 'utf-8')
+    );
+  }
 
-	async generateHCL(): Promise<string> {
-		try {
-			const userAttributes = await this.permit.api.resourceAttributes.list({
-				resourceKey: '__user',
-			});
+  async generateHCL(): Promise<string> {
+    try {
+      const userAttributes = await this.permit.api.resourceAttributes.list({
+        resourceKey: '__user',
+      });
 
-			if (!userAttributes || userAttributes.length === 0) return '';
+      if (!userAttributes || userAttributes.length === 0) 
+        return '';
 
-			let hcl = '\n# User Attributes\n';
-			for (const attr of userAttributes) {
-				hcl += `resource "permitio_user_attribute" "${createSafeId(attr.key)}" {
-  key = "${attr.key}"
-  type = "${attr.type}"${
-		attr.description ? `\n  description = "${attr.description}"` : ''
-	}
-}\n`;
-			}
-			return hcl;
-		} catch (error) {
-			this.warningCollector.addWarning(
-				`Failed to export user attributes: ${error}`,
-			);
-			return '';
-		}
-	}
+      const validAttributes = userAttributes.map(attr => ({
+        key: createSafeId(attr.key),
+        type: attr.type,
+        description: attr.description,
+      }));
+
+      return '\n# User Attributes\n' + this.template({ attributes: validAttributes });
+    } catch (error) {
+      this.warningCollector.addWarning(
+        `Failed to export user attributes: ${error}`,
+      );
+      return '';
+    }
+  }
 }

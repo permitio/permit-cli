@@ -1,84 +1,53 @@
 import { Permit } from 'permitio';
 import { HCLGenerator, WarningCollector } from '../types.js';
 import { createSafeId } from '../utils.js';
+import Handlebars from 'handlebars';
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-// Define types for attributes
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 interface Attribute {
-	type: string;
-	description?: string;
+  type: string;
+  description?: string;
 }
 
 export class ResourceGenerator implements HCLGenerator {
-	name = 'resources';
+  name = 'resources';
+  private template: HandlebarsTemplateDelegate;
 
-	constructor(
-		private permit: Permit,
-		private warningCollector: WarningCollector,
-	) {}
+  constructor(
+    private permit: Permit,
+    private warningCollector: WarningCollector,
+  ) {
+    this.template = Handlebars.compile(
+      readFileSync(join(__dirname, '../templates/resource.hcl'), 'utf-8')
+    );
+  }
 
-	async generateHCL(): Promise<string> {
-		try {
-			const resources = await this.permit.api.resources.list();
-			const validResources = resources.filter(
-				resource => resource.key !== '__user',
-			);
+  async generateHCL(): Promise<string> {
+    try {
+      const resources = await this.permit.api.resources.list();
+      const validResources = resources
+        .filter(resource => resource.key !== '__user')
+        .map(resource => ({
+          key: createSafeId(resource.key),
+          name: resource.name,
+          description: resource.description,
+          urn: resource.urn,
+          actions: resource.actions || {},
+          attributes: resource.attributes
+        }));
 
-			if (validResources.length === 0) return '';
+      if (validResources.length === 0) return '';
 
-			let hcl = '\n# Resources\n';
-
-			for (const resource of validResources) {
-				hcl += `resource "permitio_resource" "${createSafeId(resource.key)}" {
-  key  = "${resource.key}"
-  name = "${resource.name}"${
-		resource.description ? `\n  description = "${resource.description}"` : ''
-	}${resource.urn ? `\n  urn = "${resource.urn}"` : ''}
-  actions = {${this.generateActions(resource.actions || {})}}
-  ${this.generateAttributes(resource.attributes)}
-}\n`;
-			}
-
-			return hcl;
-		} catch (error) {
-			this.warningCollector.addWarning(`Failed to export resources: ${error}`);
-			return '';
-		}
-	}
-
-	private generateActions(
-		actions: Record<string, { name?: string; description?: string }>,
-	): string {
-		if (Object.keys(actions).length === 0) return '';
-
-		return Object.entries(actions)
-			.map(
-				([actionKey, action]) => `
-    "${actionKey}" = {
-      name = "${action.name || 'Unnamed Action'}"${
-				action.description
-					? `\n      description = "${action.description}"`
-					: ''
-			}
-    }`,
-			)
-			.join('');
-	}
-
-	private generateAttributes(
-		attributes: Record<string, Attribute> | undefined,
-	): string {
-		if (!attributes || Object.keys(attributes).length === 0) return '';
-
-		return `attributes = {${Object.entries(attributes)
-			.map(
-				([attrKey, attr]) => `
-    "${attrKey}" = {
-      type = "${attr.type}"${
-				attr.description ? `\n      description = "${attr.description}"` : ''
-			}
-    }`,
-			)
-			.join('')}
-  }`;
-	}
+      return '\n# Resources\n' + this.template({ resources: validResources });
+      
+    } catch (error) {
+      this.warningCollector.addWarning(`Failed to export resources: ${error}`);
+      return '';
+    }
+  }
 }
