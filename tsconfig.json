@@ -4,7 +4,9 @@
 		"jsx": "react",
 		"moduleResolution": "node16",
 		"module": "Node16",
-		"outDir": "dist"
+		"outDir": "dist",
+		"allowImportingTsExtensions": true,
+		"emitDeclarationOnly": true
 	},
 	"include": ["source"],
 	"exclude": ["node_modules"]
