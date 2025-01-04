@@ -7,6 +7,9 @@ import { RoleGenerator } from '../../commands/env/export/generators/RoleGenerato
 import { UserAttributesGenerator } from '../../commands/env/export/generators/UserAttributesGenerator.js';
 import { RelationGenerator } from '../../commands/env/export/generators/RelationGenerator.js';
 import { ConditionSetGenerator } from '../../commands/env/export/generators/ConditionSetGenerator.js';
+import { ResourceSetGenerator } from '../../commands/env/export/generators/ResourceSetGenerator.js';
+import { UserSetGenerator } from '../../commands/env/export/generators/UserSetGenerator.js';
+import { RoleDerivationGenerator } from '../../commands/env/export/generators/RoleDerivationGenerator.js';
 
 // Define a type for the `scope` parameter
 interface ExportScope {
@@ -41,6 +44,9 @@ ${generateProviderBlock(apiKey)}`;
 				new UserAttributesGenerator(permit, warningCollector),
 				new RelationGenerator(permit, warningCollector),
 				new ConditionSetGenerator(permit, warningCollector),
+				new ResourceSetGenerator(permit, warningCollector),
+				new UserSetGenerator(permit, warningCollector),
+				new RoleDerivationGenerator(permit, warningCollector),
 			];
 
 			for (const generator of generators) {

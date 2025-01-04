@@ -29,22 +29,37 @@ export class RoleGenerator implements HCLGenerator {
   async generateHCL(): Promise<string> {
     try {
       const roles = await this.permit.api.roles.list();
-      
-      if (!roles || roles.length === 0) 
+      if (!roles || roles.length === 0)
         return '';
-
-      // Transform roles to format needed for template
-      const validRoles = roles.map(role => ({
-        key: createSafeId(role.key),
-        name: role.name,
-        permissions: role.permissions || []
-      }));
-
+  
+      // Transform roles and identify dependencies
+      const validRoles = roles.map(role => {
+        const dependencies = this.getDependencies(role.permissions);
+        return {
+          key: createSafeId(role.key),
+          name: role.name,
+          permissions: role.permissions || [],
+          dependencies: dependencies
+        };
+      });
+  
       return '\n# Roles\n' + this.template({ roles: validRoles });
-
     } catch (error) {
       this.warningCollector.addWarning(`Failed to export roles: ${error}`);
       return '';
     }
   }
+  
+  private getDependencies(permissions: string[]): string[] {
+    // Extract resource keys from permissions and generate dependency references
+    const resourceDeps = new Set<string>();
+    permissions?.forEach(perm => {
+      const [resource] = perm.split(':');
+      if (resource) {
+        resourceDeps.add(`permitio_resource.${createSafeId(resource)}`);
+      }
+    });
+    return Array.from(resourceDeps);
+  }
+  
 }

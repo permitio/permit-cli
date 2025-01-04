@@ -5,5 +5,8 @@ resource "permitio_role" "{{key}}" {
   {{#if permissions}}
   permissions = {{{json permissions}}}
   {{/if}}
+  {{#if dependencies}}
+  depends_on = [{{{json dependencies}}}]
+  {{/if}}
 }
 {{/each}}
