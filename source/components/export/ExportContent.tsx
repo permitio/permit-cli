@@ -121,9 +121,7 @@ export const ExportContent: FC<{ options: ExportOptions }> = ({
 					<Text>{hclOutput}</Text> {/* Wrap HCL output in <Text> */}
 				</Text>
 			)}
-			{state.error && (
-				<Text color="red">{state.error}</Text>
-			)}
+			{state.error && <Text color="red">{state.error}</Text>}
 		</>
 	);
 };

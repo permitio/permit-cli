@@ -1,12 +1,15 @@
 import { Permit } from 'permitio';
 import React from 'react';
 
-export const usePermitSDK = (token: string, pdpUrl: string = 'http://localhost:7766') => {
+export const usePermitSDK = (
+	token: string,
+	pdpUrl: string = 'http://localhost:7766',
+) => {
 	return React.useMemo(
 		() =>
 			new Permit({
 				token,
-				pdp: pdpUrl, 
+				pdp: pdpUrl,
 			}),
 		[token, pdpUrl],
 	);

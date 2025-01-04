@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { usePermitSDK } from './PermitSDK.js';
 import { ExportState } from '../../commands/env/export/types.js';
-import { createWarningCollector, generateProviderBlock } from '../../commands/env/export/utils.js';
+import {
+	createWarningCollector,
+	generateProviderBlock,
+} from '../../commands/env/export/utils.js';
 import { ResourceGenerator } from '../../commands/env/export/generators/ResourceGenerator.js';
 import { RoleGenerator } from '../../commands/env/export/generators/RoleGenerator.js';
 import { UserAttributesGenerator } from '../../commands/env/export/generators/UserAttributesGenerator.js';

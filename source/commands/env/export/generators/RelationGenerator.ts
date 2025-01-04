@@ -10,139 +10,151 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 interface RelationData {
-  key: string;
-  name: string;
-  subject_resource: string;
-  object_resource: string;
-  description?: string;
+	key: string;
+	name: string;
+	subject_resource: string;
+	object_resource: string;
+	description?: string;
 }
 
 export class RelationGenerator implements HCLGenerator {
-  name = 'relations';
-  private template: HandlebarsTemplateDelegate;
-  private resourceKeys: Set<string> = new Set();
+	name = 'relations';
+	private template: HandlebarsTemplateDelegate;
+	private resourceKeys: Set<string> = new Set();
 
-  constructor(
-    private permit: Permit,
-    private warningCollector: WarningCollector,
-  ) {
-    this.template = Handlebars.compile(
-      readFileSync(join(__dirname, '../templates/relation.hcl'), 'utf-8'),
-    );
-  }
+	constructor(
+		private permit: Permit,
+		private warningCollector: WarningCollector,
+	) {
+		this.template = Handlebars.compile(
+			readFileSync(join(__dirname, '../templates/relation.hcl'), 'utf-8'),
+		);
+	}
 
-  private async loadResourceKeys(): Promise<void> {
-    try {
-      const resources = await this.permit.api.resources.list();
-      if (resources && Array.isArray(resources)) {
-        resources.forEach(resource => {
-          if (resource.key !== '__user') {
-            this.resourceKeys.add(createSafeId(resource.key));
-          }
-        });
-      }
-    } catch (error) {
-      this.warningCollector.addWarning(`Failed to load resources: ${error}`);
-    }
-  }
+	private async loadResourceKeys(): Promise<void> {
+		try {
+			const resources = await this.permit.api.resources.list();
+			if (resources && Array.isArray(resources)) {
+				resources.forEach(resource => {
+					if (resource.key !== '__user') {
+						this.resourceKeys.add(createSafeId(resource.key));
+					}
+				});
+			}
+		} catch (error) {
+			this.warningCollector.addWarning(`Failed to load resources: ${error}`);
+		}
+	}
 
-  private validateResource(resourceKey: string): boolean {
-    const safeKey = createSafeId(resourceKey);
-    if (!this.resourceKeys.has(safeKey)) {
-      this.warningCollector.addWarning(`Referenced resource "${resourceKey}" does not exist`);
-      return false;
-    }
-    return true;
-  }
+	private validateResource(resourceKey: string): boolean {
+		const safeKey = createSafeId(resourceKey);
+		if (!this.resourceKeys.has(safeKey)) {
+			this.warningCollector.addWarning(
+				`Referenced resource "${resourceKey}" does not exist`,
+			);
+			return false;
+		}
+		return true;
+	}
 
-  private validateRelation(relation: any): relation is RelationData {
-    const requiredFields = ['key', 'name', 'subject_resource', 'object_resource'];
-    const missingFields = requiredFields.filter(field => !relation[field]);
+	private validateRelation(relation: any): relation is RelationData {
+		const requiredFields = [
+			'key',
+			'name',
+			'subject_resource',
+			'object_resource',
+		];
+		const missingFields = requiredFields.filter(field => !relation[field]);
 
-    if (missingFields.length > 0) {
-      this.warningCollector.addWarning(
-        `Relation "${relation.key || 'unknown'}" is missing required fields: ${missingFields.join(', ')}`
-      );
-      return false;
-    }
+		if (missingFields.length > 0) {
+			this.warningCollector.addWarning(
+				`Relation "${relation.key || 'unknown'}" is missing required fields: ${missingFields.join(', ')}`,
+			);
+			return false;
+		}
 
-    // Validate that referenced resources exist
-    if (!this.validateResource(relation.subject_resource) || 
-        !this.validateResource(relation.object_resource)) {
-      return false;
-    }
+		// Validate that referenced resources exist
+		if (
+			!this.validateResource(relation.subject_resource) ||
+			!this.validateResource(relation.object_resource)
+		) {
+			return false;
+		}
 
-    return true;
-  }
+		return true;
+	}
 
-  private formatRelation(relation: RelationData): RelationData {
-    return {
-      key: createSafeId(relation.key),
-      name: relation.name,
-      subject_resource: createSafeId(relation.subject_resource),
-      object_resource: createSafeId(relation.object_resource),
-      ...(relation.description && { description: relation.description })
-    };
-  }
+	private formatRelation(relation: RelationData): RelationData {
+		return {
+			key: createSafeId(relation.key),
+			name: relation.name,
+			subject_resource: createSafeId(relation.subject_resource),
+			object_resource: createSafeId(relation.object_resource),
+			...(relation.description && { description: relation.description }),
+		};
+	}
 
-  async generateHCL(): Promise<string> {
-    try {
-      // Load resources first for validation
-      await this.loadResourceKeys();
+	async generateHCL(): Promise<string> {
+		try {
+			// Load resources first for validation
+			await this.loadResourceKeys();
 
-      // Get all resources
-      const resources = await this.permit.api.resources.list();
-      
-      if (!resources?.length) {
-        return '';
-      }
+			// Get all resources
+			const resources = await this.permit.api.resources.list();
 
-      // Collect all relations
-      const allRelations = [];
-      for (const resource of resources) {
-        if (resource.key === '__user') {
-          continue;
-        }
+			if (!resources?.length) {
+				return '';
+			}
 
-        try {
-          const resourceRelations = await this.permit.api.resourceRelations.list({
-            resourceKey: resource.key,
-          });
+			// Collect all relations
+			const allRelations = [];
+			for (const resource of resources) {
+				if (resource.key === '__user') {
+					continue;
+				}
 
-          if (resourceRelations?.length) {
-            allRelations.push(...resourceRelations);
-          }
-        } catch (err) {
-          this.warningCollector.addWarning(
-            `Failed to fetch relations for resource ${resource.key}: ${err}`
-          );
-        }
-      }
+				try {
+					const resourceRelations =
+						await this.permit.api.resourceRelations.list({
+							resourceKey: resource.key,
+						});
 
-      if (!allRelations.length) {
-        return '';
-      }
+					if (resourceRelations?.length) {
+						allRelations.push(...resourceRelations);
+					}
+				} catch (err) {
+					this.warningCollector.addWarning(
+						`Failed to fetch relations for resource ${resource.key}: ${err}`,
+					);
+				}
+			}
 
-      // Remove duplicates and get unique relations
-      const uniqueRelations = Array.from(
-        new Map(allRelations.map(r => [r.key, r])).values()
-      );
+			if (!allRelations.length) {
+				return '';
+			}
 
-      // Validate and format relations
-      const validRelations = uniqueRelations
-        .filter(this.validateRelation.bind(this))
-        .map(this.formatRelation.bind(this));
+			// Remove duplicates and get unique relations
+			const uniqueRelations = Array.from(
+				new Map(allRelations.map(r => [r.key, r])).values(),
+			);
 
-      if (!validRelations.length) {
-        return '';
-      }
+			// Validate and format relations
+			const validRelations = uniqueRelations
+				.filter(this.validateRelation.bind(this))
+				.map(this.formatRelation.bind(this));
 
-      // Generate HCL
-      return '\n# Resource Relations\n' + this.template({ relations: validRelations });
+			if (!validRelations.length) {
+				return '';
+			}
 
-    } catch (error) {
-      this.warningCollector.addWarning(`Failed to export relations: ${error}`);
-      return '';
-    }
-  }
+			// Generate HCL
+			return (
+				'\n# Resource Relations\n' +
+				this.template({ relations: validRelations })
+			);
+		} catch (error) {
+			this.warningCollector.addWarning(`Failed to export relations: ${error}`);
+			return '';
+		}
+	}
 }

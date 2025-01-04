@@ -10,39 +10,40 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export class UserAttributesGenerator implements HCLGenerator {
-  name = 'user attributes';
-  private template: HandlebarsTemplateDelegate;
+	name = 'user attributes';
+	private template: HandlebarsTemplateDelegate;
 
-  constructor(
-    private permit: Permit,
-    private warningCollector: WarningCollector,
-  ) {
-    this.template = Handlebars.compile(
-      readFileSync(join(__dirname, '../templates/user-attribute.hcl'), 'utf-8')
-    );
-  }
+	constructor(
+		private permit: Permit,
+		private warningCollector: WarningCollector,
+	) {
+		this.template = Handlebars.compile(
+			readFileSync(join(__dirname, '../templates/user-attribute.hcl'), 'utf-8'),
+		);
+	}
 
-  async generateHCL(): Promise<string> {
-    try {
-      const userAttributes = await this.permit.api.resourceAttributes.list({
-        resourceKey: '__user',
-      });
+	async generateHCL(): Promise<string> {
+		try {
+			const userAttributes = await this.permit.api.resourceAttributes.list({
+				resourceKey: '__user',
+			});
 
-      if (!userAttributes || userAttributes.length === 0) 
-        return '';
+			if (!userAttributes || userAttributes.length === 0) return '';
 
-      const validAttributes = userAttributes.map(attr => ({
-        key: createSafeId(attr.key),
-        type: attr.type,
-        description: attr.description,
-      }));
+			const validAttributes = userAttributes.map(attr => ({
+				key: createSafeId(attr.key),
+				type: attr.type,
+				description: attr.description,
+			}));
 
-      return '\n# User Attributes\n' + this.template({ attributes: validAttributes });
-    } catch (error) {
-      this.warningCollector.addWarning(
-        `Failed to export user attributes: ${error}`,
-      );
-      return '';
-    }
-  }
+			return (
+				'\n# User Attributes\n' + this.template({ attributes: validAttributes })
+			);
+		} catch (error) {
+			this.warningCollector.addWarning(
+				`Failed to export user attributes: ${error}`,
+			);
+			return '';
+		}
+	}
 }

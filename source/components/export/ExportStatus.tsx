@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text } from 'ink';
 import Spinner from 'ink-spinner';
-import { ExportState } from '../../commands/env/export/types.js'
+import { ExportState } from '../../commands/env/export/types.js';
 
 interface ExportStatusProps {
 	state: ExportState;
