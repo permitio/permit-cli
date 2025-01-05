@@ -9,8 +9,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-Handlebars.registerHelper('json', function (context) {
-	return `[${context.map(item => `"${item}"`).join(',')}]`;
+Handlebars.registerHelper('json', function (context: string[]) {
+	return `[${context.map((item: string) => `"${item}"`).join(',')}]`;
 });
 
 export class RoleGenerator implements HCLGenerator {
@@ -33,7 +33,7 @@ export class RoleGenerator implements HCLGenerator {
 
 			// Transform roles and identify dependencies
 			const validRoles = roles.map(role => {
-				const dependencies = this.getDependencies(role.permissions);
+				const dependencies = this.getDependencies(role.permissions || []); // Fix: Provide default value
 				return {
 					key: createSafeId(role.key),
 					name: role.name,

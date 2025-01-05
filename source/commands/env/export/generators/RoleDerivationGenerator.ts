@@ -5,11 +5,13 @@ import Handlebars from 'handlebars';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { ResourceRoleRead } from 'permitio/build/main/openapi/types';
 
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirPath = dirname(currentFilePath);
 
-interface RoleDerivation {
+interface RoleDerivationData {
+	resource_id: string;
 	resource: string;
 	role: string;
 	linked_by: string;
@@ -34,7 +36,7 @@ export class RoleDerivationGenerator implements HCLGenerator {
 		);
 	}
 
-	private getDependencies(derivation: RoleDerivation): string[] {
+	private getDependencies(derivation: RoleDerivationData): string[] {
 		const dependencies = new Set<string>();
 
 		// Add dependency on the source resource
@@ -52,12 +54,39 @@ export class RoleDerivationGenerator implements HCLGenerator {
 		return Array.from(dependencies);
 	}
 
+	private convertToDerivationData(
+		role: ResourceRoleRead,
+	): RoleDerivationData | null {
+		// Check that all required properties exist and are non-empty
+		if (!role.resource || !role.name || !role.id) {
+			return null;
+		}
+
+		// Create unique ID based on available properties
+		const resource_id = createSafeId(
+			`${role.resource}_${role.name}_${role.id}`,
+		);
+
+		// Create derivation data structure
+		const derivation: RoleDerivationData = {
+			resource_id,
+			resource: createSafeId(role.resource),
+			role: createSafeId(role.name),
+			linked_by: role.id, // Using ID as linked_by
+			on_resource: createSafeId(role.resource), // Using same resource as on_resource
+			to_role: createSafeId(role.name),
+			dependencies: [],
+		};
+
+		return derivation;
+	}
+
 	async generateHCL(): Promise<string> {
 		try {
 			const resources = await this.permit.api.resources.list();
 			if (!resources?.length) return '';
 
-			const allDerivations: RoleDerivation[] = [];
+			const allDerivations: RoleDerivationData[] = [];
 
 			for (const resource of resources) {
 				try {
@@ -72,35 +101,12 @@ export class RoleDerivationGenerator implements HCLGenerator {
 						resourceKey: resource.key,
 					});
 
-					const validDerivations = resourceRoles
-						.filter(
-							derivation =>
-								derivation.resource &&
-								derivation.role &&
-								derivation.linked_by &&
-								derivation.on_resource &&
-								derivation.to_role,
-						)
-						.map(derivation => ({
-							...derivation,
-							resource: createSafeId(derivation.resource),
-							role: createSafeId(derivation.role),
-							linked_by: createSafeId(derivation.linked_by),
-							on_resource: createSafeId(derivation.on_resource),
-							to_role: createSafeId(derivation.to_role),
-							resource_id: createSafeId(
-								`${derivation.resource}_${derivation.role}_${derivation.linked_by}_${derivation.on_resource}_${derivation.to_role}`,
-							),
-							dependencies: [], // Initialize empty dependencies array
-						}));
-
-					// Add dependencies for each derivation
-					validDerivations.forEach(derivation => {
-						derivation.dependencies = this.getDependencies(derivation);
-					});
-
-					if (validDerivations.length) {
-						allDerivations.push(...validDerivations);
+					for (const role of resourceRoles) {
+						const derivation = this.convertToDerivationData(role);
+						if (derivation) {
+							derivation.dependencies = this.getDependencies(derivation);
+							allDerivations.push(derivation);
+						}
 					}
 				} catch (err) {
 					this.warningCollector.addWarning(
@@ -115,15 +121,7 @@ export class RoleDerivationGenerator implements HCLGenerator {
 			}
 
 			const hcl = this.template({
-				derivations: allDerivations.map(derivation => ({
-					resource_id: derivation.resource_id,
-					resource: derivation.resource,
-					role: derivation.role,
-					linked_by: derivation.linked_by,
-					on_resource: derivation.on_resource,
-					to_role: derivation.to_role,
-					dependencies: derivation.dependencies,
-				})),
+				derivations: allDerivations,
 			});
 
 			return '\n# Role Derivations\n' + hcl;
