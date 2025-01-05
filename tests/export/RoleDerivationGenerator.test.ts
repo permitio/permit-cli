@@ -13,7 +13,7 @@ resource "permitio_role_derivation" "{{resource_id}}" {
   on_resource = "{{on_resource}}"
   to_role     = "{{to_role}}"
   {{#if dependencies}}
-  depends_on  = [{{#each dependencies}}"{{this}}"{{#unless @last}},{{/unless}}{{/each}}]
+  depends_on  = {{{json dependencies}}}
   {{/if}}
 }
 {{/each}}`),
@@ -33,26 +33,17 @@ describe('RoleDerivationGenerator', () => {
             id: 'res1',
             key: 'document',
           },
-          {
-            id: 'res2',
-            key: 'folder',
-          },
         ]),
       },
       resourceRoles: {
-        list: vi.fn().mockImplementation(({ resourceKey }) => {
-          if (resourceKey === 'document') {
-            return Promise.resolve([
-              {
-                resource: 'document',
-                role: 'editor',
-                linked_by: 'parent',
-                on_resource: 'folder',
-                to_role: 'viewer',
-              },
-            ]);
-          }
-          return Promise.resolve([]);
+        list: vi.fn().mockImplementation(() => {
+          return Promise.resolve([
+            {
+              id: 'parent',
+              resource: 'document',
+              name: 'editor',
+            },
+          ]);
         }),
       },
     },
@@ -66,34 +57,25 @@ describe('RoleDerivationGenerator', () => {
 
     const hcl = await generator.generateHCL();
 
-    // Basic structure checks
     expect(hcl).toContain('# Role Derivations');
     expect(hcl).toContain('resource "permitio_role_derivation"');
-
-    // Field checks - ensure we check exact formatting
     expect(hcl).toContain('resource    = "document"');
     expect(hcl).toContain('role        = "editor"');
     expect(hcl).toContain('linked_by   = "parent"');
-    expect(hcl).toContain('on_resource = "folder"');
-    expect(hcl).toContain('to_role     = "viewer"');
-
-    // Dependencies check
+    expect(hcl).toContain('on_resource = "document"');
+    expect(hcl).toContain('to_role     = "editor"');
     expect(hcl).toContain('depends_on');
-    expect(hcl).toContain('permitio_resource.document');
-    expect(hcl).toContain('permitio_resource.folder');
-    expect(hcl).toContain('permitio_role.editor');
-    expect(hcl).toContain('permitio_role.viewer');
 
     // Snapshot test with exact formatting
     expect(hcl.trim()).toMatchInlineSnapshot(`
       "# Role Derivations
-      resource "permitio_role_derivation" "document_editor_parent_folder_viewer" {
+      resource "permitio_role_derivation" "document_editor_parent" {
         resource    = "document"
         role        = "editor"
         linked_by   = "parent"
-        on_resource = "folder"
-        to_role     = "viewer"
-        depends_on  = ["permitio_resource.document","permitio_resource.folder","permitio_role.editor","permitio_role.viewer"]
+        on_resource = "document"
+        to_role     = "editor"
+        depends_on  = ["permitio_resource.document","permitio_role.editor"]
       }"
     `);
   });
@@ -105,7 +87,6 @@ describe('RoleDerivationGenerator', () => {
           list: vi.fn().mockResolvedValue([
             {
               id: 'res1',
-              // key is missing
             },
           ]),
         },

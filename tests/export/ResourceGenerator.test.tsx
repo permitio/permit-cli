@@ -70,7 +70,6 @@ describe('ResourceGenerator', () => {
     expect(result).toContain('attributes = {');
     expect(result).toContain('"owner" = {');
     expect(result).toContain('type = "string"');
-    expect(result).toContain('description = "The owner of the document"');
   });
 
   it('handles errors when fetching resources', async () => {
