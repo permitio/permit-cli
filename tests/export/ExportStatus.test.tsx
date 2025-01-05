@@ -1,7 +1,7 @@
 import { expect, describe, it } from 'vitest';
 import React from 'react';
 import { render } from 'ink-testing-library';
-import { ExportStatus } from '../../source/commands/env/export/components/ExportStatus.js';
+import { ExportStatus } from '../../source/components/export/ExportStatus.js';
 
 describe('ExportStatus', () => {
 	it('shows loading state', () => {

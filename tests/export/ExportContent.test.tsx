@@ -1,7 +1,7 @@
 import { expect, vi, describe, it, beforeEach } from 'vitest';
 import React from 'react';
 import { render } from 'ink-testing-library';
-import { ExportContent } from '../../source/commands/env/export/components/ExportContent.js';
+import { ExportContent } from '../../source/components/export/ExportContent.js'
 import { getMockPermit, mockValidateApiKeyScope } from './mocks/permit.js';
 import { mockUseAuth } from './mocks/hooks';
 
