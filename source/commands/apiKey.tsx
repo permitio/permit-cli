@@ -4,7 +4,7 @@ import zod from 'zod';
 import { keyAccountOption } from '../options/keychain.js';
 import { KEYSTORE_PERMIT_SERVICE_NAME } from '../config.js';
 
-import keytar from 'keytar';
+import * as keytar from 'keytar';
 
 export const args = zod.tuple([
 	zod
@@ -34,7 +34,11 @@ export default function ApiKey({ args, options }: Props) {
 			keytar
 				.getPassword(KEYSTORE_PERMIT_SERVICE_NAME, options.keyAccount)
 				.then(value => setReadKey(value || ''))
-				.catch(reason => setReadKey(`-- Failed to read key- reason ${reason}`));
+				.catch(reason =>
+					setReadKey(
+						`-- Failed to read key- reason ${reason instanceof Error ? reason.message : String(reason)}`,
+					),
+				);
 		}
 	}, [action, options.keyAccount]);
 
