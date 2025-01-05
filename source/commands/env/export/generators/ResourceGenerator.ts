@@ -9,6 +9,16 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+interface ActionData {
+	name: string;
+	description?: string;
+}
+
+interface AttributeData {
+	type: string;
+	required?: boolean;
+}
+
 interface ResourceData {
 	key: string;
 	name: string;
@@ -16,17 +26,6 @@ interface ResourceData {
 	urn?: string;
 	actions: Record<string, ActionData>;
 	attributes?: Record<string, AttributeData>;
-}
-
-interface ActionData {
-	name: string;
-	description?: string;
-}
-
-// Define a type for attributes
-interface AttributeData {
-	type: string;
-	required?: boolean;
 }
 
 interface ActionBlockRead {
@@ -62,8 +61,8 @@ export class ResourceGenerator implements HCLGenerator {
 					name: resource.name,
 					description: resource.description,
 					urn: resource.urn,
-					actions: this.transformActions(resource.actions || {}),
-					attributes: this.transformAttributes(resource.attributes),
+					actions: this.transformActions(resource.actions || {}), // Transform actions
+					attributes: this.transformAttributes(resource.attributes), // Transform attributes
 				}));
 
 			if (validResources.length === 0) return '';
@@ -82,7 +81,7 @@ export class ResourceGenerator implements HCLGenerator {
 		const transformedActions: Record<string, ActionData> = {};
 		for (const [key, action] of Object.entries(actions)) {
 			transformedActions[key] = {
-				name: action.name || key,
+				name: action.name || key, // Use the key as a fallback if `name` is undefined
 				description: action.description,
 			};
 		}
