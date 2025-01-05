@@ -1,7 +1,7 @@
 import { Permit } from 'permitio';
 import { HCLGenerator, WarningCollector } from '../types.js';
 import { createSafeId } from '../utils.js';
-import Handlebars from 'handlebars';
+import Handlebars, { TemplateDelegate } from 'handlebars';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -9,9 +9,18 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Define a proper type for the user set object
+interface UserSetData {
+	key: string;
+	name: string;
+	description?: string;
+	conditions: string;
+	resource: string; // Ensure `resource` is always a string
+}
+
 export class UserSetGenerator implements HCLGenerator {
 	name = 'user set';
-	private template: HandlebarsTemplateDelegate;
+	private template: TemplateDelegate<{ sets: UserSetData[] }>;
 
 	constructor(
 		private permit: Permit,
@@ -27,9 +36,9 @@ export class UserSetGenerator implements HCLGenerator {
 			// Get all condition sets using the Permit SDK
 			const conditionSets = await this.permit.api.conditionSets.list({});
 
-			// Filter only user sets (not resource sets)
+			// Filter only user sets (not resource sets) and ensure `resource_id` is defined
 			const validSets = conditionSets
-				.filter(set => set.type === 'userset')
+				.filter(set => set.type === 'userset' && set.resource_id !== undefined) // Ensure `resource_id` is defined
 				.map(set => ({
 					key: createSafeId(set.key),
 					name: set.name,
@@ -38,7 +47,7 @@ export class UserSetGenerator implements HCLGenerator {
 						typeof set.conditions === 'string'
 							? set.conditions
 							: JSON.stringify(set.conditions),
-					resource: set.resource_id,
+					resource: set.resource_id, // `resource_id` is now guaranteed to be defined
 				}));
 
 			if (validSets.length === 0) return '';

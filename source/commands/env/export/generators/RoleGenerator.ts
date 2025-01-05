@@ -1,7 +1,7 @@
 import { Permit } from 'permitio';
 import { HCLGenerator, WarningCollector } from '../types.js';
 import { createSafeId } from '../utils.js';
-import Handlebars from 'handlebars';
+import Handlebars, { TemplateDelegate } from 'handlebars';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -9,13 +9,22 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Define a proper type for the role object
+interface RoleData {
+	key: string;
+	name: string;
+	permissions: string[];
+	dependencies: string[];
+}
+
+// Register Handlebars helper
 Handlebars.registerHelper('json', function (context: string[]) {
 	return `[${context.map((item: string) => `"${item}"`).join(',')}]`;
 });
 
 export class RoleGenerator implements HCLGenerator {
 	name = 'roles';
-	private template: HandlebarsTemplateDelegate;
+	private template: TemplateDelegate<{ roles: RoleData[] }>;
 
 	constructor(
 		private permit: Permit,

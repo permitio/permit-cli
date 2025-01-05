@@ -1,17 +1,36 @@
 import { Permit } from 'permitio';
 import { HCLGenerator, WarningCollector } from '../types.js';
 import { createSafeId } from '../utils.js';
-import Handlebars from 'handlebars';
+import Handlebars, { TemplateDelegate } from 'handlebars';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { ResourceRead } from 'permitio/build/main/openapi/types';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+interface ConditionSetData {
+	key: string;
+	name: string;
+	description?: string;
+	conditions: string;
+	resource?: ResourceRead;
+	resourceType: string;
+}
+
+type ValidConditionSet = {
+	key: string;
+	name: string;
+	description?: string;
+	conditions: string;
+	resource?: ResourceRead;
+	resourceType: string;
+} | null;
+
 export class ConditionSetGenerator implements HCLGenerator {
 	name = 'condition sets';
-	private template: HandlebarsTemplateDelegate;
+	private template: TemplateDelegate<{ conditionSets: ConditionSetData[] }>;
 
 	constructor(
 		private permit: Permit,
@@ -34,7 +53,7 @@ export class ConditionSetGenerator implements HCLGenerator {
 			}
 
 			const validSets = conditionSets
-				.map(set => {
+				.map<ValidConditionSet>(set => {
 					try {
 						const isResourceSet = set.type === 'resourceset';
 						const resourceType = isResourceSet ? 'resource_set' : 'user_set';
@@ -58,7 +77,7 @@ export class ConditionSetGenerator implements HCLGenerator {
 						return null;
 					}
 				})
-				.filter(Boolean); // Remove null values from failed conversions
+				.filter((set): set is ConditionSetData => set !== null);
 
 			if (validSets.length === 0) return '';
 

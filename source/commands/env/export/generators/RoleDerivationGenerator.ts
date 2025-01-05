@@ -1,7 +1,7 @@
 import { Permit } from 'permitio';
 import { HCLGenerator, WarningCollector } from '../types.js';
 import { createSafeId } from '../utils.js';
-import Handlebars from 'handlebars';
+import Handlebars, { TemplateDelegate } from 'handlebars';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -22,7 +22,7 @@ interface RoleDerivationData {
 
 export class RoleDerivationGenerator implements HCLGenerator {
 	name = 'role derivation';
-	private template: HandlebarsTemplateDelegate;
+	private template: TemplateDelegate<{ derivations: RoleDerivationData[] }>;
 
 	constructor(
 		private permit: Permit,

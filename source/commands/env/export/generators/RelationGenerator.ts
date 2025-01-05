@@ -1,7 +1,7 @@
 import { Permit } from 'permitio';
 import { HCLGenerator, WarningCollector } from '../types.js';
 import { createSafeId } from '../utils.js';
-import Handlebars from 'handlebars';
+import Handlebars, { TemplateDelegate } from 'handlebars';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -15,11 +15,21 @@ interface RelationData {
 	subject_resource: string;
 	object_resource: string;
 	description?: string;
+	[key: string]: unknown;
+}
+
+interface RawRelation {
+	key: string;
+	name: string;
+	subject_resource: string;
+	object_resource: string;
+	description?: string;
+	[key: string]: unknown;
 }
 
 export class RelationGenerator implements HCLGenerator {
 	name = 'relations';
-	private template: HandlebarsTemplateDelegate;
+	private template: TemplateDelegate;
 	private resourceKeys: Set<string> = new Set();
 
 	constructor(
@@ -57,7 +67,7 @@ export class RelationGenerator implements HCLGenerator {
 		return true;
 	}
 
-	private validateRelation(relation: any): relation is RelationData {
+	private validateRelation(relation: RawRelation): relation is RelationData {
 		const requiredFields = [
 			'key',
 			'name',
@@ -107,7 +117,7 @@ export class RelationGenerator implements HCLGenerator {
 			}
 
 			// Collect all relations
-			const allRelations = [];
+			const allRelations: RawRelation[] = [];
 			for (const resource of resources) {
 				if (resource.key === '__user') {
 					continue;
@@ -120,7 +130,9 @@ export class RelationGenerator implements HCLGenerator {
 						});
 
 					if (resourceRelations?.length) {
-						allRelations.push(...resourceRelations);
+						allRelations.push(
+							...(resourceRelations as unknown as RawRelation[]),
+						);
 					}
 				} catch (err) {
 					this.warningCollector.addWarning(
