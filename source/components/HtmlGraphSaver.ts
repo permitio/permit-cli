@@ -81,7 +81,7 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
                         'text-background-color': 'rgb(18, 165, 148)',
                         'text-background-opacity': 0.8,
                         'text-background-padding': 8,
-                        'text-margin-y': -25,
+                        'text-margin-y': 0,
                     },
                 },
                 {
