@@ -8,17 +8,26 @@ interface ApiResponseData {
 
 type ApiResponse = {
 	headers: Headers;
-	response: ApiResponseData;
+	response: T;
 	status: number;
+	error: string | null;
 };
 
-export const apiCall = async (
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const apiCall = async <T = any>(
 	endpoint: string,
 	token: string,
-	cookie?: string,
+	cookie?: string | null | undefined,
 	method = 'GET',
 	body?: string,
-): Promise<ApiResponse> => {
+): Promise<ApiResponse<T>> => {
+	let defaultResponse: ApiResponse<T> = {
+		headers: new Headers(),
+		response: {} as T,
+		status: -1,
+		error: null,
+	};
+
 	const options: RequestInit = {
 		method,
 		headers: {
@@ -34,12 +43,22 @@ export const apiCall = async (
 		options.body = body;
 	}
 
-	const res = await fetch(`${PERMIT_API_URL}/${endpoint}`, options);
-	const response: ApiResponseData = await res.json();
+	try {
+		const res = await fetch(`${PERMIT_API_URL}/${endpoint}`, options);
 
-	return {
-		headers: res.headers,
-		response,
-		status: res.status,
-	};
+		if (!res.ok) {
+			const errorText = await res.json();
+			defaultResponse.error = `Request failed with status ${res.status}: ${errorText.message ?? errorText.detail}`;
+			defaultResponse.status = res.status;
+		} else {
+			const response = await res.json();
+			defaultResponse.headers = res.headers;
+			defaultResponse.response = response as T;
+			defaultResponse.status = res.status;
+		}
+	} catch (error: unknown) {
+		defaultResponse.error =
+			error instanceof Error ? error.message : 'Unknown fetch error occurred';
+	}
+	return defaultResponse;
 };
