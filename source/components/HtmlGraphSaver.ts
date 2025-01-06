@@ -28,7 +28,7 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
         }
 
         #title {
-          text-align: center;
+        text-align: center;
         font-size: 30px;
         font-weight: 600;
         height: 50px;
@@ -41,24 +41,13 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
         }
 
         #cy {
-            flex: 1;
-            width: 100%;
-            background-color: #FFF1E7;
-            padding: 10px;
-        }
-
-        #cy::before {
-            content: "NEVER BUILD PERMISSIONS AGAIN";
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 50px;
-            font-weight: 600;
-            color: rgba(43, 20, 0, 0.15); /* Subtle background text color */
-            pointer-events: none; /* Ensure this text doesn't block interactions */
-            text-align: center;
-            font-family: 'Manrope', Arial, sans-serif;
+        flex: 1;
+        width: 100%;
+        background-color: #FFF1E7; /* Base background color */
+        padding: 10px;
+        background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAj0lEQVR4Ae3YMQoEIRBE0Ro1NhHvfz8xMhXc3RnYGyjFwH8n6E931NfnRy8W9HIEuBHgRoAbAW4EuBHgRoAbAW4EuBHglrTZGEOtNcUYVUpRzlknbd9A711rLc05n5DTtgfcw//dWzhte0CtVSklhRCeEzrt4jNnRoAbAW4EuBHgRoAbAW4EuBHgRoAbAW5fFH4dU6tFNJ4AAAAASUVORK5CYII=");
+        background-size: 30px 35px; /* Matches the original image dimensions */
+        background-repeat: repeat; /* Ensures the pattern repeats */
         }
     </style>
 </head>
@@ -76,10 +65,10 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
                 {
                     selector: 'edge',
                     style: {
-                        'line-color': '#ED5F00',
+                        'line-color': 'rgb(18, 165, 148)',
                         'width': 5,
                         'target-arrow-shape': 'triangle',
-                        'target-arrow-color': '#441F04',
+                        'target-arrow-color': 'rgb(18, 165, 148)',
                         'curve-style': 'taxi',
                         'taxi-turn': 30,
                         'taxi-direction': 'downward',
@@ -89,7 +78,7 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
                         'font-size': 25,
                         'font-family': 'Manrope, Arial, sans-serif',
                         'font-weight': 500, /* Adjusted for edge labels */
-                        'text-background-color': '#1e1e1e',
+                        'text-background-color': 'rgb(18, 165, 148)',
                         'text-background-opacity': 0.8,
                         'text-background-padding': 8,
                         'text-margin-y': -25,
@@ -98,12 +87,12 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
                 {
                     selector: 'node',
                     style: {
-                        'background-color': 'rgb(43, 20, 0)',
-                        'border-color': '#ffffff',
+                        'background-color': 'rgb(255, 255, 255)',
+                        'border-color': 'rgb(211, 179, 250)',
                         'border-width': 8,
                         'shape': 'round-rectangle',
                         'label': 'data(label)',
-                        'color': 'hsl(0, 0%, 100%)',
+                        'color': 'rgb(151, 78, 242)',
                         'font-size': 30,
                         'font-family': 'Manrope, Arial, sans-serif',
                         'font-weight': 700, /* Adjusted for node labels */
