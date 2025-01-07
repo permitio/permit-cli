@@ -11,6 +11,7 @@
 	},
 	"scripts": {
 		"build": "tsc",
+		"postbuild": "cpx 'source/commands/env/export/templates/*.hcl' 'dist/commands/env/export/templates'",
 		"dev": " NODE_NO_WARNINGS=1 tsc --watch",
 		"lint": "eslint \"source/**/*.{js,ts,tsx}\"",
 		"lint:fix": "eslint \"source/**/*.{js,ts,tsx}\" --fix",
@@ -49,6 +50,7 @@
 		"@vitest/coverage-v8": "^2.1.8",
 		"@vitest/ui": "^2.1.8",
 		"chalk": "^5.2.0",
+		"cpx": "^1.5.0",
 		"delay": "^6.0.0",
 		"eslint": "^9.13.0",
 		"eslint-config-prettier": "^9.1.0",
