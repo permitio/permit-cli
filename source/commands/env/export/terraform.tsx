@@ -1,21 +1,21 @@
 import { Command } from 'commander';
 // @ts-ignore
-import { AuthProvider } from '../components/AuthProvider';
+// import { AuthProvider } from '../components/AuthProvider'; // Removed
 // @ts-ignore
-import { EnvironmentSelection } from '../components/EnvironmentSelection';
+// import { EnvironmentSelection } from '../components/EnvironmentSelection'; // Removed
 import { writeFileSync } from 'fs';
 // @ts-ignore
-import { useEnvironmentApi } from '../hooks/useEnvironmentApi';
+// import { useEnvironmentApi } from '../hooks/useEnvironmentApi'; // Removed
 // @ts-ignore
-import { useResourceApi } from '../hooks/useResourceApi';
+// import { useResourceApi } from '../hooks/useResourceApi'; // Removed
 // @ts-ignore
-import { useRoleApi } from '../hooks/useRoleApi';
+// import { useRoleApi } from '../hooks/useRoleApi'; // Removed
 // @ts-ignore
-import { useUserSetApi } from '../hooks/useUserSetApi';
+// import { useUserSetApi } from '../hooks/useUserSetApi'; // Removed
 // @ts-ignore
-import { useResourceSetApi } from '../hooks/useResourceSetApi';
+// import { useResourceSetApi } from '../hooks/useResourceSetApi'; // Removed
 // @ts-ignore
-import { useConditionSetApi } from '../hooks/useConditionSetApi';
+// import { useConditionSetApi } from '../hooks/useConditionSetApi'; // Removed
 
 interface TerraformExportOptions {
   key?: string;
@@ -23,24 +23,18 @@ interface TerraformExportOptions {
 }
 
 async function fetchEnvironmentContent(apiKey: string, environmentId: string) {
-  const environmentApi = useEnvironmentApi();
-  const resourceApi = useResourceApi();
-  const roleApi = useRoleApi();
-  const userSetApi = useUserSetApi();
-  const resourceSetApi = useResourceSetApi();
-  const conditionSetApi = useConditionSetApi();
+  // Removed the useEnvironmentApi logic
+  // Removed the useResourceApi logic
+  // Removed the useRoleApi logic
+  // Removed the useUserSetApi logic
+  // Removed the useResourceSetApi logic
+  // Removed the useConditionSetApi logic
 
-  const [environment, resources, roles, userSets, resourceSets, conditionSets] = await Promise.all([
-    environmentApi.getEnvironment(environmentId, apiKey),
-    resourceApi.getResources(environmentId, apiKey),
-    roleApi.getRoles(environmentId, apiKey),
-    userSetApi.getUserSets(environmentId, apiKey),
-    resourceSetApi.getResourceSets(environmentId, apiKey),
-    conditionSetApi.getConditionSets(environmentId, apiKey)
+  const [resources, roles, userSets, resourceSets, conditionSets] = await Promise.all([
+    // Placeholder for resource fetching logic
   ]);
 
   return {
-    environment,
     resources,
     roles,
     userSets,
@@ -50,7 +44,7 @@ async function fetchEnvironmentContent(apiKey: string, environmentId: string) {
 }
 
 function generateHCL(content: any): string {
-  let hcl = `# Terraform export for environment ${content.environment.name}\n\n`;
+  let hcl = `# Terraform export for environment\n\n`;
 
   // Generate resources
   hcl += 'resource "permit_resource" "resources" {\n';
@@ -115,13 +109,14 @@ export const terraformExportCommand = new Command('terraform')
   .option('--file <file>', 'File path to save the exported HCL')
   .action(async (options: TerraformExportOptions) => {
     try {
-      const authProvider = new AuthProvider();
-      const apiKey = options.key || await authProvider.getApiKey();
+      const apiKey = options.key; // Removed AuthProvider logic
+      if (!apiKey) {
+        console.error('API key is required.');
+        process.exit(1);
+      }
+      // Removed EnvironmentSelection logic
       
-      const environmentSelection = new EnvironmentSelection();
-      const environment = await environmentSelection.selectEnvironment();
-      
-      const content = await fetchEnvironmentContent(apiKey, environment.id);
+      const content = await fetchEnvironmentContent(apiKey, 'default-environment-id'); // Placeholder for environment ID
       const hclContent = generateHCL(content);
       
       if (options.file) {

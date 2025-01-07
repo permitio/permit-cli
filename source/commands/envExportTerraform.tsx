@@ -2,7 +2,6 @@ import React from 'react';
 import { Text } from 'ink';
 import zod from 'zod';
 import { useEnvironmentApi } from '../hooks/useEnvironmentApi.js';
-import { AuthProvider } from '../components/AuthProvider.js';
 
 // Define command arguments schema
 export const args = zod.tuple([]);
@@ -10,7 +9,9 @@ export const args = zod.tuple([]);
 // Define command options schema
 export const options = zod.object({
   key: zod.string().optional().describe('Permit API key'),
-  file: zod.string().optional().describe('Output file path for HCL')
+  file: zod.string().optional().describe('Output file path for HCL'),
+  projectId: zod.string().describe('Project ID'),
+  environmentId: zod.string().describe('Environment ID'),
 });
 
 type Props = {
@@ -21,11 +22,18 @@ type Props = {
 export default function EnvExportTerraform({ options }: Props) {
   const { getEnvironment } = useEnvironmentApi();
   
-  // TODO: Implement Terraform export logic
-  // 1. Fetch environment data using getEnvironment()
-  // 2. Convert to Terraform HCL format
-  // 3. Handle --file option for output
-  // 4. Display results
+  const fetchEnvironment = async () => {
+    const { projectId, environmentId, key } = options;
+    if (!key) {
+      console.error('API key is required.');
+      return;
+    }
+    const environment = await getEnvironment(projectId, environmentId, key);
+    console.log(environment); // Placeholder for actual logic
+  };
+
+  // Call fetchEnvironment to utilize the function
+  fetchEnvironment();
 
   return (
     <Text>

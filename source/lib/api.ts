@@ -56,3 +56,19 @@ export const apiCall = async <T = any>(
 	}
 	return defaultResponse;
 };
+
+// New functions to fetch resources, relationships, and role assignments
+export const fetchResources = async (token: string) => {
+	const response = await apiCall('resources', token);
+	return response;
+};
+
+export const fetchRelationships = async (token: string) => {
+	const response = await apiCall('relationships', token);
+	return response;
+};
+
+export const fetchRoleAssignments = async (token: string) => {
+	const response = await apiCall('role-assignments', token);
+	return response;
+};
