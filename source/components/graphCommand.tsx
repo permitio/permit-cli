@@ -136,7 +136,7 @@ export default function Graph({ options }: Props) {
 				);
 
 				const resourcesData = resourceResponse.response['map']((res: any) => ({
-					label: res.resource,
+					label: `${res.resource}#${res.resource_id}`,
 					value: res.id,
 					id: res.id,
 				}));

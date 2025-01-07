@@ -67,6 +67,7 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
                     style: {
                         'line-color': 'rgb(18, 165, 148)',
                         'width': 5,
+                        'shape': 'round-rectangle',
                         'target-arrow-shape': 'triangle',
                         'target-arrow-color': 'rgb(18, 165, 148)',
                         'curve-style': 'taxi',
@@ -83,6 +84,21 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
                         'text-background-padding': 8,
                         'text-margin-y': 0,
                     },
+                },{
+                    selector: 'edge.relationship-connection',
+                    style: {
+                        'line-color': '#F76808',
+                        'target-arrow-color': '#F76808', 
+                        'text-background-color': '#F76808',
+                        }
+                },{
+                selector: 'edge.implicit-role-connection',
+                style: {
+                    'line-color': 'rgb(18, 165, 148)',
+                    'line-style': 'dashed',
+                    'target-arrow-color': 'rgb(18, 165, 148)',
+                    'text-background-color': 'rgb(18, 165, 148)',
+                    }
                 },
                 {
                     selector: 'node',
@@ -102,6 +118,21 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
                         'height': 'label',
                         'padding': 45,
                     },
+                },{
+	             selector: 'node.user-node',
+	             style: {
+		                'border-color': '#FFB381', /*light Orange border */
+		                'color': '#F76808', /* Orange text */
+	 
+                     },             
+                },
+                        {
+	             selector: 'node.resource-instance-node',
+	             style: {
+		             'border-color': '#D3B3FA', /* light Purple border */
+		             'color': '#974EF2', /* Purple text */
+	
+                     },
                 },
             ],
             layout: {
