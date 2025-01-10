@@ -80,7 +80,9 @@ export default function Login({
 			setState('signup');
 			setError(null);
 		} else if (error || state === 'done') {
-			process.exit(1);
+			setTimeout(() => {
+				process.exit(1);
+			}, 100);
 		}
 	}, [error, state]);
 
