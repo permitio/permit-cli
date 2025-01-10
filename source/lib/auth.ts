@@ -1,7 +1,8 @@
 import { createHash, randomBytes } from 'node:crypto';
 import * as http from 'node:http';
 import open from 'open';
-import * as pkg from 'keytar';
+import keytar from 'keytar';
+const { setPassword, getPassword, deletePassword } = keytar;
 import {
 	DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
 	KEYSTORE_PERMIT_SERVICE_NAME,
