@@ -13,6 +13,9 @@ import { useAuth } from '../components/AuthProvider.js'; // Import useAuth
 type Relationship = {
 	label: string;
 	value: string;
+	id: string;
+	subjectvalue: string;
+	value1: string;
 };
 
 type RoleAssignment = {
@@ -139,7 +142,15 @@ export default function Graph({ options }: Props) {
 					label: `${res.resource}#${res.resource_id}`,
 					value: res.id,
 					id: res.id,
+					id2: `${res.resource}:${res.key}`,
+					key: res.key,
 				}));
+
+				// Create a lookup map for id2 to resource labels
+				const id2ToLabelMap = new Map<string, string>();
+				resourcesData.forEach((resource: { id2: string; id: string }) => {
+					id2ToLabelMap.set(resource.id2, resource.id);
+				});
 
 				const relationsMap = new Map<string, Relationship[]>();
 
@@ -148,12 +159,9 @@ export default function Graph({ options }: Props) {
 					relationsMap.set(
 						resource.id,
 						relationsData.map((relation: any) => {
-							// Ensure relation.object follows the "resource#role" format
-							let formattedObject = relation.object || 'Unknown ID';
-							if (formattedObject.includes(':')) {
-								const [resourcePart, rolePart] = formattedObject.split(':');
-								formattedObject = `${resourcePart}#${rolePart}`;
-							}
+							// Check if relation.object matches any id2
+							const matchedLabel = id2ToLabelMap.get(relation.object);
+							const matchedsubjectid = id2ToLabelMap.get(relation.subject);
 
 							// Convert relation.relation to uppercase
 							const relationLabel = relation.relation
@@ -161,28 +169,65 @@ export default function Graph({ options }: Props) {
 								: 'UNKNOWN RELATION';
 
 							return {
-								label: `IS ${relationLabel} OF`,
-								value: formattedObject,
+								label: relationLabel,
+								value: matchedLabel || relation.object,
+								value1: relation.object,
+								subjectvalue: matchedsubjectid || resource.id,
+								id: resource.id,
 							};
 						}),
 					);
 				});
 
 				const roleAssignmentsData: RoleAssignment[] = [];
-				for (const resource of resourcesData) {
-					const roleResponse = await apiCall(
-						`v2/facts/${selectedProject.value}/${selectedEnvironment.value}/role_assignments?resource_instance=${resource.id}`,
-						authToken,
-					);
 
-					roleAssignmentsData.push(
-						...roleResponse.response['map']((role: any) => ({
-							user: role.user || 'Unknown User',
-							role: role.role || 'Unknown Role',
-							resourceInstance: resource.id,
-						})),
-					);
-				}
+				const roleResponse = await apiCall(
+					`v2/facts/${selectedProject.value}/${selectedEnvironment.value}/users?include_resource_instance_roles=true`,
+					authToken,
+				);
+
+				const users = roleResponse.response?.data || [];
+
+				users.forEach((user: any) => {
+					const usernames = user.first_name + ' ' + user.last_name;
+
+					// Check if the user has associated tenants
+					if (user.associated_tenants?.length) {
+						user.associated_tenants.forEach((tenant: any) => {
+							if (tenant.resource_instance_roles?.length) {
+								tenant.resource_instance_roles.forEach(
+									(resourceInstanceRole: any) => {
+										const resourceInstanceId =
+											id2ToLabelMap.get(
+												`${resourceInstanceRole.resource}:${resourceInstanceRole.resource_instance}`,
+											) || resourceInstanceRole.resource_instance;
+
+										roleAssignmentsData.push({
+											user: usernames || 'Unknown User',
+											role: resourceInstanceRole.role || 'Unknown Role',
+											resourceInstance:
+												resourceInstanceId || 'Unknown Resource Instance',
+										});
+									},
+								);
+							} else {
+								// Push default entry for users with no roles in the tenant
+								roleAssignmentsData.push({
+									user: usernames || 'Unknown User',
+									role: 'No Role Assigned',
+									resourceInstance: 'No Resource Instance',
+								});
+							}
+						});
+					} else {
+						// Push default entry for users with no associated tenants
+						roleAssignmentsData.push({
+							user: usernames || 'Unknown User',
+							role: 'No Role Assigned',
+							resourceInstance: 'No Resource Instance',
+						});
+					}
+				});
 
 				const graphData = generateGraphData(
 					resourcesData,

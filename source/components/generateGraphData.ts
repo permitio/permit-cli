@@ -8,6 +8,9 @@ type ResourceInstance = {
 type Relationship = {
 	label: string;
 	value: string;
+	id: string;
+	subjectvalue: string;
+	value1: string;
 };
 
 type RoleAssignment = {
@@ -36,21 +39,44 @@ export const generateGraphData = (
 
 	relationships.forEach((relations, resourceId) => {
 		relations.forEach(relation => {
-			if (!existingNodeIds.has(relation.value)) {
+			if (!existingNodeIds.has(relation.value1)) {
+				nodes.push({
+					data: { id: relation.value1, label: `${relation.value1}` },
+				});
+				existingNodeIds.add(relation.value1);
+			}
+
+			if (resourceId !== relation.value1) {
+				edges.push({
+					data: {
+						source: resourceId,
+						target: relation.value1,
+						label: `IS ${relation.label} OF`,
+					},
+					classes: 'relationship-connection', // Class for orange lines
+				});
+			}
+		});
+	});
+	relationships.forEach((relations, subjectvalue) => {
+		relations.forEach(relation => {
+			if (!existingNodeIds.has(relation.id)) {
 				nodes.push({
 					data: { id: relation.value, label: `${relation.value}` },
 				});
 				existingNodeIds.add(relation.value);
 			}
 
-			edges.push({
-				data: {
-					source: resourceId,
-					target: relation.value,
-					label: relation.label,
-				},
-				classes: 'relationship-connection', // Class for orange lines
-			});
+			if (subjectvalue !== relation.value) {
+				edges.push({
+					data: {
+						source: subjectvalue,
+						target: relation.value,
+						label: relation.label,
+					},
+					classes: 'relationship-connection', // Class for orange lines
+				});
+			}
 		});
 	});
 
@@ -66,41 +92,17 @@ export const generateGraphData = (
 		}
 
 		// Connect user to resource instance
-		edges.push({
-			data: {
-				source: assignment.user,
-				target: assignment.resourceInstance,
-				label: `${assignment.role}`,
-			},
-		});
-	});
 
-	// Infer implicit assignments and add them as dashed green lines
-	const implicitAssignments: { user: string; resourceInstance: string }[] = [];
-	relationships.forEach((relations, sourceId) => {
-		const directlyAssignedUsers = roleAssignments
-			.filter(assignment => assignment.resourceInstance === sourceId)
-			.map(assignment => assignment.user);
-
-		relations.forEach(relation => {
-			directlyAssignedUsers.forEach(user => {
-				implicitAssignments.push({
-					user, // The user indirectly assigned
-					resourceInstance: relation.value, // Target resource instance
-				});
+		if (assignment.role !== 'No Role Assigned') {
+			edges.push({
+				data: {
+					source: assignment.user,
+					target: assignment.resourceInstance,
+					label: `${assignment.role}`,
+				},
 			});
-		});
+		}
 	});
 
-	implicitAssignments.forEach(assignment => {
-		edges.push({
-			data: {
-				source: assignment.user,
-				target: assignment.resourceInstance,
-				label: 'DERIVES', // Label for dashed green lines
-			},
-			classes: 'implicit-role-connection', // Class for styling dashed green lines
-		});
-	});
 	return { nodes, edges };
 };

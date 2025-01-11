@@ -71,9 +71,9 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
                         'target-arrow-shape': 'triangle',
                         'target-arrow-color': 'rgb(18, 165, 148)',
                         'curve-style': 'taxi',
-                        'taxi-turn': 30,
-                        'taxi-direction': 'downward',
-                        'taxi-turn-min-distance': 20,
+                        'taxi-turn': '45%',
+                        'taxi-direction': 'vertical',
+                        'taxi-turn-min-distance': 5,
                         'label': 'data(label)',
                         'color': '#ffffff',
                         'font-size': 25,
@@ -91,14 +91,6 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
                         'target-arrow-color': '#F76808', 
                         'text-background-color': '#F76808',
                         }
-                },{
-                selector: 'edge.implicit-role-connection',
-                style: {
-                    'line-color': 'rgb(18, 165, 148)',
-                    'line-style': 'dashed',
-                    'target-arrow-color': 'rgb(18, 165, 148)',
-                    'text-background-color': 'rgb(18, 165, 148)',
-                    }
                 },
                 {
                     selector: 'node',
@@ -138,9 +130,9 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
             layout: {
                 name: 'dagre',
                 rankDir: 'LR',
-                nodeSep: 70,
-                edgeSep: 50,
-                rankSep: 150,
+                nodeSep: 250,
+                edgeSep: 300,
+                rankSep: 350,
                 animate: true,
                 fit: true,
                 padding: 20,
