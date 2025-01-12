@@ -43,6 +43,18 @@ vi.mock('keytar', () => {
 	return { ...keytar, default: keytar };
 });
 
+vi.mock('keytar', async() => {
+	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+
+	// const original = await vi.importActual('keytar');
+	return {
+		// ...original,
+		setPassword: vi.fn().mockResolvedValue(demoPermitKey),
+		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
+		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
+	}
+});
+
 afterEach(() => {
 	vi.restoreAllMocks();
 });
