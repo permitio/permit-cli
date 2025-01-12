@@ -5,6 +5,8 @@ import { authCallbackServer, browserAuth, loadAuthToken } from '../../source/lib
 import { describe, it, expect, vi } from 'vitest';
 import { Text } from 'ink';
 import delay from 'delay';
+import * as keytar from "keytar"
+
 
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 
@@ -20,16 +22,16 @@ vi.mock('../../source/lib/auth.js', async () => {
 	};
 });
 
-vi.mock('keytar', async() => {
+vi.mock('keytar', () => {
 	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 
-	// const original = await vi.importActual('keytar');
-	return {
-		// ...original,
+	const keytar = {
 		setPassword: vi.fn().mockResolvedValue(demoPermitKey),
 		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
 		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
-	}
+
+	};
+	return { ...keytar, default: keytar };
 });
 const enter = '\r';
 

@@ -5,8 +5,11 @@ import delay from 'delay';
 import Check from '../source/commands/pdp/check';
 import * as keytar from 'keytar';
 
+const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+
 global.fetch = vi.fn();
 vi.mock('keytar', () => {
+	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 	const keytar = {
 		setPassword: vi.fn().mockResolvedValue(demoPermitKey),
 		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
@@ -16,7 +19,7 @@ vi.mock('keytar', () => {
 	return { ...keytar, default: keytar };
 });
 
-const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+
 
 
 vi.mock('../source/lib/auth.js', async () => {

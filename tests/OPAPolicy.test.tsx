@@ -3,19 +3,19 @@ import { describe, it, expect, vi } from 'vitest';
 import { render } from 'ink-testing-library';
 import Policy from '../source/commands/opa/policy';
 import delay from 'delay';
-import * as keytar from 'keytar';
+import * as keytar from "keytar"
 global.fetch = vi.fn();
 const enter = '\r';
-
 vi.mock('keytar', () => {
+	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 	const keytar = {
-		setPassword: vi.fn(),
-		getPassword: vi.fn(), // Mocked return value
-		deletePassword: vi.fn(),
+		setPassword: vi.fn().mockResolvedValue(demoPermitKey),
+		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
+		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
+
 	};
 	return { ...keytar, default: keytar };
 });
-
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 
 vi.mock('../source/lib/auth.js', async () => {

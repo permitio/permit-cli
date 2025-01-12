@@ -15,6 +15,8 @@ import {
 } from '../source/lib/gitops/utils.js';
 import { loadAuthToken, TokenType } from '../source/lib/auth.js';
 import { useApiKeyApi } from '../../source/hooks/useApiKeyApi';
+import * as keytar from "keytar"
+
 
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 
@@ -85,16 +87,15 @@ vi.mock('../source/hooks/useApiKeyApi', async() => {
 	}
 });
 
-vi.mock('keytar', async() => {
+vi.mock('keytar', () => {
 	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
-
-	// const original = await vi.importActual('keytar');
-	return {
-		// ...original,
+	const keytar = {
 		setPassword: vi.fn().mockResolvedValue(demoPermitKey),
 		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
 		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
-	}
+
+	};
+	return { ...keytar, default: keytar };
 });
 
 const enter = '\r';
