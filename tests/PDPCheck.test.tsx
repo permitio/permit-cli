@@ -6,9 +6,12 @@ import Check from '../source/commands/pdp/check';
 import * as keytar from 'keytar';
 
 global.fetch = vi.fn();
-vi.mock('keytar', () => ({
-	getPassword: vi.fn().mockResolvedValue('permit_key_a'.concat('a').repeat(97)),
-}));
+vi.mock('keytar', () => {
+	const keytar = {
+		getPassword: vi.fn().mockResolvedValue('permit_key_a'.concat('a').repeat(97)),
+	};
+	return { ...keytar, default: keytar };
+});
 describe('PDP Check Component', () => {
 	afterEach(() => {
 		// Clear mock calls after each test
