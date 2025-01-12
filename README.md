@@ -19,7 +19,7 @@ Permit CLI is now available only via the `npm` and requires a [Node.js installat
 npm install -g @permitio/cli
 ```
 
-## Commands
+## Usage
 All the commands in the CLI are available via the `permit` command in the following convention:
 ```bash
 $ permit [command] [options]
@@ -30,6 +30,8 @@ For example:
 $ permit pdp check --user user@permit.io --action list --resource transactions
 ```
 
+## Commands
+
 - [`login`](#login) - login to your Permit.io account
 - `logout` - logout from Permit.io
 - `pdp` - a collection of commands to work with Permit's Policy Decision Point (PDP)
@@ -37,20 +39,55 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
 	- `check` - perform an authorization check against the PDP
 - `env` - a collection of commands to manage Permit policy environments
 	- `copy` - copy a Permit environment with its policies to another environment
-  - `member` - add and assign roles to members in Permit
-  - `select` - select a different active Permit.io environment
+	- `member` - add and assign roles to members in Permit
+	- `select` - select a different active Permit.io environment
 - `opa` - a collection of commands for better OPA experience
 	-  `policy` - print the available policies of an active OPA instance
 -  `gitops create github` - configure Permit environment to use [GitOps flow](https://docs.permit.io/integrations/gitops/overview/)
 
+---
+
 ### `login`
-Use this command to login (or signup) to your Permit.io account. The command will take you to the browser to perform user authentication and then let you choose the workspace, project, and environment to fetch and store an API key for future command runs.
+After installing the CLI, you must authenticate to run commands against your Permit.io account.
+
+The `login` command will take you to the browser to perform user authentication and then let you choose the workspace, project, and environment to for future command runs.
 
 #### Options
 - `key` - store a Permit API key in your workstation keychain instead of running browser authentication
 - `workspace` - predefined workspace key to skip the workspace selection step
 
 #### Example
+```bash
+$ permit login
+```
+
+---
+
+### `logout`
+
+This command will log you out from your Permit account and remove the stored key from your workspace.
+
+#### Example
+```bash
+permit logout
+```
+
+---
+
+### `pdp`
+This collection of commands aims to improve the experience of working with Policy Decision Points (PDP) such as the Permit PDP or Open Policy Agent.
+
+### `pdp run`
+Use this command to get a `docker run` command configured with your PDP details from the account you logged in with
+
+---
+
+### `env`
+This collection of commands will enable you to automate SDLC operations for Fine-Grained Authorization with Permit.io
+
+### `env copy`
+Developers and CI pipelines can use this command to enable secure blue-green deployment in the Software Development Lifecycle (SDLC). The command will get the source and destination environments as options and copy the policies from one to another. This will let you run your tests again in a non-production environment and merge it safely into production after the tests.
+
 
 ## Development
 Permit CLI is based on 
