@@ -6,7 +6,7 @@ import delay from 'delay';
 import * as keytar from 'keytar';
 global.fetch = vi.fn();
 const enter = '\r';
-vi.mock('keytar', () => ({
+vi.mock('keytar.default', () => ({
 	getPassword: vi.fn(),
 	setPassword: vi.fn(),
 	deletePassword: vi.fn(),

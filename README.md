@@ -1,4 +1,4 @@
-# Permit CLI [![test](https://github.com/permitio/permit-cli/actions/workflows/node.js.yml/badge.svg)](https://github.com/vadimdemedes/pastel/actions/workflows/node.js.yml) [![Join our Slack!](https://img.shields.io/badge/Slack%20Community-4A154B?logo=slack&logoColor=white)](https://io.permit.io/cli-slack) ![Early Stage Development](https://img.shields.io/badge/⚠️_Early_Stage_Development-2B1400)
+# Permit CLI [![test](https://github.com/permitio/permit-cli/actions/workflows/node.js.yml/badge.svg)](https://github.com/vadimdemedes/pastel/actions/workflows/node.js.yml) [![Join our Slack!](https://img.shields.io/badge/Slack%20Community-4A154B?logo=slack&logoColor=white)](https://io.permit.io/cli-slack) ![Early Stage Development](https://img.shields.io/badge/⚠️_Early_Stage_Development-2B1400) ![Follow us on LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)
 
 <p align="center">
 <a href="https://www.permit.io/?utm_source=github&utm_medium=referral&utm_campaign=cli" align="center">
@@ -183,13 +183,18 @@ This command will configure your Permit environment to use the GitOps flow with 
 
 
 ## Development
-Permit CLI is based on 
+Permit CLI is based on Pastel, a library for building CLI applications using React-like syntax. The project is written in TypeScript and uses `tsc` to run the CLI commands in development.
 
 ### Setup Development Environment
 - Checkout this repo
 - Run `npm install`
 - Run `npm run dev`
 - Use the CLI with the following convention `node ./dist/cli.js command [options]`
+
+### Add New Commands
+To add a new command, you need to create a new file in the `src/commands` directory with the command name. The project is using the Pastel library to create the CLI commands. You can find the documentation [here](https://github.com/vadimdemedes/pastel?tab=readme-ov-file#commands)
+
+For a detailed command contribution guide, please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 
 ### Write Tests
 Permit CLI enforce UT coverage level of >90% for the code in main.
@@ -198,19 +203,26 @@ The CLI uses [`vitest`](https://vitest.dev/) as its test framework. It also uses
 
 - run `npm run tests` for testing and coverage
 
-## CLI
+## Community
 
-```
-$ permit-cli --help
+ We would love to chat with you about Pernut CKU. [Join our Slack community](https://io.permit.io/cli-slack) to chat about fine-grained authorization, open-source, realtime communication, tech, or anything else!
 
-  Usage
-    $ permit-cli
+You can raise questions and ask for features to be added to the road-map in our [**Github discussions**](https://github.com/permitio/permit-cli/discussions), report issues in [**Github issues**](https://github.com/permitio/permit-cli/issues)
 
-  Examples
-    $ permit-cli pdp check -u filip@permit.io -a create -r task
-    Checking user="filip@permit.io" action=create resource=task at tenant=default
-    ALLOWED
+If you like our project, please consider giving us a ⭐️
 
-    $ permit-cli api-key permit_key_..........
-    Key saved to './permit.key'
-```
+## Contributing to Permit CLI
+
+We would love for you to contribute to this project and help make it even better than it is today! 💎
+
+As a contributor, here are the guidelines we would like you to follow:
+ - [Code of Conduct](CODE_OF_CONDUCT.md)
+ - [Question or Problem?](CONTRIBUTING.md#question)
+ - [Issues and Bugs](CONTRIBUTING.md#issue)
+ - [Feature Requests](CONTRIBUTING.md#feature)
+ - [New Commands Guidelines](CONTRIBUTING.md#new-command-guidelines)
+
+## There's more!
+
+- Check out [OPAL](https://github.com/permitio/OPAL) - the best way to manage Open Policy Agent (OPA), Cedar, and OpenFGA in scale.
+- Check out [Cedar-Agent](https://github.com/permitio/cedar-agent), the easiest way to deploy & run AWS Cedar.

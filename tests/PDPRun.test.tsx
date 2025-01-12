@@ -4,11 +4,14 @@ import { render } from 'ink-testing-library';
 import Run from '../source/commands/pdp/run';
 import * as keytar from 'keytar';
 
-vi.mock('keytar', () => ({
-	getPassword: vi.fn(),
-	setPassword: vi.fn(),
-	deletePassword: vi.fn(),
-}));
+vi.mock('keytar', () => {
+	const keytar = {
+		setPassword: vi.fn(),
+		getPassword: vi.fn(), // Mocked return value
+		deletePassword: vi.fn(),
+	};
+	return { ...keytar, default: keytar };
+});
 
 describe('PDP Run', () => {
 	it('Should render the PDP Run command', () => {

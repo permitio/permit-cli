@@ -5,7 +5,7 @@ import Logout from '../source/commands/logout';
 import delay from 'delay';
 import * as keytar from 'keytar';
 
-vi.mock('keytar', () => ({
+vi.mock('keytar.default', () => ({
 	setPassword: vi.fn(),
 	getPassword: vi.fn(),
 	deletePassword: vi.fn(),
