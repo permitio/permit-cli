@@ -133,31 +133,48 @@ export default function Graph({ options }: Props) {
 			try {
 				setLoading(true);
 
-				const Page = 1; // Fetches the one page per page
-				const per_Page = 100; // api limit for 100 records per page
+				const per_Page = 100; // API limit for 100 records per page
+				let Page = 1;
+				let hasMoreData = true;
+				let allResourcesData: {
+					label: string;
+					value: string;
+					id: string;
+					id2: string;
+					key: string;
+				}[] = [];
+				let allRoleAssignmentsData: RoleAssignment[] = [];
 
-				const resourceResponse = await apiCall(
-					`v2/facts/${selectedProject.value}/${selectedEnvironment.value}/resource_instances?detailed=true&page=${Page}&per_page=${per_Page}`,
-					authToken,
-				);
+				while (hasMoreData) {
+					const resourceResponse = await apiCall(
+						`v2/facts/${selectedProject.value}/${selectedEnvironment.value}/resource_instances?detailed=true&page=${Page}&per_page=${per_Page}`,
+						authToken,
+					);
 
-				const resourcesData = resourceResponse.response['map']((res: any) => ({
-					label: `${res.resource}#${res.resource_id}`,
-					value: res.id,
-					id: res.id,
-					id2: `${res.resource}:${res.key}`,
-					key: res.key,
-				}));
+					const resourcesData = resourceResponse.response.map((res: any) => ({
+						label: `${res.resource}#${res.resource_id}`,
+						value: res.id,
+						id: res.id,
+						id2: `${res.resource}:${res.key}`,
+						key: res.key,
+					}));
+
+					allResourcesData = [...allResourcesData, ...resourcesData];
+
+					// Check if there are more pages to fetch
+					hasMoreData = resourceResponse.response.length === per_Page;
+					Page++;
+				}
 
 				// Create a lookup map for id2 to resource labels
 				const id2ToLabelMap = new Map<string, string>();
-				resourcesData.forEach((resource: { id2: string; id: string }) => {
+				allResourcesData.forEach((resource: { id2: string; id: string }) => {
 					id2ToLabelMap.set(resource.id2, resource.id);
 				});
 
 				const relationsMap = new Map<string, Relationship[]>();
 
-				resourceResponse.response['forEach']((resource: any) => {
+				allResourcesData.forEach((resource: any) => {
 					const relationsData = resource.relationships || [];
 					relationsMap.set(
 						resource.id,
@@ -182,60 +199,67 @@ export default function Graph({ options }: Props) {
 					);
 				});
 
-				const roleAssignmentsData: RoleAssignment[] = [];
+				Page = 1;
+				hasMoreData = true;
 
-				const roleResponse = await apiCall(
-					`v2/facts/${selectedProject.value}/${selectedEnvironment.value}/users?include_resource_instance_roles=true&page=${Page}&per_page=${per_Page}`,
-					authToken,
-				);
+				while (hasMoreData) {
+					const roleResponse = await apiCall(
+						`v2/facts/${selectedProject.value}/${selectedEnvironment.value}/users?include_resource_instance_roles=true&page=${Page}&per_page=${per_Page}`,
+						authToken,
+					);
 
-				const users = roleResponse.response?.data || [];
+					const users = roleResponse.response?.data || [];
 
-				users.forEach((user: any) => {
-					const usernames = user.first_name + ' ' + user.last_name;
+					users.forEach((user: any) => {
+						const usernames = user.first_name + ' ' + user.last_name;
 
-					// Check if the user has associated tenants
-					if (user.associated_tenants?.length) {
-						user.associated_tenants.forEach((tenant: any) => {
-							if (tenant.resource_instance_roles?.length) {
-								tenant.resource_instance_roles.forEach(
-									(resourceInstanceRole: any) => {
-										const resourceInstanceId =
-											id2ToLabelMap.get(
-												`${resourceInstanceRole.resource}:${resourceInstanceRole.resource_instance}`,
-											) || resourceInstanceRole.resource_instance;
+						// Check if the user has associated tenants
+						if (user.associated_tenants?.length) {
+							user.associated_tenants.forEach((tenant: any) => {
+								if (tenant.resource_instance_roles?.length) {
+									tenant.resource_instance_roles.forEach(
+										(resourceInstanceRole: any) => {
+											const resourceInstanceId =
+												id2ToLabelMap.get(
+													`${resourceInstanceRole.resource}:${resourceInstanceRole.resource_instance}`,
+												) || resourceInstanceRole.resource_instance;
 
-										roleAssignmentsData.push({
-											user: usernames || 'Unknown User',
-											role: resourceInstanceRole.role || 'Unknown Role',
-											resourceInstance:
-												resourceInstanceId || 'Unknown Resource Instance',
-										});
-									},
-								);
-							} else {
-								// Push default entry for users with no roles in the tenant
-								roleAssignmentsData.push({
-									user: usernames || 'Unknown User',
-									role: 'No Role Assigned',
-									resourceInstance: 'No Resource Instance',
-								});
-							}
-						});
-					} else {
-						// Push default entry for users with no associated tenants
-						roleAssignmentsData.push({
-							user: usernames || 'Unknown User',
-							role: 'No Role Assigned',
-							resourceInstance: 'No Resource Instance',
-						});
-					}
-				});
+											allRoleAssignmentsData.push({
+												user: usernames || 'Unknown User',
+												role: resourceInstanceRole.role || 'Unknown Role',
+												resourceInstance:
+													resourceInstanceId || 'Unknown Resource Instance',
+											});
+										},
+									);
+								} else {
+									// Push default entry for users with no roles in the tenant
+									allRoleAssignmentsData.push({
+										user: usernames || 'Unknown User',
+										role: 'No Role Assigned',
+										resourceInstance: 'No Resource Instance',
+									});
+								}
+							});
+						} else {
+							// Push default entry for users with no associated tenants
+							allRoleAssignmentsData.push({
+								user: usernames || 'Unknown User',
+								role: 'No Role Assigned',
+								resourceInstance: 'No Resource Instance',
+							});
+						}
+					});
+
+					// Check if there are more pages to fetch
+					hasMoreData = roleResponse.response.data.length === per_Page;
+					Page++;
+				}
 
 				const graphData = generateGraphData(
-					resourcesData,
+					allResourcesData,
 					relationsMap,
-					roleAssignmentsData,
+					allRoleAssignmentsData,
 				);
 				saveHTMLGraph(graphData);
 				setLoading(false);
