@@ -3,14 +3,14 @@ import { describe, it, expect, vi } from 'vitest';
 import { render } from 'ink-testing-library';
 import Policy from '../source/commands/opa/policy';
 import delay from 'delay';
-import * as keytar from "keytar"
+import * as keytar from 'keytar';
 global.fetch = vi.fn();
 const enter = '\r';
-vi.mock("keytar",()=>({
+vi.mock('keytar', () => ({
 	getPassword: vi.fn(),
 	setPassword: vi.fn(),
-	deletePassword:vi.fn()
-}))
+	deletePassword: vi.fn(),
+}));
 
 describe('OPA Policy Command', () => {
 	it('should render the policy command', async () => {

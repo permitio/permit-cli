@@ -16,7 +16,7 @@ A one-stop-shop to manage all your Authorization tools (OPA, OPAL, CEDAR, AVP, o
 
 Give this Repo a ⭐ to support and stay updated
 
-Based on [Pastel](https://github.com/vadimdemedes/create-pastel-app)
+Based on [Pastel](https://github.com/vadimdemedes/pastel)
 
 ## Run for development
 
@@ -28,8 +28,7 @@ Based on [Pastel](https://github.com/vadimdemedes/create-pastel-app)
 
 Permit CLI uses [`vitest`](https://vitest.dev/) as a tool for writing tests. It also uses [`ink-testing-library`](https://github.com/vadimdemedes/ink-testing-library) to render the `Ink` components.
 
-- run `npx vitest` for testing
-- run `npx vitest --coverage` for code coverage.
+- run `npm run tests` for testing and coverage
 
 ## CLI
 

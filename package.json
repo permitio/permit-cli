@@ -1,18 +1,18 @@
 {
 	"name": "@permitio/cli",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"license": "MIT",
 	"bin": {
 		"permit": "dist/cli.js"
 	},
 	"type": "module",
 	"engines": {
-		"node": ">=16"
+		"node": ">=22"
 	},
 	"scripts": {
 		"build": "tsc",
 		"dev": " NODE_NO_WARNINGS=1 tsc --watch",
-		"lint": "eslint \"source/**/*.{js,ts,tsx}\"",
+		"lint": "prettier --check ./source && eslint \"source/**/*.{js,ts,tsx}\"",
 		"lint:fix": "eslint \"source/**/*.{js,ts,tsx}\" --fix",
 		"test": "prettier --check ./source && vitest run --coverage",
 		"simple-check": "npx tsx ./source/cli.tsx pdp check -u filip@permit.io -a create -r task"
