@@ -53,8 +53,8 @@ After installing the CLI, you must authenticate to run commands against your Per
 The `login` command will take you to the browser to perform user authentication and then let you choose the workspace, project, and environment to for future command runs.
 
 #### Options
-- `key` - store a Permit API key in your workstation keychain instead of running browser authentication
-- `workspace` - predefined workspace key to skip the workspace selection step
+- `key <string>` (Optional) - store a Permit API key in your workstation keychain instead of running browser authentication
+- `workspace <string>` (Optional) - predefined workspace key to skip the workspace selection step
 
 #### Example
 ```bash
@@ -80,6 +80,32 @@ This collection of commands aims to improve the experience of working with Polic
 ### `pdp run`
 Use this command to get a `docker run` command configured with your PDP details from the account you logged in with
 
+#### Options
+- `opa <number>` (Optional) - expose the OPA instance running in the PDP
+
+#### Example
+```bash
+$ permit pdp run --opa 8181
+```
+
+### `pdp check`
+
+Use this command to perform an authorization check against the PDP. The command will take the user, action, and resource (and some other enrichment arguments) as options and return the decision.
+
+#### Options
+- `user <string>` - the user id to check the authorization for
+- `action <string>` - the action to check the authorization for
+- `resource <string>` - the resource to check the authorization for
+- `tenant <string>` (Optional) - the tenant to check the authorization for (default: `default`)
+- `pdpurl <string>` (Optional) - the PDP URL to check the authorization against (default: `http://localhost:7676`)
+- `userAttributes` (Optional) - additional user attributes to enrich the authorization check in the format `key1=value1,key2=value2`
+- `resourceAttributes` (Optional) - additional resource attributes to enrich the authorization check in the format `key1=value1,key2=value2`
+
+#### Example
+```bash
+$ permit  pdp check --user eventHandler --action update --resource Widget:dashboard-1-widget
+```
+
 ---
 
 ### `env`
@@ -87,6 +113,73 @@ This collection of commands will enable you to automate SDLC operations for Fine
 
 ### `env copy`
 Developers and CI pipelines can use this command to enable secure blue-green deployment in the Software Development Lifecycle (SDLC). The command will get the source and destination environments as options and copy the policies from one to another. This will let you run your tests again in a non-production environment and merge it safely into production after the tests.
+
+#### Options
+- `key <string>` (Required) - a Permit API key in project level or higher to authenticate the operation
+- `from <string>` (Optional) - the source environment to copy the policies from (will prompt if not provided)
+- `to <string>` (Optional) - the destination environment to copy the policies to (will prompt if not provided)
+- `name <string>` (Optional) - the name of a new environment to copy the policies to (will prompt if not provided)
+- `description <string>` (Optional) - the description of a new environment to copy the policies to (will prompt if not provided)
+- `conflictStrategy <fail | overwrite>` (Optional) - the strategy to handle conflicts when copying policies (default: `fail`)
+
+#### Example
+```bash
+$ permit env copy --key permit_key_.......... --from staging --to production --conflictStrategy overwrite
+```
+
+### `env member`
+This command will assign members to environment with the roles you specify. This is useful for managing the access control of your team members in the Permit.io environment.
+
+This command can run in the CI after creating a new environment for development or testing to assign the roles to the team members who need to access the environment.
+
+#### Options
+- `key <string>` (Required) - a Permit API key in project level or higher to authenticate the operation
+- `environment <string>` (Optional) - the environment to assign the roles to (will prompt if not provided)
+- `project <string>` (Optional) - the project to assign the roles to (will prompt if not provided)
+- `email <string>` (Optional) - the email of the member to assign the roles to (will prompt if not provided)
+- `role <Owner | Editor | Member>` (Optional) - the role to assign to the member (will prompt if not provided)
+
+#### Example
+```bash
+$ permit env member --key permit_key_.......... --environment staging --project my-project --email gabriel@permit.io --role Owner
+```
+
+### `env select`
+This command will let you select a different active Permit.io environment. This is useful when you have multiple environments in your account and you want to switch between them without logging out and logging in again.
+
+#### Options
+- `key <string>` (Optional) - a Permit API key in project level or higher to authenticate the operation. If not provided, the command will reauthenticate you in the browser.
+
+#### Example
+```bash
+$ permit env select --key permit_key_.........
+```
+
+---
+
+### `opa`
+This collection of commands aims to create new experiences for developers working with Open Policy Agent (OPA) in their projects.
+
+### `opa policy`
+This command will print the available policies of an active OPA instance. This is useful when you want to see the policies in your OPA instance without fetching them from the OPA server.
+
+#### Options
+- `serverUrl <string>` (Optional) - the URL of the OPA server to fetch the policies from (default: `http://localhost:8181`)
+- `apiKey <string>` (Optional) - the API key to authenticate the operation
+
+#### Example
+```bash
+$ permit opa policy --serverUrl http://localhost:8181 --apiKey permit_key_..........
+```
+
+---
+
+### `gitops create github`
+This command will configure your Permit environment to use the GitOps flow with GitHub. This is useful when you want to manage your policies in your own Git repository and extend them with custom policy code.
+
+#### Options
+- `key <string>` (Optional) - a Permit API key to authenticate the operation. If not provided, the command will take the one you logged in with.
+- `inactive <boolean>` (Optional) - set the environment to inactive after configuring GitOps (default: `false`)
 
 
 ## Development
