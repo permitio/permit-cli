@@ -5,12 +5,14 @@ import Logout from '../source/commands/logout';
 import delay from 'delay';
 import * as keytar from 'keytar';
 
-vi.mock('keytar.default', () => ({
-	setPassword: vi.fn(),
-	getPassword: vi.fn(),
-	deletePassword: vi.fn(),
-}));
-
+vi.mock('keytar', () => {
+	const keytar = {
+		setPassword: vi.fn(),
+		getPassword: vi.fn(), // Mocked return value
+		deletePassword: vi.fn(),
+	};
+	return { ...keytar, default: keytar };
+});
 describe('Logout', () => {
 	beforeEach(() => {
 		vi.spyOn(process, 'exit').mockImplementation(code => {

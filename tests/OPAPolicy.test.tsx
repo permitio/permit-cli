@@ -6,11 +6,15 @@ import delay from 'delay';
 import * as keytar from 'keytar';
 global.fetch = vi.fn();
 const enter = '\r';
-vi.mock('keytar.default', () => ({
-	getPassword: vi.fn(),
-	setPassword: vi.fn(),
-	deletePassword: vi.fn(),
-}));
+
+vi.mock('keytar', () => {
+	const keytar = {
+		setPassword: vi.fn(),
+		getPassword: vi.fn(), // Mocked return value
+		deletePassword: vi.fn(),
+	};
+	return { ...keytar, default: keytar };
+});
 
 describe('OPA Policy Command', () => {
 	it('should render the policy command', async () => {
