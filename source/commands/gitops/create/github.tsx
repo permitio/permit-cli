@@ -4,6 +4,9 @@ import { option } from 'pastel';
 import { AuthProvider } from '../../../components/AuthProvider.js';
 import GitHubComponent from '../../../components/gitops/GitHubComponent.js';
 
+export const description =
+	'Connect a GitHub repository to a permit Environment';
+
 export const options = zod.object({
 	key: zod
 		.string()

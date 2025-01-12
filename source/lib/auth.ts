@@ -10,7 +10,7 @@ import { URL, URLSearchParams } from 'url';
 import { setTimeout } from 'timers';
 import { Buffer } from 'buffer';
 
-const { setPassword, getPassword, deletePassword } = pkg;
+const { setPassword, getPassword, deletePassword } = pkg.default;
 
 export enum TokenType {
 	APIToken = 'APIToken',
