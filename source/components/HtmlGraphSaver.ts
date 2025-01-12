@@ -58,91 +58,111 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
         const graphData = ${JSON.stringify(graphData, null, 2)};
         cytoscape.use(cytoscapeDagre);
 
-        const cy = cytoscape({
-            container: document.getElementById('cy'),
-            elements: [...graphData.nodes, ...graphData.edges],
-            style: [
-                {
-                    selector: 'edge',
-                    style: {
-                        'line-color': 'rgb(18, 165, 148)',
-                        'width': 5,
-                        'shape': 'round-rectangle',
-                        'target-arrow-shape': 'triangle',
-                        'target-arrow-color': 'rgb(18, 165, 148)',
-                        'curve-style': 'taxi',
-                        'taxi-turn': '45%',
-                        'taxi-direction': 'vertical',
-                        'taxi-turn-min-distance': 5,
-                        'label': 'data(label)',
-                        'color': '#ffffff',
-                        'font-size': 25,
-                        'font-family': 'Manrope, Arial, sans-serif',
-                        'font-weight': 500, /* Adjusted for edge labels */
-                        'text-background-color': 'rgb(18, 165, 148)',
-                        'text-background-opacity': 0.8,
-                        'text-background-padding': 8,
-                        'text-margin-y': 0,
-                    },
-                },{
-                    selector: 'edge.relationship-connection',
-                    style: {
-                        'line-color': '#F76808',
-                        'target-arrow-color': '#F76808', 
-                        'text-background-color': '#F76808',
-                        }
-                },
-                {
-                    selector: 'node',
-                    style: {
-                        'background-color': 'rgb(255, 255, 255)',
-                        'border-color': 'rgb(211, 179, 250)',
-                        'border-width': 8,
-                        'shape': 'round-rectangle',
-                        'label': 'data(label)',
-                        'color': 'rgb(151, 78, 242)',
-                        'font-size': 30,
-                        'font-family': 'Manrope, Arial, sans-serif',
-                        'font-weight': 700, /* Adjusted for node labels */
-                        'text-valign': 'center',
-                        'text-halign': 'center',
-                        'width': 'label',
-                        'height': 'label',
-                        'padding': 45,
-                    },
-                },{
-	             selector: 'node.user-node',
-	             style: {
-		                'border-color': '#FFB381', /*light Orange border */
-		                'color': '#F76808', /* Orange text */
-	 
-                     },             
-                },
-                        {
-	             selector: 'node.resource-instance-node',
-	             style: {
-		             'border-color': '#D3B3FA', /* light Purple border */
-		             'color': '#974EF2', /* Purple text */
-	
-                     },
-                },
-            ],
-            layout: {
-                name: 'dagre',
-                rankDir: 'LR',
-                nodeSep: 250,
-                edgeSep: 300,
-                rankSep: 350,
-                animate: true,
-                fit: true,
-                padding: 20,
-                directed: true,
-                spacingFactor: 1.5,
-            },
-        });
-    </script>
-</body>
+			const cy = cytoscape({
+				container: document.getElementById('cy'),
+				elements: [...graphData.nodes, ...graphData.edges],
+				style: [
+					{
+						selector: 'edge',
+						style: {
+							'line-color': 'rgb(18, 165, 148)',
+							width: 5,
+							shape: 'round-rectangle',
+							'target-arrow-shape': 'triangle',
+							'target-arrow-color': 'rgb(18, 165, 148)',
+							'curve-style': 'taxi',
+							'taxi-turn': '45%',
+							'taxi-direction': 'vertical',
+							'taxi-turn-min-distance': 5,
+							'target-label': 'data(label)',
+							color: '#ffffff',
+							'font-size': 25,
+							'font-family': 'Manrope, Arial, sans-serif',
+							'font-weight': 500 /* Adjusted for edge labels */,
+							'text-background-color': 'rgb(18, 165, 148)',
+							'text-background-opacity': 0.8,
+							'text-background-padding': 8,
+							'text-rotation': 'autorotate', // Added for label rotation
+							'text-margin-x': 20, // Added for positioning label closer to target node
+							'target-distance-from-node': 46,
+							'target-text-offset': 35,
+						},
+					},
+					{
+						selector: 'edge.relationship-connection',
+						style: {
+							'line-color': '#F76808',
+							'target-arrow-color': '#F76808',
+							'text-background-color': '#F76808',
+							color: '#ffffff',
+							'target-distance-from-node': 2,
+							'target-text-offset': 13,
+						},
+					},
+					{
+						selector: 'node',
+						style: {
+							'background-color': 'rgb(255, 255, 255)',
+							'border-color': 'rgb(211, 179, 250)',
+							'border-width': 8,
+							shape: 'round-rectangle',
+							label: 'data(label)',
+							color: 'rgb(151, 78, 242)',
+							'font-size': 30,
+							'font-family': 'Manrope, Arial, sans-serif',
+							'font-weight': 700 /* Adjusted for node labels */,
+							'text-valign': 'center',
+							'text-halign': 'center',
+							width: 'label',
+							height: 'label',
+							padding: 45,
+						},
+					},
+					{
+						selector: 'node.user-node',
+						style: {
+							'border-color': '#FFB381' /*light Orange border */,
+							color: '#F76808' /* Orange text */,
+						},
+					},
+					{
+						selector: 'node.resource-instance-node',
+						style: {
+							'border-color': '#D3B3FA' /* light Purple border */,
+							color: '#974EF2' /* Purple text */,
+						},
+					},
+				],
+				layout: {
+					name: 'dagre',
+					rankDir: 'TB',
+					nodeSep: 250,
+					edgeSep: 300,
+					rankSep: 350,
+					animate: true,
+					fit: true,
+					padding: 20,
+					directed: true,
+					spacingFactor: 1.5,
+				},
+			});
+			// Track target nodes and offsets dynamically
+			const targetOffsets = new Map(); // Keeps track of target nodes and their current offset
+
+			cy.edges().forEach(edge => {
+				const target = edge.target().id(); // Get the target node ID
+				let offset = targetOffsets.get(target) || 13; // Default starting offset is 13
+
+				// Set the target-text-offset for the edge
+				edge.style('target-text-offset', offset);
+
+				// Update the offset for the next edge targeting the same node
+				targetOffsets.set(target, offset + 45); // Increment by 22
+			});
+		</script>
+	</body>
 </html>
+
 `;
 
 	writeFileSync(outputHTMLPath, htmlTemplate, 'utf8');

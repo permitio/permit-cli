@@ -133,8 +133,11 @@ export default function Graph({ options }: Props) {
 			try {
 				setLoading(true);
 
+				const Page = 1; // Fetches the one page per page
+				const per_Page = 100; // api limit for 100 records per page
+
 				const resourceResponse = await apiCall(
-					`v2/facts/${selectedProject.value}/${selectedEnvironment.value}/resource_instances?detailed=true`,
+					`v2/facts/${selectedProject.value}/${selectedEnvironment.value}/resource_instances?detailed=true&page=${Page}&per_page=${per_Page}`,
 					authToken,
 				);
 
@@ -182,7 +185,7 @@ export default function Graph({ options }: Props) {
 				const roleAssignmentsData: RoleAssignment[] = [];
 
 				const roleResponse = await apiCall(
-					`v2/facts/${selectedProject.value}/${selectedEnvironment.value}/users?include_resource_instance_roles=true`,
+					`v2/facts/${selectedProject.value}/${selectedEnvironment.value}/users?include_resource_instance_roles=true&page=${Page}&per_page=${per_Page}`,
 					authToken,
 				);
 
