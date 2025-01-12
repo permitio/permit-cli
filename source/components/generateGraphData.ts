@@ -104,5 +104,19 @@ export const generateGraphData = (
 		}
 	});
 
+	// Ensure that for every target ID in the edges array there is a corresponding node
+	edges.forEach(edge => {
+		if (!existingNodeIds.has(edge.data.target)) {
+			nodes.push({
+				data: {
+					id: edge.data.target,
+					label: `Node ${edge.data.target}`,
+				},
+				classes: 'resource-instance-node',
+			});
+			existingNodeIds.add(edge.data.target);
+		}
+	});
+
 	return { nodes, edges };
 };
