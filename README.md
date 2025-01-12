@@ -44,18 +44,27 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
 -  `gitops create github` - configure Permit environment to use [GitOps flow](https://docs.permit.io/integrations/gitops/overview/)
 
 ### `login`
+Use this command to login (or signup) to your Permit.io account. The command will take you to the browser to perform user authentication and then let you choose the workspace, project, and environment to fetch and store an API key for future command runs.
 
+#### Options
+- `key` - store a Permit API key in your workstation keychain instead of running browser authentication
+- `workspace` - predefined workspace key to skip the workspace selection step
+
+#### Example
 
 ## Development
+Permit CLI is based on 
 
+### Setup Development Environment
 - Checkout this repo
 - Run `npm install`
 - Run `npm run dev`
 - Use the CLI with the following convention `node ./dist/cli.js command [options]`
 
-### Writing Tests
+### Write Tests
+Permit CLI enforce UT coverage level of >90% for the code in main.
 
-Permit CLI uses [`vitest`](https://vitest.dev/) as a tool for writing tests. It also uses [`ink-testing-library`](https://github.com/vadimdemedes/ink-testing-library) to render the `Ink` components.
+The CLI uses [`vitest`](https://vitest.dev/) as its test framework. It also uses [`ink-testing-library`](https://github.com/vadimdemedes/ink-testing-library) to render the `Ink` components.
 
 - run `npm run tests` for testing and coverage
 
