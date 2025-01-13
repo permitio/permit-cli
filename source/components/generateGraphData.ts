@@ -67,6 +67,13 @@ export const generateGraphData = (
 				existingNodeIds.add(relation.objectId);
 			}
 
+			if (!existingNodeIds.has(relation.objectId)) {
+				nodes.push({
+					data: { id: relation.objectId, label: `${relation.objectId}` },
+				});
+				existingNodeIds.add(relation.objectId);
+			}
+
 			if (relation.subjectId !== relation.objectId) {
 				edges.push({
 					data: {
@@ -91,6 +98,13 @@ export const generateGraphData = (
 			existingNodeIds.add(assignment.user);
 		}
 
+		if (!existingNodeIds.has(assignment.resourceInstance)) {
+			nodes.push({
+				data: { id: assignment.resourceInstance, label: `${assignment.resourceInstance}` },
+				classes: 'resource-instance-node',
+			});
+			existingNodeIds.add(assignment.resourceInstance);
+		}
 		// Connect user to resource instance
 
 		if (assignment.role !== 'No Role Assigned') {
