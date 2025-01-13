@@ -39,8 +39,7 @@ export function AuthProvider({
 	scope,
 	keyAccount,
 }: AuthProviderProps) {
-	const { validateApiKeyScope, getApiKeyList, getApiKeyById, getApiKeyScope } =
-		useApiKeyApi();
+	const { validateApiKeyScope, getApiKeyList, getApiKeyById } = useApiKeyApi();
 
 	const [internalAuthToken, setInternalAuthToken] = useState<string | null>(
 		null,
