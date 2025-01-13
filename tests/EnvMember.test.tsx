@@ -6,6 +6,7 @@ import { useApiKeyApi } from '../source/hooks/useApiKeyApi.js';
 import { useMemberApi } from '../source/hooks/useMemberApi.js';
 import EnvironmentSelection from '../source/components/EnvironmentSelection.js';
 import delay from 'delay';
+import * as keytar from "keytar"
 
 vi.mock('../source/hooks/useApiKeyApi.js', () => ({
 	useApiKeyApi: vi.fn(() => ({
@@ -23,6 +24,18 @@ vi.mock('../source/components/EnvironmentSelection.js', () => ({
 	__esModule: true,
 	default: vi.fn(),
 }));
+
+vi.mock('keytar', () => {
+	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+	const keytar = {
+		setPassword: vi.fn().mockResolvedValue(demoPermitKey),
+		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
+		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
+
+	};
+	return { ...keytar, default: keytar };
+});
+
 
 beforeEach(() => {
 	vi.restoreAllMocks();
@@ -73,7 +86,7 @@ describe('Member Component', () => {
 			<Member options={{ key: 'valid_api_key' }} />,
 		);
 
-		await delay(50); // Allow environment selection
+		await delay(100); // Allow environment selection
 
 		stdin.write('user@example.com\n');
 		await delay(50);
