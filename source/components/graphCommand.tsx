@@ -8,7 +8,6 @@ import { generateGraphData } from '../components/generateGraphData.js';
 import zod from 'zod';
 import { option } from 'pastel';
 import { useAuth } from '../components/AuthProvider.js'; // Import useAuth
-import { object } from 'joi';
 
 // Define types
 type Relationship = {
@@ -169,10 +168,6 @@ export default function Graph({ options }: Props) {
 					hasMoreData = resourceResponse.response.length === per_Page;
 					Page++;
 				}
-
-				allResourcesData.forEach((resource: any) => {
-					console.log(resource.label);
-				})
 
 				// Create a lookup map for id2 to resource labels
 				const id2ToLabelMap = new Map<string, string>();
