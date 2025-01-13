@@ -4,6 +4,7 @@ import { describe, vi, it, expect, afterEach, beforeEach } from 'vitest';
 import delay from 'delay';
 import Check from '../source/commands/pdp/check';
 import * as keytar from 'keytar';
+import { useApiKeyApi } from '../source/hooks/useApiKeyApi';
 
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 
@@ -11,15 +12,19 @@ global.fetch = vi.fn();
 vi.mock('keytar', () => {
 	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 	const keytar = {
-		setPassword: vi.fn().mockResolvedValue(demoPermitKey),
-		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
-		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
+		setPassword: vi.fn(),
+		getPassword: vi.fn(),
+		deletePassword: vi.fn(),
 
 	};
 	return { ...keytar, default: keytar };
 });
 
-
+vi.mock('../source/hooks/useApiKeyApi.js', () => ({
+	useApiKeyApi: vi.fn(() => ({
+		validateApiKeyScope: vi.fn(),
+	})),
+}));
 
 
 vi.mock('../source/lib/auth.js', async () => {
@@ -45,12 +50,26 @@ describe('PDP Check Component', () => {
 			json: async () => ({ allow: true }),
 		});
 
+		vi.mocked(useApiKeyApi).mockReturnValue({
+			validateApiKeyScope: vi.fn(() =>
+				Promise.resolve({
+					valid: true,
+					scope: {
+						project_id: 'proj1',
+						environment_id: 'proj1',
+					},
+					error: null,
+				}),
+			),
+		});
+
 		const options = {
 			user: 'testUser',
 			resource: 'testResource',
 			action: 'testAction',
 			tenant: 'testTenant',
 			keyAccount: 'testKeyAccount',
+			demoPermitKey: demoPermitKey
 		};
 
 		const { lastFrame } = render(<Check options={options} />);
@@ -72,12 +91,27 @@ describe('PDP Check Component', () => {
 			json: async () => ({ allow: false }),
 		});
 
+		vi.mocked(useApiKeyApi).mockReturnValue({
+			validateApiKeyScope: vi.fn(() =>
+				Promise.resolve({
+					valid: true,
+					scope: {
+						project_id: 'proj1',
+						environment_id: 'proj1',
+					},
+					error: null,
+				}),
+			),
+		});
+
 		const options = {
 			user: 'testUser',
 			resource: 'testResource',
 			action: 'testAction',
 			tenant: 'testTenant',
+			demoPermitKey: demoPermitKey,
 			keyAccount: 'testKeyAccount',
+
 		};
 
 		const { lastFrame } = render(<Check options={options} />);
@@ -95,11 +129,21 @@ describe('PDP Check Component', () => {
 
 	it('should render an error when fetch fails', async () => {
 		(fetch as any).mockResolvedValueOnce({
-			ok: true,
-			json: async () => ({ allow: false }),
-		}).mockResolvedValueOnce({
 			ok: false,
 			text: async () => 'Error',
+		});
+
+		vi.mocked(useApiKeyApi).mockReturnValue({
+			validateApiKeyScope: vi.fn(() =>
+				Promise.resolve({
+					valid: true,
+					scope: {
+						project_id: 'proj1',
+						environment_id: 'proj1',
+					},
+					error: null,
+				}),
+			),
 		});
 
 		const options = {
@@ -108,6 +152,7 @@ describe('PDP Check Component', () => {
 			action: 'testAction',
 			tenant: 'testTenant',
 			keyAccount: 'testKeyAccount',
+			demoPermitKey: demoPermitKey
 		};
 
 		const { lastFrame } = render(<Check options={options} />);
@@ -118,7 +163,7 @@ describe('PDP Check Component', () => {
 			`Checking user="testUser" action="testAction" resource="testResource" at tenant="testTenant"`,
 		);
 
-		await delay(50);
+		await delay(100);
 
 		expect(lastFrame()?.toString()).toContain('Error');
 	});
@@ -129,12 +174,26 @@ describe('PDP Check Component', () => {
 			json: async () => ({ allow: true }),
 		});
 
+		vi.mocked(useApiKeyApi).mockReturnValue({
+			validateApiKeyScope: vi.fn(() =>
+				Promise.resolve({
+					valid: true,
+					scope: {
+						project_id: 'proj1',
+						environment_id: 'proj1',
+					},
+					error: null,
+				}),
+			),
+		});
+
 		const options = {
 			user: 'testUser',
 			resource: 'testResourceType: testResourceKey',
 			action: 'testAction',
 			tenant: 'testTenant',
 			keyAccount: 'testKeyAccount',
+			demoPermitKey: demoPermitKey
 		};
 
 		const { lastFrame } = render(<Check options={options} />);

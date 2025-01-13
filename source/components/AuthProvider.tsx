@@ -75,13 +75,19 @@ export function AuthProvider({
 		) => {
 			try {
 				const token = await loadAuthToken(keyAccount);
-				const { response, error } = await getApiKeyScope(token);
-				if (error) {
-					setError(error);
-					return;
+				const {
+					valid,
+					scope: keyScope,
+					error,
+				} = await validateApiKeyScope(
+					token,
+					redirect_scope === 'login' ? 'environment' : redirect_scope,
+				);
+				if (error || !valid) {
+					throw Error('Invalid token scope, redirecting to login of choice');
 				}
 				setAuthToken(token);
-				setCurrentScope(response);
+				setCurrentScope(keyScope);
 			} catch {
 				setState(redirect_scope);
 			}
