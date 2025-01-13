@@ -7,10 +7,10 @@ type ResourceInstance = {
 
 type Relationship = {
 	label: string;
-	value: string;
+	ObjectId: string;
 	id: string;
-	subjectvalue: string;
-	value1: string;
+	subjectId: string;
+	Object: string;
 };
 
 type RoleAssignment = {
@@ -39,18 +39,18 @@ export const generateGraphData = (
 
 	relationships.forEach((relations, resourceId) => {
 		relations.forEach(relation => {
-			if (!existingNodeIds.has(relation.value1)) {
+			if (!existingNodeIds.has(relation.Object)) {
 				nodes.push({
-					data: { id: relation.value1, label: `${relation.value1}` },
+					data: { id: relation.Object, label: `${relation.Object}` },
 				});
-				existingNodeIds.add(relation.value1);
+				existingNodeIds.add(relation.Object);
 			}
 
-			if (resourceId !== relation.value1) {
+			if (resourceId !== relation.Object) {
 				edges.push({
 					data: {
 						source: resourceId,
-						target: relation.value1,
+						target: relation.Object,
 						label: `IS ${relation.label} OF`,
 					},
 					classes: 'relationship-connection', // Class for orange lines
@@ -58,20 +58,20 @@ export const generateGraphData = (
 			}
 		});
 	});
-	relationships.forEach((relations, subjectvalue) => {
+	relationships.forEach((relations, subjectId) => {
 		relations.forEach(relation => {
 			if (!existingNodeIds.has(relation.id)) {
 				nodes.push({
-					data: { id: relation.value, label: `${relation.value}` },
+					data: { id: relation.ObjectId, label: `${relation.ObjectId}` },
 				});
-				existingNodeIds.add(relation.value);
+				existingNodeIds.add(relation.ObjectId);
 			}
 
-			if (subjectvalue !== relation.value) {
+			if (subjectId !== relation.ObjectId) {
 				edges.push({
 					data: {
-						source: subjectvalue,
-						target: relation.value,
+						source: subjectId,
+						target: relation.ObjectId,
 						label: relation.label,
 					},
 					classes: 'relationship-connection', // Class for orange lines

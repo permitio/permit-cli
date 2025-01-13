@@ -8,14 +8,15 @@ import { generateGraphData } from '../components/generateGraphData.js';
 import zod from 'zod';
 import { option } from 'pastel';
 import { useAuth } from '../components/AuthProvider.js'; // Import useAuth
+import { object } from 'joi';
 
 // Define types
 type Relationship = {
 	label: string;
-	value: string;
 	id: string;
-	subjectvalue: string;
-	value1: string;
+	subjectId: string;
+	ObjectId: string;
+	Object: string;
 };
 
 type RoleAssignment = {
@@ -142,8 +143,10 @@ export default function Graph({ options }: Props) {
 					id: string;
 					id2: string;
 					key: string;
+					relationships?: any[];
 				}[] = [];
 				let allRoleAssignmentsData: RoleAssignment[] = [];
+				const relationsMap = new Map<string, Relationship[]>();
 
 				while (hasMoreData) {
 					const resourceResponse = await apiCall(
@@ -157,6 +160,7 @@ export default function Graph({ options }: Props) {
 						id: res.id,
 						id2: `${res.resource}:${res.key}`,
 						key: res.key,
+						relationships: res.relationships || [],
 					}));
 
 					allResourcesData = [...allResourcesData, ...resourcesData];
@@ -166,39 +170,41 @@ export default function Graph({ options }: Props) {
 					Page++;
 				}
 
+				allResourcesData.forEach((resource: any) => {
+					console.log(resource.label);
+				})
+
 				// Create a lookup map for id2 to resource labels
 				const id2ToLabelMap = new Map<string, string>();
 				allResourcesData.forEach((resource: { id2: string; id: string }) => {
 					id2ToLabelMap.set(resource.id2, resource.id);
 				});
 
-				const relationsMap = new Map<string, Relationship[]>();
+					allResourcesData.forEach((resource: any) => {
+						const relationsData = resource.relationships || [];
+						relationsMap.set(
+							resource.id,
+							relationsData.map((relation: any) => {
+								// Check if relation.object matches any id2
+								const matchedLabel = id2ToLabelMap.get(relation.object);
+								const matchedsubjectid = id2ToLabelMap.get(relation.subject);
+	
+								// Convert relation.relation to uppercase
+								const relationLabel = relation.relation
+									? relation.relation.toUpperCase()
+									: 'UNKNOWN RELATION';
 
-				allResourcesData.forEach((resource: any) => {
-					const relationsData = resource.relationships || [];
-					relationsMap.set(
-						resource.id,
-						relationsData.map((relation: any) => {
-							// Check if relation.object matches any id2
-							const matchedLabel = id2ToLabelMap.get(relation.object);
-							const matchedsubjectid = id2ToLabelMap.get(relation.subject);
-
-							// Convert relation.relation to uppercase
-							const relationLabel = relation.relation
-								? relation.relation.toUpperCase()
-								: 'UNKNOWN RELATION';
-
-							return {
-								label: relationLabel,
-								value: matchedLabel || relation.object,
-								value1: relation.object,
-								subjectvalue: matchedsubjectid || resource.id,
-								id: resource.id,
-							};
-						}),
-					);
-				});
-
+								return {
+									label: relationLabel,
+									objectId: matchedLabel || relation.object,
+									Object: relation.object,
+									subjectId: matchedsubjectid || resource.id,
+									id: resource.id,
+								};
+					}),
+						);
+					});
+		
 				Page = 1;
 				hasMoreData = true;
 
