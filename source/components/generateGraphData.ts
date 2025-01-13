@@ -58,7 +58,7 @@ export const generateGraphData = (
 			}
 		});
 	});
-	relationships.forEach((relations) => {
+	relationships.forEach(relations => {
 		relations.forEach(relation => {
 			if (!existingNodeIds.has(relation.id)) {
 				nodes.push({

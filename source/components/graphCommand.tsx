@@ -175,31 +175,31 @@ export default function Graph({ options }: Props) {
 					id2ToLabelMap.set(resource.id2, resource.id);
 				});
 
-					allResourcesData.forEach((resource: any) => {
-						const relationsData = resource.relationships || [];
-						relationsMap.set(
-							resource.id,
-							relationsData.map((relation: any) => {
-								// Check if relation.object matches any id2
-								const matchedLabel = id2ToLabelMap.get(relation.object);
-								const matchedsubjectid = id2ToLabelMap.get(relation.subject);
-	
-								// Convert relation.relation to uppercase
-								const relationLabel = relation.relation
-									? relation.relation.toUpperCase()
-									: 'UNKNOWN RELATION';
+				allResourcesData.forEach((resource: any) => {
+					const relationsData = resource.relationships || [];
+					relationsMap.set(
+						resource.id,
+						relationsData.map((relation: any) => {
+							// Check if relation.object matches any id2
+							const matchedLabel = id2ToLabelMap.get(relation.object);
+							const matchedsubjectid = id2ToLabelMap.get(relation.subject);
 
-								return {
-									label: relationLabel,
-									objectId: matchedLabel || relation.object,
-									Object: relation.object,
-									subjectId: matchedsubjectid || relation.subject,
-									id: resource.id,
-								};
-					}),
-						);
-					});
-		
+							// Convert relation.relation to uppercase
+							const relationLabel = relation.relation
+								? relation.relation.toUpperCase()
+								: 'UNKNOWN RELATION';
+
+							return {
+								label: relationLabel,
+								objectId: matchedLabel || relation.object,
+								Object: relation.object,
+								subjectId: matchedsubjectid || relation.subject,
+								id: resource.id,
+							};
+						}),
+					);
+				});
+
 				Page = 1;
 				hasMoreData = true;
 
