@@ -7,7 +7,7 @@ type ResourceInstance = {
 
 type Relationship = {
 	label: string;
-	ObjectId: string;
+	objectId: string;
 	id: string;
 	subjectId: string;
 	Object: string;
@@ -58,20 +58,20 @@ export const generateGraphData = (
 			}
 		});
 	});
-	relationships.forEach((relations, subjectId) => {
+	relationships.forEach((relations) => {
 		relations.forEach(relation => {
 			if (!existingNodeIds.has(relation.id)) {
 				nodes.push({
-					data: { id: relation.ObjectId, label: `${relation.ObjectId}` },
+					data: { id: relation.objectId, label: `${relation.objectId}` },
 				});
-				existingNodeIds.add(relation.ObjectId);
+				existingNodeIds.add(relation.objectId);
 			}
 
-			if (subjectId !== relation.ObjectId) {
+			if (relation.subjectId !== relation.objectId) {
 				edges.push({
 					data: {
-						source: subjectId,
-						target: relation.ObjectId,
+						source: relation.subjectId,
+						target: relation.objectId,
 						label: relation.label,
 					},
 					classes: 'relationship-connection', // Class for orange lines

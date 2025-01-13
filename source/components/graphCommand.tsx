@@ -14,7 +14,7 @@ type Relationship = {
 	label: string;
 	id: string;
 	subjectId: string;
-	ObjectId: string;
+	objectId: string;
 	Object: string;
 };
 
@@ -193,7 +193,7 @@ export default function Graph({ options }: Props) {
 									label: relationLabel,
 									objectId: matchedLabel || relation.object,
 									Object: relation.object,
-									subjectId: matchedsubjectid || resource.id,
+									subjectId: matchedsubjectid || relation.subject,
 									id: resource.id,
 								};
 					}),
