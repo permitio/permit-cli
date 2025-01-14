@@ -54,7 +54,6 @@ export default function MemberComponent({
 	const { inviteNewMember } = useMemberApi();
 
 	useEffect(() => {
-		// console.log(error, state);
 		if (error || state === 'done') {
 			process.exit(1);
 		}
@@ -96,7 +95,6 @@ export default function MemberComponent({
 					},
 				],
 			};
-			console.log(requestBody, apiKey);
 
 			const { error } = await inviteNewMember(apiKey ?? '', requestBody);
 			if (error) {
@@ -114,7 +112,6 @@ export default function MemberComponent({
 			project: ActiveState,
 			environment: ActiveState,
 		) => {
-			// console.log(environment);
 			if (keyScope && keyScope.environment_id !== environment.value) {
 				setKeyScope({
 					organization_id: organisation.value,
@@ -127,7 +124,6 @@ export default function MemberComponent({
 	);
 
 	useEffect(() => {
-		// console.log({ email, environment, handleMemberInvite, keyScope, role });
 		if (!apiKey) return;
 		if (!environment && !keyScope?.environment_id) {
 			setState('selecting');
