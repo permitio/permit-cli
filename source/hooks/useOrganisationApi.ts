@@ -37,10 +37,25 @@ export const useOrganisationApi = () => {
 		);
 	};
 
+	const createOrg = async (
+		body: object,
+		accessToken: string,
+		cookie?: string | null,
+	) => {
+		return await apiCall<Organization>(
+			`v2/orgs`,
+			accessToken,
+			cookie ?? '',
+			'POST',
+			JSON.stringify(body),
+		);
+	};
+
 	return useMemo(
 		() => ({
 			getOrgs,
 			getOrg,
+			createOrg,
 		}),
 		[],
 	);
