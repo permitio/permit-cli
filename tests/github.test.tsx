@@ -13,7 +13,11 @@ import {
 	getProjectList,
 	getRepoList,
 } from '../source/lib/gitops/utils.js';
-import { loadAuthToken } from '../source/lib/auth.js';
+import { loadAuthToken, TokenType } from '../source/lib/auth.js';
+import { useApiKeyApi } from '../../source/hooks/useApiKeyApi';
+import * as keytar from "keytar"
+
+
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 
 vi.mock('clipboardy', () => ({
@@ -21,9 +25,13 @@ vi.mock('clipboardy', () => ({
 		writeSync: vi.fn(),
 	},
 }));
-vi.mock('../source/lib/auth.js', () => ({
-	loadAuthToken: vi.fn(() => demoPermitKey),
-}));
+vi.mock('../source/lib/auth.js', async () => {
+	const original = await vi.importActual('../source/lib/auth.js');
+	return {
+		...original,
+		loadAuthToken: vi.fn(() => demoPermitKey),
+	};
+});
 vi.mock('../source/lib/gitops/utils.js', () => ({
 	getProjectList: vi.fn(() =>
 		Promise.resolve([
@@ -48,6 +56,47 @@ vi.mock('../source/lib/gitops/utils.js', () => ({
 		Promise.resolve({ id: '1', status: 'active', key: 'repo1' }),
 	),
 }));
+vi.mock('../source/hooks/useApiKeyApi', async() => {
+	const original = await vi.importActual('../source/hooks/useApiKeyApi');
+	return {
+		...original,
+		useApiKeyApi: () => ({
+			getApiKeyScope: vi.fn().mockResolvedValue({
+				response: {
+					environment_id: 'env1',
+					project_id: 'proj1',
+					organization_id: 'org1',
+				},
+				error: null,
+				status: 200,
+			}),
+			getProjectEnvironmentApiKey: vi.fn().mockResolvedValue({
+				response: { secret: 'test-secret' },
+				error: null,
+			}),
+			validateApiKeyScope: vi.fn().mockResolvedValue({
+				valid: true,
+				scope: {
+					environment_id: 'env1',
+					project_id: 'proj1',
+					organization_id: 'org1',
+				},
+				error: null
+			})
+		}),
+	}
+});
+
+vi.mock('keytar', () => {
+	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+	const keytar = {
+		setPassword: vi.fn().mockResolvedValue(demoPermitKey),
+		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
+		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
+
+	};
+	return { ...keytar, default: keytar };
+});
 
 const enter = '\r';
 const arrowUp = '\u001B[A';
@@ -345,7 +394,7 @@ describe('Branch Name component', () => {
 	});
 });
 
-describe('GiHub Complete Flow', () => {
+describe('GitHub Complete Flow', () => {
 	it('should complete the flow', async () => {
 		const { stdin, lastFrame } = render(
 			<GitHub options={{ key: demoPermitKey }} />,

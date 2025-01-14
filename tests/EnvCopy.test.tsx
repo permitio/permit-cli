@@ -6,6 +6,7 @@ import { useApiKeyApi } from '../source/hooks/useApiKeyApi.js';
 import { useEnvironmentApi } from '../source/hooks/useEnvironmentApi.js';
 import EnvironmentSelection from '../source/components/EnvironmentSelection.js';
 import delay from 'delay';
+import * as keytar from 'keytar';
 
 vi.mock('../source/hooks/useApiKeyApi.js', () => ({
 	useApiKeyApi: vi.fn(() => ({
@@ -30,6 +31,19 @@ beforeEach(() => {
 		console.warn(`Mocked process.exit(${code}) called`);
 	});
 });
+
+
+vi.mock('keytar', () => {
+	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+	const keytar = {
+		setPassword: vi.fn().mockResolvedValue(demoPermitKey),
+		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
+		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
+
+	};
+	return { ...keytar, default: keytar };
+});
+
 
 afterEach(() => {
 	vi.restoreAllMocks();
