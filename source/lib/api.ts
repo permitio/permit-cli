@@ -1,4 +1,4 @@
-import { PERMIT_API_URL } from '../config.js';
+import { PERMIT_API_URL, PERMIT_ORIGIN_URL } from '../config.js';
 
 type ApiResponse<T> = {
 	headers: Headers;
@@ -26,7 +26,7 @@ export const apiCall = async <T = any>(
 		method,
 		headers: {
 			Accept: '*/*',
-			Origin: 'https://app.permit.io',
+			Origin: PERMIT_ORIGIN_URL,
 			Authorization: `Bearer ${token}`,
 			Cookie: cookie ?? '',
 			'Content-Type': 'application/json',

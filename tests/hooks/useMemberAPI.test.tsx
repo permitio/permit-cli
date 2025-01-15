@@ -28,7 +28,7 @@ describe('useMemberApi', () => {
 			apiCall.mockResolvedValue({ success: true });
 
 			const inviteMember = async () => {
-				const result = await inviteNewMember(authToken, body);
+				const result = await inviteNewMember(authToken, body, 'dummy_name', 'dummy_email');
 				return result.success ? 'Member invited' : 'Failed to invite member';
 			};
 			const [result, setResult] = React.useState<string | null>(null);
@@ -56,7 +56,7 @@ describe('useMemberApi', () => {
 			apiCall.mockResolvedValue({ success: false });
 
 			const inviteMember = async () => {
-				const result = await inviteNewMember(authToken, body);
+				const result = await inviteNewMember(authToken, body, 'dummy_name', 'dummy_email');
 				return result.success ? 'Member invited' : 'Failed to invite member';
 			};
 			const [result, setResult] = React.useState<string | null>(null);

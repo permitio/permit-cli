@@ -6,6 +6,7 @@ import { useApiKeyApi } from '../source/hooks/useApiKeyApi.js';
 import { useMemberApi } from '../source/hooks/useMemberApi.js';
 import EnvironmentSelection from '../source/components/EnvironmentSelection.js';
 import delay from 'delay';
+import * as keytar from "keytar"
 
 vi.mock('../source/hooks/useApiKeyApi.js', () => ({
 	useApiKeyApi: vi.fn(() => ({
@@ -23,6 +24,18 @@ vi.mock('../source/components/EnvironmentSelection.js', () => ({
 	__esModule: true,
 	default: vi.fn(),
 }));
+
+vi.mock('keytar', () => {
+	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+	const keytar = {
+		setPassword: vi.fn().mockResolvedValue(demoPermitKey),
+		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
+		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
+
+	};
+	return { ...keytar, default: keytar };
+});
+
 
 beforeEach(() => {
 	vi.restoreAllMocks();
@@ -73,14 +86,61 @@ describe('Member Component', () => {
 			<Member options={{ key: 'valid_api_key' }} />,
 		);
 
-		await delay(50); // Allow environment selection
+		await delay(100); // Allow environment selection
 
 		stdin.write('user@example.com\n');
 		await delay(50);
 		stdin.write(enter);
 		await delay(50);
 		stdin.write(enter);
-		await delay(100); // Allow role selection
+		await delay(50)
+		stdin.write("dummy_name")
+		await delay(50);
+		stdin.write(enter);
+		await delay(50)
+		stdin.write("dummy_email")
+		await delay(50);
+		stdin.write(enter);
+		await delay(100);
+
+		expect(lastFrame()).toMatch(/User Invited Successfully/);
+	});
+	it('should handle successful member invite flow with all flags passed', async () => {
+		vi.mocked(useApiKeyApi).mockReturnValue({
+			validateApiKeyScope: vi.fn(() =>
+				Promise.resolve({
+					valid: true,
+					scope: {
+						organization_id: 'org1',
+						project_id: 'proj1',
+					},
+					error: null,
+				}),
+			),
+		});
+
+		vi.mocked(useMemberApi).mockReturnValue({
+			inviteNewMember: vi.fn(() =>
+				Promise.resolve({
+					error: null,
+				}),
+			),
+		});
+
+		vi.mocked(EnvironmentSelection).mockImplementation(({ onComplete }) => {
+			onComplete(
+				{ label: 'Org1', value: 'org1' },
+				{ label: 'Proj1', value: 'proj1' },
+				{ label: 'Env1', value: 'env1' },
+			);
+			return null;
+		});
+
+		const { lastFrame, stdin } = render(
+			<Member options={{ key: 'valid_api_key', project:'proj1', environment: 'env1', email: 'email1', role: 'read', inviterEmail: 'email2', inviterName: 'name1' }} />,
+		);
+
+		await delay(100);
 
 		expect(lastFrame()).toMatch(/User Invited Successfully/);
 	});
