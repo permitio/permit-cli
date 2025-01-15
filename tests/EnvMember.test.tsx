@@ -93,7 +93,54 @@ describe('Member Component', () => {
 		stdin.write(enter);
 		await delay(50);
 		stdin.write(enter);
-		await delay(100); // Allow role selection
+		await delay(50)
+		stdin.write("dummy_name")
+		await delay(50);
+		stdin.write(enter);
+		await delay(50)
+		stdin.write("dummy_email")
+		await delay(50);
+		stdin.write(enter);
+		await delay(100);
+
+		expect(lastFrame()).toMatch(/User Invited Successfully/);
+	});
+	it('should handle successful member invite flow with all flags passed', async () => {
+		vi.mocked(useApiKeyApi).mockReturnValue({
+			validateApiKeyScope: vi.fn(() =>
+				Promise.resolve({
+					valid: true,
+					scope: {
+						organization_id: 'org1',
+						project_id: 'proj1',
+					},
+					error: null,
+				}),
+			),
+		});
+
+		vi.mocked(useMemberApi).mockReturnValue({
+			inviteNewMember: vi.fn(() =>
+				Promise.resolve({
+					error: null,
+				}),
+			),
+		});
+
+		vi.mocked(EnvironmentSelection).mockImplementation(({ onComplete }) => {
+			onComplete(
+				{ label: 'Org1', value: 'org1' },
+				{ label: 'Proj1', value: 'proj1' },
+				{ label: 'Env1', value: 'env1' },
+			);
+			return null;
+		});
+
+		const { lastFrame, stdin } = render(
+			<Member options={{ key: 'valid_api_key', project:'proj1', environment: 'env1', email: 'email1', role: 'read', inviterEmail: 'email2', inviterName: 'name1' }} />,
+		);
+
+		await delay(100);
 
 		expect(lastFrame()).toMatch(/User Invited Successfully/);
 	});

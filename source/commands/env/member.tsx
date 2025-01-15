@@ -50,6 +50,22 @@ export const options = zod.object({
 				description: 'Optional: Role of the user',
 			}),
 		),
+	inviterEmail: zod
+		.string()
+		.optional()
+		.describe(
+			option({
+				description: 'Optional: Your mail id',
+			}),
+		),
+	inviterName: zod
+		.string()
+		.optional()
+		.describe(
+			option({
+				description: 'Optional: Your name',
+			}),
+		),
 });
 
 type Props = {
@@ -57,7 +73,15 @@ type Props = {
 };
 
 export default function Member({
-	options: { key, environment, project, email, role },
+	options: {
+		key,
+		environment,
+		project,
+		email,
+		role,
+		inviterName,
+		inviterEmail,
+	},
 }: Props) {
 	return (
 		<>
@@ -67,6 +91,8 @@ export default function Member({
 					environment={environment}
 					email={email}
 					role={role}
+					inviter_name={inviterName}
+					inviter_email={inviterEmail}
 				/>
 			</AuthProvider>
 		</>

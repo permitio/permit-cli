@@ -25,6 +25,8 @@ type Props = {
 	project?: string;
 	email?: string;
 	role?: 'admin' | 'write' | 'read';
+	inviter_name?: string;
+	inviter_email?: string;
 };
 
 interface MemberInviteResult {
@@ -37,10 +39,19 @@ export default function MemberComponent({
 	project,
 	email: emailP,
 	role: roleP,
+	inviter_email,
+	inviter_name,
 }: Props) {
 	const [error, setError] = React.useState<string | null>(null);
 	const [state, setState] = useState<
-		'loading' | 'selecting' | 'input-email' | 'input-role' | 'inviting' | 'done'
+		| 'loading'
+		| 'selecting'
+		| 'input-email'
+		| 'input-role'
+		| 'input-inviter-name'
+		| 'input-inviter-email'
+		| 'inviting'
+		| 'done'
 	>('loading');
 	const [keyScope, setKeyScope] = useState<ApiKeyScope>({
 		environment_id: environment ?? null,
@@ -49,6 +60,12 @@ export default function MemberComponent({
 	});
 	const [email, setEmail] = useState<string | undefined>(emailP);
 	const [role, setRole] = useState<string | undefined>(roleP);
+	const [inviterName, setInviterName] = useState<string | undefined>(
+		inviter_name,
+	);
+	const [inviterEmail, setInviterEmail] = useState<string | undefined>(
+		inviter_email,
+	);
 	const [apiKey, setApiKey] = useState<string | null>(null);
 
 	const { inviteNewMember } = useMemberApi();
@@ -96,14 +113,19 @@ export default function MemberComponent({
 				],
 			};
 
-			const { error } = await inviteNewMember(apiKey ?? '', requestBody);
+			const { error } = await inviteNewMember(
+				apiKey ?? '',
+				requestBody,
+				inviter_name ?? '',
+				inviter_email ?? '',
+			);
 			if (error) {
 				setError(error);
 				return;
 			}
 			setState('done');
 		},
-		[apiKey, inviteNewMember, keyScope],
+		[apiKey, inviteNewMember, inviter_email, inviter_name, keyScope],
 	);
 
 	const onEnvironmentSelectSuccess = useCallback(
@@ -131,6 +153,10 @@ export default function MemberComponent({
 			setState('input-email');
 		} else if (!role) {
 			setState('input-role');
+		} else if (!inviterName) {
+			setState('input-inviter-name');
+		} else if (!inviterEmail) {
+			setState('input-inviter-email');
 		} else if (keyScope && keyScope.environment_id && email && role) {
 			setState('inviting');
 			handleMemberInvite({
@@ -138,7 +164,16 @@ export default function MemberComponent({
 				memberRole: role,
 			});
 		}
-	}, [apiKey, email, environment, handleMemberInvite, keyScope, role]);
+	}, [
+		apiKey,
+		email,
+		environment,
+		handleMemberInvite,
+		inviterEmail,
+		inviterName,
+		keyScope,
+		role,
+	]);
 
 	return (
 		<>
@@ -176,6 +211,28 @@ export default function MemberComponent({
 						items={rolesOptions}
 						onSelect={role => {
 							setRole(role.value);
+						}}
+					/>
+				</>
+			)}
+			{apiKey && state === 'input-inviter-name' && (
+				<>
+					<Text>Your name: </Text>
+					<TextInput
+						placeholder="Enter your name"
+						onSubmit={name_input => {
+							setInviterName(name_input);
+						}}
+					/>
+				</>
+			)}
+			{apiKey && state === 'input-inviter-email' && (
+				<>
+					<Text>Your email: </Text>
+					<TextInput
+						placeholder="Enter your email address"
+						onSubmit={email_input => {
+							setInviterEmail(email_input);
 						}}
 					/>
 				</>
