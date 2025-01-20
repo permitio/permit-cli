@@ -1,13 +1,17 @@
 {{#each sets}}
 resource "permitio_resource_set" "{{key}}" {
-  key = "{{key}}"
-  name = "{{name}}"
+  name        = "{{name}}"
+  key         = "{{key}}"
   {{#if description}}
   description = "{{description}}"
   {{/if}}
-  {{#if resource}}
-  resource = "{{resource}}"
-  {{/if}}
-  conditions = "{{conditions}}"
+  resource    = permitio_resource.{{resource}}.key
+  conditions  = {{{conditions}}}
+
+  depends_on  = [
+    {{#each depends_on}}
+    {{this}}{{#unless @last}},{{/unless}}
+    {{/each}}
+  ]
 }
 {{/each}}
