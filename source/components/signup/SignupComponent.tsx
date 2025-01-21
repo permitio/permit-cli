@@ -106,7 +106,6 @@ const SignupComponent: FC<SignupProp> = ({
 						Organization: {organizationName} created successfully & Signup
 						successful
 					</Text>
-					{/*<SelectProject accessToken={} onComplete={} onError={} />*/}
 				</>
 			)}
 			{error && (
