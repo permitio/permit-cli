@@ -63,7 +63,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description: 'Optional: Your name',
+				description: 'Optional: Inviter name',
 			}),
 		),
 });
