@@ -113,6 +113,14 @@ describe('AuthProvider', () => {
 		}).mockResolvedValueOnce({
 			ok: true,
 			status: 200,
+			headers: {
+				getSetCookie: () => ['cookie_value'],
+			},
+			json: async () => ({}),
+			error: null,
+		}).mockResolvedValueOnce({
+			ok: true,
+			status: 200,
 			error: null,
 			json: async () => ([
 					{ id: 'proj1', name: 'Project 1' },
@@ -171,7 +179,8 @@ describe('AuthProvider', () => {
 			},
 			json: async () => ({}),
 			error: null,
-		}).mockResolvedValueOnce({
+		})
+			.mockResolvedValueOnce({
 			ok: true,
 			status: 200,
 			error: null,
@@ -180,7 +189,8 @@ describe('AuthProvider', () => {
 					{ id: 'org2', name: 'Organization 2' },
 				]
 			)
-		}).mockResolvedValueOnce({
+		})
+			.mockResolvedValueOnce({
 			ok: true,
 			status: 200,
 			headers: {
@@ -188,7 +198,8 @@ describe('AuthProvider', () => {
 			},
 			json: async () => ({}),
 			error: null,
-		}).mockResolvedValueOnce({
+		})
+			.mockResolvedValueOnce({
 			ok: true,
 			status: 200,
 			error: null,
@@ -197,7 +208,8 @@ describe('AuthProvider', () => {
 					{ id: 'proj2', name: 'Project 2' },
 				]
 			)
-		}).mockResolvedValueOnce({
+		})
+			.mockResolvedValueOnce({
 			ok: true,
 			status: 200,
 			error: null,
@@ -206,7 +218,8 @@ describe('AuthProvider', () => {
 					{ id: 'env2', name: 'Env 2' },
 				]
 			)
-		}).mockResolvedValueOnce({
+		})
+			.mockResolvedValueOnce({
 			ok: true,
 			status: 200,
 			error: null,
@@ -214,7 +227,8 @@ describe('AuthProvider', () => {
 					secret: 'super-secret'
 				}
 			)
-		}).mockResolvedValueOnce({
+		})
+			.mockResolvedValueOnce({
 			ok: true,
 			status: 200,
 			error: null,
@@ -224,7 +238,8 @@ describe('AuthProvider', () => {
 					]
 				}
 			)
-		}).mockResolvedValueOnce({
+		})
+			.mockResolvedValueOnce({
 			ok: true,
 			status: 200,
 			error: null,

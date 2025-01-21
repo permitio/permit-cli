@@ -14,6 +14,7 @@ import { ActiveState } from './EnvironmentSelection.js';
 import LoginFlow from './LoginFlow.js';
 import SelectOrganization from './SelectOrganization.js';
 import SelectProject from './SelectProject.js';
+import { useAuthApi } from '../hooks/useAuthApi.js';
 
 // Define the AuthContext type
 type AuthContextType = {
@@ -46,6 +47,7 @@ export function AuthProvider({
 	);
 	const [authToken, setAuthToken] = useState<string>('');
 	const [cookie, setCookie] = useState<string | null>(null);
+	const [newCookie, setNewCookie] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [state, setState] = useState<
 		'loading' | 'validate' | 'organization' | 'project' | 'login' | 'done'
@@ -54,6 +56,8 @@ export function AuthProvider({
 	const [project, setProject] = useState<string | null>(null);
 	const [loading, setLoading] = useState<boolean>(true);
 	const [currentScope, setCurrentScope] = useState<ApiKeyScope | null>(null);
+
+	const { authSwitchOrgs } = useAuthApi();
 
 	useEffect(() => {
 		if (error) {
@@ -130,6 +134,25 @@ export function AuthProvider({
 		}
 	}, [key, scope, state, validateApiKeyScope]);
 
+	const switchActiveOrganization = useCallback(
+		async (organization_id: string) => {
+			const { headers, error } = await authSwitchOrgs(
+				organization_id,
+				internalAuthToken,
+				cookie,
+			);
+
+			if (error) {
+				setError(`Error while selecting active workspace: ${error}`);
+				return;
+			}
+
+			let newCookie = headers.getSetCookie()[0] ?? '';
+			setNewCookie(newCookie);
+		},
+		[authSwitchOrgs, internalAuthToken, cookie],
+	);
+
 	useEffect(() => {
 		if (
 			(state === 'organization' && organization) ||
@@ -139,21 +162,25 @@ export function AuthProvider({
 				const { response, error } = await getApiKeyList(
 					state === 'organization' ? 'org' : 'project',
 					internalAuthToken ?? '',
-					cookie,
+					newCookie,
 					project,
 				);
 				if (error || response.data.length === 0) {
-					setError(error ?? 'No API Key found');
+					setError(
+						error
+							? `Error while getting api key list ${error}`
+							: 'No API Key found',
+					);
 					return;
 				}
 				const apiKeyId = response.data[0]?.id ?? '';
 				const { response: secret, error: err } = await getApiKeyById(
 					apiKeyId,
 					internalAuthToken ?? '',
-					cookie,
+					newCookie,
 				);
 				if (err) {
-					setError(err);
+					setError(`Error while getting api key by id: ${err}`);
 					return;
 				}
 				setAuthToken(secret.secret ?? '');
@@ -165,7 +192,7 @@ export function AuthProvider({
 			})();
 		}
 	}, [
-		cookie,
+		newCookie,
 		getApiKeyById,
 		getApiKeyList,
 		internalAuthToken,
@@ -205,20 +232,23 @@ export function AuthProvider({
 					{internalAuthToken && cookie && !organization && (
 						<SelectOrganization
 							accessToken={internalAuthToken}
-							onComplete={organization => setOrganization(organization.value)}
+							onComplete={async organization => {
+								setOrganization(organization.value);
+								await switchActiveOrganization(organization.value);
+							}}
 							onError={setError}
 							cookie={cookie}
 						/>
 					)}
 					{state === 'project' &&
 						internalAuthToken &&
-						cookie &&
+						newCookie &&
 						organization &&
 						!project && (
 							<SelectProject
 								accessToken={internalAuthToken}
 								onComplete={project => setProject(project.value)}
-								cookie={cookie}
+								cookie={newCookie}
 								onError={setError}
 							/>
 						)}
