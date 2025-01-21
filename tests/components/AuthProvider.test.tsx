@@ -141,6 +141,14 @@ describe('AuthProvider', () => {
 			ok: true,
 			status: 200,
 			error: null,
+			json: async () => (
+				{id: 'mock-id'}
+
+			)
+		}).mockResolvedValueOnce({
+			ok: true,
+			status: 200,
+			error: null,
 			json: async () => ({
 					secret: "secret",
 					project_id: "proj_id",

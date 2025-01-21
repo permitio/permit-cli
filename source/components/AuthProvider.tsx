@@ -6,7 +6,7 @@ import React, {
 	useEffect,
 	useState,
 } from 'react';
-import { Text } from 'ink';
+import { Text, Newline } from 'ink';
 import { loadAuthToken } from '../lib/auth.js';
 import Login from '../commands/login.js';
 import { ApiKeyScope, useApiKeyApi } from '../hooks/useApiKeyApi.js';
@@ -40,7 +40,9 @@ export function AuthProvider({
 	scope,
 	keyAccount,
 }: AuthProviderProps) {
-	const { validateApiKeyScope, getApiKeyList, getApiKeyById } = useApiKeyApi();
+	const { validateApiKeyScope, getApiKeyList, getApiKeyById, createApiKey } =
+		useApiKeyApi();
+	const { authSwitchOrgs } = useAuthApi();
 
 	const [internalAuthToken, setInternalAuthToken] = useState<string | null>(
 		null,
@@ -50,14 +52,19 @@ export function AuthProvider({
 	const [newCookie, setNewCookie] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [state, setState] = useState<
-		'loading' | 'validate' | 'organization' | 'project' | 'login' | 'done'
+		| 'loading'
+		| 'validate'
+		| 'creating-key'
+		| 'organization'
+		| 'project'
+		| 'login'
+		| 'done'
 	>('loading');
 	const [organization, setOrganization] = useState<string | null>(null);
 	const [project, setProject] = useState<string | null>(null);
 	const [loading, setLoading] = useState<boolean>(true);
 	const [currentScope, setCurrentScope] = useState<ApiKeyScope | null>(null);
-
-	const { authSwitchOrgs } = useAuthApi();
+	const [keyCreated, setKeyCreated] = useState<boolean>(false);
 
 	useEffect(() => {
 		if (error) {
@@ -165,15 +172,40 @@ export function AuthProvider({
 					newCookie,
 					project,
 				);
-				if (error || response.data.length === 0) {
-					setError(
-						error
-							? `Error while getting api key list ${error}`
-							: 'No API Key found',
-					);
+				if (error) {
+					setError(`Error while getting api key list ${error}`);
 					return;
 				}
-				const apiKeyId = response.data[0]?.id ?? '';
+
+				let cliApiKey = response.data.find(
+					apiKey => apiKey.name === 'CLI_API_Key',
+				);
+
+				if (!cliApiKey) {
+					setState('creating-key');
+					let body = {
+						organization_id: organization,
+						name: 'CLI_API_Key',
+						object_type: 'org',
+					};
+					if (state === 'project') {
+						body.object_type = 'project';
+						// @ts-expect-error custom param addition
+						body.project_id = project;
+					}
+					const { response: creationResponse, error: creationError } =
+						await createApiKey(
+							internalAuthToken ?? '',
+							JSON.stringify(body),
+							newCookie,
+						);
+					if (creationError) {
+						setError(`Error while creating Key: ${creationError}`);
+					}
+					cliApiKey = creationResponse;
+					setKeyCreated(true);
+				}
+				const apiKeyId = cliApiKey?.id ?? '';
 				const { response: secret, error: err } = await getApiKeyById(
 					apiKeyId,
 					internalAuthToken ?? '',
@@ -199,6 +231,7 @@ export function AuthProvider({
 		organization,
 		project,
 		state,
+		createApiKey,
 	]);
 
 	const handleLoginSuccess = useCallback(
@@ -259,17 +292,39 @@ export function AuthProvider({
 					<Login options={{}} loginSuccess={handleLoginSuccess} />
 				</>
 			)}
+			{state === 'creating-key' && (
+				<>
+					<Text>CLI_API_Key not found, creating one for you.</Text>
+				</>
+			)}
 			{state === 'done' && authToken && currentScope && (
-				<AuthContext.Provider
-					value={{
-						authToken: authToken,
-						loading: loading,
-						error: error,
-						scope: currentScope,
-					}}
-				>
-					{!loading && !error && children}
-				</AuthContext.Provider>
+				<>
+					{keyCreated && (
+						<>
+							<Text>
+								Created an{' '}
+								{currentScope.environment_id
+									? 'environment'
+									: currentScope.project_id
+										? 'project'
+										: 'organization'}{' '}
+								level key for you, named CLI_API_key (this key is protected,
+								please do not change it)
+							</Text>
+							<Newline />
+						</>
+					)}
+					<AuthContext.Provider
+						value={{
+							authToken: authToken,
+							loading: loading,
+							error: error,
+							scope: currentScope,
+						}}
+					>
+						{!loading && !error && children}
+					</AuthContext.Provider>
+				</>
 			)}
 			{error && <Text>{error}</Text>}
 		</>

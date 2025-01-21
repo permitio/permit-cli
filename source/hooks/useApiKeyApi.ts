@@ -125,12 +125,27 @@ export const useApiKeyApi = () => {
 		[validateApiKey],
 	);
 
+	const createApiKey = async (
+		token: string,
+		body: string,
+		cookie?: string | null,
+	) => {
+		return await apiCall<ApiKeyResponse>(
+			'v2/api-key',
+			token,
+			cookie,
+			'POST',
+			body,
+		);
+	};
+
 	return useMemo(
 		() => ({
 			getProjectEnvironmentApiKey,
 			getApiKeyScope,
 			getApiKeyList,
 			getApiKeyById,
+			createApiKey,
 			validateApiKeyScope,
 			validateApiKey,
 		}),
