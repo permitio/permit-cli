@@ -16,7 +16,7 @@ type Props = {
 
 export default function Run({ options: { opa } }: Props) {
 	return (
-		<AuthProvider scope={'environment'}>
+		<AuthProvider>
 			<PDPRunComponent opa={opa} />
 		</AuthProvider>
 	);
