@@ -1,13 +1,16 @@
-{{#each conditionSets}}
-resource "permitio_{{resourceType}}" "{{key}}" {
-  key = "{{key}}"
-  name = "{{name}}"
+{{#each sets}}
+resource "permitio_user_set" "{{key}}" {
+  name        = "{{name}}"
+  key         = "{{key}}"
   {{#if description}}
   description = "{{description}}"
   {{/if}}
-  conditions = {{conditions}}
+  conditions  = {{{conditions}}}
   {{#if resource}}
-  resource = "{{resource}}"
+  resource    = permitio_resource.{{resource}}.key
+  depends_on  = [
+    permitio_resource.{{resource}}
+  ]
   {{/if}}
 }
 {{/each}}

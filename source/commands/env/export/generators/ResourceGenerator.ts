@@ -41,66 +41,78 @@ interface AttributeBlockRead {
 export class ResourceGenerator implements HCLGenerator {
 	name = 'resources';
 	private template: TemplateDelegate<{ resources: ResourceData[] }>;
-
+  
 	constructor(
-		private permit: Permit,
-		private warningCollector: WarningCollector,
+	  private permit: Permit,
+	  private warningCollector: WarningCollector,
 	) {
-		this.template = Handlebars.compile(
-			readFileSync(join(__dirname, '../templates/resource.hcl'), 'utf-8'),
-		);
+	  this.template = Handlebars.compile(
+		readFileSync(join(__dirname, '../templates/resource.hcl'), 'utf-8'),
+	  );
 	}
-
+  
 	async generateHCL(): Promise<string> {
-		try {
-			const resources = await this.permit.api.resources.list();
-			const validResources = resources
-				.filter(resource => resource.key !== '__user')
-				.map(resource => ({
-					key: createSafeId(resource.key),
-					name: resource.name,
-					description: resource.description,
-					urn: resource.urn,
-					actions: this.transformActions(resource.actions || {}), // Transform actions
-					attributes: this.transformAttributes(resource.attributes), // Transform attributes
-				}));
-
-			if (validResources.length === 0) return '';
-
-			return '\n# Resources\n' + this.template({ resources: validResources });
-		} catch (error) {
-			this.warningCollector.addWarning(`Failed to export resources: ${error}`);
-			return '';
-		}
+	  try {
+		const resources = await this.permit.api.resources.list();
+		const validResources = resources
+		  .filter(resource => resource.key !== '__user')
+		  .map(resource => ({
+			key: createSafeId(resource.key),
+			name: resource.name,
+			description: resource.description,
+			urn: resource.urn,
+			actions: this.transformActions(resource.actions || {}),
+			attributes: this.transformAttributes(resource.attributes),
+			depends_on: []
+		  }));
+  
+		if (validResources.length === 0) return '';
+		return '\n# Resources\n' + this.template({ resources: validResources });
+	  } catch (error) {
+		this.warningCollector.addWarning(`Failed to export resources: ${error}`);
+		return '';
+	  }
 	}
-
-	// Helper function to transform actions
+  
+	// Add the missing transformActions method
 	private transformActions(
-		actions: Record<string, ActionBlockRead>,
+	  actions: Record<string, ActionBlockRead>,
 	): Record<string, ActionData> {
-		const transformedActions: Record<string, ActionData> = {};
-		for (const [key, action] of Object.entries(actions)) {
-			transformedActions[key] = {
-				name: action.name || key, // Use the key as a fallback if `name` is undefined
-				description: action.description,
-			};
-		}
-		return transformedActions;
+	  const transformedActions: Record<string, ActionData> = {};
+	  
+	  for (const [key, action] of Object.entries(actions)) {
+		transformedActions[key] = {
+		  name: action.name || key,
+		  description: action.description,
+		};
+	  }
+	  
+	  return transformedActions;
 	}
-
-	// Helper function to transform attributes
+  
 	private transformAttributes(
-		attributes: Record<string, AttributeBlockRead> | undefined,
+	  attributes: Record<string, AttributeBlockRead> | undefined,
 	): Record<string, AttributeData> | undefined {
-		if (!attributes) return undefined;
-
-		const transformedAttributes: Record<string, AttributeData> = {};
-		for (const [key, attribute] of Object.entries(attributes)) {
-			transformedAttributes[key] = {
-				type: attribute.type || 'string',
-				required: attribute.required || false,
-			};
-		}
-		return transformedAttributes;
+	  if (!attributes) return undefined;
+	  const transformedAttributes: Record<string, AttributeData> = {};
+	  
+	  for (const [key, attribute] of Object.entries(attributes)) {
+		transformedAttributes[key] = {
+		  name: key.charAt(0).toUpperCase() + key.slice(1),
+		  type: this.normalizeAttributeType(attribute.type || 'string'),
+		};
+	  }
+	  
+	  return transformedAttributes;
+	}
+  
+	private normalizeAttributeType(type: string): string {
+	  const typeMap: Record<string, string> = {
+		'boolean': 'bool',
+		'array': 'array',
+		'string': 'string',
+		// Add other type mappings as needed
+	  };
+	  return typeMap[type.toLowerCase()] || type;
 	}
 }

@@ -1,38 +1,35 @@
 {{#each resources}}
 resource "permitio_resource" "{{key}}" {
-  key         = "{{key}}"
   name        = "{{name}}"
-  {{#if description}}
   description = "{{description}}"
-  {{/if}}
-  {{#if urn}}
-  urn         = "{{urn}}"
-  {{/if}}
-
-  {{#if actions}}
+  key         = "{{key}}"
+  
   actions = {
     {{#each actions}}
     "{{@key}}" = {
       name = "{{name}}"
-      {{#if description}}
-      description = "{{description}}"
-      {{/if}}
-    }
+      {{#if description}}description = "{{description}}"{{/if}}
+    }{{#unless @last}},{{/unless}}
     {{/each}}
   }
-  {{/if}}
 
   {{#if attributes}}
   attributes = {
     {{#each attributes}}
-    "{{@key}}" = {
+    {{@key}} = {
+      name = "{{name}}"
       type = "{{type}}"
-      {{#if description}}
-      description = "{{description}}"
-      {{/if}}
-    }
+    }{{#unless @last}},{{/unless}}
     {{/each}}
   }
+  {{/if}}
+
+  {{#if depends_on}}
+  depends_on = [
+    {{#each depends_on}}
+    "{{this}}"{{#unless @last}},{{/unless}}
+    {{/each}}
+  ]
   {{/if}}
 }
 {{/each}}
