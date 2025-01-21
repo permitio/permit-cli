@@ -47,7 +47,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description: 'Optional: Role of the user',
+				description: 'Optional: Environment role for the user',
 			}),
 		),
 	inviterEmail: zod
