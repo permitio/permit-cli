@@ -1,7 +1,6 @@
 import React from 'react';
 import zod from 'zod';
 import { option } from 'pastel';
-import { keyAccountOption } from '../../options/keychain.js';
 import { AuthProvider } from '../../components/AuthProvider.js';
 import OPAPolicyComponent from '../../components/opa/OPAPolicyComponent.js';
 
@@ -24,7 +23,6 @@ export const options = zod.object({
 					'The API key for the OPA Server and Permit env, project or Workspace',
 			}),
 		),
-	keyAccount: keyAccountOption,
 });
 
 export type OpaPolicyProps = {

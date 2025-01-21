@@ -31,14 +31,12 @@ type AuthProviderProps = {
 	readonly children: ReactNode;
 	permit_key?: string | null;
 	scope?: 'organization' | 'project' | 'environment';
-	keyAccount?: string | null;
 };
 
 export function AuthProvider({
 	children,
 	permit_key: key,
 	scope,
-	keyAccount,
 }: AuthProviderProps) {
 	const { validateApiKeyScope, getApiKeyList, getApiKeyById, createApiKey } =
 		useApiKeyApi();
@@ -84,7 +82,7 @@ export function AuthProvider({
 			redirect_scope: 'organization' | 'project' | 'login',
 		) => {
 			try {
-				const token = await loadAuthToken(keyAccount);
+				const token = await loadAuthToken();
 				const {
 					valid,
 					scope: keyScope,
@@ -121,7 +119,7 @@ export function AuthProvider({
 			}
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [key, keyAccount, scope]);
+	}, [key, scope]);
 
 	useEffect(() => {
 		if (state === 'validate') {

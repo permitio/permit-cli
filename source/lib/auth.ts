@@ -55,12 +55,10 @@ export const saveAuthToken = async (token: string): Promise<string> => {
 	}
 };
 
-export const loadAuthToken = async (
-	keyAccount?: string | null,
-): Promise<string> => {
+export const loadAuthToken = async (): Promise<string> => {
 	const token = await getPassword(
 		KEYSTORE_PERMIT_SERVICE_NAME,
-		keyAccount ?? DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
+		DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
 	);
 	if (!token) {
 		throw new Error(

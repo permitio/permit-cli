@@ -1,7 +1,6 @@
 import React from 'react';
 import zod, { string } from 'zod';
 import { option } from 'pastel';
-import { keyAccountOption } from '../../options/keychain.js';
 import PDPCheckComponent from '../../components/pdp/PDPCheckComponent.js';
 import { AuthProvider } from '../../components/AuthProvider.js';
 
@@ -82,7 +81,6 @@ export const options = zod.object({
 					'The API key for the Permit env, project or Workspace (Optional)',
 			}),
 		),
-	keyAccount: keyAccountOption,
 });
 
 export type PDPCheckProps = {
@@ -92,11 +90,7 @@ export type PDPCheckProps = {
 export default function Check({ options }: PDPCheckProps) {
 	return (
 		<>
-			<AuthProvider
-				scope={'environment'}
-				permit_key={options.apiKey}
-				keyAccount={options.keyAccount}
-			>
+			<AuthProvider scope={'environment'} permit_key={options.apiKey}>
 				<PDPCheckComponent options={options} />
 			</AuthProvider>
 		</>
