@@ -55,7 +55,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description: 'Optional: Your mail id',
+				description: 'Optional: Inviter email address',
 			}),
 		),
 	inviterName: zod
