@@ -1,11 +1,12 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import SelectProject from './SelectProject.js';
 import RepositoryKey from './RepositoryKey.js';
 import SSHKey from './SSHKey.js';
 import BranchName from './BranchName.js';
 import { Box, Text } from 'ink';
 import { configurePermit, GitConfig } from '../../lib/gitops/utils.js';
 import { useAuth } from '../AuthProvider.js';
+import SelectProject from '../SelectProject.js';
+import { ActiveState } from '../EnvironmentSelection.js';
 type Props = {
 	authKey: string | undefined;
 	inactivateWhenValidated: boolean | undefined;
@@ -56,6 +57,17 @@ const GitHubComponent: React.FC<Props> = ({
 	useEffect(() => {
 		apiKeyRender();
 	}, [apiKeyRender]);
+
+	const handleProjectSelect = useCallback((project: ActiveState) => {
+		setProjectKey(project.value);
+		setState('repositoryKey');
+	}, []);
+
+	const handleProjectSelectionError = useCallback((error: string) => {
+		setError(error);
+		setState('error');
+	}, []);
+
 	return (
 		<>
 			<Box margin={1}>
@@ -64,15 +76,9 @@ const GitHubComponent: React.FC<Props> = ({
 
 			{state === 'project' && (
 				<SelectProject
-					apiKey={ApiKey}
-					onError={(errorMessage: string) => {
-						setError(errorMessage);
-						setState('error');
-					}}
-					onProjectSubmit={(projectIdKey: string) => {
-						setProjectKey(projectIdKey);
-						setState('repositoryKey');
-					}}
+					onError={handleProjectSelectionError}
+					onComplete={handleProjectSelect}
+					accessToken={ApiKey}
 				/>
 			)}
 
