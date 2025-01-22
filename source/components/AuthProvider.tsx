@@ -136,6 +136,8 @@ export function AuthProvider({
 				fetchAuthToken('login');
 			}
 		}
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [key, scope]);
 
 	// Step 2, Validates the api key and matches it with the scope
