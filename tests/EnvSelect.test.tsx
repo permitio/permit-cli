@@ -92,8 +92,6 @@ describe('Select Component', () => {
 	it('should display loading state initially', async () => {
 
 		const { lastFrame } = render(<SelectComponent key={demoPermitKey} />);
-		// expect(frameString).toContain(/Loading Your Environment/);
-		// await delay(10);
 		expect(lastFrame()).toMatch(/Loading your environment/);
 	});
 
@@ -144,19 +142,6 @@ describe('Select Component', () => {
 	});
 
 	it('handle complete enviroment selection process', async () => {
-		// vi.mocked(useApiKeyApi).mockReturnValue({
-		// 	validateApiKey: vi.fn(() => true),
-		// 	validateApiKeyScope: vi.fn(() =>
-		// 		Promise.resolve({
-		// 			valid: true,
-		// 			scope: {
-		// 				organization_id: 'org1',
-		// 				project_id: 'proj1',
-		// 			},
-		// 			error: null,
-		// 		}),
-		// 	),
-		// });
 		vi.mocked(saveAuthToken).mockResolvedValueOnce();
 		vi.mocked(EnvironmentSelection).mockImplementation(({ onComplete }) => {
 			onComplete(
