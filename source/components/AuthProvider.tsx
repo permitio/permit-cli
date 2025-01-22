@@ -1,3 +1,9 @@
+/**
+ * AuthProvider: A React context provider for managing authentication and authorization states.
+ *
+ * This component handles authentication flows, API key validation, and token management.
+ */
+
 import React, {
 	createContext,
 	ReactNode,
@@ -64,12 +70,14 @@ export function AuthProvider({
 	const [currentScope, setCurrentScope] = useState<ApiKeyScope | null>(null);
 	const [keyCreated, setKeyCreated] = useState<boolean>(false);
 
+	// Handles all the error
 	useEffect(() => {
 		if (error) {
 			process.exit(1);
 		}
 	}, [error]);
 
+	// Step 4 If we have collected all the data needed by auth provider we set the state to 'done'
 	useEffect(() => {
 		if (authToken.length !== 0 && currentScope) {
 			setLoading(false);
@@ -77,7 +85,10 @@ export function AuthProvider({
 		}
 	}, [authToken, currentScope]);
 
+	// Step: 1, This useEffect is the heart of AuthProvider, it decides which flow to choose based on the props passed.
 	useEffect(() => {
+		// Loads the token stored on our system if any, if no token is found or if the scope of the token is not right,
+		// we redirect user to login.
 		const fetchAuthToken = async (
 			redirect_scope: 'organization' | 'project' | 'login',
 		) => {
@@ -101,7 +112,14 @@ export function AuthProvider({
 			}
 		};
 
+		// If user passes the scope
+		// and passes the key, we go to step 2
+		// otherwise we call auth token with the provided scope
+		// If scope is not passed, it is defaulted to 'environment'
+		// and if key is provided we redirect to step 2
+		// otherwise we redirect to fetchAuthToken
 		if (scope) {
+			// If scope is given then
 			if (key) {
 				setState('validate');
 			} else {
@@ -118,9 +136,9 @@ export function AuthProvider({
 				fetchAuthToken('login');
 			}
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [key, scope]);
 
+	// Step 2, Validates the api key and matches it with the scope
 	useEffect(() => {
 		if (state === 'validate') {
 			(async () => {
@@ -158,6 +176,8 @@ export function AuthProvider({
 		[authSwitchOrgs, internalAuthToken, cookie],
 	);
 
+	// Step 3, if we don't find the key in our system, or if it's invalid we prompt the user to select the respective
+	// organization & project based on the scope, and then finally redirect user to Step 4.
 	useEffect(() => {
 		if (
 			(state === 'organization' && organization) ||
