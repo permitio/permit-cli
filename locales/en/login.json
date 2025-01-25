@@ -1,0 +1,8 @@
+{
+    "loggedIn.message": "Logged in to {{organization}} with the selected environment as {{environment}}.",
+    "invalidKey.message": "Invalid API Key. Please provide a valid API Key or leave it blank to use browser authentication.",
+    "loginError.message": "Login failed. Reason: {{error}}. Please check your network connection and try again.",
+    "unexpectedError.message": "Unexpected error during authentication. {{error}}",
+    "loading.message": "Logging in...",
+    "login.message": "Login to Permit"
+}

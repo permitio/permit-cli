@@ -1,0 +1,5 @@
+{
+    "cliApiKeyNotFound.message": "CLI_API_Key not found, creating one for you.",
+    "cliApiKeyCreated.message": "Created an {{keyScope}} level key for you, named CLI_API_key (this key is protected, please do not change it)",
+    "contextError.message": "useAuth must be used within an AuthProvider"
+}

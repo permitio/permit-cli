@@ -3,13 +3,13 @@ import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import { generateSSHKey } from '../../lib/gitops/utils.js';
 import clipboard from 'clipboardy';
+import { getNamespaceIl18n } from '../../lib/i18n.js';
+const i18n = getNamespaceIl18n('gitops.create.github');
 
 type Props = {
 	onSSHKeySubmit: (sshKey: string, sshUrl: string) => void;
 	onError: (error: string) => void;
 };
-const SSHHelperMessage =
-	'Go to https://github.com/{{organization}}/{{repository}}/settings/keys/new and create your new SSH key. You can also refer to https://docs.permit.io/integrations/gitops/github#create-a-repository for more details\n';
 
 const SSHKey: React.FC<Props> = ({ onSSHKeySubmit, onError }) => {
 	const [sshUrl, setSshUrl] = useState<string>('');
@@ -25,12 +25,12 @@ const SSHKey: React.FC<Props> = ({ onSSHKeySubmit, onError }) => {
 	const handleSSHSubmit = useCallback(
 		(sshUrl: string) => {
 			if (sshUrl.length <= 1) {
-				onError('Please enter a valid SSH URL');
+				onError(i18n('invalidSshUrl.error'));
 				return;
 			}
 			const sshRegex = /^git@[a-zA-Z0-9.-]+:[a-zA-Z0-9/_-]+\.git$/;
 			if (!sshRegex.test(sshUrl)) {
-				onError('Please enter a valid SSH URL');
+				onError(i18n('invalidSshUrl.error'));
 				return;
 			}
 			onSSHKeySubmit(sshKey.privateKey, sshUrl);
@@ -41,20 +41,23 @@ const SSHKey: React.FC<Props> = ({ onSSHKeySubmit, onError }) => {
 	return (
 		<>
 			<Box margin={1}>
-				<Text>{SSHHelperMessage}</Text>
+				<Text>{i18n('sshHelper.message', { 
+					url: 'https://github.com/{{organization}}/{{repository}}/settings/keys/new',
+					moreDetailsUrl: 'https://docs.permit.io/integrations/gitops/github#create-a-repository'
+				})}</Text>
 			</Box>
 			<Box margin={1}>
-				<Text>SSH Key Generated.</Text>
+				<Text>{i18n('sshKeyGenerated.message')}</Text>
 			</Box>
 			<Box>
 				<Text>
 					{' '}
-					Copy The Public Key to Github: {'\n'}
+					{i18n('copySshKey.message')}{'\n'}
 					{sshKey.publicKey}
 				</Text>
 			</Box>
 			<Box margin={1}>
-				<Text color={'green'}> Enter the SSH URL of the Repo: </Text>
+				<Text color={'green'}>{i18n('enterSshUrl.message')}</Text>
 				<TextInput
 					value={sshUrl}
 					onChange={setSshUrl}

@@ -4,6 +4,8 @@ import SelectInput from 'ink-select-input';
 import Spinner from 'ink-spinner';
 import { ActiveState } from './EnvironmentSelection.js';
 import { useEnvironmentApi } from '../hooks/useEnvironmentApi.js';
+import { getNamespaceIl18n } from '../lib/i18n.js';
+const i18n = getNamespaceIl18n('common.selectEnvironment');
 
 type Props = {
 	accessToken: string;
@@ -40,7 +42,7 @@ const SelectEnvironment: React.FC<Props> = ({
 
 			if (error) {
 				onError(
-					`Failed to load environments for project "${activeProject.label}". Reason: ${error}. Please check your network connection or credentials and try again.`,
+					i18n('loadEnv.error', { project: activeProject.label, error }),
 				);
 				return;
 			}
@@ -69,12 +71,12 @@ const SelectEnvironment: React.FC<Props> = ({
 		<>
 			{state && (
 				<Text>
-					<Spinner type="dots" /> Loading Environments...
+					<Spinner type="dots" />{i18n('loadingEnv.message')}
 				</Text>
 			)}
 			{!state && (
 				<>
-					<Text>Select an environment</Text>
+					<Text>{i18n('selectEnv.message')}</Text>
 					<SelectInput
 						items={environments}
 						onSelect={handleEnvironmentSelect}

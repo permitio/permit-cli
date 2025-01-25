@@ -25,6 +25,7 @@
 		"clipboardy": "^4.0.0",
 		"delay": "^6.0.0",
 		"fuse.js": "^7.0.0",
+		"i18next": "^24.1.2",
 		"ink": "^5.1.0",
 		"ink-ascii": "^0.0.4",
 		"ink-big-text": "^2.0.0",

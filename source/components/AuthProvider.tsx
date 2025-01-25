@@ -21,6 +21,8 @@ import LoginFlow from './LoginFlow.js';
 import SelectOrganization from './SelectOrganization.js';
 import SelectProject from './SelectProject.js';
 import { useAuthApi } from '../hooks/useAuthApi.js';
+import { getNamespaceIl18n } from '../lib/i18n.js';
+const i18n = getNamespaceIl18n('authProvider');
 
 // Define the AuthContext type
 type AuthContextType = {
@@ -276,6 +278,13 @@ export function AuthProvider({
 		setCookie(cookie);
 	}, []);
 
+	const keyScope = currentScope && (
+		currentScope.environment_id ? 'environment' : 
+			currentScope.project_id
+				? 'project'
+				: 'organization'
+		)
+
 	return (
 		<>
 			{state === 'loading' && <Text>Loading Token</Text>}
@@ -314,7 +323,7 @@ export function AuthProvider({
 			)}
 			{state === 'creating-key' && (
 				<>
-					<Text>CLI_API_Key not found, creating one for you.</Text>
+				<Text>{i18n('cliApiKeyNotFound.message')}</Text>
 				</>
 			)}
 			{state === 'done' && authToken && currentScope && (
@@ -322,14 +331,7 @@ export function AuthProvider({
 					{keyCreated && (
 						<>
 							<Text>
-								Created an{' '}
-								{currentScope.environment_id
-									? 'environment'
-									: currentScope.project_id
-										? 'project'
-										: 'organization'}{' '}
-								level key for you, named CLI_API_key (this key is protected,
-								please do not change it)
+								{i18n('cliApiKeyCreated.message', { keyScope })}
 							</Text>
 							<Newline />
 						</>
@@ -355,7 +357,7 @@ export function AuthProvider({
 export const useAuth = (): AuthContextType => {
 	const context = useContext(AuthContext);
 	if (!context) {
-		throw new Error('useAuth must be used within an AuthProvider');
+		throw new Error(i18n('contextError.message'));
 	}
 
 	return context;

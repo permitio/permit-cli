@@ -4,6 +4,8 @@ import SelectInput from 'ink-select-input';
 import Spinner from 'ink-spinner';
 import { ActiveState } from './EnvironmentSelection.js';
 import { useProjectAPI } from '../hooks/useProjectAPI.js';
+import { getNamespaceIl18n } from '../lib/i18n.js';
+const i18n = getNamespaceIl18n('common.selectProject');
 
 type Props = {
 	accessToken: string;
@@ -37,7 +39,7 @@ const SelectProject: React.FC<Props> = ({
 
 			if (error) {
 				onError(
-					`Failed to load projects. Reason: ${error}. Please check your network connection or credentials and try again.`,
+					i18n('loadProjects.error', { error }),
 				);
 				return;
 			}
@@ -59,11 +61,11 @@ const SelectProject: React.FC<Props> = ({
 
 	return loading ? (
 		<Text>
-			<Spinner type="dots" /> Loading Projects...
+			<Spinner type="dots" />{i18n('loading.message')}
 		</Text>
 	) : (
 		<>
-			<Text>Select a project</Text>
+			<Text>{i18n('selectProject.message')}</Text>
 			<SelectInput items={projects} onSelect={handleProjectSelect} />
 		</>
 	);

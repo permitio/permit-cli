@@ -7,6 +7,8 @@ import EnvironmentSelection, {
 } from '../../components/EnvironmentSelection.js';
 import { cleanKey } from '../../lib/env/copy/utils.js';
 import { useAuth } from '../AuthProvider.js';
+import { getNamespaceIl18n } from '../../lib/i18n.js';
+const i18n = getNamespaceIl18n('env.copy');
 
 type Props = {
 	from?: string;
@@ -159,7 +161,7 @@ export default function CopyComponent({
 		<>
 			{state === 'selecting-env' && authToken && (
 				<>
-					<Text>Select an existing Environment to copy from.</Text>
+					<Text>{i18n('select.message')}</Text>
 					<EnvironmentSelection
 						accessToken={authToken}
 						cookie={''}
@@ -170,28 +172,28 @@ export default function CopyComponent({
 			)}
 			{authToken && state === 'selecting-name' && (
 				<>
-					<Text>Input the new Environment name to copy to.</Text>
+					<Text>{i18n('inputName.message')}</Text>
 					<TextInput
 						onSubmit={name => {
 							setEnvToName(name);
 						}}
-						placeholder={'Enter name here...'}
+						placeholder={i18n('inputName.placeholder')}
 					/>
 				</>
 			)}
 			{authToken && state === 'selecting-description' && (
 				<>
-					<Text>Input the new Environment Description.</Text>
+					<Text>{i18n('inputDescription.message')}</Text>
 					<TextInput
 						onSubmit={description => {
 							setEnvToDescription(description);
 						}}
-						placeholder={'Enter description here...'}
+						placeholder={i18n('inputDescription.placeholder')}
 					/>
 				</>
 			)}
 
-			{state === 'done' && <Text>Environment copied successfully</Text>}
+			{state === 'done' && <Text>{i18n('copiedSuccess.message')}</Text>}
 			{error && <Text>{error}</Text>}
 		</>
 	);

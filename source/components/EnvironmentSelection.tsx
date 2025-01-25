@@ -7,6 +7,8 @@ import { useApiKeyApi } from '../hooks/useApiKeyApi.js';
 import { useEnvironmentApi } from '../hooks/useEnvironmentApi.js';
 import { useOrganisationApi } from '../hooks/useOrganisationApi.js';
 import { Text } from 'ink';
+import { getNamespaceIl18n } from '../lib/i18n.js';
+const i18n = getNamespaceIl18n('common.environmentSelection');
 
 export interface ActiveState {
 	label: string;
@@ -70,9 +72,9 @@ const EnvironmentSelection: React.FC<Props> = ({
 				if (error) {
 					let errorMsg;
 					if (status === 401) {
-						errorMsg = `Invalid ApiKey, ${error}`;
+						errorMsg = i18n('invalidApiKey.error', { error });
 					} else {
-						errorMsg = `Error while getting scopes for the ApiKey: ${error}`;
+						errorMsg = i18n('apiKeyScope.error', { error });
 					}
 					stableOnError(errorMsg);
 					return;
@@ -126,7 +128,7 @@ const EnvironmentSelection: React.FC<Props> = ({
 				);
 
 				if (error) {
-					stableOnError(`Error while selecting active workspace: ${error}`);
+					stableOnError(i18n('selectWorkspace.error', { error }));
 					return;
 				}
 
@@ -154,7 +156,7 @@ const EnvironmentSelection: React.FC<Props> = ({
 			);
 
 			if (error) {
-				stableOnError(`Error while getting Environment Secret: ${error}`);
+				stableOnError(i18n('envSecret.error', { error }));
 				return;
 			}
 
@@ -180,7 +182,7 @@ const EnvironmentSelection: React.FC<Props> = ({
 	return (
 		<>
 			{state === 'user-key' && (
-				<Text>User provided ApiKey has environment scope.</Text>
+				<Text>{i18n('userKey.message')}</Text>
 			)}
 			{state === 'workspace' && (
 				<SelectOrganization

@@ -6,6 +6,8 @@ import { TextInput, Select } from '@inkjs/ui';
 import Fuse from 'fuse.js';
 import { OpaPolicyProps } from '../../commands/opa/policy.js';
 import { useAuth } from '../AuthProvider.js';
+import { getNamespaceIl18n } from '../../lib/i18n.js';
+const i18n = getNamespaceIl18n('opa.policy');
 
 interface PolicyItem {
 	id: string;
@@ -79,7 +81,7 @@ export default function OPAPolicyComponent({ options }: OpaPolicyProps) {
 	return (
 		<>
 			<Text color={'green'}>
-				Listing Policies on Opa Server={options.serverUrl}
+				{i18n('title', { serverUrl: options.serverUrl })}
 			</Text>
 			{res.status === 0 && error === null && <Spinner type="dots" />}
 			{res.status === 200 && (
@@ -87,12 +89,12 @@ export default function OPAPolicyComponent({ options }: OpaPolicyProps) {
 					{!selection && (
 						<>
 							<Text>
-								Showing {view.length} of {policyItems.length} policies:
+								{i18n('subtitle', { viewLength: view.length, policyItemsLength: policyItems.length })}
 							</Text>
 
 							<Box flexDirection="column" gap={1}>
 								<TextInput
-									placeholder="Type text to filter list"
+									placeholder={i18n('placeholder')}
 									onSubmit={(value: string) => {
 										const selectedPolicy = res.result.result.find(
 											p => p.id === value,
@@ -123,7 +125,7 @@ export default function OPAPolicyComponent({ options }: OpaPolicyProps) {
 			)}
 			{error && (
 				<Box>
-					<Text color="red">Request failed: {JSON.stringify(error)}</Text>
+					<Text color="red">{i18n('requestError.message', { error: JSON.stringify(error) })}</Text>
 					<Newline />
 					<Text>
 						{inspect(res, {

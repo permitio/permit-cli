@@ -1,6 +1,8 @@
 import { apiCall } from '../api.js';
 import ssh from 'micro-key-producer/ssh.js';
 import { randomBytes } from 'micro-key-producer/utils.js';
+import { getNamespaceIl18n } from '../../lib/i18n.js';
+const i18n = getNamespaceIl18n('lib.gitops.utils');
 
 type Project = {
 	key: string;
@@ -19,7 +21,7 @@ type Repo = {
 async function getProjectList(apiKey: string): Promise<Project[]> {
 	const projects = await apiCall('v2/projects', apiKey);
 	if (projects.status !== 200) {
-		throw new Error(`Failed to fetch projects: ${projects.response}`);
+		throw new Error(i18n('getProjectList.error', { response: projects.response }));
 	}
 	return projects.response as Project[];
 }
@@ -73,7 +75,7 @@ async function configurePermit(
 		JSON.stringify(body),
 	);
 	if (response.status === 422) {
-		throw new Error('Validation Error in Configuring Permit');
+		throw new Error(i18n('configurePermit.validationError'));
 	}
 	if (response.status === 200) {
 		const gitConfigResponse = response.response as {
@@ -87,7 +89,7 @@ async function configurePermit(
 			status: gitConfigResponse.status,
 		};
 	} else {
-		throw new Error('Invalid Configuration ');
+		throw new Error(i18n('configurePermit.invalidError'));
 	}
 }
 

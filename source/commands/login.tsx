@@ -8,6 +8,8 @@ import EnvironmentSelection, {
 	ActiveState,
 } from '../components/EnvironmentSelection.js';
 import SignupComponent from '../components/signup/SignupComponent.js';
+import { getNamespaceIl18n } from '../lib/i18n.js';
+const i18n = getNamespaceIl18n('login');
 
 export const options = object({
 	key: string()
@@ -117,7 +119,7 @@ export default function Login({
 			)}
 			{state === 'done' && (
 				<Text>
-					Logged in to {organization} with selected environment as {environment}
+					{i18n('loggedIn.message', { organization, environment })}
 				</Text>
 			)}
 			{error && state !== 'signup' && <Text>{error}</Text>}
