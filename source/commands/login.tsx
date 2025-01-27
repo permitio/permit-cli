@@ -118,9 +118,7 @@ export default function Login({
 				</>
 			)}
 			{state === 'done' && (
-				<Text>
-					{i18n('loggedIn.message', { organization, environment })}
-				</Text>
+				<Text>{i18n('loggedIn.message', { organization, environment })}</Text>
 			)}
 			{error && state !== 'signup' && <Text>{error}</Text>}
 		</>

@@ -28,9 +28,7 @@ const LoginFlow: React.FC<LoginFlowProps> = ({
 			if (apiKey && validateApiKey(apiKey)) {
 				onSuccess(apiKey, '');
 			} else if (apiKey) {
-				onError(
-					i18n('invalidKey.message'),
-				);
+				onError(i18n('invalidKey.message'));
 				return;
 			} else {
 				try {
@@ -38,9 +36,7 @@ const LoginFlow: React.FC<LoginFlowProps> = ({
 					const token = await authCallbackServer(verifier);
 					const { headers, error } = await getLogin(token);
 					if (error) {
-						onError(
-							i18n('loginError.message', { error }),
-						);
+						onError(i18n('loginError.message', { error }));
 						return;
 					}
 					onSuccess(token, headers.getSetCookie()[0] ?? '');
@@ -58,7 +54,8 @@ const LoginFlow: React.FC<LoginFlowProps> = ({
 
 	return loading ? (
 		<Text>
-			<Spinner type="dots" />{i18n('loading.message')}
+			<Spinner type="dots" />
+			{i18n('loading.message')}
 		</Text>
 	) : (
 		<Text>{i18n('login.message')}</Text>

@@ -42,9 +42,7 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 				cookie ?? '',
 			);
 			if (error) {
-				onError(
-					i18n('loadOrganizations.error', { error }),
-				);
+				onError(i18n('loadOrganizations.error', { error }));
 				return;
 			}
 
@@ -59,9 +57,7 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 					});
 					return;
 				} else {
-					onError(
-						i18n('workspaceNotFound.error', { workspace }),
-					);
+					onError(i18n('workspaceNotFound.error', { workspace }));
 					return;
 				}
 			}
@@ -95,7 +91,8 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 		<>
 			{loading && (
 				<Text>
-					<Spinner type="dots" />{i18n('loading.message')}
+					<Spinner type="dots" />
+					{i18n('loading.message')}
 				</Text>
 			)}
 

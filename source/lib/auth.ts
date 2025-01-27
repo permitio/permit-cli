@@ -63,9 +63,7 @@ export const loadAuthToken = async (): Promise<string> => {
 		DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
 	);
 	if (!token) {
-		throw new Error(
-			i18n('loadTokenError.message'),
-		);
+		throw new Error(i18n('loadTokenError.message'));
 	}
 
 	return token;

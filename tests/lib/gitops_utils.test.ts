@@ -3,6 +3,8 @@ import * as utils from '../../source/lib/gitops/utils';
 import { apiCall } from '../../source/lib/api';
 import ssh from 'micro-key-producer/ssh.js';
 import { randomBytes } from 'micro-key-producer/utils.js';
+import '../../source/i18n.ts';
+
 vi.mock('../../source/lib/api', () => ({
 	apiCall: vi.fn(),
 }));

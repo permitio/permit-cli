@@ -4,6 +4,7 @@ import { describe, it, expect, vi } from 'vitest';
 import SelectEnvironment from '../source/components/SelectEnvironment.js';
 import { useEnvironmentApi } from '../source/hooks/useEnvironmentApi.js';
 import delay from 'delay';
+import '../source/i18n.ts';
 
 vi.mock('../source/hooks/useEnvironmentApi.js', () => ({
 	useEnvironmentApi: vi.fn(),

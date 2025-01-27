@@ -1,5 +1,9 @@
 {
     "cliApiKeyNotFound.message": "CLI_API_Key not found, creating one for you.",
     "cliApiKeyCreated.message": "Created an {{keyScope}} level key for you, named CLI_API_key (this key is protected, please do not change it)",
+    "cliApiKeyCreation.error": "Error while creating Key: {{creationError}}",
+    "cliApiKeyGet.error": "Error while getting api key by id: {{err}}",
+    "invalidCliApiKey.error": "Invalid Key Provided",
+    "invalidTokenScope.message": "Invalid token scope, redirecting to login of choice",
     "contextError.message": "useAuth must be used within an AuthProvider"
 }

@@ -89,9 +89,7 @@ export default function MemberComponent({
 
 			if (auth.scope && environment) {
 				if (!auth.scope.project_id && !project) {
-					setError(
-						i18n('invalidKey.message'),
-					);
+					setError(i18n('invalidKey.message'));
 				}
 				setKeyScope(prev => ({
 					...prev,

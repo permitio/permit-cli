@@ -41,9 +41,7 @@ const SelectEnvironment: React.FC<Props> = ({
 			);
 
 			if (error) {
-				onError(
-					i18n('loadEnv.error', { project: activeProject.label, error }),
-				);
+				onError(i18n('loadEnv.error', { project: activeProject.label, error }));
 				return;
 			}
 
@@ -71,7 +69,8 @@ const SelectEnvironment: React.FC<Props> = ({
 		<>
 			{state && (
 				<Text>
-					<Spinner type="dots" />{i18n('loadingEnv.message')}
+					<Spinner type="dots" />
+					{i18n('loadingEnv.message')}
 				</Text>
 			)}
 			{!state && (

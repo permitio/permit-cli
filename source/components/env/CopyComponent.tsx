@@ -104,7 +104,7 @@ export default function CopyComponent({
 				body,
 			);
 			if (error) {
-				setError(`Error while copying Environment: ${error}`);
+				setError(i18n('copy.error', { error }));
 				return;
 			}
 			setState('done');

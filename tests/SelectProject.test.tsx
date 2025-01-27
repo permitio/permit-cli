@@ -4,6 +4,7 @@ import { describe, it, expect, vi } from 'vitest';
 import SelectProject from '../source/components/SelectProject.js';
 import { useProjectAPI } from '../source/hooks/useProjectAPI.js';
 import delay from 'delay';
+import '../source/i18n.ts';
 
 vi.mock('../source/hooks/useProjectAPI.js', () => ({
 	useProjectAPI: vi.fn(),

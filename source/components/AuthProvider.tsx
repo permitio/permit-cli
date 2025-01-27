@@ -105,7 +105,7 @@ export function AuthProvider({
 					redirect_scope === 'login' ? 'environment' : redirect_scope,
 				);
 				if (error || !valid) {
-					throw Error('Invalid token scope, redirecting to login of choice');
+					throw Error(i18n('invalidTokenScope.message'));
 				}
 				setAuthToken(token);
 				setCurrentScope(keyScope);
@@ -152,7 +152,7 @@ export function AuthProvider({
 					error,
 				} = await validateApiKeyScope(key ?? '', scope ?? 'environment');
 				if (!valid || error) {
-					setError(error ?? 'Invalid Key Provided');
+					setError(error ?? i18n('invalidCliApiKey.error'));
 				} else {
 					setAuthToken(key ?? '');
 					setCurrentScope(keyScope);
@@ -222,7 +222,7 @@ export function AuthProvider({
 							newCookie,
 						);
 					if (creationError) {
-						setError(`Error while creating Key: ${creationError}`);
+						setError(i18n('cliApiKeyCreation.error', { creationError }));
 					}
 					cliApiKey = creationResponse;
 					setKeyCreated(true);
@@ -234,7 +234,7 @@ export function AuthProvider({
 					newCookie,
 				);
 				if (err) {
-					setError(`Error while getting api key by id: ${err}`);
+					setError(i18n('cliApiKeyGet.error', { err }));
 					return;
 				}
 				setAuthToken(secret.secret ?? '');
@@ -278,12 +278,13 @@ export function AuthProvider({
 		setCookie(cookie);
 	}, []);
 
-	const keyScope = currentScope && (
-		currentScope.environment_id ? 'environment' : 
-			currentScope.project_id
+	const keyScope =
+		currentScope &&
+		(currentScope.environment_id
+			? 'environment'
+			: currentScope.project_id
 				? 'project'
-				: 'organization'
-		)
+				: 'organization');
 
 	return (
 		<>
@@ -323,16 +324,14 @@ export function AuthProvider({
 			)}
 			{state === 'creating-key' && (
 				<>
-				<Text>{i18n('cliApiKeyNotFound.message')}</Text>
+					<Text>{i18n('cliApiKeyNotFound.message')}</Text>
 				</>
 			)}
 			{state === 'done' && authToken && currentScope && (
 				<>
 					{keyCreated && (
 						<>
-							<Text>
-								{i18n('cliApiKeyCreated.message', { keyScope })}
-							</Text>
+							<Text>{i18n('cliApiKeyCreated.message', { keyScope })}</Text>
 							<Newline />
 						</>
 					)}

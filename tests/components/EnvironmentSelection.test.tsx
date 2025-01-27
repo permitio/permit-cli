@@ -9,6 +9,8 @@ import { useEnvironmentApi } from '../../source/hooks/useEnvironmentApi';
 import { useOrganisationApi } from '../../source/hooks/useOrganisationApi';
 import { apiCall } from '../../source/lib/api';
 import { g } from 'vitest/dist/chunks/suite.B2jumIFP.js';
+import '../../source/i18n.ts';
+
 vi.mock('../../source/lib/api', () => ({
 	apiCall: vi.fn(),
 }));

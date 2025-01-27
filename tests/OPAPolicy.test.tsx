@@ -4,6 +4,8 @@ import { render } from 'ink-testing-library';
 import Policy from '../source/commands/opa/policy';
 import delay from 'delay';
 import * as keytar from "keytar"
+import '../source/i18n.ts';
+
 global.fetch = vi.fn();
 const enter = '\r';
 vi.mock('keytar', () => {

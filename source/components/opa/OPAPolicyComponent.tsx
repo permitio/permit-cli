@@ -81,7 +81,12 @@ export default function OPAPolicyComponent({ options }: OpaPolicyProps) {
 	return (
 		<>
 			<Text color={'green'}>
-				{i18n('title', { serverUrl: options.serverUrl })}
+				{i18n('title', {
+					serverUrl: options.serverUrl,
+					interpolation: {
+						escapeValue: false,
+					},
+				})}
 			</Text>
 			{res.status === 0 && error === null && <Spinner type="dots" />}
 			{res.status === 200 && (
@@ -89,7 +94,10 @@ export default function OPAPolicyComponent({ options }: OpaPolicyProps) {
 					{!selection && (
 						<>
 							<Text>
-								{i18n('subtitle', { viewLength: view.length, policyItemsLength: policyItems.length })}
+								{i18n('subtitle', {
+									viewLength: view.length,
+									policyItemsLength: policyItems.length,
+								})}
 							</Text>
 
 							<Box flexDirection="column" gap={1}>
@@ -125,7 +133,9 @@ export default function OPAPolicyComponent({ options }: OpaPolicyProps) {
 			)}
 			{error && (
 				<Box>
-					<Text color="red">{i18n('requestError.message', { error: JSON.stringify(error) })}</Text>
+					<Text color="red">
+						{i18n('requestError.message', { error: JSON.stringify(error) })}
+					</Text>
 					<Newline />
 					<Text>
 						{inspect(res, {

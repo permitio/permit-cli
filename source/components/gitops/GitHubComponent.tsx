@@ -138,9 +138,7 @@ const GitHubComponent: React.FC<Props> = ({
 								updatedGitConfig,
 							);
 							if (configResponse.status === 'invalid') {
-								setError(
-									i18n('invalidConfig.message'),
-								);
+								setError(i18n('invalidConfig.message'));
 								setState('error');
 								return;
 							}
@@ -151,14 +149,10 @@ const GitHubComponent: React.FC<Props> = ({
 						}
 						setState('done');
 						if (gitConfig.activateWhenValidated) {
-							setDoneMessage(
-								i18n('activatedOnceValidated.message'),
-							);
+							setDoneMessage(i18n('activatedOnceValidated.message'));
 							return;
 						}
-						setDoneMessage(
-							i18n('success.message'),
-						);
+						setDoneMessage(i18n('success.message'));
 					}}
 				/>
 			)}

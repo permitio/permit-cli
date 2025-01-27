@@ -2,7 +2,7 @@
     "selectEnvironment": {
         "loadingEnv.message": "Loading Environments...",
         "selectEnv.message": "Select an environment",
-        "loadEnv.error": "Failed to load environments for project {{project}}. Reason: {{error}}. Please check your network connection or credentials and try again."
+        "loadEnv.error": "Failed to load environments for project \"{{project}}\". Reason: {{error}}. Please check your network connection or credentials and try again."
     },
     "environmentSelection": {
         "invalidApiKey.error": "Invalid ApiKey, {{error}}",

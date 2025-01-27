@@ -41,10 +41,13 @@ const SSHKey: React.FC<Props> = ({ onSSHKeySubmit, onError }) => {
 	return (
 		<>
 			<Box margin={1}>
-				<Text>{i18n('sshHelper.message', { 
-					url: 'https://github.com/{{organization}}/{{repository}}/settings/keys/new',
-					moreDetailsUrl: 'https://docs.permit.io/integrations/gitops/github#create-a-repository'
-				})}</Text>
+				<Text>
+					{i18n('sshHelper.message', {
+						url: 'https://github.com/{{organization}}/{{repository}}/settings/keys/new',
+						moreDetailsUrl:
+							'https://docs.permit.io/integrations/gitops/github#create-a-repository',
+					})}
+				</Text>
 			</Box>
 			<Box margin={1}>
 				<Text>{i18n('sshKeyGenerated.message')}</Text>
@@ -52,7 +55,8 @@ const SSHKey: React.FC<Props> = ({ onSSHKeySubmit, onError }) => {
 			<Box>
 				<Text>
 					{' '}
-					{i18n('copySshKey.message')}{'\n'}
+					{i18n('copySshKey.message')}
+					{'\n'}
 					{sshKey.publicKey}
 				</Text>
 			</Box>

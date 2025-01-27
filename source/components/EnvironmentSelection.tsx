@@ -181,9 +181,7 @@ const EnvironmentSelection: React.FC<Props> = ({
 
 	return (
 		<>
-			{state === 'user-key' && (
-				<Text>{i18n('userKey.message')}</Text>
-			)}
+			{state === 'user-key' && <Text>{i18n('userKey.message')}</Text>}
 			{state === 'workspace' && (
 				<SelectOrganization
 					accessToken={accessToken}

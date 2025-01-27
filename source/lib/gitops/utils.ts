@@ -21,7 +21,9 @@ type Repo = {
 async function getProjectList(apiKey: string): Promise<Project[]> {
 	const projects = await apiCall('v2/projects', apiKey);
 	if (projects.status !== 200) {
-		throw new Error(i18n('getProjectList.error', { response: projects.response }));
+		throw new Error(
+			i18n('getProjectList.error', { response: projects.response }),
+		);
 	}
 	return projects.response as Project[];
 }
