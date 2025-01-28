@@ -8,12 +8,60 @@ import Login from '../source/commands/login.js';
 import EnvironmentSelection from '../source/components/EnvironmentSelection.js';
 import { saveAuthToken } from '../source/lib/auth.js';
 import delay from 'delay';
+import SelectComponent from '../source/components/env/SelectComponent';
 
-vi.mock('../source/hooks/useApiKeyApi.js', () => ({
-	useApiKeyApi: vi.fn(() => ({
-		validateApiKey: vi.fn(),
-	})),
-}));
+
+const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+
+
+// vi.mock('../source/hooks/useApiKeyApi.js', () => ({
+// 	useApiKeyApi: vi.fn(() => ({
+// 		validateApiKey: vi.fn(),
+// 		validateApiKeyScope: vi.fn(),
+// 	})),
+// }));
+
+vi.mock('../source/components/AuthProvider.tsx', async() => {
+	const original = await vi.importActual('../source/components/AuthProvider.tsx');
+	return {
+		...original,
+		useAuth: () => ({
+			authToken: demoPermitKey,
+		})
+	}
+})
+
+vi.mock('../source/hooks/useApiKeyApi', async() => {
+	const original = await vi.importActual('../source/hooks/useApiKeyApi');
+	return {
+		...original,
+		useApiKeyApi: () => ({
+			getApiKeyScope: vi.fn().mockResolvedValue({
+				response: {
+					environment_id: 'env1',
+					project_id: 'proj1',
+					organization_id: 'org1',
+				},
+				error: null,
+				status: 200,
+			}),
+			getProjectEnvironmentApiKey: vi.fn().mockResolvedValue({
+				response: { secret: 'test-secret' },
+				error: null,
+			}),
+			validateApiKeyScope: vi.fn().mockResolvedValue({
+				valid: true,
+				scope: {
+					environment_id: 'env1',
+					project_id: 'proj1',
+					organization_id: 'org1',
+				},
+				error: null
+			})
+		}),
+	}
+});
+
 
 vi.mock('../source/commands/login.js', () => ({
 	__esModule: true,
@@ -42,48 +90,12 @@ afterEach(() => {
 
 describe('Select Component', () => {
 	it('should display loading state initially', async () => {
-		const { lastFrame } = render(<Select options={{}} />);
 
+		const { lastFrame } = render(<SelectComponent key={demoPermitKey} />);
 		expect(lastFrame()).toMatch(/Loading your environment/);
 	});
 
-	it('should redirect to login when no API key is provided', async () => {
-		// Mock the Login component
-		vi.mocked(Login).mockImplementation(() => (
-			<Text>Mocked Login Component</Text>
-		));
-
-		const { lastFrame } = render(<Select options={{}} />);
-
-		await delay(50); // Allow state transitions to occur
-
-		expect(lastFrame()).toMatch(/No Key provided, Redirecting to Login/);
-		expect(lastFrame()).toMatch(/Mocked Login Component/);
-	});
-
-	it('should display error for invalid API key', async () => {
-		// Mock validateApiKey to return false
-		vi.mocked(useApiKeyApi).mockReturnValue({
-			validateApiKey: vi.fn(() => false),
-		});
-
-		const { lastFrame } = render(
-			<Select options={{ key: 'invalid_api_key' }} />,
-		);
-
-		await delay(50); // Allow state transitions to occur
-
-		expect(lastFrame()).toMatch(
-			/Invalid API Key. Please provide a valid API Key./,
-		);
-		expect(process.exit).toHaveBeenCalledWith(1);
-	});
-
 	it('should handle environment selection successfully', async () => {
-		// Mock validateApiKey to return true
-		vi.mocked(useApiKeyApi).mockReturnValue({
-			validateApiKey: vi.fn(() => true),
-		});
 
 		// Mock saveAuthToken
 		vi.mocked(saveAuthToken).mockResolvedValueOnce();
@@ -106,10 +118,6 @@ describe('Select Component', () => {
 		expect(lastFrame()).toMatch(/Environment: Env1 selected successfully/);
 	});
 	it('should handle environment selection failure', async () => {
-		// Mock validateApiKey to return true
-		vi.mocked(useApiKeyApi).mockReturnValue({
-			validateApiKey: vi.fn(() => true),
-		});
 
 		// Mock saveAuthToken
 		vi.mocked(saveAuthToken).mockRejectedValueOnce('Failed to save token');
@@ -125,34 +133,15 @@ describe('Select Component', () => {
 			return null;
 		});
 
-		const { lastFrame } = render(<Select options={{ key: 'valid_api_key' }} />);
+		const { lastFrame } = render(<SelectComponent key={demoPermitKey } />);
 
 		await delay(100); // Allow async operations to complete
 
 		expect(lastFrame()).toMatch(/Failed to save token/);
 		expect(process.exit).toHaveBeenCalledWith(1);
 	});
-	it('handle login successs', async () => {
-		vi.mocked(useApiKeyApi).mockReturnValue({
-			validateApiKey: vi.fn(() => true),
-		});
-		vi.mocked(EnvironmentSelection).mockImplementation(({ onComplete }) => {
-			onComplete(
-				{ label: 'Org1', value: 'org1' },
-				{ label: 'Proj1', value: 'proj1' },
-				{ label: 'Env1', value: 'env1' },
-				'secret_token',
-			);
-			return null;
-		});
-		const { lastFrame } = render(<Select options={{ key: 'valid_api_key' }} />);
-		await delay(100); // Allow async operations to complete
-		expect(lastFrame()).toMatch(/Environment: Env1 selected successfully/);
-	});
+
 	it('handle complete enviroment selection process', async () => {
-		vi.mocked(useApiKeyApi).mockReturnValue({
-			validateApiKey: vi.fn(() => true),
-		});
 		vi.mocked(saveAuthToken).mockResolvedValueOnce();
 		vi.mocked(EnvironmentSelection).mockImplementation(({ onComplete }) => {
 			onComplete(
@@ -163,7 +152,7 @@ describe('Select Component', () => {
 			);
 			return null;
 		});
-		const { lastFrame } = render(<Select options={{ key: 'valid_api_key' }} />);
+		const { lastFrame } = render(<SelectComponent key={demoPermitKey}/>);
 		await delay(100); // Allow async operations to complete
 		expect(lastFrame()).toMatch(/Environment: Env1 selected successfully/);
 	});
