@@ -9,64 +9,83 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Define a proper type for the role object
 interface RoleData {
-	key: string;
-	name: string;
-	permissions: string[];
-	dependencies: string[];
+  key: string;
+  name: string;
+  resource?: string;
+  permissions: string[];
+  dependencies: string[];
+  description?: string;
 }
-
-// Register Handlebars helper
-Handlebars.registerHelper('json', function (context: string[]) {
-	return `[${context.map((item: string) => `"${item}"`).join(',')}]`;
-});
 
 export class RoleGenerator implements HCLGenerator {
 	name = 'roles';
 	private template: TemplateDelegate<{ roles: RoleData[] }>;
-
+  
 	constructor(
-		private permit: Permit,
-		private warningCollector: WarningCollector,
+	  private permit: Permit,
+	  private warningCollector: WarningCollector,
 	) {
-		this.template = Handlebars.compile(
-			readFileSync(join(__dirname, '../templates/role.hcl'), 'utf-8'),
-		);
+	  Handlebars.registerHelper('json', function(context: string[]) {
+		return `[${context.map(item => `"${item}"`).join(', ')}]`;
+	  });
+  
+	  this.template = Handlebars.compile(
+		readFileSync(join(__dirname, '../templates/role.hcl'), 'utf-8'),
+	  );
 	}
-
+  
 	async generateHCL(): Promise<string> {
-		try {
-			const roles = await this.permit.api.roles.list();
-			if (!roles || roles.length === 0) return '';
-
-			// Transform roles and identify dependencies
-			const validRoles = roles.map(role => {
-				const dependencies = this.getDependencies(role.permissions || []); // Fix: Provide default value
-				return {
-					key: createSafeId(role.key),
-					name: role.name,
-					permissions: role.permissions || [],
-					dependencies: dependencies,
-				};
-			});
-
-			return '\n# Roles\n' + this.template({ roles: validRoles });
-		} catch (error) {
-			this.warningCollector.addWarning(`Failed to export roles: ${error}`);
-			return '';
+	  try {
+		const roles = await this.permit.api.roles.list({ detailed: true });
+		const resources = await this.permit.api.resources.list();
+  
+		if (!roles || roles.length === 0) {
+		  return '';
 		}
-	}
-
-	private getDependencies(permissions: string[]): string[] {
-		// Extract resource keys from permissions and generate dependency references
-		const resourceDeps = new Set<string>();
-		permissions?.forEach(perm => {
-			const [resource] = perm.split(':');
-			if (resource) {
-				resourceDeps.add(`permitio_resource.${createSafeId(resource)}`);
+  
+		const validRoles: RoleData[] = [];
+  
+		// Handle base user role
+		const userRole = roles.find(r => r.key === 'user');
+		if (userRole) {
+		  validRoles.push({
+			key: 'user',
+			name: 'User',
+			description: 'Application user',
+			permissions: [],
+			dependencies: []
+		  });
+		}
+  
+		// Process roles from each resource
+		for (const resource of resources) {
+		  const resourceKey = resource.key;
+  
+		  if (resource.roles) {
+			for (const [roleKey, roleData] of Object.entries(resource.roles)) {
+			  const permissions = (roleData.permissions || []).map(perm => {
+				const [, action] = perm.split(':');
+				return action || perm;
+			  }).filter(Boolean);
+  
+			  validRoles.push({
+				key: roleKey,
+				name: roleData.name,
+				resource: resourceKey,
+				permissions,
+				dependencies: [`permitio_resource.${resourceKey}`],
+				description: roleData.description
+			  });
 			}
-		});
-		return Array.from(resourceDeps);
+		  }
+		}
+  
+		return '\n# Roles\n' + this.template({ roles: validRoles });
+  
+	  } catch (error) {
+		this.warningCollector.addWarning(`Failed to export roles: ${error}`);
+		return '';
+	  }
 	}
-}
+  }
