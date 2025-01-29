@@ -20,6 +20,7 @@ type Relationship = {
 
 type RoleAssignment = {
 	user: string;
+	email: string;
 	role: string;
 	resourceInstance: string;
 };
@@ -212,7 +213,8 @@ export default function Graph({ options }: Props) {
 					const users = roleResponse.response?.data || [];
 
 					users.forEach((user: any) => {
-						const usernames = user.first_name + ' ' + user.last_name;
+						const usernames = user.key;
+						const email = user.email;
 
 						// Check if the user has associated tenants
 						if (user.associated_tenants?.length) {
@@ -227,6 +229,7 @@ export default function Graph({ options }: Props) {
 
 											allRoleAssignmentsData.push({
 												user: usernames || 'Unknown User',
+												email: email || '',
 												role: resourceInstanceRole.role || 'Unknown Role',
 												resourceInstance:
 													resourceInstanceId || 'Unknown Resource Instance',
@@ -237,6 +240,7 @@ export default function Graph({ options }: Props) {
 									// Push default entry for users with no roles in the tenant
 									allRoleAssignmentsData.push({
 										user: usernames || 'Unknown User',
+										email: email || '',
 										role: 'No Role Assigned',
 										resourceInstance: 'No Resource Instance',
 									});
@@ -246,6 +250,7 @@ export default function Graph({ options }: Props) {
 							// Push default entry for users with no associated tenants
 							allRoleAssignmentsData.push({
 								user: usernames || 'Unknown User',
+								email: email || '',
 								role: 'No Role Assigned',
 								resourceInstance: 'No Resource Instance',
 							});

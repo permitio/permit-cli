@@ -15,6 +15,7 @@ type Relationship = {
 
 type RoleAssignment = {
 	user: string;
+	email: string;
 	role: string;
 	resourceInstance: string;
 };
@@ -92,18 +93,26 @@ export const generateGraphData = (
 		// Add user nodes with a specific class
 		if (!existingNodeIds.has(assignment.user)) {
 			nodes.push({
-				data: { id: assignment.user, label: `${assignment.user}` },
+				data: {
+					id: assignment.user,
+					label: `${assignment.user} ${assignment.email}`,
+				},
 				classes: 'user-node',
 			});
 			existingNodeIds.add(assignment.user);
 		}
 
-		if (!existingNodeIds.has(assignment.resourceInstance)) {
-			nodes.push({
-				data: { id: assignment.resourceInstance, label: `${assignment.resourceInstance}` },
-				classes: 'resource-instance-node',
-			});
-			existingNodeIds.add(assignment.resourceInstance);
+		if (assignment.resourceInstance !== 'No Resource Instance') {
+			if (!existingNodeIds.has(assignment.resourceInstance)) {
+				nodes.push({
+					data: {
+						id: assignment.resourceInstance,
+						label: `${assignment.resourceInstance}`,
+					},
+					classes: 'resource-instance-node',
+				});
+				existingNodeIds.add(assignment.resourceInstance);
+			}
 		}
 		// Connect user to resource instance
 
@@ -114,6 +123,7 @@ export const generateGraphData = (
 					target: assignment.resourceInstance,
 					label: `${assignment.role}`,
 				},
+				classes: 'user-edge',
 			});
 		}
 	});
