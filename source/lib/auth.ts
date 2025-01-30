@@ -15,6 +15,8 @@ import {
 import { URL, URLSearchParams } from 'url';
 import { setTimeout } from 'timers';
 import { Buffer } from 'buffer';
+import { getNamespaceIl18n } from '../lib/i18n.js';
+const i18n = getNamespaceIl18n('lib.auth');
 
 const { setPassword, getPassword, deletePassword } = pkg.default;
 
@@ -61,9 +63,7 @@ export const loadAuthToken = async (): Promise<string> => {
 		DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
 	);
 	if (!token) {
-		throw new Error(
-			'No token found, use `permit login` command to get an auth token',
-		);
+		throw new Error(i18n('loadTokenError.message'));
 	}
 
 	return token;

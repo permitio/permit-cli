@@ -4,6 +4,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import SignupComponent from '../../source/components/signup/SignupComponent.js';
 import { useOrganisationApi } from '../../source/hooks/useOrganisationApi.js';
 import delay from 'delay';
+import '../../source/i18n.ts';
 
 vi.mock('../../source/hooks/useOrganisationApi.js', () => ({
 	useOrganisationApi: vi.fn(() => ({

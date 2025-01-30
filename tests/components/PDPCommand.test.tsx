@@ -6,6 +6,8 @@ import { AuthProvider } from '../../source/components/AuthProvider';
 import delay from 'delay';
 import { loadAuthToken } from '../../source/lib/auth';
 import Run from '../../source/commands/pdp/run';
+import '../../source/i18n.ts';
+
 vi.mock('../../source/lib/auth', () => ({
 	loadAuthToken: vi.fn(),
 }));

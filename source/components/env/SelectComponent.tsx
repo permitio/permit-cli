@@ -7,6 +7,8 @@ import EnvironmentSelection, {
 	ActiveState,
 } from '../../components/EnvironmentSelection.js';
 import { useAuth } from '../AuthProvider.js';
+import { getNamespaceIl18n } from '../../lib/i18n.js';
+const i18n = getNamespaceIl18n('env.select');
 
 export default function SelectComponent({ key }: { key: string | undefined }) {
 	const [error, setError] = React.useState<string | null>(null);
@@ -52,7 +54,7 @@ export default function SelectComponent({ key }: { key: string | undefined }) {
 			{state === 'loading' && (
 				<Text>
 					<Spinner type={'dots'} />
-					Loading your environment
+					{i18n('loading.message')}
 				</Text>
 			)}
 			{authToken && state === 'selecting' && (
@@ -63,7 +65,7 @@ export default function SelectComponent({ key }: { key: string | undefined }) {
 				/>
 			)}
 			{state === 'done' && environment && (
-				<Text>Environment: {environment} selected successfully</Text>
+				<Text>{i18n('success.message', { environment })}</Text>
 			)}
 			{error && <Text>{error}</Text>}
 		</>

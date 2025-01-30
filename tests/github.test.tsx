@@ -17,6 +17,7 @@ import { useApiKeyApi } from '../../source/hooks/useApiKeyApi';
 import * as keytar from "keytar"
 import SelectProject from '../source/components/SelectProject';
 import { useProjectAPI } from '../source/hooks/useProjectAPI';
+import '../source/i18n.ts';
 
 
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
@@ -99,7 +100,7 @@ vi.mock('keytar', () => {
 		setPassword: vi.fn().mockResolvedValue(demoPermitKey),
 		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
 		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
-
+ 
 	};
 	return { ...keytar, default: keytar };
 });

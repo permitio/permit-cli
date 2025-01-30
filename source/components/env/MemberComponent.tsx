@@ -10,6 +10,8 @@ import EnvironmentSelection, {
 	ActiveState,
 } from '../../components/EnvironmentSelection.js';
 import { useAuth } from '../AuthProvider.js';
+import { getNamespaceIl18n } from '../../lib/i18n.js';
+const i18n = getNamespaceIl18n('env.member');
 
 const rolesOptions = [
 	{ label: 'Owner', value: 'admin' },
@@ -87,9 +89,7 @@ export default function MemberComponent({
 
 			if (auth.scope && environment) {
 				if (!auth.scope.project_id && !project) {
-					setError(
-						'Please pass the project key, or use a project level Api Key',
-					);
+					setError(i18n('invalidKey.message'));
 				}
 				setKeyScope(prev => ({
 					...prev,
@@ -180,12 +180,12 @@ export default function MemberComponent({
 			{state === 'loading' && (
 				<Text>
 					<Spinner type={'dots'} />
-					Loading your environment
+					{i18n('loading.message')}
 				</Text>
 			)}
 			{apiKey && state === 'selecting' && (
 				<>
-					<Text>Select Environment to add member to</Text>
+					<Text>{i18n('selectEnv.message')}</Text>
 					<EnvironmentSelection
 						accessToken={apiKey}
 						onComplete={onEnvironmentSelectSuccess}
@@ -195,9 +195,9 @@ export default function MemberComponent({
 			)}
 			{apiKey && state === 'input-email' && (
 				<>
-					<Text>User email: </Text>
+					<Text>{i18n('enterEmail.header')}</Text>
 					<TextInput
-						placeholder="Enter email address for the user to invite"
+						placeholder={i18n('enterEmail.placeholder')}
 						onSubmit={email_input => {
 							setEmail(email_input);
 						}}
@@ -206,7 +206,7 @@ export default function MemberComponent({
 			)}
 			{apiKey && state === 'input-role' && (
 				<>
-					<Text>Select a scope</Text>
+					<Text>{i18n('selectScope.message')}</Text>
 					<SelectInput
 						items={rolesOptions}
 						onSelect={role => {
@@ -217,9 +217,9 @@ export default function MemberComponent({
 			)}
 			{apiKey && state === 'input-inviter-name' && (
 				<>
-					<Text>Your name: </Text>
+					<Text>{i18n('enterName.header')}</Text>
 					<TextInput
-						placeholder="Enter your name"
+						placeholder={i18n('enterName.placeholder')}
 						onSubmit={name_input => {
 							setInviterName(name_input);
 						}}
@@ -228,16 +228,16 @@ export default function MemberComponent({
 			)}
 			{apiKey && state === 'input-inviter-email' && (
 				<>
-					<Text>Your email: </Text>
+					<Text>{i18n('enterYourEmail.header')}</Text>
 					<TextInput
-						placeholder="Enter your email address"
+						placeholder={i18n('enterYourEmail.placeholder')}
 						onSubmit={email_input => {
 							setInviterEmail(email_input);
 						}}
 					/>
 				</>
 			)}
-			{state === 'done' && <Text>User Invited Successfully !</Text>}
+			{state === 'done' && <Text>{i18n('inviteSuccess.message')}</Text>}
 			{error && <Text>{error}</Text>}
 		</>
 	);

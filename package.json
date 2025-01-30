@@ -12,7 +12,7 @@
 	"scripts": {
 		"build": "tsc",
 		"dev": " NODE_NO_WARNINGS=1 tsc --watch",
-		"lint": "prettier --check ./source && eslint \"source/**/*.{js,ts,tsx}\"",
+		"lint": "prettier --check ./source && eslint \"sourc e/**/*.{js,ts,tsx}\"",
 		"lint:fix": "eslint \"source/**/*.{js,ts,tsx}\" --fix",
 		"test": "prettier --check ./source && vitest run --coverage",
 		"simple-check": "npx tsx ./source/cli.tsx pdp check -u filip@permit.io -a create -r task"
@@ -25,6 +25,7 @@
 		"clipboardy": "^4.0.0",
 		"delay": "^6.0.0",
 		"fuse.js": "^7.0.0",
+		"i18next": "^24.1.2",
 		"ink": "^5.1.0",
 		"ink-ascii": "^0.0.4",
 		"ink-big-text": "^2.0.0",

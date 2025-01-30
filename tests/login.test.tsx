@@ -4,6 +4,7 @@ import { render } from 'ink-testing-library';
 import Login from '../source/commands/login';
 import delay from 'delay';
 import * as keytar from 'keytar';
+import '../source/i18n.ts';
 
 vi.mock('keytar', () => {
 	const keytar = {

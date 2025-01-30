@@ -4,6 +4,8 @@ import Spinner from 'ink-spinner';
 import { browserAuth, authCallbackServer } from '../lib/auth.js';
 import { useAuthApi } from '../hooks/useAuthApi.js';
 import { useApiKeyApi } from '../hooks/useApiKeyApi.js';
+import { getNamespaceIl18n } from '../lib/i18n.js';
+const i18n = getNamespaceIl18n('login');
 
 type LoginFlowProps = {
 	apiKey?: string;
@@ -26,9 +28,7 @@ const LoginFlow: React.FC<LoginFlowProps> = ({
 			if (apiKey && validateApiKey(apiKey)) {
 				onSuccess(apiKey, '');
 			} else if (apiKey) {
-				onError(
-					'Invalid API Key. Please provide a valid API Key or leave it blank to use browser authentication.',
-				);
+				onError(i18n('invalidKey.message'));
 				return;
 			} else {
 				try {
@@ -36,14 +36,12 @@ const LoginFlow: React.FC<LoginFlowProps> = ({
 					const token = await authCallbackServer(verifier);
 					const { headers, error } = await getLogin(token);
 					if (error) {
-						onError(
-							`Login failed. Reason: ${error}. Please check your network connection and try again.`,
-						);
+						onError(i18n('loginError.message', { error }));
 						return;
 					}
 					onSuccess(token, headers.getSetCookie()[0] ?? '');
 				} catch (error: unknown) {
-					onError(`Unexpected error during authentication. ${error as string}`);
+					onError(i18n('unexpectedError.message', { error }));
 					return;
 				}
 			}
@@ -56,10 +54,11 @@ const LoginFlow: React.FC<LoginFlowProps> = ({
 
 	return loading ? (
 		<Text>
-			<Spinner type="dots" /> Logging in...
+			<Spinner type="dots" />
+			{i18n('loading.message')}
 		</Text>
 	) : (
-		<Text>Login to Permit</Text>
+		<Text>{i18n('login.message')}</Text>
 	);
 };
 

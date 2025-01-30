@@ -3,6 +3,7 @@ import { vi, describe, expect, it } from 'vitest';
 import { render } from 'ink-testing-library';
 import Run from '../source/commands/pdp/run';
 import * as keytar from 'keytar';
+import '../source/i18n.ts';
 
 vi.mock('keytar', () => {
 	const keytar = {

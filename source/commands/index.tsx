@@ -1,15 +1,17 @@
 import React from 'react';
 import Gradient from 'ink-gradient';
 import { Text } from 'ink';
+import { getNamespaceIl18n } from '../lib/i18n.js';
+const i18n = getNamespaceIl18n('index');
 
 export default function Index() {
 	return (
 		<>
 			<Text>
-				<Gradient colors={['#FF923F', '#944EEF']}>Permit CLI</Gradient> is a
-				developer swiss army knife for fine-grained authorization
+				<Gradient colors={['#FF923F', '#944EEF']}>Permit CLI</Gradient>
+				{i18n('title.description')}
 			</Text>
-			<Text>Run this command with --help for more information</Text>
+			<Text>{i18n('help.message')}</Text>
 		</>
 	);
 }

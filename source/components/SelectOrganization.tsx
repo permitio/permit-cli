@@ -7,6 +7,8 @@ import {
 	Organization,
 	useOrganisationApi,
 } from '../hooks/useOrganisationApi.js';
+import { getNamespaceIl18n } from '../lib/i18n.js';
+const i18n = getNamespaceIl18n('common.selectOrganization');
 
 type SelectOrganizationProps = {
 	accessToken: string;
@@ -40,9 +42,7 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 				cookie ?? '',
 			);
 			if (error) {
-				onError(
-					`Failed to load organizations. Reason: ${error}. Please check your network connection or credentials and try again.`,
-				);
+				onError(i18n('loadOrganizations.error', { error }));
 				return;
 			}
 
@@ -57,9 +57,7 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 					});
 					return;
 				} else {
-					onError(
-						`Organization "${workspace}" not found. Please ensure the name is correct and try again.`,
-					);
+					onError(i18n('workspaceNotFound.error', { workspace }));
 					return;
 				}
 			}
@@ -93,13 +91,14 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 		<>
 			{loading && (
 				<Text>
-					<Spinner type="dots" /> Loading Organizations...
+					<Spinner type="dots" />
+					{i18n('loading.message')}
 				</Text>
 			)}
 
 			{!loading && orgs && (
 				<>
-					<Text>Select an organization</Text>
+					<Text>{i18n('selectOrganization.message')}</Text>
 					<SelectInput items={orgs} onSelect={handleSelectOrganization} />
 				</>
 			)}

@@ -10,6 +10,7 @@ import {
 } from '../source/lib/auth.js';
 import { useAuthApi } from '../source/hooks/useAuthApi.js';
 import delay from 'delay';
+import '../source/i18n.ts';
 
 vi.mock('../source/lib/auth.js', () => ({
 	browserAuth: vi.fn(),

@@ -9,6 +9,7 @@ import EnvironmentSelection from '../source/components/EnvironmentSelection.js';
 import { saveAuthToken } from '../source/lib/auth.js';
 import delay from 'delay';
 import SelectComponent from '../source/components/env/SelectComponent';
+import '../source/i18n.ts';
 
 
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));

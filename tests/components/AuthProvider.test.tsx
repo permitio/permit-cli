@@ -5,7 +5,8 @@ import { authCallbackServer, browserAuth, loadAuthToken } from '../../source/lib
 import { describe, it, expect, vi } from 'vitest';
 import { Text } from 'ink';
 import delay from 'delay';
-import * as keytar from "keytar"
+import * as keytar from "keytar";
+import '../../source/i18n.ts';
 
 
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));

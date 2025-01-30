@@ -3,6 +3,7 @@ import { render } from 'ink-testing-library';
 import { describe, vi, expect, it } from 'vitest';
 import Index from '../source/commands/index';
 import delay from 'delay';
+import '../source/i18n.ts';
 
 describe('index file', () => {
 	it('the index file should render', () => {

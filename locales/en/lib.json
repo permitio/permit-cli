@@ -1,0 +1,12 @@
+{
+    "auth": {
+        "loadTokenError.message": "No token found, use `permit login` command to get an auth token"
+    },
+    "gitops": {
+        "utils": {
+            "getProjectList.error": "Failed to fetch projects: {{response}}",
+            "configurePermit.validationError": "Validation Error in Configuring Permit",
+            "configurePermit.invalidError": "Invalid Configuration "
+        }
+    }
+}
