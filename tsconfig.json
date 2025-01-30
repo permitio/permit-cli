@@ -4,7 +4,8 @@
 		"jsx": "react",
 		"moduleResolution": "node16",
 		"module": "Node16",
-		"outDir": "dist"
+		"outDir": "dist",
+		"allowJs": true,
 	},
 	"include": ["source"],
 	"exclude": ["node_modules"]

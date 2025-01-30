@@ -1,8 +1,8 @@
-import i18next, { i18n } from 'i18next';
-import locales from '../locales';
+import i18next, { i18n } from 'i18next'; 
+import locales from '../locales/index.js';
 const { en } = locales;
 
-i18next.init(
+i18next.init(   
 	{
 		fallbackLng: 'en',
 		lng: 'en',

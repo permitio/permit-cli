@@ -1,5 +1,5 @@
-import en from './en';
+import en from './en/index.js';
 
-export default {
+export default {  
     en
 }
