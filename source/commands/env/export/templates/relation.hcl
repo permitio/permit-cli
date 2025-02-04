@@ -1,16 +1,15 @@
 {{#each relations}}
-resource "permitio_relation" "{{key}}" {
-  key = "{{key}}"
-  name = "{{name}}"
+resource "permitio_relation" "{{resource_name}}" {
+  key              = "{{key}}"
+  name             = "{{noEscape name}}"
   {{#if description}}
-  description = "{{description}}"
+  description      = "{{noEscape description}}"
   {{/if}}
-  subject_resource = "{{subject_resource}}"
-  object_resource = "{{object_resource}}"
-
+  subject_resource = {{subject_resource_key}}
+  object_resource  = {{object_resource_key}}
   depends_on = [
-    permitio_resource.{{subject_resource}},
-    permitio_resource.{{object_resource}}
+    {{#each depends_on}}{{this}}{{#unless @last}},
+    {{/unless}}{{/each}}
   ]
 }
 {{/each}}

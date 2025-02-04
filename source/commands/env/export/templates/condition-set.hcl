@@ -1,16 +1,11 @@
-{{#each sets}}
-resource "permitio_user_set" "{{key}}" {
-  name        = "{{name}}"
-  key         = "{{key}}"
-  {{#if description}}
-  description = "{{description}}"
-  {{/if}}
-  conditions  = {{{conditions}}}
-  {{#if resource}}
-  resource    = permitio_resource.{{resource}}.key
-  depends_on  = [
-    permitio_resource.{{resource}}
+{{#each rules}}
+resource "permitio_condition_set_rule" "{{key}}" {
+  user_set     = permitio_role.{{userSet}}.key
+  resource_set = permitio_resource_set.{{resourceSet}}.key
+  permission   = "{{permission}}"
+  depends_on   = [
+    permitio_resource_set.{{resourceSet}}, 
+    permitio_role.{{userSet}}
   ]
-  {{/if}}
 }
 {{/each}}

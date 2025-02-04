@@ -12,7 +12,7 @@ resource "permitio_role" "{{key}}" {
   description = "{{description}}"
   {{/if}}
   {{#if dependencies}}
-  depends_on  = {{{json dependencies}}}
+  depends_on  = [{{#each dependencies}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}]
   {{/if}}
 }
 {{/each}}
