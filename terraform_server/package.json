@@ -1,0 +1,15 @@
+{
+  "name": "permit-terraform-server",
+  "version": "1.0.0",
+  "description": "This is a minimalist server to run the backend of the permit-terraform ",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "abinand0911@gmail.com",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
