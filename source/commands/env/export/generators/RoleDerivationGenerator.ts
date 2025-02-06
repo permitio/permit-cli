@@ -26,6 +26,12 @@ interface ResourceData {
   relations: RelationRead[];
 }
 
+interface ResourceRelation {
+  sourceResource: string;
+  targetResource: string;
+  relation: RelationRead;
+}
+
 export class RoleDerivationGenerator implements HCLGenerator {
   name = 'role derivation';
   private template: Handlebars.TemplateDelegate<{ derivations: RoleDerivationData[] }>;
@@ -44,20 +50,22 @@ export class RoleDerivationGenerator implements HCLGenerator {
     try {
       const resources = await this.permit.api.resources.list();
       if (!resources?.length) return resourceMap;
+
       for (const resource of resources) {
         if (!resource.key) continue;
         try {
           const roles = await this.permit.api.resourceRoles.list({
             resourceKey: resource.key,
           });
+          
           const relationsResponse = await this.permit.api.resourceRelations.list({
             resourceKey: resource.key,
           });
-          const relations = relationsResponse?.data || [];
+
           resourceMap.set(resource.key, {
             resource,
             roles: roles ?? [],
-            relations,
+            relations: relationsResponse?.data || [],
           });
         } catch (error) {
           this.warningCollector.addWarning(
@@ -71,78 +79,110 @@ export class RoleDerivationGenerator implements HCLGenerator {
     return resourceMap;
   }
 
-  private buildDependencyList(
-    sourceRole: string,
-    sourceResource: string,
-    targetRole: string,
-    targetResource: string,
-    relationKey: string
-  ): string[] {
-    const baseDeps = [
-      `permitio_role.allowed_user`,
-      `permitio_resource.bool_mark`,
-    ];
-    if (sourceResource === 'bool_mark') {
-      return [
-        ...baseDeps,
-        `permitio_role.${createSafeId(targetRole)}`,
-        `permitio_resource.${createSafeId(targetResource)}`,
-        `permitio_relation.${createSafeId(relationKey)}`
-      ];
-    }
+  private getRoleSuffix(roleKey: string): string | undefined {
+    const parts = roleKey.split('_');
+    return parts[parts.length - 1];
+  }
+
+  private getResourcePrefix(roleKey: string): string | undefined {
+    const parts = roleKey.split('_');
+    return parts.length > 1 ? parts[0] : undefined;
+  }
+
+  private getBaseRoleForResource(roles: ResourceRoleRead[]): string | undefined {
+    return roles.find(role => this.getRoleSuffix(role.key || '') === 'user')?.key;
+  }
+
+  private simplifyRoleName(roleKey: string): string {
+    const prefix = this.getResourcePrefix(roleKey);
+    const suffix = this.getRoleSuffix(roleKey);
+    return prefix && suffix ? `${prefix}_${suffix}` : roleKey;
+  }
+
+  private createSimpleDerivationId(sourceRole: string, targetRole: string): string {
+    const sourceSimple = this.simplifyRoleName(sourceRole);
+    const targetSimple = this.simplifyRoleName(targetRole);
+    return `${sourceSimple}_to_${targetSimple}`;
+  }
+
+  private buildDependencyList(config: { 
+    role: string; 
+    resource: string;
+    toRole: string;
+    toResource: string;
+    relationKey: string;
+  }): string[] {
     return [
-      ...baseDeps,
-      `permitio_role.${createSafeId(sourceRole)}`,
-      `permitio_resource.${createSafeId(sourceResource)}`,
-      `permitio_role.${createSafeId(targetRole)}`,
-      `permitio_resource.${createSafeId(targetResource)}`,
-      `permitio_relation.${createSafeId(relationKey)}`
+      `permitio_role.${createSafeId(config.role)}`,
+      `permitio_resource.${createSafeId(config.resource)}`,
+      `permitio_role.${createSafeId(config.toRole)}`,
+      `permitio_resource.${createSafeId(config.toResource)}`,
+      `permitio_relation.${createSafeId(config.relationKey)}`,
     ];
   }
 
-  private buildResourceId(sourceRole: string, targetRole: string): string {
-    return `allowed_user_${createSafeId(targetRole)}`;
-  }
+  private getAllResourceRelations(resourceMap: Map<string, ResourceData>): ResourceRelation[] {
+    const relations: ResourceRelation[] = [];
+    const processedRelations = new Set<string>();
 
-  private processDerivations(resourceMap: Map<string, ResourceData>): RoleDerivationData[] {
-    const derivations: RoleDerivationData[] = [];
-    resourceMap.forEach((data) => {
-      data.relations.forEach((relation) => {
-        const src = relation.subject_resource;
-        const tgt = relation.object_resource;
-        if (!src || !tgt) return;
-        const sourceData = resourceMap.get(src);
-        const targetData = resourceMap.get(tgt);
-        if (!sourceData || !targetData) return;
-        let sourceRole: string | undefined;
-        let targetRole: string | undefined;
-        let resourceId: string;
-        let relationKey: string;
-        if (src === 'bool_mark') {
-          sourceRole = 'allowed_user';
-          targetRole = targetData.roles.find(r => r.key === `${tgt}_user`)?.key;
-          if (!targetRole) return;
-          resourceId = this.buildResourceId(sourceRole, targetRole);
-          relationKey = `${src}_${tgt}`;
-        } else {
-          sourceRole = sourceData.roles.find(r => r.key === `${src}_user`)?.key;
-          targetRole = targetData.roles.find(r => r.key === `${src}_visit_user`)?.key;
-          if (!sourceRole || !targetRole) return;
-          resourceId = this.buildResourceId(sourceRole, targetRole);
-          relationKey = `${tgt}_${src}`;
+    resourceMap.forEach((data, resourceKey) => {
+      data.relations.forEach(relation => {
+        const relationKey = `${relation.subject_resource}_${relation.key}_${relation.object_resource}`;
+        
+        if (relation.subject_resource && 
+            relation.object_resource && 
+            !processedRelations.has(relationKey)) {
+          relations.push({
+            sourceResource: relation.subject_resource,
+            targetResource: relation.object_resource,
+            relation,
+          });
+          processedRelations.add(relationKey);
         }
-        const dependencies = this.buildDependencyList(sourceRole, src, targetRole, tgt, relationKey);
-        derivations.push({
-          resource_id: resourceId,
-          resource: tgt,
-          role: sourceRole,
-          linked_by: relationKey,
-          on_resource: src,
-          to_role: targetRole,
-          dependencies,
-        });
       });
     });
+
+    return relations;
+  }
+
+  private async processDerivations(resourceMap: Map<string, ResourceData>): Promise<RoleDerivationData[]> {
+    const derivations: RoleDerivationData[] = [];
+    const relations = this.getAllResourceRelations(resourceMap);
+    const processedDerivations = new Set<string>();
+
+    for (const relation of relations) {
+      const sourceData = resourceMap.get(relation.sourceResource);
+      const targetData = resourceMap.get(relation.targetResource);
+
+      if (!sourceData || !targetData) continue;
+
+      const sourceRole = this.getBaseRoleForResource(sourceData.roles);
+      const targetRole = this.getBaseRoleForResource(targetData.roles);
+
+      if (sourceRole && targetRole && relation.relation.key) {
+        const derivationId = this.createSimpleDerivationId(sourceRole, targetRole);
+        
+        if (!processedDerivations.has(derivationId)) {
+          derivations.push({
+            resource_id: derivationId,
+            resource: relation.targetResource,
+            role: sourceRole,
+            linked_by: relation.relation.key,
+            on_resource: relation.sourceResource,
+            to_role: targetRole,
+            dependencies: this.buildDependencyList({
+              role: sourceRole,
+              resource: relation.sourceResource,
+              toRole: targetRole,
+              toResource: relation.targetResource,
+              relationKey: relation.relation.key,
+            })
+          });
+          processedDerivations.add(derivationId);
+        }
+      }
+    }
+
     return derivations;
   }
 
@@ -150,8 +190,10 @@ export class RoleDerivationGenerator implements HCLGenerator {
     try {
       const resourceMap = await this.gatherResourceData();
       if (resourceMap.size === 0) return '';
-      const derivations = this.processDerivations(resourceMap);
+
+      const derivations = await this.processDerivations(resourceMap);
       if (derivations.length === 0) return '';
+
       const hcl = this.template({ derivations });
       return '\n# Role Derivations\n' + hcl;
     } catch (error) {

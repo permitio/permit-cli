@@ -45,9 +45,6 @@ export class RelationGenerator implements HCLGenerator {
     );
   }
 
-  /**
-   * Capitalizes each word from an underscore‐delimited string.
-   */
   private formatName(key: string): string {
     return key
       .split('_')
@@ -55,10 +52,6 @@ export class RelationGenerator implements HCLGenerator {
       .join(' ');
   }
 
-  /**
-   * Returns a display name for the relation. If a description is provided, it is used; otherwise
-   * the key is formatted.
-   */
   private formatRelationshipName(relation: RelationData): string {
     return relation.description || this.formatName(relation.key);
   }
@@ -92,48 +85,15 @@ export class RelationGenerator implements HCLGenerator {
     return `permitio_resource.${createSafeId(resourceId)}`;
   }
 
-  /**
-   * Applies transformation rules to a relation based on its subject and object.
-   *
-   * - When the subject is "bool_mark", we want to:
-   *   - Use a block name of "bool_mark_{object}".
-   *   - Reverse the depends_on order (object first, then subject).
-   *   - If the relation key includes "non_concealed", display the name as
-   *     "{Object} in not concealed"; if it includes "advertised", display it as
-   *     "{Object} is advertised".
-   *
-   * - When the object is "visit" (and the subject is not "bool_mark"), we want to:
-   *   - Use a block name of "visit_{subject}".
-   *   - Reverse the depends_on order (object first, then subject).
-   *   - Use a display name of "Visit's {Subject}".
-   *
-   * These rules are encapsulated here so that they can be modified or extended without
-   * scattering conditional logic.
-   */
   private transformRelation(relation: RelationData): { resource_name: string, name: string, depends_on: string[] } {
     const subjectRef = this.formatResourceReference(relation.subject_resource);
     const objectRef = this.formatResourceReference(relation.object_resource);
-    let resource_name = createSafeId(relation.key); // default: use the original key
-    let name = relation.name;
-    let depends_on = [subjectRef, objectRef];
-
-    // When the subject is "bool_mark"
-    if (relation.subject_resource === 'bool_mark') {
-      resource_name = `bool_mark_${createSafeId(relation.object_resource)}`;
-      depends_on = [objectRef, subjectRef];
-      if (relation.key.includes('non_concealed')) {
-        name = `${this.formatName(relation.object_resource)} in not concealed`;
-      } else if (relation.key.includes('advertised')) {
-        name = `${this.formatName(relation.object_resource)} is advertised`;
-      }
-    }
-    // When the object is "visit" (and not already handled as a bool_mark relation)
-    else if (relation.object_resource === 'visit') {
-      resource_name = `visit_${createSafeId(relation.subject_resource)}`;
-      depends_on = [objectRef, subjectRef];
-      name = `${this.formatName(relation.object_resource)}'s ${this.formatName(relation.subject_resource)}`;
-    }
-    return { resource_name, name, depends_on };
+    
+    return {
+      resource_name: createSafeId(relation.key),
+      name: relation.name,
+      depends_on: [subjectRef, objectRef]
+    };
   }
 
   async generateHCL(): Promise<string> {
@@ -153,7 +113,6 @@ export class RelationGenerator implements HCLGenerator {
             Object.entries(resourceDetails.relations).forEach(([relationKey, relationData]) => {
               const relation: RelationData = {
                 key: relationKey,
-                // Compute the display name (may be overridden by transformRelation below)
                 name: this.formatRelationshipName({
                   key: relationKey,
                   subject_resource: relationData.resource,
