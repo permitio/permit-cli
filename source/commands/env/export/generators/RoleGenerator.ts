@@ -1,6 +1,5 @@
 import { Permit } from 'permitio';
 import { HCLGenerator, WarningCollector } from '../types.js';
-import { createSafeId } from '../utils.js';
 import Handlebars, { TemplateDelegate } from 'handlebars';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
