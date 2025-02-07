@@ -14,6 +14,19 @@ import {
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirPath = dirname(currentFilePath);
 
+interface PaginatedResponse<T> {
+	data: T[];
+	pagination?: {
+		total_count?: number;
+		page?: number;
+		per_page?: number;
+	};
+	tenant_id?: string;
+	project_id?: string;
+	org_id?: string;
+	environment_id?: string;
+}
+
 interface RoleDerivationData {
 	resource_id: string;
 	resource: string;
@@ -34,11 +47,6 @@ interface ResourceRelation {
 	sourceResource: string;
 	targetResource: string;
 	relation: RelationRead;
-}
-
-interface PaginatedResponse<T> {
-	data: T[];
-	[key: string]: any;
 }
 
 export class RoleDerivationGenerator implements HCLGenerator {
