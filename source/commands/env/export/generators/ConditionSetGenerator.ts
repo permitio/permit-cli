@@ -10,74 +10,78 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 interface ConditionSetRuleData {
-  key: string;
-  userSet: string;
-  resourceSet: string;
-  permission: string;
+	key: string;
+	userSet: string;
+	resourceSet: string;
+	permission: string;
 }
 
 interface ConditionSetRule {
-  user_set: string;
-  resource_set: string;
-  permission: string;
+	user_set: string;
+	resource_set: string;
+	permission: string;
 }
 
 export class ConditionSetGenerator implements HCLGenerator {
-  name = 'condition set rules';
-  private template: Handlebars.TemplateDelegate<{rules: ConditionSetRuleData[]}>;
+	name = 'condition set rules';
+	private template: Handlebars.TemplateDelegate<{
+		rules: ConditionSetRuleData[];
+	}>;
 
-  constructor(
-    private permit: Permit,
-    private warningCollector: WarningCollector,
-  ) {
-    this.template = Handlebars.compile(
-      readFileSync(join(__dirname, '../templates/condition-set.hcl'), 'utf-8'),
-    );
-  }
+	constructor(
+		private permit: Permit,
+		private warningCollector: WarningCollector,
+	) {
+		this.template = Handlebars.compile(
+			readFileSync(join(__dirname, '../templates/condition-set.hcl'), 'utf-8'),
+		);
+	}
 
-  async generateHCL(): Promise<string> {
-    try {
-      // Get all rules by passing wildcard values for required fields
-      const rules = await this.permit.api.conditionSetRules.list({
-        userSetKey: '*',
-        permissionKey: '*',
-        resourceSetKey: '*'
-      });
-      
-      if (!rules || !Array.isArray(rules) || rules.length === 0) {
-        return '';
-      }
+	async generateHCL(): Promise<string> {
+		try {
+			// Get all rules by passing wildcard values for required fields
+			const rules = await this.permit.api.conditionSetRules.list({
+				userSetKey: '*',
+				permissionKey: '*',
+				resourceSetKey: '*',
+			});
 
-      const validRules = rules.map((rule: ConditionSetRule) => {
-        try {
-          const cleanUserSet = rule.user_set.replace('__autogen_', '');
-          const cleanResourceSet = rule.resource_set;
+			if (!rules || !Array.isArray(rules) || rules.length === 0) {
+				return '';
+			}
 
-          const key = `allow_${cleanResourceSet}`;
+			const validRules = rules
+				.map((rule: ConditionSetRule) => {
+					try {
+						const cleanUserSet = rule.user_set.replace('__autogen_', '');
+						const cleanResourceSet = rule.resource_set;
 
-          return {
-            key: createSafeId(key),
-            userSet: createSafeId(cleanUserSet),
-            resourceSet: createSafeId(cleanResourceSet),
-            permission: rule.permission,
-          };
-        } catch (ruleError) {
-          this.warningCollector.addWarning(
-            `Failed to export condition set rule: ${ruleError}`,
-          );
-          return null;
-        }
-      }).filter((rule): rule is ConditionSetRuleData => rule !== null);
+						const key = `allow_${cleanResourceSet}`;
 
-      if (validRules.length === 0) return '';
+						return {
+							key: createSafeId(key),
+							userSet: createSafeId(cleanUserSet),
+							resourceSet: createSafeId(cleanResourceSet),
+							permission: rule.permission,
+						};
+					} catch (ruleError) {
+						this.warningCollector.addWarning(
+							`Failed to export condition set rule: ${ruleError}`,
+						);
+						return null;
+					}
+				})
+				.filter((rule): rule is ConditionSetRuleData => rule !== null);
 
-      // Return generated HCL
-      return '\n# Condition Set Rules\n' + this.template({ rules: validRules });
-    } catch (error) {
-      this.warningCollector.addWarning(
-        `Failed to export condition set rules: ${error}`,
-      );
-      return '';
-    }
-  }
+			if (validRules.length === 0) return '';
+
+			// Return generated HCL
+			return '\n# Condition Set Rules\n' + this.template({ rules: validRules });
+		} catch (error) {
+			this.warningCollector.addWarning(
+				`Failed to export condition set rules: ${error}`,
+			);
+			return '';
+		}
+	}
 }
