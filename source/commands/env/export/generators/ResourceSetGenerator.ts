@@ -18,6 +18,10 @@ interface ResourceSetData {
 	depends_on: string[];
 }
 
+interface ConditionsObject {
+	[key: string]: unknown;
+}
+
 export class ResourceSetGenerator implements HCLGenerator {
 	name = 'resource sets';
 	private template: TemplateDelegate<{ sets: ResourceSetData[] }>;
@@ -34,7 +38,6 @@ export class ResourceSetGenerator implements HCLGenerator {
 
 	async generateHCL(): Promise<string> {
 		try {
-			// First, build resource key map
 			await this.buildResourceKeyMap();
 
 			const resourceSets = await this.permit.api.conditionSets.list({});
@@ -44,8 +47,10 @@ export class ResourceSetGenerator implements HCLGenerator {
 					key: createSafeId(set.key),
 					name: set.name,
 					description: set.description,
-					conditions: this.formatConditions(set.conditions),
-					// Ensure resource is a string
+					conditions: this.formatConditions(
+						(set.conditions as string | ConditionsObject) ??
+							({} as ConditionsObject),
+					),
 					resource:
 						this.resourceKeyMap.get(set.resource_id!.toString()) ||
 						set.resource_id!.toString(),
@@ -78,10 +83,11 @@ export class ResourceSetGenerator implements HCLGenerator {
 		}
 	}
 
-	private formatConditions(conditions: any): string {
+	private formatConditions(conditions: string | ConditionsObject): string {
 		if (typeof conditions === 'string') {
 			try {
-				conditions = JSON.parse(conditions);
+				const parsed = JSON.parse(conditions) as ConditionsObject;
+				return `jsonencode(${JSON.stringify(parsed, null, 2)})`;
 			} catch {
 				return conditions;
 			}
