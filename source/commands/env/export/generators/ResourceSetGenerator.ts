@@ -45,9 +45,9 @@ export class ResourceSetGenerator implements HCLGenerator {
           name: set.name,
           description: set.description,
           conditions: this.formatConditions(set.conditions),
-          // Use resource key instead of ID
-          resource: this.resourceKeyMap.get(set.resource_id!) || set.resource_id!,
-          depends_on: [`permitio_resource.${this.resourceKeyMap.get(set.resource_id!) || set.resource_id!}`]
+          // Ensure resource is a string
+          resource: this.resourceKeyMap.get(set.resource_id!.toString()) || set.resource_id!.toString(),
+          depends_on: [`permitio_resource.${this.resourceKeyMap.get(set.resource_id!.toString()) || set.resource_id!.toString()}`]
         }));
 
       if (validSets.length === 0) return '';
@@ -65,7 +65,7 @@ export class ResourceSetGenerator implements HCLGenerator {
     try {
       const resources = await this.permit.api.resources.list();
       resources.forEach(resource => {
-        this.resourceKeyMap.set(resource.id, resource.key);
+        this.resourceKeyMap.set(resource.id.toString(), resource.key);
       });
     } catch (error) {
       this.warningCollector.addWarning(

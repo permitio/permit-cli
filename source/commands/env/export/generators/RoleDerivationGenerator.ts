@@ -32,6 +32,11 @@ interface ResourceRelation {
   relation: RelationRead;
 }
 
+interface PaginatedResponse<T> {
+  data: T[];
+  [key: string]: any;
+}
+
 export class RoleDerivationGenerator implements HCLGenerator {
   name = 'role derivation';
   private template: Handlebars.TemplateDelegate<{ derivations: RoleDerivationData[] }>;
@@ -54,18 +59,25 @@ export class RoleDerivationGenerator implements HCLGenerator {
       for (const resource of resources) {
         if (!resource.key) continue;
         try {
+          // Get roles
           const roles = await this.permit.api.resourceRoles.list({
             resourceKey: resource.key,
           });
           
+          // Get relations and ensure we have an array
           const relationsResponse = await this.permit.api.resourceRelations.list({
             resourceKey: resource.key,
           });
 
+          // Handle both array and paginated response cases
+          const relations = Array.isArray(relationsResponse)
+            ? relationsResponse
+            : ((relationsResponse as PaginatedResponse<RelationRead>)?.data || []);
+
           resourceMap.set(resource.key, {
             resource,
             roles: roles ?? [],
-            relations: relationsResponse?.data || [],
+            relations,
           });
         } catch (error) {
           this.warningCollector.addWarning(
@@ -125,21 +137,23 @@ export class RoleDerivationGenerator implements HCLGenerator {
     const relations: ResourceRelation[] = [];
     const processedRelations = new Set<string>();
 
-    resourceMap.forEach((data, resourceKey) => {
-      data.relations.forEach(relation => {
-        const relationKey = `${relation.subject_resource}_${relation.key}_${relation.object_resource}`;
-        
-        if (relation.subject_resource && 
-            relation.object_resource && 
-            !processedRelations.has(relationKey)) {
-          relations.push({
-            sourceResource: relation.subject_resource,
-            targetResource: relation.object_resource,
-            relation,
-          });
-          processedRelations.add(relationKey);
-        }
-      });
+    resourceMap.forEach((data) => {
+      if (Array.isArray(data.relations)) {
+        data.relations.forEach(relation => {
+          const relationKey = `${relation.subject_resource}_${relation.key}_${relation.object_resource}`;
+          
+          if (relation.subject_resource && 
+              relation.object_resource && 
+              !processedRelations.has(relationKey)) {
+            relations.push({
+              sourceResource: relation.subject_resource,
+              targetResource: relation.object_resource,
+              relation,
+            });
+            processedRelations.add(relationKey);
+          }
+        });
+      }
     });
 
     return relations;

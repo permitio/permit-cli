@@ -16,6 +16,12 @@ interface ConditionSetRuleData {
   permission: string;
 }
 
+interface ConditionSetRule {
+  user_set: string;
+  resource_set: string;
+  permission: string;
+}
+
 export class ConditionSetGenerator implements HCLGenerator {
   name = 'condition set rules';
   private template: Handlebars.TemplateDelegate<{rules: ConditionSetRuleData[]}>;
@@ -31,20 +37,22 @@ export class ConditionSetGenerator implements HCLGenerator {
 
   async generateHCL(): Promise<string> {
     try {
-      const rules = await this.permit.api.conditionSetRules.list({});
+      // Get all rules by passing wildcard values for required fields
+      const rules = await this.permit.api.conditionSetRules.list({
+        userSetKey: '*',
+        permissionKey: '*',
+        resourceSetKey: '*'
+      });
       
       if (!rules || !Array.isArray(rules) || rules.length === 0) {
         return '';
       }
 
-      const validRules = rules.map(rule => {
+      const validRules = rules.map((rule: ConditionSetRule) => {
         try {
-          // Clean up the userSet and resourceSet names by removing __autogen_ prefix
           const cleanUserSet = rule.user_set.replace('__autogen_', '');
           const cleanResourceSet = rule.resource_set;
 
-          // Create key without including the permission - simplified naming
-          // Example: "allow_advertised_practitioner" instead of "allow_advertised_practitioner_practitioner_read"
           const key = `allow_${cleanResourceSet}`;
 
           return {

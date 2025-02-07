@@ -52,10 +52,6 @@ export class RelationGenerator implements HCLGenerator {
       .join(' ');
   }
 
-  private formatRelationshipName(relation: RelationData): string {
-    return relation.description || this.formatName(relation.key);
-  }
-
   private async loadResourceKeys(): Promise<void> {
     try {
       const resources = await this.permit.api.resources.list();
@@ -113,15 +109,10 @@ export class RelationGenerator implements HCLGenerator {
             Object.entries(resourceDetails.relations).forEach(([relationKey, relationData]) => {
               const relation: RelationData = {
                 key: relationKey,
-                name: this.formatRelationshipName({
-                  key: relationKey,
-                  subject_resource: relationData.resource,
-                  object_resource: resource.key,
-                  description: relationData.description,
-                }),
+                name: this.formatName(relationKey), // Ensuring name is always set
                 subject_resource: relationData.resource,
                 object_resource: resource.key,
-                description: relationData.description,
+                description: relationData.description ?? undefined,  // Convert null to undefined
               };
               allRelations.push(relation);
             });
