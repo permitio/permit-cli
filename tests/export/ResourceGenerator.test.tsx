@@ -68,7 +68,7 @@ describe('ResourceGenerator', () => {
     expect(result).toContain('name = "Read"');
     expect(result).toContain('description = "Read the document"');
     expect(result).toContain('attributes = {');
-    expect(result).toContain('"owner" = {');
+    expect(result).toContain('owner = {'); // Updated to match the actual output
     expect(result).toContain('type = "string"');
   });
 

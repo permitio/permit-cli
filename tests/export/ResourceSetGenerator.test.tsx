@@ -18,10 +18,16 @@ describe('ResourceSetGenerator', () => {
           {
             key: 'user-set',
             name: 'User Set',
-            type: 'userset', // This should be filtered out
+            type: 'userset', 
             conditions: 'user.department == "IT"',
             resource_id: 'user',
           },
+        ]),
+      },
+      resources: {
+        list: vi.fn().mockResolvedValue([
+          { id: 'document', key: 'document' },
+          { id: 'user', key: 'user' },
         ]),
       },
     },
@@ -35,30 +41,41 @@ describe('ResourceSetGenerator', () => {
 
     const hcl = await generator.generateHCL();
 
-    // Basic structure checks
     expect(hcl).toContain('# Resource Sets');
     expect(hcl).toContain('resource "permitio_resource_set" "test_set"');
 
-    // Field checks
-    expect(hcl).toContain('key = "test_set"');
-    expect(hcl).toContain('name = "Test Set"');
+    expect(hcl).toContain('key         = "test_set"');
+    expect(hcl).toContain('name        = "Test Set"');
     expect(hcl).toContain('description = "Test resource set"');
-    expect(hcl).toContain('resource = "document"');
-    expect(hcl).toContain('conditions = "{&quot;attribute&quot;:&quot;value&quot;}"');
+    expect(hcl).toContain('resource    = permitio_resource.document.key');
+
+    expect(hcl).toContain('conditions  = jsonencode({');
+    expect(hcl).toContain('"attribute": "value"');
+
+    // Dependency check
+    expect(hcl).toContain('depends_on  = [');
+    expect(hcl).toContain('permitio_resource.document');
 
     // Negative assertions
-    expect(hcl).not.toContain('user-set'); // Ensure user set is filtered out
+    expect(hcl).not.toContain('user-set');
     expect(hcl).not.toContain('userset');
 
-    // Verify complete structure
-    expect(hcl.trim()).toMatchInlineSnapshot(`"# Resource Sets
+    expect(hcl.trim()).toMatchInlineSnapshot(`
+"# Resource Sets
 resource "permitio_resource_set" "test_set" {
-  key = "test_set"
-  name = "Test Set"
+  name        = "Test Set"
+  key         = "test_set"
   description = "Test resource set"
-  resource = "document"
-  conditions = "{&quot;attribute&quot;:&quot;value&quot;}"
-}"`);
+  resource    = permitio_resource.document.key
+  conditions  = jsonencode({
+  "attribute": "value"
+})
+
+  depends_on  = [
+    permitio_resource.document
+  ]
+}"
+    `);
   });
 
   it('generates valid HCL for resource sets with string conditions', async () => {
@@ -68,12 +85,15 @@ resource "permitio_resource_set" "test_set" {
           list: vi.fn().mockResolvedValue([
             {
               key: 'string-condition-set',
-              name: 'String Condition Set',
+              name: 'String Condition Set', 
               type: 'resourceset',
               conditions: 'resource.owner == user.id',
               resource_id: 'document',
             },
           ]),
+        },
+        resources: {
+          list: vi.fn().mockResolvedValue([{ id: 'document', key: 'document' }]),
         },
       },
     };
@@ -85,15 +105,21 @@ resource "permitio_resource_set" "test_set" {
 
     const hcl = await generator.generateHCL();
 
-    expect(hcl).toContain('conditions = "resource.owner &#x3D;&#x3D; user.id"');
-    
-    expect(hcl.trim()).toMatchInlineSnapshot(`"# Resource Sets
+    expect(hcl).toContain('conditions  = resource.owner == user.id');
+
+    expect(hcl.trim()).toMatchInlineSnapshot(`
+"# Resource Sets
 resource "permitio_resource_set" "string_condition_set" {
-  key = "string_condition_set"
-  name = "String Condition Set"
-  resource = "document"
-  conditions = "resource.owner &#x3D;&#x3D; user.id"
-}"`);
+  name        = "String Condition Set"
+  key         = "string_condition_set"
+  resource    = permitio_resource.document.key
+  conditions  = resource.owner == user.id
+
+  depends_on  = [
+    permitio_resource.document
+  ]
+}"
+    `);
   });
 
   it('returns empty string when no resource sets exist', async () => {

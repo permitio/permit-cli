@@ -15,9 +15,7 @@ describe('RelationGenerator', () => {
       api: {
         resources: {
           list: vi.fn(),
-        },
-        resourceRelations: {
-          list: vi.fn(),
+          get: vi.fn(),
         },
       },
     };
@@ -31,74 +29,92 @@ describe('RelationGenerator', () => {
   });
 
   it('skips internal user resource', async () => {
-    mockPermit.api.resources.list
-      .mockResolvedValueOnce([{ key: '__user' }, { key: 'document' }])
-      .mockResolvedValueOnce([{ key: '__user' }, { key: 'document' }]);
-    mockPermit.api.resourceRelations.list.mockResolvedValue([]);
+    mockPermit.api.resources.list.mockResolvedValue([
+      { key: '__user' },
+      { key: 'document' },
+    ]);
+    mockPermit.api.resources.get.mockResolvedValue({
+      key: 'document',
+      relations: {},
+    });
 
     const generator = new RelationGenerator(mockPermit, warningCollector);
     await generator.generateHCL();
-    expect(mockPermit.api.resourceRelations.list).toHaveBeenCalledTimes(1);
-    expect(mockPermit.api.resourceRelations.list).toHaveBeenCalledWith({
-      resourceKey: 'document',
-    });
+
+    expect(mockPermit.api.resources.get).toHaveBeenCalledTimes(1);
+    expect(mockPermit.api.resources.get).toHaveBeenCalledWith('document');
   });
 
   it('generates valid HCL for relations', async () => {
-    const mockResources = [{ key: 'document' }, { key: 'user' }];
-    const mockRelations = [
-      {
-        key: 'owner',
-        name: 'Owner',
-        description: 'Document owner',
-        subject_resource: 'user',
-        object_resource: 'document',
-      },
-    ];
+    mockPermit.api.resources.list.mockResolvedValue([
+      { key: 'document' },
+      { key: 'user' },
+    ]);
 
-    mockPermit.api.resources.list
-      .mockResolvedValueOnce(mockResources)
-      .mockResolvedValueOnce(mockResources);
-    mockPermit.api.resourceRelations.list.mockResolvedValue(mockRelations);
+    mockPermit.api.resources.get.mockImplementation((key) => {
+      if (key === 'document') {
+        return Promise.resolve({
+          key: 'document',
+          relations: {
+            owner: {
+              description: 'Document owner',
+              resource: 'user',
+              resource_id: 'user_id',
+            },
+          },
+        });
+      }
+      if (key === 'user') {
+        return Promise.resolve({
+          key: 'user',
+          relations: {},
+        });
+      }
+      return Promise.reject(new Error('Invalid resource'));
+    });
 
     const generator = new RelationGenerator(mockPermit, warningCollector);
     const result = await generator.generateHCL();
-    
-    expect(result).toContain('resource "permitio_relation" "owner"');
-    expect(result).toContain('key = "owner"');
-    expect(result).toContain('name = "Owner"');
-    expect(result).toContain('description = "Document owner"');
-    expect(result).toContain('subject_resource = "user"');
-    expect(result).toContain('object_resource = "document"');
+
+    const expectedContent = [
+      'resource "permitio_relation" "owner"',
+      'key              = "owner"',
+      'name             = "Owner"',
+      'description      = "Document owner"',
+      'subject_resource = permitio_resource.user.key',
+      'object_resource  = permitio_resource.document.key',
+      'depends_on = [',
+      'permitio_resource.user,',
+      'permitio_resource.document',
+    ];
+
+    expectedContent.forEach(content => {
+      expect(result).toContain(content);
+    });
   });
 
   it('handles errors when fetching relations', async () => {
-    mockPermit.api.resources.list
-      .mockResolvedValueOnce([{ key: 'document' }])
-      .mockResolvedValueOnce([{ key: 'document' }]);
-    mockPermit.api.resourceRelations.list.mockRejectedValue(new Error('API error'));
+    mockPermit.api.resources.list.mockResolvedValue([{ key: 'document' }]);
+    mockPermit.api.resources.get.mockRejectedValue(new Error('API error'));
 
     const generator = new RelationGenerator(mockPermit, warningCollector);
     await generator.generateHCL();
+
     expect(warningCollector.addWarning).toHaveBeenCalledWith(
-      expect.stringContaining('Failed to fetch relations for resource document'),
+      'Failed to fetch details for resource document: Error: API error'
     );
   });
 
   it('skips invalid relations', async () => {
-    mockPermit.api.resources.list
-      .mockResolvedValueOnce([{ key: 'document' }])
-      .mockResolvedValueOnce([{ key: 'document' }]);
-    mockPermit.api.resourceRelations.list.mockResolvedValue([
-      { key: 'invalid' },
-    ]);
+    mockPermit.api.resources.list.mockResolvedValue([{ key: 'document' }]);
+    mockPermit.api.resources.get.mockRejectedValue(new Error('API error'));
 
     const generator = new RelationGenerator(mockPermit, warningCollector);
     const result = await generator.generateHCL();
-    
+
     expect(warningCollector.addWarning).toHaveBeenCalledWith(
-      'Relation "invalid" is missing required fields: name, subject_resource, object_resource'
+      'Failed to fetch details for resource document: Error: API error'
     );
-    expect(result).not.toContain('resource "permitio_relation" "invalid"');
+    expect(result).toBe('');
   });
 });

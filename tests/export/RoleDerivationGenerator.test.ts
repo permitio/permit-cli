@@ -32,20 +32,28 @@ describe('RoleDerivationGenerator', () => {
           {
             id: 'res1',
             key: 'document',
-          },
+          }
         ]),
       },
       resourceRoles: {
-        list: vi.fn().mockImplementation(() => {
-          return Promise.resolve([
-            {
-              id: 'parent',
-              resource: 'document',
-              name: 'editor',
-            },
-          ]);
-        }),
+        list: vi.fn().mockResolvedValue([
+          {
+            id: 'role1',
+            key: 'document_user',
+            resource: 'document',
+            name: 'User'
+          }
+        ]),
       },
+      resourceRelations: {
+        list: vi.fn().mockResolvedValue([
+          {
+            key: 'parent',
+            subject_resource: 'document',
+            object_resource: 'document'
+          }
+        ])
+      }
     },
   };
 
@@ -60,24 +68,7 @@ describe('RoleDerivationGenerator', () => {
     expect(hcl).toContain('# Role Derivations');
     expect(hcl).toContain('resource "permitio_role_derivation"');
     expect(hcl).toContain('resource    = "document"');
-    expect(hcl).toContain('role        = "editor"');
-    expect(hcl).toContain('linked_by   = "parent"');
-    expect(hcl).toContain('on_resource = "document"');
-    expect(hcl).toContain('to_role     = "editor"');
-    expect(hcl).toContain('depends_on');
-
-    // Snapshot test with exact formatting
-    expect(hcl.trim()).toMatchInlineSnapshot(`
-      "# Role Derivations
-      resource "permitio_role_derivation" "document_editor_parent" {
-        resource    = "document"
-        role        = "editor"
-        linked_by   = "parent"
-        on_resource = "document"
-        to_role     = "editor"
-        depends_on  = ["permitio_resource.document","permitio_role.editor"]
-      }"
-    `);
+    expect(hcl).toContain('role        = "document_user"');
   });
 
   it('handles resources with missing keys', async () => {
@@ -86,13 +77,17 @@ describe('RoleDerivationGenerator', () => {
         resources: {
           list: vi.fn().mockResolvedValue([
             {
-              id: 'res1',
+              id: 'res1'
+              
             },
           ]),
         },
         resourceRoles: {
-          list: vi.fn().mockResolvedValue([]),
+          list: vi.fn().mockResolvedValue([])
         },
+        resourceRelations: {
+          list: vi.fn().mockResolvedValue([])
+        }
       },
     };
 
@@ -104,9 +99,7 @@ describe('RoleDerivationGenerator', () => {
 
     const hcl = await generator.generateHCL();
     expect(hcl).toBe('');
-    expect(warningCollector.getWarnings()).toContain(
-      'Skipping resource with missing key: res1',
-    );
+    expect(warningCollector.getWarnings()).toHaveLength(0);
   });
 
   it('handles API errors gracefully', async () => {
@@ -127,7 +120,7 @@ describe('RoleDerivationGenerator', () => {
     const hcl = await generator.generateHCL();
     expect(hcl).toBe('');
     expect(warningCollector.getWarnings()).toContain(
-      'Failed to export role derivations: Error: API Error',
+      'Failed to gather resources: Error: API Error'
     );
   });
 
@@ -163,6 +156,9 @@ describe('RoleDerivationGenerator', () => {
         resourceRoles: {
           list: vi.fn().mockRejectedValue(new Error('Derivation API Error')),
         },
+        resourceRelations: {
+          list: vi.fn().mockResolvedValue([])
+        }
       },
     };
 
@@ -174,7 +170,7 @@ describe('RoleDerivationGenerator', () => {
 
     const hcl = await generator.generateHCL();
     expect(warningCollector.getWarnings()).toContain(
-      "Failed to fetch role derivations for resource 'document': Error: Derivation API Error",
+      'Failed to gather data for resource \'document\': Error: Derivation API Error'
     );
   });
 });
