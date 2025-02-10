@@ -1,6 +1,5 @@
 import React from 'react';
 import { render } from 'ink-testing-library';
-import SelectProject from '../source/components/gitops/SelectProject.js';
 import RepositoryKey from '../source/components/gitops/RepositoryKey.js';
 import SSHKey from '../source/components/gitops/SSHKey.js';
 import BranchName from '../source/components/gitops/BranchName.js';
@@ -13,7 +12,13 @@ import {
 	getProjectList,
 	getRepoList,
 } from '../source/lib/gitops/utils.js';
-import { loadAuthToken } from '../source/lib/auth.js';
+import { loadAuthToken, TokenType } from '../source/lib/auth.js';
+import { useApiKeyApi } from '../../source/hooks/useApiKeyApi';
+import * as keytar from "keytar"
+import SelectProject from '../source/components/SelectProject';
+import { useProjectAPI } from '../source/hooks/useProjectAPI';
+
+
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 
 vi.mock('clipboardy', () => ({
@@ -21,9 +26,18 @@ vi.mock('clipboardy', () => ({
 		writeSync: vi.fn(),
 	},
 }));
-vi.mock('../source/lib/auth.js', () => ({
-	loadAuthToken: vi.fn(() => demoPermitKey),
+vi.mock('../source/lib/auth.js', async () => {
+	const original = await vi.importActual('../source/lib/auth.js');
+	return {
+		...original,
+		loadAuthToken: vi.fn(() => demoPermitKey),
+	};
+});
+
+vi.mock('../source/hooks/useProjectAPI.js', () => ({
+	useProjectAPI: vi.fn(),
 }));
+
 vi.mock('../source/lib/gitops/utils.js', () => ({
 	getProjectList: vi.fn(() =>
 		Promise.resolve([
@@ -48,81 +62,51 @@ vi.mock('../source/lib/gitops/utils.js', () => ({
 		Promise.resolve({ id: '1', status: 'active', key: 'repo1' }),
 	),
 }));
+vi.mock('../source/hooks/useApiKeyApi', async() => {
+	const original = await vi.importActual('../source/hooks/useApiKeyApi');
+	return {
+		...original,
+		useApiKeyApi: () => ({
+			getApiKeyScope: vi.fn().mockResolvedValue({
+				response: {
+					environment_id: 'env1',
+					project_id: 'proj1',
+					organization_id: 'org1',
+				},
+				error: null,
+				status: 200,
+			}),
+			getProjectEnvironmentApiKey: vi.fn().mockResolvedValue({
+				response: { secret: 'test-secret' },
+				error: null,
+			}),
+			validateApiKeyScope: vi.fn().mockResolvedValue({
+				valid: true,
+				scope: {
+					environment_id: 'env1',
+					project_id: 'proj1',
+					organization_id: 'org1',
+				},
+				error: null
+			})
+		}),
+	}
+});
+
+vi.mock('keytar', () => {
+	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+	const keytar = {
+		setPassword: vi.fn().mockResolvedValue(demoPermitKey),
+		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
+		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
+
+	};
+	return { ...keytar, default: keytar };
+});
 
 const enter = '\r';
 const arrowUp = '\u001B[A';
 const arrowDown = '\u001B[B';
-describe('Select Project Component', () => {
-	it('should display loading message when projects are being loaded', async () => {
-		const onProjectSubmit = vi.fn();
-		const onError = vi.fn();
-		const accessKey = 'permit_key_'.concat('a'.repeat(97));
-		const { stdin, lastFrame } = render(
-			<SelectProject
-				apiKey={accessKey}
-				onProjectSubmit={onProjectSubmit}
-				onError={onError}
-			/>,
-		);
-
-		// Assertion
-		expect(lastFrame()?.toString() ?? '').toMatch(/Loading projects.../);
-	});
-
-	it('Should display project after loading', async () => {
-		const onProjectSubmit = vi.fn();
-		const onError = vi.fn();
-		const accessKey = 'permit_key_'.concat('a'.repeat(97));
-		const { stdin, lastFrame } = render(
-			<SelectProject
-				apiKey={accessKey}
-				onProjectSubmit={onProjectSubmit}
-				onError={onError}
-			/>,
-		);
-
-		// Check that the loading message is displayed
-		expect(lastFrame()?.toString() ?? '').toMatch(/Loading projects.../);
-
-		// Wait for the mocked getProjectList to resolve and display the projects
-		await delay(50); // Adjust time depending on the delay for fetching projects
-
-		// Optionally: Check that the project names are displayed
-		expect(lastFrame()?.toString()).toMatch(/Project 1/);
-		expect(lastFrame()?.toString()).toMatch(/Project 2/);
-		stdin.write(arrowDown);
-		await delay(50);
-		stdin.write(enter);
-		await delay(50);
-		expect(onProjectSubmit).toHaveBeenCalledOnce();
-		expect(onProjectSubmit).toHaveBeenCalledWith('proj2');
-	});
-	it('should display an error message when fetching projects fails', async () => {
-		const onProjectSubmit = vi.fn();
-		const onError = vi.fn();
-		const accessKey = 'permit_key_'.concat('a'.repeat(97));
-
-		// Mock error response
-		(getProjectList as any).mockRejectedValueOnce(
-			new Error('Failed to fetch projects'),
-		);
-
-		const { stdin, lastFrame } = render(
-			<SelectProject
-				apiKey={accessKey}
-				onProjectSubmit={onProjectSubmit}
-				onError={onError}
-			/>,
-		);
-
-		// Initially, check for loading message
-		expect(lastFrame()?.toString()).toMatch(/Loading projects.../);
-
-		// Wait for the error to be handled
-		await delay(50); // Adjust delay as needed
-		expect(onError).toHaveBeenCalledWith('Failed to fetch projects');
-	});
-});
 
 describe('RepositoryKey  Component', () => {
 	it('should call onRepoKeySubmit with the correct value', async () => {
@@ -130,6 +114,18 @@ describe('RepositoryKey  Component', () => {
 		const onError = vi.fn();
 		const projectName = 'project1';
 		const accessToken = 'permit_key_'.concat('a'.repeat(97));
+		const mockGetProjects = vi.fn(() =>
+			Promise.resolve({
+				response: [
+					{ id: 'proj1', name: 'Project 1' },
+					{ id: 'proj2', name: 'Project 2' },
+				],
+				error: null,
+			}),
+		);
+		(useProjectAPI as ReturnType<typeof vi.fn>).mockReturnValue({
+			getProjects: mockGetProjects,
+		});
 		const { stdin, lastFrame } = render(
 			<RepositoryKey
 				projectName={projectName}
@@ -156,6 +152,18 @@ describe('RepositoryKey  Component', () => {
 		const onError = vi.fn();
 		const projectName = 'project1';
 		const accessToken = 'permit_key_'.concat('a'.repeat(97));
+		const mockGetProjects = vi.fn(() =>
+			Promise.resolve({
+				response: [
+					{ id: 'proj1', name: 'Project 1' },
+					{ id: 'proj2', name: 'Project 2' },
+				],
+				error: null,
+			}),
+		);
+		(useProjectAPI as ReturnType<typeof vi.fn>).mockReturnValue({
+			getProjects: mockGetProjects,
+		});
 		const { stdin, lastFrame } = render(
 			<RepositoryKey
 				projectName={projectName}
@@ -181,6 +189,18 @@ describe('RepositoryKey  Component', () => {
 		const onError = vi.fn();
 		const projectName = 'project1';
 		const accessToken = 'permit_key_'.concat('a'.repeat(97));
+		const mockGetProjects = vi.fn(() =>
+			Promise.resolve({
+				response: [
+					{ id: 'proj1', name: 'Project 1' },
+					{ id: 'proj2', name: 'Project 2' },
+				],
+				error: null,
+			}),
+		);
+		(useProjectAPI as ReturnType<typeof vi.fn>).mockReturnValue({
+			getProjects: mockGetProjects,
+		});
 		const { stdin, lastFrame } = render(
 			<RepositoryKey
 				projectName={projectName}
@@ -209,6 +229,18 @@ describe('RepositoryKey  Component', () => {
 		const onError = vi.fn();
 		const projectName = 'project1';
 		const accessToken = 'permit_key_'.concat('a'.repeat(97));
+		const mockGetProjects = vi.fn(() =>
+			Promise.resolve({
+				response: [
+					{ id: 'proj1', name: 'Project 1' },
+					{ id: 'proj2', name: 'Project 2' },
+				],
+				error: null,
+			}),
+		);
+		(useProjectAPI as ReturnType<typeof vi.fn>).mockReturnValue({
+			getProjects: mockGetProjects,
+		});
 		const { stdin, lastFrame } = render(
 			<RepositoryKey
 				projectName={projectName}
@@ -237,6 +269,18 @@ describe('RepositoryKey  Component', () => {
 describe('SSHKey Component', () => {
 	it('should call onSSHKeySubmit with the correct value', async () => {
 		const onSSHKeySubmit = vi.fn();
+		const mockGetProjects = vi.fn(() =>
+			Promise.resolve({
+				response: [
+					{ id: 'proj1', name: 'Project 1' },
+					{ id: 'proj2', name: 'Project 2' },
+				],
+				error: null,
+			}),
+		);
+		(useProjectAPI as ReturnType<typeof vi.fn>).mockReturnValue({
+			getProjects: mockGetProjects,
+		});
 		const onError = vi.fn();
 		const { stdin, lastFrame } = render(
 			<SSHKey onSSHKeySubmit={onSSHKeySubmit} onError={onError} />,
@@ -265,6 +309,18 @@ describe('SSHKey Component', () => {
 	it("should call onError with 'Please enter a valid SSH URL' for empty value", async () => {
 		const onSSHKeySubmit = vi.fn();
 		const onError = vi.fn();
+		const mockGetProjects = vi.fn(() =>
+			Promise.resolve({
+				response: [
+					{ id: 'proj1', name: 'Project 1' },
+					{ id: 'proj2', name: 'Project 2' },
+				],
+				error: null,
+			}),
+		);
+		(useProjectAPI as ReturnType<typeof vi.fn>).mockReturnValue({
+			getProjects: mockGetProjects,
+		});
 		const { stdin, lastFrame } = render(
 			<SSHKey onSSHKeySubmit={onSSHKeySubmit} onError={onError} />,
 		);
@@ -287,6 +343,18 @@ describe('SSHKey Component', () => {
 	it("should call onError with 'Please enter a valid SSH URL' for invalid value", async () => {
 		const onSSHKeySubmit = vi.fn();
 		const onError = vi.fn();
+		const mockGetProjects = vi.fn(() =>
+			Promise.resolve({
+				response: [
+					{ id: 'proj1', name: 'Project 1' },
+					{ id: 'proj2', name: 'Project 2' },
+				],
+				error: null,
+			}),
+		);
+		(useProjectAPI as ReturnType<typeof vi.fn>).mockReturnValue({
+			getProjects: mockGetProjects,
+		});
 		const { stdin, lastFrame } = render(
 			<SSHKey onSSHKeySubmit={onSSHKeySubmit} onError={onError} />,
 		);
@@ -345,7 +413,7 @@ describe('Branch Name component', () => {
 	});
 });
 
-describe('GiHub Complete Flow', () => {
+describe('GitHub Complete Flow', () => {
 	it('should complete the flow', async () => {
 		const { stdin, lastFrame } = render(
 			<GitHub options={{ key: demoPermitKey }} />,

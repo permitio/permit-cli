@@ -4,6 +4,9 @@ import { option } from 'pastel';
 import { AuthProvider } from '../../../components/AuthProvider.js';
 import GitHubComponent from '../../../components/gitops/GitHubComponent.js';
 
+export const description =
+	'Connect a GitHub repository to a permit Environment';
+
 export const options = zod.object({
 	key: zod
 		.string()
@@ -32,7 +35,7 @@ type Props = {
 
 export default function GitHub({ options }: Props) {
 	return (
-		<AuthProvider>
+		<AuthProvider permit_key={options.key} scope={'project'}>
 			<GitHubComponent
 				authKey={options.key}
 				inactivateWhenValidated={options.inactive}

@@ -28,11 +28,14 @@ vi.mock('node:crypto', () => ({
 }));
 
 // Correct mock for 'keytar' using named exports
-vi.mock('keytar', () => ({
-	setPassword: vi.fn(),
-	getPassword: vi.fn(), // Mocked return value
-	deletePassword: vi.fn(),
-}));
+vi.mock('keytar', () => {
+	const keytar = {
+		setPassword: vi.fn(),
+		getPassword: vi.fn(), // Mocked return value
+		deletePassword: vi.fn(),
+	};
+	return { ...keytar, default: keytar };
+});
 
 describe('Token Type', () => {
 	it('Should return correct token type', async () => {

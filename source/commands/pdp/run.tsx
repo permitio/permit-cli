@@ -1,6 +1,6 @@
 import React from 'react';
 import { AuthProvider } from '../../components/AuthProvider.js';
-import PDPCommand from '../../components/PDPCommand.js';
+import PDPRunComponent from '../../components/pdp/PDPRunComponent.js';
 import { type infer as zInfer, number, object } from 'zod';
 import { option } from 'pastel';
 
@@ -17,7 +17,7 @@ type Props = {
 export default function Run({ options: { opa } }: Props) {
 	return (
 		<AuthProvider>
-			<PDPCommand opa={opa} />
+			<PDPRunComponent opa={opa} />
 		</AuthProvider>
 	);
 }

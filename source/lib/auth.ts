@@ -3,14 +3,20 @@ import * as http from 'node:http';
 import open from 'open';
 import * as pkg from 'keytar';
 import {
+	AUTH_API_URL,
+	AUTH_PERMIT_DOMAIN,
+	AUTH_REDIRECT_HOST,
+	AUTH_REDIRECT_PORT,
+	AUTH_REDIRECT_URI,
 	DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
 	KEYSTORE_PERMIT_SERVICE_NAME,
+	AUTH_PERMIT_URL,
 } from '../config.js';
 import { URL, URLSearchParams } from 'url';
 import { setTimeout } from 'timers';
 import { Buffer } from 'buffer';
 
-const { setPassword, getPassword, deletePassword } = pkg;
+const { setPassword, getPassword, deletePassword } = pkg.default;
 
 export enum TokenType {
 	APIToken = 'APIToken',
@@ -86,7 +92,7 @@ export const authCallbackServer = async (verifier: string): Promise<string> => {
 
 			const code = url.searchParams.get('code');
 			// Send the response
-			const data = await fetch('https://auth.permit.io/oauth/token', {
+			const data = await fetch(`${AUTH_PERMIT_URL}/oauth/token`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -96,7 +102,7 @@ export const authCallbackServer = async (verifier: string): Promise<string> => {
 					client_id: 'Pt7rWJ4BYlpELNIdLg6Ciz7KQ2C068C1',
 					code_verifier: verifier,
 					code,
-					redirect_uri: 'http://localhost:62419',
+					redirect_uri: AUTH_REDIRECT_URI,
 				}),
 			}).then(async response => response.json());
 			res.statusCode = 200; // Set the response status code
@@ -107,11 +113,8 @@ export const authCallbackServer = async (verifier: string): Promise<string> => {
 		});
 
 		// Specify the port and host
-		const port = 62_419;
-		const host = 'localhost';
-
 		// Start the server and listen on the specified port
-		server.listen(port, host);
+		server.listen(AUTH_REDIRECT_PORT, AUTH_REDIRECT_HOST);
 
 		setTimeout(() => {
 			server.close();
@@ -137,20 +140,20 @@ export const browserAuth = async (): Promise<string> => {
 
 	const challenge = base64UrlEncode(sha256(verifier));
 	const parameters = new URLSearchParams({
-		audience: 'https://api.permit.io/v1/',
-		screen_hint: 'app.permit.io',
-		domain: 'app.permit.io',
+		audience: AUTH_API_URL,
+		screen_hint: AUTH_PERMIT_DOMAIN,
+		domain: AUTH_PERMIT_DOMAIN,
 		auth0Client: 'eyJuYW1lIjoiYXV0aDAtcmVhY3QiLCJ2ZXJzaW9uIjoiMS4xMC4yIn0=',
 		isEAP: 'false',
 		response_type: 'code',
-		fragment: 'domain=app.permit.io',
+		fragment: `domain=${AUTH_PERMIT_DOMAIN}`,
 		code_challenge: challenge,
 		code_challenge_method: 'S256',
 		client_id: 'Pt7rWJ4BYlpELNIdLg6Ciz7KQ2C068C1',
-		redirect_uri: 'http://localhost:62419',
+		redirect_uri: AUTH_REDIRECT_URI,
 		scope: 'openid profile email',
 		state: 'bFR2dn5idUhBVDNZYlhlSEFHZnJaSjRFdUhuczdaSlhCSHFDSGtlYXpqbQ==',
 	});
-	await open(`https://auth.permit.io/authorize?${parameters.toString()}`);
+	await open(`${AUTH_PERMIT_URL}/authorize?${parameters.toString()}`);
 	return verifier;
 };

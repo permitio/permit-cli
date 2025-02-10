@@ -1,20 +1,20 @@
 {
 	"name": "@permitio/cli",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"license": "MIT",
 	"bin": {
 		"permit": "dist/cli.js"
 	},
 	"type": "module",
 	"engines": {
-		"node": ">=16"
+		"node": ">=22"
 	},
 	"scripts": {
 		"build": "tsc",
 		"postbuild": "rimraf dist/commands/env/export/templates && cpx 'source/commands/env/export/templates/*.hcl' 'dist/commands/env/export/templates'",
 		"predev": "cpx 'source/commands/env/export/templates/*.hcl' 'dist/commands/env/export/templates'",
-    	"dev": "NODE_NO_WARNINGS=1 tsc --watch",
-		"lint": "eslint \"source/**/*.{js,ts,tsx}\"",
+		"dev": " NODE_NO_WARNINGS=1 tsc --watch",
+		"lint": "prettier --check ./source && eslint \"source/**/*.{js,ts,tsx}\"",
 		"lint:fix": "eslint \"source/**/*.{js,ts,tsx}\" --fix",
 		"test": "prettier --check ./source && vitest run --coverage",
 		"simple-check": "npx tsx ./source/cli.tsx pdp check -u filip@permit.io -a create -r task"
@@ -23,6 +23,7 @@
 		"dist"
 	],
 	"dependencies": {
+		"@scaleway/random-name": "^5.1.1",
 		"clipboardy": "^4.0.0",
 		"delay": "^6.0.0",
 		"fuse.js": "^7.0.0",
