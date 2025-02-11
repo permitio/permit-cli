@@ -13,8 +13,10 @@ interface RoleData {
 	name: string;
 	resource?: string;
 	permissions: string[];
+	extends?: string[];
 	dependencies: string[];
 	description?: string;
+	attributes?: Record<string, any>;
 }
 
 interface RoleRead {
@@ -22,12 +24,16 @@ interface RoleRead {
 	name: string;
 	description?: string;
 	permissions?: string[];
+	extends?: string[];
+	attributes?: Record<string, any>;
 }
 
 interface ResourceRole {
 	name: string;
 	description?: string;
 	permissions?: string[];
+	extends?: string[];
+	attributes?: Record<string, any>;
 }
 
 interface ResourceRoles {
@@ -42,9 +48,26 @@ export class RoleGenerator implements HCLGenerator {
 		private permit: Permit,
 		private warningCollector: WarningCollector,
 	) {
-		Handlebars.registerHelper('json', function (context: string[]) {
-			return `[${context.map(item => `"${item}"`).join(', ')}]`;
+		// Register Handlebars helpers
+		Handlebars.registerHelper('json', function (context: any) {
+			if (Array.isArray(context)) {
+				return `[${context.map(item => `"${item}"`).join(', ')}]`;
+			}
+			return JSON.stringify(context);
 		});
+
+		Handlebars.registerHelper(
+			'attributes',
+			function (context: Record<string, any>) {
+				if (!context) return '';
+				const entries = Object.entries(context);
+				if (entries.length === 0) return '';
+
+				return `\n  attributes = {
+    ${entries.map(([key, value]) => `${key} = ${JSON.stringify(value)}`).join('\n    ')}
+  }`;
+			},
+		);
 
 		this.template = Handlebars.compile(
 			readFileSync(join(__dirname, '../templates/role.hcl'), 'utf-8'),
@@ -53,39 +76,64 @@ export class RoleGenerator implements HCLGenerator {
 
 	async generateHCL(): Promise<string> {
 		try {
-			const roles = await this.permit.api.roles.list();
-			const resources = await this.permit.api.resources.list();
+			const [roles, resources] = await Promise.all([
+				this.permit.api.roles.list(),
+				this.permit.api.resources.list(),
+			]);
 
 			const rolesArray = (Array.isArray(roles) ? roles : []) as RoleRead[];
-
 			if (!rolesArray || rolesArray.length === 0) {
 				return '';
 			}
 
 			const validRoles: RoleData[] = [];
+			const rolesDependencies = new Map<string, string[]>();
 
-			// Handle base user role
-			const userRole = rolesArray.find(r => r.key === 'user');
-			if (userRole) {
-				validRoles.push({
-					key: 'user',
-					name: 'User',
-					description: 'Application user',
-					permissions: [],
-					dependencies: [],
-				});
+			// Process standalone roles first
+			for (const role of rolesArray) {
+				if (!role.key.includes(':')) {
+					validRoles.push({
+						key: role.key,
+						name: role.name,
+						description: role.description,
+						permissions: role.permissions || [],
+						extends: role.extends || [],
+						attributes: role.attributes,
+						dependencies: [],
+					});
+
+					// Track dependencies for roles that extend this one
+					if (role.extends?.length) {
+						rolesDependencies.set(
+							role.key,
+							role.extends.map(ext => `permitio_role.${ext}`),
+						);
+					}
+				}
 			}
 
-			// Process roles from each resource
+			// Process resource-specific roles
 			for (const resource of resources) {
 				const resourceKey = resource.key;
 				if (resource.roles) {
 					const roles = resource.roles as ResourceRoles;
+
 					for (const [roleKey, roleData] of Object.entries(roles)) {
+						const dependencies = [`permitio_resource.${resourceKey}`];
+
+						if (roleData.extends?.length) {
+							roleData.extends.forEach(ext => {
+								dependencies.push(`permitio_role.${ext}`);
+							});
+						}
+
 						const permissions = (roleData.permissions || [])
 							.map((perm: string) => {
-								const [, action] = perm.split(':');
-								return action || perm;
+								if (typeof perm === 'string') {
+									const [, action] = perm.split(':');
+									return action || perm;
+								}
+								return perm;
 							})
 							.filter(Boolean);
 
@@ -94,12 +142,21 @@ export class RoleGenerator implements HCLGenerator {
 							name: roleData.name,
 							resource: resourceKey,
 							permissions,
-							dependencies: [`permitio_resource.${resourceKey}`],
+							extends: roleData.extends,
+							dependencies,
 							description: roleData.description,
+							attributes: roleData.attributes,
 						});
 					}
 				}
 			}
+
+			validRoles.forEach(role => {
+				const deps = rolesDependencies.get(role.key);
+				if (deps) {
+					role.dependencies.push(...deps);
+				}
+			});
 
 			return '\n# Roles\n' + this.template({ roles: validRoles });
 		} catch (error) {

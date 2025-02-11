@@ -8,6 +8,6 @@ resource "permitio_user_set" "{{key}}" {
   {{#if resource}}
   resource = "{{resource}}"
   {{/if}}
-  conditions = "{{conditions}}"
+  conditions = jsonencode({{{formatConditions conditions}}})
 }
 {{/each}}

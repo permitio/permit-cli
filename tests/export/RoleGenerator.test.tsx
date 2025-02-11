@@ -22,10 +22,10 @@ describe('RoleGenerator', () => {
       roles: {
         list: vi.fn().mockResolvedValue([
           {
-            key: 'admin',
+            key: 'document:admin',
             name: 'Administrator',
             description: 'Admin role',
-            permissions: ['document:read', 'document:write'],
+            permissions: ['document:read', 'document:write']
           }
         ])
       }
@@ -44,7 +44,7 @@ describe('RoleGenerator', () => {
     expect(hcl).toContain('# Roles');
     expect(hcl).toContain('resource "permitio_role" "admin"');
 
-    // Field checks 
+    // Field checks - update to match actual formatting
     expect(hcl).toContain('key         = "admin"');
     expect(hcl).toContain('name        = "Administrator"');
     expect(hcl).toContain('description = "Admin role"');

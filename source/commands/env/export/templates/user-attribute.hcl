@@ -1,9 +1,13 @@
-{{#each attributes}}
-resource "permitio_user_attribute" "{{key}}" {
+{{#each sets}}
+resource "permitio_user_set" "{{key}}" {
   key = "{{key}}"
-  type = "{{type}}"
+  name = "{{name}}"
   {{#if description}}
   description = "{{description}}"
   {{/if}}
+  {{#if resource}}
+  resource = "{{resource}}"
+  {{/if}}
+  conditions = jsonencode({{{formatConditions conditions}}})
 }
 {{/each}}
