@@ -11,14 +11,12 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>ReBAC Graph</title>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.min.js"></script>
+		<script src="https://d3js.org/d3.v7.min.js"></script>
+		<script src="https://unpkg.com/@popperjs/core@2"></script>
 		<link
 			href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&display=swap"
 			rel="stylesheet"
 		/>
-		<script src="https://unpkg.com/@popperjs/core@2"></script>
-		<script src="https://unpkg.com/cytoscape-popper@2.0.0"></script>
-
 		<style>
 			body {
 				display: flex;
@@ -29,7 +27,6 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 				font-family: 'Manrope', Arial, sans-serif;
 				color: #ffffff;
 			}
-
 			#title {
 				text-align: center;
 				font-size: 30px;
@@ -50,252 +47,531 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 					0
 				); /* Same background color as bg-[#2B1400] */
 			}
-
-			#cy {
-				flex: 1;
-				width: 100%;
-				background-color: linear-gradient(
-					180deg,
-					#fff1e7 0%,
-					#ffe0d2 100%
-				); /* Base background color */
-				padding: 10px;
+			svg {
+				width: 100vw;
+				height: calc(100vh - 50px);
+				background: linear-gradient(180deg, #fff1e7 0%, #ffe0d2 100%);
 				background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAj0lEQVR4Ae3YMQoEIRBE0Ro1NhHvfz8xMhXc3RnYGyjFwH8n6E931NfnRy8W9HIEuBHgRoAbAW4EuBHgRoAbAW4EuBHglrTZGEOtNcUYVUpRzlknbd9A711rLc05n5DTtgfcw//dWzhte0CtVSklhRCeEzrt4jNnRoAbAW4EuBHgRoAbAW4EuBHgRoAbAW5fFH4dU6tFNJ4AAAAASUVORK5CYII=');
-				background-size: 30px 35px; /* Matches the original image dimensions */
-				background-repeat: repeat; /* Ensures the pattern repeats */
+			}
+			/* Main node style */
+			.node-main rect {
+				fill: #ffffff;
+				stroke: rgb(211, 179, 250);
+				stroke-width: 10px;
+				rx: 65px;
+				ry: 65px;
+			}
+			.node-main text {
+				fill: rgb(151, 78, 242);
+				font-size: 55px;
+				font-weight: 700;
+				pointer-events: none;
+				font-family: 'Manrope', Arial, sans-serif;
+				text-anchor: middle;
+				dominant-baseline: middle;
 			}
 
-			.popper-content {
-				background-color: rgb(255, 255, 255);
-				color: rgb(151, 78, 242);
-				border: 2px solid rgb(211, 179, 250);
-				padding: 10px;
-				border-radius: 5px;
+			.node-text.user-node {
+				/* Specific styling for text on user nodes */
+				fill: #ff6600; /* for example */
+				dominant-baseline: middle;
+				text-anchor: middle;
+			}
+
+			.node-text.resource-instance-node {
+				/* Specific styling for text on resource instance nodes */
+				fill: #7e23ec;
+				dominant-baseline: middle;
+				text-anchor: middle;
+			}
+
+			/* -------------------------------
+ USER NODE SPECIFIC STYLE
+---------------------------------*/
+			.node-main.user-node rect {
+				fill: #fff0e7;
+				stroke: #fab587;
+				stroke-width: 15px;
+			}
+
+			/* -------------------------------
+//   RESOURCE INSTANCE NODE STYLE
+---------------------------------*/
+			.node-main.resource-instance-node rect {
+				fill: #f4eefc;
+				stroke: #caa5f7;
+			}
+
+			/* Port node style */
+			.node-port {
+				fill: #ffffff;
+				stroke: rgb(211, 179, 250);
+				stroke-width: 2px;
+			}
+			/* Link (edge) style for port edges */
+			.link {
+				fill: none;
+				stroke: rgb(18, 165, 148);
+				stroke-width: 3px;
+				stroke-dasharray: 30, 25;
+				animation: dash 0.5s linear infinite;
+			}
+			@keyframes dash {
+				to {
+					stroke-dashoffset: -55;
+				}
+			}
+			/* -------------------------------
+   RELATIONSHIP CONNECTION EDGES
+---------------------------------*/
+			.link.relationship-connection {
+				stroke: #f76a0c;
+			}
+
+			/* -------------------------------
+   EDGE LABELS
+---------------------------------*/
+			.edge-label {
+				fill: #ffffff;
+				font-size: 25px;
 				font-family: 'Manrope', Arial, sans-serif;
-				font-size: 14px;
-				font-weight: 700;
-				max-width: 200px;
-				word-wrap: break-word;
-				display: none; /* Initially hidden */
-				position: absolute; /* Positioning for the popper */
-				z-index: 9999; /* Ensure it is on top */
-				box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-				border-radius: 8px;
-				transition: opacity 0.2s ease-in-out;
-				letter-spacing: 0.5px; /* Works in standard HTML */
+				/* If you need a background for the text (as in Cytoscape),
+     you'll need to render a separate rectangle behind the text.
+     This snippet just sets the text styling. */
 			}
 		</style>
-</head>
-<body>
-    <div id="title">Permit ReBAC Graph</div>
-    <div id="cy"></div>
-    <script>
-        const graphData = ${JSON.stringify(graphData, null, 2)};
+	</head>
+	<body>
+		<div id="title">Permit ReBAC Graph</div>
+		<svg></svg>
+		<script>
+			/***********************
+			 * 1. DATA & HIERARCHY
+			 ***********************/
+			// Assume your dynamic graph data (flat, Cytoscape-style) is injected here.
+			// For example:
+			const graphData = ${JSON.stringify(graphData, null, 2)};
 
-			const cy = cytoscape({
-				container: document.getElementById('cy'),
-				elements: [...graphData.nodes, ...graphData.edges],
-				style: [
-					{
-						selector: 'edge',
-						style: {
-							'line-color': 'rgb(18, 165, 148)',
-							width: 9,
-							'line-style': 'dashed',
-							'line-dash-pattern': [10, 5],
-							shape: 'round-rectangle',
-							'target-arrow-shape': 'triangle',
-							'target-arrow-color': 'rgb(18, 165, 148)',
-							'curve-style': 'taxi',
-							'taxi-turn': '45%',
-							'taxi-direction': 'vertical',
-							'taxi-turn-min-distance': 5,
-							'target-label': 'data(label)',
-							color: '#ffffff',
-							'font-size': 75,
-							'font-family': 'Manrope, Arial, sans-serif',
-							'font-weight': 500 /* Adjusted for edge labels */,
-							'text-background-color': 'rgb(18, 165, 148)',
-							'text-background-opacity': 1,
-							'text-background-padding': 10,
-							'text-background-shape': 'round-rectangle',
-							'text-rotation': 'autorotate', // Added for label rotation
-							'target-distance-from-node': 86,
-							'target-text-offset': 65,
-							'target-text-rotation': 'autorotate',
-							'text-outline-color': 'rgba(0, 0, 0, 0.2)', // Soft glow effect
-							'text-outline-width': 3, // Adds contrast to text
-						},
-					},
-					{
-						selector: 'edge.relationship-connection',
-						style: {
-							'line-color': '#F76808',
-							'target-arrow-color': '#F76808',
-							'text-background-color': '#F76808',
-							color: '#ffffff',
-							'target-distance-from-node': 2,
-							'target-text-offset': 13,
-						},
-					},
-					{
-						selector: 'node',
-						style: {
-							'background-color': 'rgb(255, 255, 255)',
-							'border-color': 'rgb(211, 179, 250)',
-							'border-width': 13,
-							shape: 'round-rectangle',
-							label: 'data(label)',
-							color: 'rgb(151, 78, 242)',
-							'font-size': 85,
-							'font-family': 'Manrope, Arial, sans-serif',
-							'font-weight': 700 /* Adjusted for node labels */,
-							width: '600',
-							height: '600',
-							padding: 15,
-							textWrap: 'wrap',
-							'text-valign': 'center',
-							'text-halign': 'center',
-							'text-outline-color': 'rgba(151, 78, 242, 0.6)',
-							'text-outline-width': 3, // Makes text stand out
-							'text-background-color': 'rgba(255, 255, 255, 0.5)', // Light text background for clarity
-							'text-background-opacity': 1,
-							'text-background-padding': 5,
-							'text-background-shape': 'round-rectangle',
-						},
-					},
-					{
-						selector: 'node.user-node',
-						style: {
-							shape: 'ellipse',
-							'border-width': 15,
-							'border-color': '#FFB381' /*light Orange border */,
-							'font-size': 90,
-							padding: 15,
-							width: '800',
-							height: '800',
-							color: '#F76808' /* Orange text */,
-							textWrap: 'wrap',
-							'text-valign': 'center',
-							'text-halign': 'center',
-							'text-outline-color': '#F76808',
-							'text-outline-width': 3, // Makes text stand out
-							'text-background-color': 'rgba(255, 255, 255, 0.5)', // Light text background for clarity
-							'text-background-opacity': 1,
-							'text-background-padding': 5,
-							'text-background-shape': 'round-rectangle',
-						},
-					},
-					{
-						selector: 'node.resource-instance-node',
-						style: {
-							'border-color': '#D3B3FA' /* light Purple border */,
-							color: '#974EF2' /* Purple text */,
-							'text-outline-color': 'rgba(151, 78, 242, 0.6)',
-							'text-outline-width': 3, // Makes text stand out
-							'text-background-color': 'rgba(255, 255, 255, 0.5)', // Light text background for clarity
-							'text-background-opacity': 1,
-							'text-background-padding': 5,
-							'text-background-shape': 'round-rectangle',
-						},
-					},
-				],
-				layout: {
-					name: 'cose',
-					animate: true, // Animates the layout
-					fit: true, // Ensures the graph fits in the viewport
-					padding: 10, // Padding around the graph
-					nodeDimensionsIncludeLabels: true, // Includes label dimensions
-					randomize: false, // Starts from current positions
-					avoidOverlap: true, // Prevents nodes from overlapping
-					componentSpacing: 1000, // Increased spacing between connected components
-					nodeRepulsion: 20000, // Increased strength of the node repulsion force
-					idealEdgeLength: 200, // Increased ideal length of edges
-					edgeElasticity: 1000, // Elasticity of edges
-					gravity: 1, // Gravity force applied to the nodes
-					maxSimulationTime: 2000, // Max time for simulation
-					numIter: 2500, // Maximum iterations to run
-					initialTemp: 200, // Initial cooling temperature
-					coolingFactor: 0.95, // Cooling factor for the simulation
-					minTemp: 1.0, // Minimum temperature to stop the simulation
-				},
+			function flatToForest(flatNodes, flatEdges) {
+				const nodeMap = new Map();
+
+				// Create a node object for each flat node.
+				flatNodes.forEach(n => {
+					nodeMap.set(n.data.id, {
+						id: n.data.id,
+						name: n.data.label.trim(),
+						classes: n.classes,
+						children: [],
+						incomingEdges: [], // Optionally store additional edge labels here.
+					});
+				});
+
+				// Keep track of which nodes have already been attached as a child.
+				const attached = new Set();
+
+				// Process each edge.
+				flatEdges.forEach(edge => {
+					const sourceId = edge.data.source;
+					const targetId = edge.data.target;
+					if (nodeMap.has(sourceId) && nodeMap.has(targetId)) {
+						// Get the source and target node objects.
+						const sourceNode = nodeMap.get(sourceId);
+						const targetNode = nodeMap.get(targetId);
+
+						// If this target hasn't been attached yet, attach it as a child of source.
+						if (!attached.has(targetId)) {
+							sourceNode.children.push(targetNode);
+							attached.add(targetId);
+							// Optionally, store this edge's label on the target node:
+							targetNode.edgeLabel = edge.data.label;
+						} else {
+							// If the target is already attached, you can optionally store additional edge labels.
+							targetNode.incomingEdges.push(edge.data.label);
+						}
+					}
+				});
+
+				// The roots are those nodes that never appear as a target.
+				const forest = [];
+				flatNodes.forEach(n => {
+					if (!attached.has(n.data.id)) {
+						forest.push(nodeMap.get(n.data.id));
+					}
+				});
+
+				// If no root is found (shouldn't normally happen), return all nodes.
+				if (forest.length === 0) {
+					flatNodes.forEach(n => forest.push(nodeMap.get(n.data.id)));
+				}
+
+				return forest;
+			}
+
+			const forest = flatToForest(graphData.nodes, graphData.edges);
+
+			// If multiple roots, wrap them in a dummy root:
+			const dummyRoot = { id: 'dummy_root', name: 'Root', children: forest };
+
+			// Create D3 hierarchy.
+			const rootHierarchy = d3.hierarchy(dummyRoot);
+
+			// -----------------------------
+			// 2. LAYOUT: Compute Tree Layout
+			// -----------------------------
+			const layoutWidth = window.innerWidth * 100; // Expand horizontal space as needed.
+			const layoutHeight = (window.innerHeight - 100) * 4; // Vertical space remains as needed.
+
+			// For a top-to-bottom layout, we want the root at the top.
+			// One common approach is to set size as [width, height] and then use a vertical link generator.
+			const treeLayout = d3
+				.tree()
+				.size([layoutWidth, layoutHeight])
+				.separation((a, b) => (a.parent === b.parent ? 1.5 : 2.5));
+
+			treeLayout(rootHierarchy);
+
+			// -----------------------------
+			// 3. RENDERING: Create SVG and Container Group
+			// -----------------------------
+			const svg = d3
+				.select('svg')
+				.attr('viewBox', \`0 0 \${layoutWidth + 100} \${layoutHeight + 100}\`);
+			const g = svg.append('g').attr('transform', 'translate(50,50)');
+
+			// -----------------------------
+			// 4. RENDER MAIN LINKS (if needed)
+			// -----------------------------
+			// (We will later add port edges and use them for connection.)
+			// For now, render links from the hierarchy using a vertical link generator.
+			const linkGenerator = d3
+				.linkVertical()
+				.x(d => d.x)
+				.y(d => d.y);
+
+			// Uncomment if you want to see the original links:
+			// g.selectAll("path.link")
+			//   .data(rootHierarchy.links())
+			//   .enter()
+			//   .append("path")
+			//   .attr("class", "link")
+			//   .attr("d", linkGenerator);
+
+			// -----------------------------
+			// 5. RENDER MAIN NODES
+			// -----------------------------
+			// Render nodes from the hierarchy (excluding the dummy root)
+			const mainNodes = rootHierarchy
+				.descendants()
+				.filter(d => d.data.id !== 'dummy_root');
+			const nodeGroup = g
+				.selectAll('g.node-main')
+				.data(mainNodes)
+				.enter()
+				.append('g')
+				.attr('class', d => 'node-main ' + (d.data.classes || ''))
+				.attr('transform', d => \`translate(\${d.x}, \${d.y})\`)
+				.call(
+					d3
+						.drag()
+						.on('start', function (event, d) {
+							d3.select(this).classed('dragging', true);
+						})
+						.on('drag', function (event, d) {
+							// Update node coordinates.
+							d.x = event.x;
+							d.y = event.y;
+							d3.select(this).attr('transform', \`translate(\${d.x}, \${d.y})\`);
+							// Update port nodes and port edges.
+							updatePortPositions(d);
+							updatePortEdges();
+						})
+						.on('end', function (event, d) {
+							d3.select(this).classed('dragging', false);
+						}),
+				);
+
+			// Append rectangle and text for each main node.
+			nodeGroup
+				.append('rect')
+				.attr('width', 650)
+				.attr('height', 120)
+				.attr('x', -325)
+				.attr('y', -60);
+
+			nodeGroup
+				.append('text')
+				.attr('class', d => 'node-text ' + (d.data.classes || ''))
+				.attr('dy', '0.15em')
+				.attr('text-anchor', 'middle')
+				.attr('dominant-baseline', 'middle')
+				.text(d => {
+					const fullText = d.data.name;
+					return fullText.length > 17
+						? fullText.substring(0, 15) + '...'
+						: fullText;
+				});
+
+			// -----------------------------
+			// 6. RENDER DUMMY PORT NODES
+			// -----------------------------
+			// For each main node, we create two dummy port nodes:
+			// One for incoming (id: mainID_in) and one for outgoing (id: mainID_out).
+			// Compute an array for port nodes based on the mainNodes data.
+			const portData = [];
+			mainNodes.forEach(d => {
+				portData.push({
+					id: d.data.id + '_in',
+					main: d.data.id,
+					type: 'in',
+					x: d.x, // Initially, same as main node.
+					y: d.y - 70, // Offset above.
+				});
+				portData.push({
+					id: d.data.id + '_out',
+					main: d.data.id,
+					type: 'out',
+					x: d.x, // Initially, same as main node.
+					y: d.y + 70, // Offset below.
+				});
 			});
-			
-     	
-      // Function to wrap text
-        function wrapText(text, lineLength) {
-            const regex = new RegExp(\`.{1,\${lineLength}}\`, 'g');
-            return text.match(regex)?.join('\\n') || text;
-        }
 
-      // Preprocess node labels for resource-instance-node
-			cy.nodes('.resource-instance-node').forEach(node => {
-				const originalLabel = node.data('label'); // Get the original label
-				const resource = originalLabel.split('#')[0]; // Extract the resource part
-				const wrappedLabel = wrapText(resource, 14); // Wrap the resource text
-				node.data('label', wrappedLabel); // Update the node label with the wrapped text
+			const portNodeSel = g
+				.selectAll('circle.node-port')
+				.data(portData, d => d.id)
+				.enter()
+				.append('circle')
+				.attr('class', 'node-port')
+				.attr('id', d => d.id)
+				.attr('r', 5)
+				.attr('cx', d => d.x)
+				.attr('cy', d => d.y);
 
-				// Create a popper for the full label
-				const popperDiv = document.createElement('div');
-				popperDiv.classList.add('popper-content');
-				popperDiv.innerHTML = originalLabel;
-				document.body.appendChild(popperDiv);
+			// -----------------------------
+			// 7. RENDER PORT EDGES
+			// -----------------------------
+			// For every link in the hierarchy (parent-to-child),
+			// create a new edge that connects the parent's outgoing port to the child's incoming port.
+			const portEdges = rootHierarchy.links().map(link => ({
+				source: link.source.data.id + '_out',
+				target: link.target.data.id + '_in',
+				label: link.target.data.edgeLabel, // optional
+				classes:
+					(
+						graphData.edges.find(
+							e =>
+								e.data.source === link.source.data.id &&
+								e.data.target === link.target.data.id,
+						) || {}
+					).classes || 'relationship-connection',
+			}));
+			console.log(portEdges);
+			// Render these port edges.
+			const portEdgeSel = g
+				.selectAll('path.port-link')
+				.data(portEdges)
+				.enter()
+				.append('path')
+				.attr('class', d => 'link port-link ' + (d.classes || ''))
+				.attr('d', portLinkGenerator);
 
-				const popper = node.popper({
-					content: () => popperDiv,
-					popper: {
-						placement: 'top',
+			// Define a function to generate the path for a port edge.
+			function portLinkGenerator(d) {
+				// For parent's out port and child's in port, get positions from the rendered circles.
+				const sourceCircle =
+					g.select(\`circle.node-port[id="\${d.source}"]\`).node() ||
+					document.getElementById(d.source);
+				const targetCircle =
+					g.select(\`circle.node-port[id="\${d.target}"]\`).node() ||
+					document.getElementById(d.target);
+				// Alternatively, find in our portData array:
+				const source = portData.find(n => n.id === d.source);
+				const target = portData.find(n => n.id === d.target);
+				if (!source || !target) return '';
+				const sX = source.x,
+					sY = source.y;
+				const tX = target.x,
+					tY = target.y;
+				// Compute control points for an S-shaped curve:
+				const cp1 = [sX, sY + 270];
+				const cp2 = [tX, tY - 270];
+				return \`M \${sX} \${sY} C \${cp1[0]} \${cp1[1]}, \${cp2[0]} \${cp2[1]}, \${tX} \${tY}\`;
+			}
+
+			// -----------------------------
+			// 8. Drag Behavior: Update Port Nodes and Edges on Drag
+			// -----------------------------
+			function updatePortPositions(d) {
+				// Update portData for the main node d.
+				portData.forEach(p => {
+					if (p.main === d.data.id) {
+						if (p.type === 'in') {
+							p.x = d.x;
+							p.y = d.y - 40;
+						} else if (p.type === 'out') {
+							p.x = d.x;
+							p.y = d.y + 40;
+						}
+					}
+				});
+				// Update the SVG circles for port nodes.
+				portNodeSel.attr('cx', d => d.x).attr('cy', d => d.y);
+			}
+
+			function updatePortEdges() {
+				g.selectAll('path.port-link').attr('d', portLinkGenerator);
+				updateEdgeLabels();
+			}
+
+			// Reassign drag behavior on main nodes to update ports and port edges.
+			nodeGroup.call(
+				d3
+					.drag()
+					.on('start', function (event, d) {
+						d3.select(this).classed('dragging', true);
+					})
+					.on('drag', function (event, d) {
+						d.x = event.x;
+						d.y = event.y;
+						d3.select(this).attr('transform', \`translate(\${d.x}, \${d.y})\`);
+						updatePortPositions(d);
+						updatePortEdges();
+						updateEdgeLabels();
+					})
+					.on('end', function (event, d) {
+						d3.select(this).classed('dragging', false);
+					}),
+			);
+
+			// -----------------------------
+			// 9. Enable Zoom and Pan
+			// -----------------------------
+			// Create and store your zoom behavior instance.
+			const zoomBehavior = d3
+				.zoom()
+				.scaleExtent([0.5, 22])
+				.on('zoom', event => {
+					g.attr('transform', event.transform);
+				});
+
+			// Apply the zoom behavior to your SVG.
+			svg.call(zoomBehavior);
+
+			// Reset any transform so we get a proper bounding box.
+			g.attr('transform', 'translate(0,0)');
+
+			requestAnimationFrame(() => {
+				const bbox = g.node().getBBox();
+				const svgWidth = svg.node().clientWidth;
+				const svgHeight = svg.node().clientHeight;
+				const centerX = svgWidth / 2;
+				const centerY = svgHeight / 2;
+				const graphCenterX = bbox.x + bbox.width / 2;
+				const graphCenterY = bbox.y + bbox.height / 2;
+
+				const initialScale = 15; // desired zoom level
+				// Multiply the graph center coordinates by the scale factor:
+				const translateX = centerX - initialScale * graphCenterX;
+				const translateY = centerY - initialScale * graphCenterY;
+
+				const initialTransform = d3.zoomIdentity
+					.translate(translateX, translateY)
+					.scale(initialScale);
+
+				svg.call(zoomBehavior.transform, initialTransform);
+			});
+
+			// -----------------------------
+			// 10. Update Link Paths Function (if needed)
+			// -----------------------------
+			// In this example, we update only port edges.
+			// If you had additional links to update, call updatePortEdges() accordingly.
+			// 1. Create (or select) a group for edge labels (if not already created)
+			const edgeLabelGroup = g
+				.selectAll('text.edge-label')
+				.data(portEdges, d => d.source + '|' + d.target)
+				.enter()
+				.append('text')
+				.attr('class', d => 'edge-label ' + (d.classes || ''))
+				.attr('dy', -5) // Adjust vertical offset as needed
+				.attr('text-anchor', 'middle')
+				.style('fill', '#000000') // Label color
+				.style('font-size', '60px')
+				.text(d => d.label);
+
+			updateEdgeLabels();
+
+			// 2. Create a function to update label positions based on the port node positions.
+			//    This function calculates the midpoint between the source and target port nodes.
+			function updateEdgeLabels() {
+				g.selectAll('text.edge-label')
+					.data(portEdges, d => d.source + '|' + d.target)
+					.attr('transform', d => {
+						// Use the rendered port nodes (by their IDs)
+						const sourceCircle = g
+							.select(\`circle.node-port[id="\${d.source}"]\`)
+							.node();
+						const targetCircle = g
+							.select(\`circle.node-port[id="\${d.target}"]\`)
+							.node();
+
+						if (sourceCircle && targetCircle) {
+							const sX = +sourceCircle.getAttribute('cx');
+							const sY = +sourceCircle.getAttribute('cy');
+							const tX = +targetCircle.getAttribute('cx');
+							const tY = +targetCircle.getAttribute('cy');
+							const midX = (sX + tX) / 2;
+							const midY = (sY + tY) / 2;
+							return \`translate(\${midX}, \${midY})\`;
+						}
+						return '';
+					})
+					.text(d => d.label);
+			}
+
+			// Create a tooltip div and append it to the body.
+			const tooltip = document.createElement('div');
+			tooltip.id = 'tooltip';
+			tooltip.style.position = 'absolute';
+			tooltip.style.background = 'rgba(0, 0, 0, 0.7)';
+			tooltip.style.color = '#fff';
+			tooltip.style.padding = '5px 10px';
+			tooltip.style.borderRadius = '3px';
+			tooltip.style.fontFamily = "'Manrope', Arial, sans-serif";
+			tooltip.style.fontSize = '18px';
+			tooltip.style.display = 'none'; // Initially hidden
+			document.body.appendChild(tooltip);
+
+			nodeGroup
+				.on('mouseover', function (event, d) {
+					// Set the tooltip content to the full text (or any desired content).
+					tooltip.innerText = d.data.name;
+					tooltip.style.display = 'block';
+
+					// Create a Popper instance to position the tooltip relative to the hovered node.
+					// We pass 'this' (the DOM element for the node) as the reference.
+					Popper.createPopper(this, tooltip, {
+						placement: 'bottom', // or "bottom", "right", etc.
 						modifiers: [
 							{
 								name: 'offset',
 								options: {
-									offset: [0, 10],
+									offset: [0, 8], // Adjust the offset as needed.
 								},
 							},
 						],
-					},
+					});
+				})
+				.on('mousemove', function (event, d) {
+					// Optionally update the tooltip position if needed; Popper generally handles this.
+					// You might want to update the content or force an update if required.
+				})
+				.on('mouseout', function (event, d) {
+					tooltip.style.display = 'none';
 				});
-
-				// Show popper on hover
-				node.on('mouseover', () => {
-					popper.update();
-					popperDiv.style.display = 'block';
-				});
-
-				// Hide popper on mouseout
-				node.on('mouseout', () => {
-					popperDiv.style.display = 'none';
-				});
-			});
-
-			cy.nodes().forEach(node => {
-				let label = node.data('label');
-				let spacedLabel = label.split('').join('\u200A'); // Adds small spaces between letters
-				node.data('label', spacedLabel);
-			});
-
-			// Preprocess node labels for resource-instance-node
-			cy.nodes('.user-node').forEach(node => {
-				const originalLabel = node.data('label'); // Get the original label
-				const wrappedLabel = wrapText(originalLabel, 14); // Wrap the label text
-				node.data('label', wrappedLabel); // Update the node label with the wrapped text
-			});
-			// Track target nodes and offsets dynamically
-			const targetOffsets = new Map(); // Keeps track of target nodes and their current offset
-
-			cy.edges().forEach(edge => {
-				const target = edge.target().id(); // Get the target node ID
-				let offset = targetOffsets.get(target) || 37; // Default starting offset is 37
-
-				// Set the target-text-offset for the edge
-				edge.style('target-text-offset', offset);
-
-				// Update the offset for the next edge targeting the same node
-				targetOffsets.set(target, offset + 105); // Increment by 105
-			});
 		</script>
 	</body>
 </html>
+
 
 `;
 
