@@ -44,8 +44,12 @@ export default function Template({ options: { key, local, template } }: Props) {
 	return (
 		<>
 			<AuthProvider permit_key={key} scope={'environment'}>
-                <ApplyComponent keyv={key} local={local} template={template}></ApplyComponent>
-            </AuthProvider>
+				<ApplyComponent
+					keyv={key}
+					local={local}
+					template={template}
+				></ApplyComponent>
+			</AuthProvider>
 		</>
 	);
 }
