@@ -7,16 +7,10 @@ terraform {
   }
 }
 
-variable "PERMIT_API_KEY" {
-  type        = string
-  description = "The API key for the Permit.io API"
-}
-
 provider "permitio" {
   api_url = "https://api.permit.io"
-  api_key = var.PERMIT_API_KEY
+  api_key = {{API_KEY}}
 }
-
 
 resource "permitio_resource" "visit" {
   name        = "Visit"

@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render } from 'ink-testing-library';
 import Policy from '../source/commands/opa/policy';
 import delay from 'delay';
-import * as keytar from "keytar"
+import * as keytar from 'keytar';
 global.fetch = vi.fn();
 const enter = '\r';
 vi.mock('keytar', () => {
@@ -12,7 +12,6 @@ vi.mock('keytar', () => {
 		setPassword: vi.fn().mockResolvedValue(demoPermitKey),
 		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
 		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
-
 	};
 	return { ...keytar, default: keytar };
 });
@@ -25,7 +24,7 @@ vi.mock('../source/lib/auth.js', async () => {
 		loadAuthToken: vi.fn(() => demoPermitKey),
 	};
 });
-vi.mock('../source/hooks/useApiKeyApi', async() => {
+vi.mock('../source/hooks/useApiKeyApi', async () => {
 	const original = await vi.importActual('../source/hooks/useApiKeyApi');
 	return {
 		...original,
@@ -50,12 +49,11 @@ vi.mock('../source/hooks/useApiKeyApi', async() => {
 					project_id: 'proj1',
 					organization_id: 'org1',
 				},
-				error: null
-			})
+				error: null,
+			}),
 		}),
-	}
+	};
 });
-
 
 describe('OPA Policy Command', () => {
 	it('should render the policy command', async () => {
