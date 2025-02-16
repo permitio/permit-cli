@@ -2,7 +2,6 @@ import React from 'react';
 import { option } from 'pastel';
 import zod from 'zod';
 import { type infer as zInfer } from 'zod';
-import { Text } from 'ink';
 import { AuthProvider } from '../../../components/AuthProvider.js';
 import ApplyComponent from '../../../components/env/template/ApplyComponent.js';
 export const description = 'A apply command to run the TF file';
@@ -45,7 +44,7 @@ export default function Template({ options: { key, local, template } }: Props) {
 		<>
 			<AuthProvider permit_key={key} scope={'environment'}>
 				<ApplyComponent
-					keyv={key}
+					apiKey={key}
 					local={local}
 					template={template}
 				></ApplyComponent>
