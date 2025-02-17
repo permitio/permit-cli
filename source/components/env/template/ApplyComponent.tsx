@@ -25,6 +25,9 @@ export default function ApplyComponent({ apiKey, local, template }: Props) {
 		value: file,
 	}));
 	if (template) {
+		if (local) {
+			//Todo
+		}
 		ApplyTemplate(template, key)
 			.then(message => {
 				if (message.startsWith('Error')) {

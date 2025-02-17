@@ -1,6 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import os from 'os';
 import { TERRAFORM_PERMIT_URL } from '../../../config.js';
+import { exec } from 'child_process';
 
 export function getFiles(): string[] {
 	const directory = 'source/templates';
@@ -35,6 +37,41 @@ export async function ApplyTemplate(
 		} else {
 			return `Success: The terraform template is applied successfully.`;
 		}
+	} catch (error) {
+		return `Error: ${error instanceof Error ? error.message : (error as string)}`;
+	}
+}
+
+export async function ApplyTemplateLocally(
+	fileName: string,
+	apiKey: string,
+): Promise<string> {
+	try {
+		const fileContent = getFileContent(fileName).replace('{{API_KEY}}', apiKey);
+
+		const tempDir = path.join(os.tmpdir(), `teraform-temp-${Date.now()}`);
+		fs.mkdirSync(tempDir, { recursive: true });
+
+		const tempPath = path.join(tempDir, 'main.tf');
+		fs.writeFileSync(tempPath, fileContent, 'utf-8');
+
+		const runCommand = (cmd: string) => {
+			return new Promise<string>((resolve, reject) => {
+				exec(cmd, { cwd: tempDir }, (error, stdout, stderr) => {
+					if (error) return reject(`Error: ${error.message}`);
+					if (stderr) return reject(`Terraform Error: ${stderr}`);
+					resolve(stdout);
+				});
+			});
+		};
+		await runCommand('terrafrom init');
+		const applyOutput = await runCommand(
+			`terraform apply -auto-approve ${tempPath}`,
+		);
+
+		fs.unlinkSync(tempPath);
+		fs.rmdirSync(tempDir, { recursive: true });
+		return `Success: Terraform Appled successfully \n Terraform Output: ${applyOutput}`;
 	} catch (error) {
 		return `Error: ${error instanceof Error ? error.message : (error as string)}`;
 	}
