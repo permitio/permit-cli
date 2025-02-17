@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { getFiles, ApplyTemplate } from '../../../lib/env/template/utils.js';
+import {
+	getFiles,
+	ApplyTemplate,
+	ApplyTemplateLocally,
+} from '../../../lib/env/template/utils.js';
 import SelectInput from 'ink-select-input';
 import { Text } from 'ink';
 import { useAuth } from '../../AuthProvider.js';
@@ -26,7 +30,19 @@ export default function ApplyComponent({ apiKey, local, template }: Props) {
 	}));
 	if (template) {
 		if (local) {
-			//Todo
+			ApplyTemplateLocally(template, key)
+				.then(message => {
+					if (message.startsWith('Error')) {
+						setErrorMessage(message);
+					} else {
+						setSuccessMessage(message);
+					}
+				})
+				.catch(error => {
+					setErrorMessage(
+						error instanceof Error ? error.message : (error as string),
+					);
+				});
 		}
 		ApplyTemplate(template, key)
 			.then(message => {
@@ -44,7 +60,19 @@ export default function ApplyComponent({ apiKey, local, template }: Props) {
 	}
 	const handleSelect = async (item: SelectItemType) => {
 		if (local) {
-			// To be implemented
+			ApplyTemplateLocally(item.value, key)
+				.then(message => {
+					if (message.startsWith('Error')) {
+						setErrorMessage(message);
+					} else {
+						setSuccessMessage(message);
+					}
+				})
+				.catch(error => {
+					setErrorMessage(
+						error instanceof Error ? error.message : (error as string),
+					);
+				});
 		} else {
 			const message = await ApplyTemplate(item.value, key);
 			if (message.startsWith('Error')) {
