@@ -3,6 +3,7 @@ type ResourceInstance = {
 	label: string;
 	value: string;
 	id: string;
+	id2: string;
 };
 
 type Relationship = {
@@ -28,7 +29,7 @@ export const generateGraphData = (
 ) => {
 	const nodes: { data: { id: string; label: string }; classes?: string }[] =
 		resources.map(resource => ({
-			data: { id: resource.id, label: ` ${resource.label}` },
+			data: { id: resource.id, label: ` ${resource.label}`, id2: resource.id2 },
 			classes: 'resource-instance-node',
 		}));
 
@@ -43,19 +44,29 @@ export const generateGraphData = (
 			if (!existingNodeIds.has(relation.Object)) {
 				nodes.push({
 					data: { id: relation.Object, label: `${relation.Object}` },
+					classes: 'object-node',
 				});
 				existingNodeIds.add(relation.Object);
 			}
 
 			if (resourceId !== relation.Object) {
-				edges.push({
-					data: {
-						source: resourceId,
-						target: relation.Object,
-						label: `IS ${relation.label} OF`,
-					},
-					classes: 'relationship-connection', // Class for orange lines
-				});
+				// Check if an edge with the same source, target, and label already exists.
+				const exists = edges.some(
+					edge =>
+						edge.data.source === resourceId &&
+						edge.data.target === relation.Object &&
+						edge.data.label === `IS ${relation.label} OF`,
+				);
+				if (!exists) {
+					edges.push({
+						data: {
+							source: resourceId,
+							target: relation.Object,
+							label: `IS ${relation.label} OF`,
+						},
+						classes: 'relationship-connection',
+					});
+				}
 			}
 		});
 	});
@@ -76,14 +87,23 @@ export const generateGraphData = (
 			}
 
 			if (relation.subjectId !== relation.objectId) {
-				edges.push({
-					data: {
-						source: relation.subjectId,
-						target: relation.objectId,
-						label: relation.label,
-					},
-					classes: 'relationship-connection', // Class for orange lines
-				});
+				// Check if an edge with the same source, target, and label already exists.
+				const exists = edges.some(
+					edge =>
+						edge.data.source === relation.subjectId &&
+						edge.data.target === relation.objectId &&
+						edge.data.label === relation.label,
+				);
+				if (!exists) {
+					edges.push({
+						data: {
+							source: relation.subjectId,
+							target: relation.objectId,
+							label: relation.label,
+						},
+						classes: 'relationship-connection', // Class for orange lines
+					});
+				}
 			}
 		});
 	});

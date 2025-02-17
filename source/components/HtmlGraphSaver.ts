@@ -50,20 +50,20 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 			svg {
 				width: 100vw;
 				height: calc(100vh - 50px);
-				background: linear-gradient(180deg, #fff1e7 0%, #ffe0d2 100%);
-				background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAj0lEQVR4Ae3YMQoEIRBE0Ro1NhHvfz8xMhXc3RnYGyjFwH8n6E931NfnRy8W9HIEuBHgRoAbAW4EuBHgRoAbAW4EuBHglrTZGEOtNcUYVUpRzlknbd9A711rLc05n5DTtgfcw//dWzhte0CtVSklhRCeEzrt4jNnRoAbAW4EuBHgRoAbAW4EuBHgRoAbAW5fFH4dU6tFNJ4AAAAASUVORK5CYII=');
+				background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cdefs%3E%3Cpattern id='squarePattern' x='0' y='0' width='20' height='20' patternUnits='userSpaceOnUse'%3E%3Crect width='20' height='20' fill='white'/%3E%3Crect x='2' y='2' width='1.3' height='1.3' fill='%23ccc'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23squarePattern)'/%3E%3C/svg%3E")
+					repeat;
 			}
 			/* Main node style */
 			.node-main rect {
-				fill: #ffffff;
-				stroke: rgb(211, 179, 250);
+				fill: rgb(206, 231, 254);
+				stroke: rgb(206, 231, 254);
 				stroke-width: 10px;
-				rx: 65px;
-				ry: 65px;
+				rx: 73px;
+				ry: 73px;
 			}
 			.node-main text {
-				fill: rgb(151, 78, 242);
-				font-size: 55px;
+				fill: rgb(0, 106, 220);
+				font-size: 85px;
 				font-weight: 700;
 				pointer-events: none;
 				font-family: 'Manrope', Arial, sans-serif;
@@ -73,14 +73,14 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 
 			.node-text.user-node {
 				/* Specific styling for text on user nodes */
-				fill: #ff6600; /* for example */
+				fill: rgb(67, 48, 43); /* for example */
 				dominant-baseline: middle;
 				text-anchor: middle;
 			}
 
 			.node-text.resource-instance-node {
 				/* Specific styling for text on resource instance nodes */
-				fill: #7e23ec;
+				fill: rgb(0, 106, 220);
 				dominant-baseline: middle;
 				text-anchor: middle;
 			}
@@ -89,8 +89,8 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
  USER NODE SPECIFIC STYLE
 ---------------------------------*/
 			.node-main.user-node rect {
-				fill: #fff0e7;
-				stroke: #fab587;
+				fill: rgb(234, 221, 215);
+				stroke: rgb(234, 221, 215);
 				stroke-width: 15px;
 			}
 
@@ -98,34 +98,47 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 //   RESOURCE INSTANCE NODE STYLE
 ---------------------------------*/
 			.node-main.resource-instance-node rect {
-				fill: #f4eefc;
-				stroke: #caa5f7;
+				fill: rgb(206, 231, 254);
+				stroke: rgb(206, 231, 254);
 			}
 
 			/* Port node style */
 			.node-port {
-				fill: #ffffff;
-				stroke: rgb(211, 179, 250);
-				stroke-width: 2px;
+				fill: rgb(94, 176, 239);
+				stroke: rgb(255, 255, 255);
+				stroke-width: 3px;
 			}
+			.node-port.user-node {
+				fill: rgb(161, 140, 130);
+				stroke: rgb(255, 255, 255);
+				stroke-width: 3px;
+			}
+
+			.node-port.resource-instance-node {
+				fill: rgb(94, 176, 239);
+				stroke: rgb(255, 255, 255);
+				stroke-width: 4px;
+			}
+
 			/* Link (edge) style for port edges */
 			.link {
 				fill: none;
-				stroke: rgb(18, 165, 148);
-				stroke-width: 3px;
-				stroke-dasharray: 30, 25;
+				stroke: rgb(161, 140, 130);
+				stroke-width: 4px;
+				stroke-dasharray: 45, 40;
 				animation: dash 0.5s linear infinite;
 			}
 			@keyframes dash {
 				to {
-					stroke-dashoffset: -55;
+					stroke-dashoffset: -85;
 				}
 			}
 			/* -------------------------------
    RELATIONSHIP CONNECTION EDGES
 ---------------------------------*/
 			.link.relationship-connection {
-				stroke: #f76a0c;
+				stroke: rgb(163, 131, 117);
+				stroke-width: 5;
 			}
 
 			/* -------------------------------
@@ -152,21 +165,58 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 			// For example:
 			const graphData = ${JSON.stringify(graphData, null, 2)};
 
-			function flatToForest(flatNodes, flatEdges) {
+			function flatToForestLayered(flatNodes, flatEdges) {
 				const nodeMap = new Map();
+				const relationshipCount = {};
 
-				// Create a node object for each flat node.
+				// Initialize relationship count for each node.
 				flatNodes.forEach(n => {
-					nodeMap.set(n.data.id, {
-						id: n.data.id,
-						name: n.data.label.trim(),
-						classes: n.classes,
-						children: [],
-						incomingEdges: [], // Optionally store additional edge labels here.
-					});
+					relationshipCount[n.data.id] = 0;
+				});
+				flatEdges.forEach(e => {
+					const s = e.data.source,
+						t = e.data.target;
+					if (relationshipCount[s] !== undefined) relationshipCount[s]++;
+					if (relationshipCount[t] !== undefined) relationshipCount[t]++;
 				});
 
-				// Keep track of which nodes have already been attached as a child.
+				// Create a unique node object for each flat node and assign a layer.
+				flatNodes.forEach(n => {
+					if (!nodeMap.has(n.data.id)) {
+						let layer = 1; // default layer
+						const classesStr = n.classes || '';
+						// For user-nodes: if they have any relationships, assign layer 2.
+						if (classesStr.includes('user-node')) {
+							layer = relationshipCount[n.data.id] > 0 ? 2 : 1;
+						}
+						// For resource-instance-nodes: no relationships → layer 1; one → layer 3; more → layer 4.
+						else if (classesStr.includes('resource-instance-node')) {
+							if (relationshipCount[n.data.id] === 0) {
+								layer = 1;
+							} else if (relationshipCount[n.data.id] === 1) {
+								layer = 3;
+							} else {
+								layer = 4;
+							}
+						}
+						// For object-nodes, assign layer 5.
+						else if (classesStr.includes('object-node')) {
+							layer = 5;
+						}
+
+						nodeMap.set(n.data.id, {
+							id: n.data.id,
+							id2: n.data.id2 || '',
+							name: n.data.label.trim(),
+							classes: n.classes,
+							children: [],
+							incomingEdges: [],
+							layer: layer,
+						});
+					}
+				});
+
+				// Keep track of which nodes have been attached as children.
 				const attached = new Set();
 
 				// Process each edge.
@@ -174,42 +224,40 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 					const sourceId = edge.data.source;
 					const targetId = edge.data.target;
 					if (nodeMap.has(sourceId) && nodeMap.has(targetId)) {
-						// Get the source and target node objects.
 						const sourceNode = nodeMap.get(sourceId);
 						const targetNode = nodeMap.get(targetId);
-
-						// If this target hasn't been attached yet, attach it as a child of source.
 						if (!attached.has(targetId)) {
 							sourceNode.children.push(targetNode);
 							attached.add(targetId);
-							// Optionally, store this edge's label on the target node:
 							targetNode.edgeLabel = edge.data.label;
 						} else {
-							// If the target is already attached, you can optionally store additional edge labels.
-							targetNode.incomingEdges.push(edge.data.label);
+							if (!targetNode.extraRelationships) {
+								targetNode.extraRelationships = [];
+							}
+							targetNode.extraRelationships.push({
+								source: sourceId,
+								label: edge.data.label,
+							});
 						}
 					}
 				});
 
-				// The roots are those nodes that never appear as a target.
+				// Build the forest by iterating over the unique nodes.
 				const forest = [];
-				flatNodes.forEach(n => {
-					if (!attached.has(n.data.id)) {
-						forest.push(nodeMap.get(n.data.id));
+				nodeMap.forEach((node, id) => {
+					if (!attached.has(id)) {
+						forest.push(node);
 					}
 				});
-
-				// If no root is found (shouldn't normally happen), return all nodes.
 				if (forest.length === 0) {
-					flatNodes.forEach(n => forest.push(nodeMap.get(n.data.id)));
+					nodeMap.forEach(node => forest.push(node));
 				}
-
 				return forest;
 			}
 
-			const forest = flatToForest(graphData.nodes, graphData.edges);
-
-			// If multiple roots, wrap them in a dummy root:
+			const forest = flatToForestLayered(graphData.nodes, graphData.edges);
+			console.log('Forest:', forest);
+			// Wrap the forest in a dummy root.
 			const dummyRoot = { id: 'dummy_root', name: 'Root', children: forest };
 
 			// Create D3 hierarchy.
@@ -218,48 +266,174 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 			// -----------------------------
 			// 2. LAYOUT: Compute Tree Layout
 			// -----------------------------
-			const layoutWidth = window.innerWidth * 100; // Expand horizontal space as needed.
-			const layoutHeight = (window.innerHeight - 100) * 4; // Vertical space remains as needed.
+			const layoutWidth = window.innerWidth * 100; //  horizontal space 
+			const layoutHeight = (window.innerHeight - 100) * 4; // Vertical space
 
-			// For a top-to-bottom layout, we want the root at the top.
-			// One common approach is to set size as [width, height] and then use a vertical link generator.
 			const treeLayout = d3
 				.tree()
 				.size([layoutWidth, layoutHeight])
-				.separation((a, b) => (a.parent === b.parent ? 1.5 : 2.5));
+				.separation((a, b) => (a.parent === b.parent ? 2 : 3));
 
 			treeLayout(rootHierarchy);
 
+			// For each node (except dummy root), if a layer property exists, force d.y = layer * spacing.
+			const layerSpacing = 800;
+			rootHierarchy.descendants().forEach(d => {
+				if (d.depth > 0 && d.data.layer !== undefined) {
+					d.y = d.data.layer * layerSpacing;
+				}
+			});
+			// --- horizontal spacing without disturbing user nodes ---
+			const minSpacing = 1250; 
+
+			const nodesByLayer = d3.group(
+				rootHierarchy
+					.descendants()
+					.filter(
+						d => d.data.id !== 'dummy_root' && d.data.layer !== undefined,
+					),
+				d => d.data.layer,
+			);
+
+			// For each layer, check nodes in order of x and nudge non-user nodes if they’re too close.
+			nodesByLayer.forEach((nodes, layer) => {
+				nodes.sort((a, b) => a.x - b.x);
+				for (let i = 1; i < nodes.length; i++) {
+					const prev = nodes[i - 1];
+					const curr = nodes[i];
+					if ((curr.data.classes || '').includes('user-node')) continue;
+					if (curr.x - prev.x < minSpacing) {
+						curr.x = prev.x + minSpacing;
+					}
+				}
+			});
+			// --- Horizontal Alignment Adjustment with Combined Layers 4 & 5 and Clamping ---
+			// Compute baseline x from layers 2 and 3.
+			const baselineNodes = rootHierarchy
+				.descendants()
+				.filter(
+					d =>
+						d.data.layer !== undefined &&
+						(d.data.layer === 2 || d.data.layer === 3),
+				);
+			const baselineAvgX = d3.mean(baselineNodes, d => d.x);
+
+			const group1 = rootHierarchy
+				.descendants()
+				.filter(d => d.data.layer !== undefined && d.data.layer === 1);
+
+			const group45 = rootHierarchy
+				.descendants()
+				.filter(
+					d =>
+						d.data.layer !== undefined &&
+						(d.data.layer === 4 || d.data.layer === 5),
+				);
+
+			const minAllowedX = 50;
+			const maxAllowedX = layoutWidth - 50; 
+
+			// Adjust layer 1: shift its nodes so that the group average x matches the baseline.
+			if (group1.length > 0) {
+				const group1AvgX = d3.mean(group1, d => d.x);
+				const shift1 = baselineAvgX - group1AvgX;
+				group1.forEach(d => {
+					d.x += shift1;
+					d.x = Math.max(minAllowedX, Math.min(d.x, maxAllowedX));
+				});
+			}
+
+			// Adjust combined group (layers 4 and 5):
+			if (group45.length > 0) {
+				const group45AvgX = d3.mean(group45, d => d.x);
+				const shift45 = baselineAvgX - group45AvgX;
+				group45.forEach(d => {
+					d.x += shift45;
+					d.x = Math.max(minAllowedX, Math.min(d.x, maxAllowedX));
+				});
+
+				// Sort the group by x.
+				group45.sort((a, b) => a.x - b.x);
+				const maxGap = 20050; 
+				for (let i = 1; i < group45.length; i++) {
+					const gap = group45[i].x - group45[i - 1].x;
+					if (gap > maxGap) {
+						group45[i].x = group45[i - 1].x + maxGap;
+					}
+				}
+			}
+
+			// ---- NEW: Reassign resource-instance nodes in layer 4 to layer 7 if too far horizontally from connected user nodes ----
+			const maxAllowedDistance = 1000; 
+
+			rootHierarchy.descendants().forEach(d => {
+				// Check only resource-instance nodes currently in layer 4.
+				if (
+					d.data.layer === 4 &&
+					(d.data.classes || '').includes('resource-instance-node')
+				) {
+					// Find all user nodes that are connected to this resource instance.
+					const connectedUserXs = [];
+					// Iterate over graphData.edges to find edges where this node is the target.
+					graphData.edges.forEach(e => {
+						if (e.data.target === d.data.id) {
+							const sourceNode = graphData.nodes.find(
+								n =>
+									n.data.id === e.data.source &&
+									(n.classes || '').includes('user-node'),
+							);
+							if (sourceNode) {
+								const sourceLayoutNode = rootHierarchy
+									.descendants()
+									.find(n => n.data.id === sourceNode.data.id);
+								if (sourceLayoutNode) {
+									connectedUserXs.push(sourceLayoutNode.x);
+								}
+							}
+						}
+					});
+					if (connectedUserXs.length > 0) {
+						const avgUserX = d3.mean(connectedUserXs);
+						// If the horizontal distance exceeds the maximum allowed, update the layer to 7.
+						if (Math.abs(d.x - avgUserX) > maxAllowedDistance) {
+							d.data.layer = 7;
+							d.y = 6.5 * layerSpacing;
+						}
+					}
+				}
+			});
+
 			// -----------------------------
-			// 3. RENDERING: Create SVG and Container Group
+			// 3. RENDERING: Create SVG and Container Group (unchanged)
 			// -----------------------------
 			const svg = d3
 				.select('svg')
 				.attr('viewBox', \`0 0 \${layoutWidth + 100} \${layoutHeight + 100}\`);
+
+			const defs = svg.append('defs');
+			defs
+				.append('pattern')
+				.attr('id', 'squarePattern')
+				.attr('x', 0)
+				.attr('y', 0)
+				.attr('width', 90)
+				.attr('height', 90)
+				.attr('patternUnits', 'userSpaceOnUse')
+				.html(
+					"<rect width='120' height='120' fill='white' />" +
+						"<rect x='18' y='18' width='7' height='7' fill='#ccc' />",
+				);
+
 			const g = svg.append('g').attr('transform', 'translate(50,50)');
 
-			// -----------------------------
-			// 4. RENDER MAIN LINKS (if needed)
-			// -----------------------------
-			// (We will later add port edges and use them for connection.)
-			// For now, render links from the hierarchy using a vertical link generator.
-			const linkGenerator = d3
-				.linkVertical()
-				.x(d => d.x)
-				.y(d => d.y);
+			g.insert('rect', ':first-child')
+				.attr('x', -100000)
+				.attr('y', -100000)
+				.attr('width', layoutWidth + 200000)
+				.attr('height', layoutHeight + 200000)
+				.attr('fill', 'url(#squarePattern)');
 
-			// Uncomment if you want to see the original links:
-			// g.selectAll("path.link")
-			//   .data(rootHierarchy.links())
-			//   .enter()
-			//   .append("path")
-			//   .attr("class", "link")
-			//   .attr("d", linkGenerator);
-
-			// -----------------------------
-			// 5. RENDER MAIN NODES
-			// -----------------------------
-			// Render nodes from the hierarchy (excluding the dummy root)
+			
 			const mainNodes = rootHierarchy
 				.descendants()
 				.filter(d => d.data.id !== 'dummy_root');
@@ -277,11 +451,9 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 							d3.select(this).classed('dragging', true);
 						})
 						.on('drag', function (event, d) {
-							// Update node coordinates.
 							d.x = event.x;
 							d.y = event.y;
 							d3.select(this).attr('transform', \`translate(\${d.x}, \${d.y})\`);
-							// Update port nodes and port edges.
 							updatePortPositions(d);
 							updatePortEdges();
 						})
@@ -290,48 +462,189 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 						}),
 				);
 
-			// Append rectangle and text for each main node.
-			nodeGroup
-				.append('rect')
-				.attr('width', 650)
-				.attr('height', 120)
-				.attr('x', -325)
-				.attr('y', -60);
+			// Helper function to truncate strings.
+			function truncateTo7(str = '') {
+				return str.length > 7 ? str.substring(0, 7) + '...' : str;
+			}
 
-			nodeGroup
-				.append('text')
-				.attr('class', d => 'node-text ' + (d.data.classes || ''))
-				.attr('dy', '0.15em')
-				.attr('text-anchor', 'middle')
-				.attr('dominant-baseline', 'middle')
-				.text(d => {
-					const fullText = d.data.name;
-					return fullText.length > 17
-						? fullText.substring(0, 15) + '...'
-						: fullText;
+			nodeGroup.each(function (d) {
+				const nodeSel = d3.select(this);
+				nodeSel.selectAll('*').remove();
+
+				let textSel;
+				const classesStr = d.data.classes || '';
+
+				if (classesStr.includes('resource-instance-node')) {
+					// -----------------------------------------
+					//  resource-instance-node handling
+					// -----------------------------------------
+					const fullText = d.data.name || '';
+					const [resourceTypeRaw, resourceIdRaw] = fullText.split('#');
+					const resourceType = truncateTo7(resourceTypeRaw || '');
+					const resourceId = truncateTo7(resourceIdRaw || '');
+					textSel = nodeSel
+						.append('text')
+						.attr('class', 'node-text resource-instance-text')
+						.attr('text-anchor', 'middle')
+						.attr('dominant-baseline', 'middle')
+						.attr('dy', '0.15em');
+					textSel
+						.append('tspan')
+						.text(resourceType)
+						.attr('fill', 'rgb(0, 106, 220)');
+					textSel.append('tspan').text('#').attr('fill', 'rgb(94, 176, 239)');
+					textSel
+						.append('tspan')
+						.text(resourceId)
+						.attr('fill', 'rgb(0, 106, 220)');
+
+					// Insert the diamond icon :
+					requestAnimationFrame(() => {
+						const bbox = textSel.node().getBBox();
+						const diamondMargin = 10;
+						const diamondWidth = 24;
+						const diamondScale = 2.9;
+						const diamondCenterX =
+							bbox.x +
+							bbox.width -
+							diamondMargin -
+							(diamondWidth * diamondScale) / 2;
+						const diamondCenterY = bbox.y + bbox.height / 1.6;
+
+						nodeSel
+							.append('path')
+							.attr(
+								'd',
+								\`M 16 8 L 23.5 12 L 16 16 L 12 23.5 L 8 16 L 0.5 12 L 8 8 L 12 0.5 L 16 8 Z\`,
+							)
+							.attr('fill', 'none')
+							.attr('stroke', 'rgb(0, 106, 220)')
+							.attr('stroke-width', 2.3)
+							.attr(
+								'transform',
+								\`
+          translate(\${diamondCenterX}, \${diamondCenterY})
+          scale(\${diamondScale})
+          translate(-10, -10)
+        \`,
+							);
+					});
+				} else if (classesStr.includes('user-node')) {
+					// -----------------------------------------
+					// user-node handling WITH a "person+star" icon
+					// -----------------------------------------
+					textSel = nodeSel
+						.append('text')
+						.attr('class', 'node-text user-node')
+						.attr('text-anchor', 'middle')
+						.attr('dominant-baseline', 'middle')
+						.attr('dy', '0.15em')
+						.text(d.data.name);
+
+					requestAnimationFrame(() => {
+						const bbox = textSel.node().getBBox();
+
+						const iconMargin = 10;
+						const iconWidth = 24;
+						const iconScale = 3.9;
+
+						const iconCenterX = bbox.x + 30;
+						const iconCenterY = bbox.y + bbox.height / 1.6;
+
+						const personPlusStarPath = \`
+  M12,2
+  C9.79,2,8,3.79,8,6
+  C8,8.21,9.79,10,12,10
+  C14.21,10,16,8.21,16,6
+  C16,3.79,14.21,2,12,2
+  Z
+
+  M12,10
+  A8 8 0 0 1 4,18
+
+  M20,15
+  L21,17
+  L23,17.5
+  L21,18.5
+  L21.5,20.5
+  L20,19.5
+  L18.5,20.5
+  L19,18.5
+  L17,17.5
+  L19,17
+  Z
+\`.trim();
+
+						nodeSel
+							.append('path')
+							.attr('d', personPlusStarPath.trim())
+							.attr('fill', 'none')
+							.attr('stroke', 'rgb(67, 48, 43)')
+							.attr('stroke-width', 2.3)
+							.attr(
+								'transform',
+								\`
+          translate(\${iconCenterX}, \${iconCenterY})
+          scale(\${iconScale})
+        translate(-13.5, -11.25)
+        \`,
+							);
+					});
+				} else {
+					// -----------------------------------------
+					// Fallback for all other node types
+					// -----------------------------------------
+					textSel = nodeSel
+						.append('text')
+						.attr('class', 'node-text ' + classesStr)
+						.attr('text-anchor', 'middle')
+						.attr('dominant-baseline', 'middle')
+						.attr('dy', '0.15em')
+						.text(d.data.name);
+				}
+
+				// Insert the rounded rectangle behind the text (common to all):
+				requestAnimationFrame(() => {
+					const bbox = textSel.node().getBBox();
+					const paddingX = 40;
+					const paddingY = 42;
+					const rectWidth = bbox.width + paddingX;
+					const rectHeight = bbox.height + paddingY;
+
+					nodeSel
+						.insert('rect', 'text')
+						.attr('width', rectWidth)
+						.attr('height', rectHeight)
+						.attr('x', -rectWidth / 2)
+						.attr('y', (-rectHeight + 1.3) / 2)
+						.attr('rx', 12.5)
+						.attr('ry', 12.5);
 				});
+			});
 
 			// -----------------------------
 			// 6. RENDER DUMMY PORT NODES
 			// -----------------------------
-			// For each main node, we create two dummy port nodes:
-			// One for incoming (id: mainID_in) and one for outgoing (id: mainID_out).
-			// Compute an array for port nodes based on the mainNodes data.
 			const portData = [];
 			mainNodes.forEach(d => {
+				const inheritedClass = d.data.classes || '';
 				portData.push({
 					id: d.data.id + '_in',
 					main: d.data.id,
 					type: 'in',
-					x: d.x, // Initially, same as main node.
-					y: d.y - 70, // Offset above.
+					x: d.x,
+					y: d.y - 75,
+					classes: inheritedClass,
+					layer: d.data.layer,
 				});
 				portData.push({
 					id: d.data.id + '_out',
 					main: d.data.id,
 					type: 'out',
-					x: d.x, // Initially, same as main node.
-					y: d.y + 70, // Offset below.
+					x: d.x,
+					y: d.y + 78,
+					classes: inheritedClass,
+					layer: d.data.layer,
 				});
 			});
 
@@ -340,21 +653,19 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 				.data(portData, d => d.id)
 				.enter()
 				.append('circle')
-				.attr('class', 'node-port')
+				.attr('class', d => \`node-port \${d.classes}\`)
 				.attr('id', d => d.id)
-				.attr('r', 5)
+				.attr('r', 10)
 				.attr('cx', d => d.x)
 				.attr('cy', d => d.y);
 
 			// -----------------------------
-			// 7. RENDER PORT EDGES
+			// 7. RENDER PORT EDGES 
 			// -----------------------------
-			// For every link in the hierarchy (parent-to-child),
-			// create a new edge that connects the parent's outgoing port to the child's incoming port.
 			const portEdges = rootHierarchy.links().map(link => ({
 				source: link.source.data.id + '_out',
 				target: link.target.data.id + '_in',
-				label: link.target.data.edgeLabel, // optional
+				label: link.target.data.edgeLabel,
 				classes:
 					(
 						graphData.edges.find(
@@ -365,25 +676,49 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 					).classes || 'relationship-connection',
 			}));
 			console.log(portEdges);
-			// Render these port edges.
+
+			// Generate extra port edges from extraRelationships by traversing the hierarchy.
+			const extraPortEdges = [];
+			rootHierarchy.descendants().forEach(d => {
+				if (d.data.extraRelationships) {
+					d.data.extraRelationships.forEach(rel => {
+						extraPortEdges.push({
+							source: rel.source + '_out',
+							target: d.data.id + '_in',
+							label: rel.label,
+							classes: 'relationship-connection extra',
+						});
+					});
+				}
+			});
+
+			const allEdges = portEdges.concat(extraPortEdges);
+
+			// Render extra port edges.
+			const extraPortEdgeSel = g
+				.selectAll('path.extra-port-link')
+				.data(extraPortEdges)
+				.enter()
+				.append('path')
+				.attr('class', d => 'link extra-port-link ' + (d.classes || ''))
+				.attr('d', portLinkGenerator) 
+				.style('opacity', 0.5);
+
 			const portEdgeSel = g
 				.selectAll('path.port-link')
 				.data(portEdges)
 				.enter()
 				.append('path')
 				.attr('class', d => 'link port-link ' + (d.classes || ''))
-				.attr('d', portLinkGenerator);
-
-			// Define a function to generate the path for a port edge.
+				.attr('d', portLinkGenerator)
+				.style('opacity', 0.5);
 			function portLinkGenerator(d) {
-				// For parent's out port and child's in port, get positions from the rendered circles.
 				const sourceCircle =
 					g.select(\`circle.node-port[id="\${d.source}"]\`).node() ||
 					document.getElementById(d.source);
 				const targetCircle =
 					g.select(\`circle.node-port[id="\${d.target}"]\`).node() ||
 					document.getElementById(d.target);
-				// Alternatively, find in our portData array:
 				const source = portData.find(n => n.id === d.source);
 				const target = portData.find(n => n.id === d.target);
 				if (!source || !target) return '';
@@ -391,38 +726,45 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 					sY = source.y;
 				const tX = target.x,
 					tY = target.y;
-				// Compute control points for an S-shaped curve:
-				const cp1 = [sX, sY + 270];
-				const cp2 = [tX, tY - 270];
+				// Set default control points.
+				let cp1 = [sX, sY + 270];
+				let cp2 = [tX, tY - 270];
+
+				// If the target node is in layer 4, adjust the control points.
+				if (target.layer === 4) {
+					cp1 = [sX, sY + 600];
+					cp2 = [tX, tY - 600];
+				}
+				if (target.layer === 7) {
+					cp1 = [sX, sY + 5000];
+					cp2 = [tX, tY - 1000];
+				}
+
 				return \`M \${sX} \${sY} C \${cp1[0]} \${cp1[1]}, \${cp2[0]} \${cp2[1]}, \${tX} \${tY}\`;
 			}
 
 			// -----------------------------
-			// 8. Drag Behavior: Update Port Nodes and Edges on Drag
+			// 8. DRAG BEHAVIOR: Update Port Nodes and Edges on Drag
 			// -----------------------------
 			function updatePortPositions(d) {
-				// Update portData for the main node d.
 				portData.forEach(p => {
 					if (p.main === d.data.id) {
 						if (p.type === 'in') {
 							p.x = d.x;
-							p.y = d.y - 40;
+							p.y = d.y - 75;
 						} else if (p.type === 'out') {
 							p.x = d.x;
-							p.y = d.y + 40;
+							p.y = d.y + 80;
 						}
 					}
 				});
-				// Update the SVG circles for port nodes.
 				portNodeSel.attr('cx', d => d.x).attr('cy', d => d.y);
 			}
-
 			function updatePortEdges() {
 				g.selectAll('path.port-link').attr('d', portLinkGenerator);
+				g.selectAll('path.extra-port-link').attr('d', portLinkGenerator);
 				updateEdgeLabels();
 			}
-
-			// Reassign drag behavior on main nodes to update ports and port edges.
 			nodeGroup.call(
 				d3
 					.drag()
@@ -443,36 +785,76 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 			);
 
 			// -----------------------------
-			// 9. Enable Zoom and Pan
+			// 9. ENABLE ZOOM AND PAN 
 			// -----------------------------
-			// Create and store your zoom behavior instance.
 			const zoomBehavior = d3
 				.zoom()
-				.scaleExtent([0.5, 22])
+				.scaleExtent([6, 22])
 				.on('zoom', event => {
 					g.attr('transform', event.transform);
 				});
-
-			// Apply the zoom behavior to your SVG.
 			svg.call(zoomBehavior);
-
-			// Reset any transform so we get a proper bounding box.
 			g.attr('transform', 'translate(0,0)');
+			const initialScale = 10; 
 
 			requestAnimationFrame(() => {
-				const bbox = g.node().getBBox();
 				const svgWidth = svg.node().clientWidth;
 				const svgHeight = svg.node().clientHeight;
 				const centerX = svgWidth / 2;
 				const centerY = svgHeight / 2;
-				const graphCenterX = bbox.x + bbox.width / 2;
-				const graphCenterY = bbox.y + bbox.height / 2;
 
-				const initialScale = 15; // desired zoom level
-				// Multiply the graph center coordinates by the scale factor:
-				const translateX = centerX - initialScale * graphCenterX;
-				const translateY = centerY - initialScale * graphCenterY;
+				let centerPoint = null;
 
+				// Filter all nodes (excluding dummy_root) that have "user-node" in their classes.
+				const userNodes = rootHierarchy
+					.descendants()
+					.filter(
+						d =>
+							d.data.id !== 'dummy_root' &&
+							(d.data.classes || '').includes('user-node'),
+					);
+
+				if (userNodes.length > 0) {
+					let maxCount = -1;
+					let mostConnectedUser = null;
+
+					// For each user node, count the number of connections.
+					userNodes.forEach(node => {
+						const count = graphData.edges.reduce((acc, edge) => {
+							return (
+								acc +
+								(edge.data.source === node.data.id ||
+								edge.data.target === node.data.id
+									? 1
+									: 0)
+							);
+						}, 0);
+						if (count > maxCount) {
+							maxCount = count;
+							mostConnectedUser = node;
+						}
+					});
+
+					if (mostConnectedUser) {
+						centerPoint = {
+							x: mostConnectedUser.x - mostConnectedUser.x / 11,
+							y: mostConnectedUser.y - mostConnectedUser.y * -0.7,
+						};
+					}
+				}
+
+				// Fallback: center on the entire graph's bounding box if no user node was found.
+				if (!centerPoint) {
+					const bbox = g.node().getBBox();
+					centerPoint = {
+						x: bbox.x + bbox.width / 2,
+						y: bbox.y + bbox.height / 2,
+					};
+				}
+
+				// Calculate the translation so that centerPoint is placed at the center of the SVG.
+				const translateX = centerX - initialScale * centerPoint.x;
+				const translateY = centerY - initialScale * centerPoint.y;
 				const initialTransform = d3.zoomIdentity
 					.translate(translateX, translateY)
 					.scale(initialScale);
@@ -481,93 +863,171 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 			});
 
 			// -----------------------------
-			// 10. Update Link Paths Function (if needed)
+			// 10. CREATE & UPDATE EDGE LABEL GROUPS WITH BACKGROUND (initially hidden)
 			// -----------------------------
-			// In this example, we update only port edges.
-			// If you had additional links to update, call updatePortEdges() accordingly.
-			// 1. Create (or select) a group for edge labels (if not already created)
 			const edgeLabelGroup = g
-				.selectAll('text.edge-label')
-				.data(portEdges, d => d.source + '|' + d.target)
+				.selectAll('g.edge-label-group')
+				.data(allEdges, d => d.source + '|' + d.target)
 				.enter()
+				.append('g')
+				.attr('class', d => 'edge-label-group ' + (d.classes || ''))
+				.style('opacity', 0);
+
+			// Append a background rectangle into each group (no explicit opacity set here).
+			edgeLabelGroup
+				.append('rect')
+				.attr('class', 'edge-label-bg')
+				.style('fill', 'rgb(206, 231, 254)')
+				.attr('rx', 5)
+				.attr('ry', 5);
+
+			// Append the text element inside each group.
+			edgeLabelGroup
 				.append('text')
-				.attr('class', d => 'edge-label ' + (d.classes || ''))
-				.attr('dy', -5) // Adjust vertical offset as needed
+				.attr('class', 'edge-label')
+				.attr('dy', -5)
 				.attr('text-anchor', 'middle')
-				.style('fill', '#000000') // Label color
+				.style('fill', 'rgb(15, 48, 88)')
 				.style('font-size', '60px')
 				.text(d => d.label);
 
-			updateEdgeLabels();
+			// Once rendered, measure each text element and update the background rectangle.
+			edgeLabelGroup.each(function () {
+				const group = d3.select(this);
+				const textElem = group.select('text.edge-label');
+				requestAnimationFrame(() => {
+					const bbox = textElem.node().getBBox();
+					const paddingX = 70; // horizontal padding
+					const paddingY = 50; // vertical padding
+					const rectWidth = bbox.width + paddingX;
+					const rectHeight = bbox.height + paddingY;
+					group
+						.select('rect.edge-label-bg')
+						.attr('width', rectWidth)
+						.attr('height', rectHeight)
+						.attr('x', -rectWidth / 2)
+						.attr('y', -rectHeight / 1.4);
+				});
+			});
 
-			// 2. Create a function to update label positions based on the port node positions.
-			//    This function calculates the midpoint between the source and target port nodes.
+			// Updated updateEdgeLabels function: update the transform on the edge-label groups.
 			function updateEdgeLabels() {
-				g.selectAll('text.edge-label')
-					.data(portEdges, d => d.source + '|' + d.target)
+				edgeLabelGroup
 					.attr('transform', d => {
-						// Use the rendered port nodes (by their IDs)
 						const sourceCircle = g
 							.select(\`circle.node-port[id="\${d.source}"]\`)
 							.node();
 						const targetCircle = g
 							.select(\`circle.node-port[id="\${d.target}"]\`)
 							.node();
-
 						if (sourceCircle && targetCircle) {
 							const sX = +sourceCircle.getAttribute('cx');
 							const sY = +sourceCircle.getAttribute('cy');
 							const tX = +targetCircle.getAttribute('cx');
 							const tY = +targetCircle.getAttribute('cy');
-							const midX = (sX + tX) / 2;
-							const midY = (sY + tY) / 2;
-							return \`translate(\${midX}, \${midY})\`;
+
+							// Look up target port data to check its layer.
+							const targetPort = portData.find(n => n.id === d.target);
+							if (targetPort && targetPort.layer === 7) {
+								// For layer 7 edges, use the modified control points as in portLinkGenerator.
+								let cp1 = [sX, sY + 5500];
+								let cp2 = [tX, tY - 1000];
+								// Compute the cubic Bezier midpoint at t=0.5:
+								const midX =
+									0.125 * sX + 0.375 * cp1[0] + 0.375 * cp2[0] + 0.125 * tX;
+								const midY =
+									0.125 * sY + 0.375 * cp1[1] + 0.375 * cp2[1] + 0.125 * tY;
+								return \`translate(\${midX}, \${midY})\`;
+							} else {
+								const midX = (sX + tX) / 2;
+								const midY = (sY + tY) / 2;
+								return \`translate(\${midX}, \${midY})\`;
+							}
 						}
 						return '';
 					})
+					.select('text.edge-label')
 					.text(d => d.label);
 			}
+			updateEdgeLabels();
 
-			// Create a tooltip div and append it to the body.
+			// -----------------------------
+			// TOOLTIP
+			// -----------------------------
 			const tooltip = document.createElement('div');
 			tooltip.id = 'tooltip';
 			tooltip.style.position = 'absolute';
 			tooltip.style.background = 'rgba(0, 0, 0, 0.7)';
 			tooltip.style.color = '#fff';
 			tooltip.style.padding = '5px 10px';
-			tooltip.style.borderRadius = '3px';
+			tooltip.style.borderRadius = '12px';
 			tooltip.style.fontFamily = "'Manrope', Arial, sans-serif";
-			tooltip.style.fontSize = '18px';
-			tooltip.style.display = 'none'; // Initially hidden
+			tooltip.style.fontSize = '11.5px';
+			tooltip.style.whiteSpace = 'pre-line'; 
+			tooltip.style.display = 'none';
 			document.body.appendChild(tooltip);
 
 			nodeGroup
 				.on('mouseover', function (event, d) {
-					// Set the tooltip content to the full text (or any desired content).
-					tooltip.innerText = d.data.name;
+					let tooltipText = d.data.name;
+					if ((d.data.classes || '').includes('resource-instance-node')) {
+						tooltipText += \`'\n'\` + d.data.id2;
+					}
+					tooltip.innerText = tooltipText;
 					tooltip.style.display = 'block';
-
-					// Create a Popper instance to position the tooltip relative to the hovered node.
-					// We pass 'this' (the DOM element for the node) as the reference.
 					Popper.createPopper(this, tooltip, {
-						placement: 'bottom', // or "bottom", "right", etc.
-						modifiers: [
-							{
-								name: 'offset',
-								options: {
-									offset: [0, 8], // Adjust the offset as needed.
-								},
-							},
-						],
+						placement: 'bottom',
+						modifiers: [{ name: 'offset', options: { offset: [0, 15] } }],
 					});
-				})
-				.on('mousemove', function (event, d) {
-					// Optionally update the tooltip position if needed; Popper generally handles this.
-					// You might want to update the content or force an update if required.
+					// For connected edges:
+					g.selectAll('path.port-link')
+						.filter(
+							edge =>
+								edge.source === d.data.id + '_out' ||
+								edge.target === d.data.id + '_in',
+						)
+						.transition()
+						.duration(200)
+						.style('opacity', 2);
+
+					// For connected edge label groups:
+					g.selectAll('g.edge-label-group')
+						.filter(
+							edge =>
+								edge.source === d.data.id + '_out' ||
+								edge.target === d.data.id + '_in',
+						)
+						.transition()
+						.duration(200)
+						.style('opacity', 1.5);
 				})
 				.on('mouseout', function (event, d) {
 					tooltip.style.display = 'none';
+					// Revert connected edges to 50% opacity:
+					g.selectAll('path.port-link')
+						.filter(
+							edge =>
+								edge.source === d.data.id + '_out' ||
+								edge.target === d.data.id + '_in',
+						)
+						.transition()
+						.duration(200)
+						.style('opacity', 0.5);
+
+					g.selectAll('g.edge-label-group')
+						.filter(
+							edge =>
+								edge.source === d.data.id + '_out' ||
+								edge.target === d.data.id + '_in',
+						)
+						.transition()
+						.duration(200)
+						.style('opacity', 0);
 				});
+
+			// Ensure that all node groups are raised above edges.
+			g.selectAll('g.node-main').raise();
+			g.selectAll('circle.node-port').raise();
 		</script>
 	</body>
 </html>
