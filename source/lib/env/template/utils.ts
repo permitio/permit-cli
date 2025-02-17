@@ -11,7 +11,7 @@ export function getFiles(): string[] {
 
 function getFileContent(fileName: string): string {
 	const directory = 'source/templates';
-	const filePath = path.join(directory, fileName);
+	const filePath = path.join(directory, fileName+".tf");
 	return fs.readFileSync(filePath, 'utf-8');
 }
 
@@ -38,6 +38,7 @@ export async function ApplyTemplate(
 			return `Success: The terraform template is applied successfully.`;
 		}
 	} catch (error) {
+		console.log(error)
 		return `Error: ${error instanceof Error ? error.message : (error as string)}`;
 	}
 }

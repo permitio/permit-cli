@@ -84,7 +84,7 @@ export default function ApplyComponent({ apiKey, local, template }: Props) {
 	};
 	return (
 		<>
-			{' '}
+			
 			{template == undefined && (
 				<SelectInput items={selectionValues} onSelect={handleSelect} />
 			)}
