@@ -14,15 +14,11 @@ type SelectItemType = {
 	value: string;
 };
 
-export default async function ApplyComponent({
-	apiKey,
-	local,
-	template,
-}: Props) {
+export default function ApplyComponent({ apiKey, local, template }: Props) {
 	const [errorMessage, setErrorMessage] = useState('');
 	const [successMessage, setSuccessMessage] = useState('');
 	const files = getFiles();
-	const key = apiKey || (await loadAuthToken());
+	const key = apiKey || loadAuthToken();
 	const selectionValues = files.map(file => ({
 		label: file,
 		value: file,
@@ -31,7 +27,7 @@ export default async function ApplyComponent({
 		if (local) {
 			// To be implemented
 		} else {
-			const message = await ApplyTemplate(item.value, key);
+			const message = await ApplyTemplate(item.value, await key);
 			if (message.startsWith('Error')) {
 				setErrorMessage(message);
 			} else {

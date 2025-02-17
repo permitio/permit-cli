@@ -3,22 +3,14 @@ import * as path from 'path';
 import { TERRAFORM_PERMIT_URL } from '../../../config.js';
 
 export function getFiles(): string[] {
-	try {
-		const directory = 'source/templates';
-		return fs.readdirSync(directory).map(file => path.parse(file).name);
-	} catch (error) {
-		throw error;
-	}
+	const directory = 'source/templates';
+	return fs.readdirSync(directory).map(file => path.parse(file).name);
 }
 
 function getFileContent(fileName: string): string {
-	try {
-		const directory = 'source/templates';
-		const filePath = path.join(directory, fileName);
-		return fs.readFileSync(filePath, 'utf-8');
-	} catch (error) {
-		throw error;
-	}
+	const directory = 'source/templates';
+	const filePath = path.join(directory, fileName);
+	return fs.readFileSync(filePath, 'utf-8');
 }
 
 export async function ApplyTemplate(
