@@ -1,21 +1,29 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const cors= require("cors");
 const { exec } = require("child_process");
 const bodyParser = require("body-parser");
+
+
 const app = express();
 app.use(bodyParser.text({ type: "application/x-hcl" }));
-
+app.use(cors())
 const TF_FILE = path.join(__dirname, "temp/config.tf");
 
 const generateTfFile = (data, apiKey) => {
   const tfContent = data.replace("{{API_KEY}}", `"` + apiKey + `"`);
+  const dirPath = path.dirname(TF_FILE);
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
 
-  fs.writeFileSync(TF_FILE, tfContent);
+  fs.writeFileSync(TF_FILE, tfContent,"utf-8");
 };
 
 app.post("/apply", (req, res) => {
   try {
+    console.log("API CALL IS RECIVED")
     const apiKey = req.headers["authorization"];
     if (!apiKey) {
       return res.status(400).json({ error: "API Key is required" });
@@ -34,6 +42,7 @@ app.post("/apply", (req, res) => {
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
+  console.log("APICALL COMPLETED")
 });
 
 const PORT = 3000;
