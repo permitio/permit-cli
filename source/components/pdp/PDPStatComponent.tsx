@@ -60,7 +60,7 @@ export default function PDPStatComponent({ options }: PDPStatsProps) {
 			{!isObjectEmpty(res.data) && (
 				<TableComponent
 					data={res.data}
-					headers={['id','active', 'pdp_version', 'opa_version']}
+					headers={['id', 'active', 'pdp_version', 'opa_version']}
 					headersHexColor={'#89CFF0'}
 				/>
 			)}
