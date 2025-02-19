@@ -14,10 +14,9 @@ import {
 } from '../source/lib/gitops/utils.js';
 import { loadAuthToken, TokenType } from '../source/lib/auth.js';
 import { useApiKeyApi } from '../../source/hooks/useApiKeyApi';
-import * as keytar from "keytar"
+import * as keytar from 'keytar';
 import SelectProject from '../source/components/SelectProject';
 import { useProjectAPI } from '../source/hooks/useProjectAPI';
-
 
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 
@@ -62,7 +61,7 @@ vi.mock('../source/lib/gitops/utils.js', () => ({
 		Promise.resolve({ id: '1', status: 'active', key: 'repo1' }),
 	),
 }));
-vi.mock('../source/hooks/useApiKeyApi', async() => {
+vi.mock('../source/hooks/useApiKeyApi', async () => {
 	const original = await vi.importActual('../source/hooks/useApiKeyApi');
 	return {
 		...original,
@@ -87,10 +86,10 @@ vi.mock('../source/hooks/useApiKeyApi', async() => {
 					project_id: 'proj1',
 					organization_id: 'org1',
 				},
-				error: null
-			})
+				error: null,
+			}),
 		}),
-	}
+	};
 });
 
 vi.mock('keytar', () => {
@@ -99,7 +98,6 @@ vi.mock('keytar', () => {
 		setPassword: vi.fn().mockResolvedValue(demoPermitKey),
 		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
 		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
-
 	};
 	return { ...keytar, default: keytar };
 });
