@@ -1,9 +1,9 @@
 export enum MethodE {
-	GET = "GET",
-	POST = "POST",
-	PUT = "PUT",
-	PATCH = "PATCH",
-	DELETE = "DELETE"
+	GET = 'GET',
+	POST = 'POST',
+	PUT = 'PUT',
+	PATCH = 'PATCH',
+	DELETE = 'DELETE',
 }
 
 /**
@@ -33,7 +33,7 @@ export async function fetchUtil<T>(
 	method: MethodE,
 	apiKey?: string,
 	headers?: Record<string, string>,
-	body?: object
+	body?: object,
 ): Promise<FetchResponse<T>> {
 	try {
 		const response = await fetch(url, {
@@ -63,7 +63,7 @@ export async function fetchUtil<T>(
 		} catch (jsonError) {
 			return {
 				success: false,
-				error: "Invalid JSON response",
+				error: 'Invalid JSON response',
 				status: response.status,
 			};
 		}
@@ -71,7 +71,7 @@ export async function fetchUtil<T>(
 		// Handle network errors and unexpected issues
 		return {
 			success: false,
-			error: error instanceof Error ? error.message : "Unknown error occurred",
+			error: error instanceof Error ? error.message : 'Unknown error occurred',
 		};
 	}
 }

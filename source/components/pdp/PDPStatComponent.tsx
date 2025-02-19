@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Box, Newline, Text } from 'ink';
 import Spinner from 'ink-spinner';
 import { useAuth } from '../AuthProvider.js';
@@ -13,53 +13,51 @@ const isObjectEmpty = (object: object) => {
 
 export default function PDPStatComponent({ options }: PDPStatsProps) {
 	// State to store API errors
-	const [error, setError] = useState('');
-
-	// State to store API response data
-	const [res, setRes] = useState<{ data: object[] }>({ data: [] });
+	const [error, setError] = useState<string | undefined>('');
 
 	// Get authentication details from the AuthProvider
 	const auth = useAuth();
 
-	useEffect(() => {
-		// Function to fetch PDP statistics data
-		const queryPDP = async (apiKey: string) => {
-			try {
-				// Construct the API URL dynamically using project/environment keys
-				const response = await fetchUtil(
-					`${options.statsUrl || PERMIT_API_STATISTICS_URL}/${auth.scope.project_id || options.projectKey}/${auth.scope.environment_id || options.environmentKey}/pdps`,
-					MethodE.GET,
-					apiKey,
-				);
+	// State To Store Statistics URL
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	const [statisticsURL, _] = useState<string>(
+		`${options.statsUrl || PERMIT_API_STATISTICS_URL}/${auth.scope.project_id || options.projectKey}/${auth.scope.environment_id || options.environmentKey}/pdps`,
+	);
 
-				// If the request was successful, update state with the response data
-				if (response.success) {
-					setRes(response.data as any); // Casting response.data as 'any' (consider adding stronger typing)
-				} else {
-					// Log and store the error message if the request failed
-					console.error('Error fetching PDP stats:', response.error);
-					setError(response.error);
-				}
-			} catch (err) {
-				// Handle unexpected errors
-				if (err instanceof Error) {
-					setError(err.message);
-				} else {
-					setError(String(err));
-				}
+	// State to store API response data
+	const [res, setRes] = useState<{ data: object[] }>({ data: [] });
+
+	// ✅ Wrap queryPDP in useCallback to prevent unnecessary re-creations
+	const queryPDP = useCallback(async () => {
+		try {
+			const response = await fetchUtil(
+				statisticsURL,
+				MethodE.GET,
+				auth.authToken,
+			);
+			if (response.success) {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				setRes((response as any).data);
+			} else {
+				console.error('Error fetching PDP stats:', response.error);
+				setError(response.error);
 			}
-		};
-
-		// If authentication has failed, store the error message
-		if (auth.error) {
-			setError(auth.error);
+		} catch (err) {
+			setError(err instanceof Error ? err.message : String(err));
 		}
+	}, [auth.authToken, statisticsURL]); // 🔥 Dependencies: Only re-create if `apiKey` changes
 
-		// Only fetch data if authentication is complete and not in a loading state
-		if (!auth.loading) {
-			queryPDP(auth.authToken);
+	useEffect(() => {
+		// eslint-disable-next-line no-undef
+		let intervalId: NodeJS.Timeout;
+		queryPDP(); // Immediate call
+		if (options.top) {
+			intervalId = setInterval(queryPDP, 3000); // Call every 3 seconds
+
+			return () => clearInterval(intervalId); // Cleanup on unmount
 		}
-	}, [auth, options]); // Dependency array ensures this runs when auth or options change
+		return;
+	}, [queryPDP, options]); // 🔥 Now depends on queryPDP
 
 	return (
 		<>
@@ -80,7 +78,8 @@ export default function PDPStatComponent({ options }: PDPStatsProps) {
 				<Box>
 					<Text color="red">Request failed: {error}</Text>
 					<Newline />
-					<Text>{JSON.stringify(res)}</Text> {/* Show raw API response for debugging */}
+					<Text>{JSON.stringify(res)}</Text>{' '}
+					{/* Show raw API response for debugging */}
 				</Box>
 			)}
 		</>

@@ -15,7 +15,6 @@ vi.mock('keytar', () => {
 		setPassword: vi.fn(),
 		getPassword: vi.fn(),
 		deletePassword: vi.fn(),
-
 	};
 	return { ...keytar, default: keytar };
 });
@@ -25,7 +24,6 @@ vi.mock('../source/hooks/useApiKeyApi.js', () => ({
 		validateApiKeyScope: vi.fn(),
 	})),
 }));
-
 
 vi.mock('../source/lib/auth.js', async () => {
 	const original = await vi.importActual('../source/lib/auth.js');
@@ -69,7 +67,7 @@ describe('PDP Check Component', () => {
 			action: 'testAction',
 			tenant: 'testTenant',
 			keyAccount: 'testKeyAccount',
-			demoPermitKey: demoPermitKey
+			demoPermitKey: demoPermitKey,
 		};
 
 		const { lastFrame } = render(<Check options={options} />);
@@ -111,7 +109,6 @@ describe('PDP Check Component', () => {
 			tenant: 'testTenant',
 			demoPermitKey: demoPermitKey,
 			keyAccount: 'testKeyAccount',
-
 		};
 
 		const { lastFrame } = render(<Check options={options} />);
@@ -152,7 +149,7 @@ describe('PDP Check Component', () => {
 			action: 'testAction',
 			tenant: 'testTenant',
 			keyAccount: 'testKeyAccount',
-			demoPermitKey: demoPermitKey
+			demoPermitKey: demoPermitKey,
 		};
 
 		const { lastFrame } = render(<Check options={options} />);
@@ -193,7 +190,7 @@ describe('PDP Check Component', () => {
 			action: 'testAction',
 			tenant: 'testTenant',
 			keyAccount: 'testKeyAccount',
-			demoPermitKey: demoPermitKey
+			demoPermitKey: demoPermitKey,
 		};
 
 		const { lastFrame } = render(<Check options={options} />);

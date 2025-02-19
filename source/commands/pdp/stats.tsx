@@ -40,6 +40,7 @@ export const options = zod.object({
 					'The API key for the Permit env, project or Workspace (Optional)',
 			}),
 		),
+	top: zod.boolean().default(false).describe('Run stats in top mode'),
 });
 
 export type PDPStatsProps = {
