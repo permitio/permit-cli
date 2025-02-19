@@ -60,7 +60,7 @@ export async function fetchUtil<T>(
 		try {
 			const data: T = await response.json();
 			return { success: true, data, status: response.status };
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (jsonError: any) {
 			return {
 				success: false,
