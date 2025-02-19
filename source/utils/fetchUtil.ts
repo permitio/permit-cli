@@ -60,10 +60,11 @@ export async function fetchUtil<T>(
 		try {
 			const data: T = await response.json();
 			return { success: true, data, status: response.status };
-		} catch (jsonError) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		} catch (jsonError: any) {
 			return {
 				success: false,
-				error: 'Invalid JSON response',
+				error: jsonError.message,
 				status: response.status,
 			};
 		}
