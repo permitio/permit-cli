@@ -48,7 +48,10 @@ export async function ApplyTemplateLocally(
 	apiKey: string,
 ): Promise<string> {
 	try {
-		const fileContent = getFileContent(fileName).replace('{{API_KEY}}', apiKey);
+		const fileContent = getFileContent(fileName).replace(
+			'{{API_KEY}}',
+			'"' + apiKey + '"',
+		);
 
 		const tempDir = path.join(os.tmpdir(), `teraform-temp-${Date.now()}`);
 		fs.mkdirSync(tempDir, { recursive: true });
