@@ -39,7 +39,7 @@ type Props = {
 	readonly options: zInfer<typeof options>;
 };
 
-export default function Template({ options: { key, local, template } }: Props) {
+export default function Apply({ options: { key, local, template } }: Props) {
 	return (
 		<>
 			<AuthProvider permit_key={key} scope={'environment'}>
