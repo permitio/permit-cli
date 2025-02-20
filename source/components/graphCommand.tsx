@@ -150,11 +150,13 @@ export default function Graph({ options }: Props) {
 
 				while (hasMoreData) {
 					const resourceResponse = await apiCall(
-						`v2/facts/${selectedProject.value}/${selectedEnvironment.value}/resource_instances?detailed=true&page=${Page}&per_page=${per_Page}`,
+						`v2/facts/${selectedProject.value}/${selectedEnvironment.value}/resource_instances/detailed?page=${Page}&per_page=${per_Page}`,
 						authToken,
 					);
+					const resourceArray =
+						resourceResponse.response.data || resourceResponse.response;
 
-					const resourcesData = resourceResponse.response.map((res: any) => ({
+					const resourcesData = resourceArray.map((res: any) => ({
 						label: `${res.resource}#${res.resource_id}`,
 						value: res.id,
 						id: res.id,
@@ -166,7 +168,7 @@ export default function Graph({ options }: Props) {
 					allResourcesData = [...allResourcesData, ...resourcesData];
 
 					// Check if there are more pages to fetch
-					hasMoreData = resourceResponse.response.length === per_Page;
+					hasMoreData = resourceArray.length === per_Page;
 					Page++;
 				}
 

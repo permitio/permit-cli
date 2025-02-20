@@ -148,15 +148,27 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 				fill: #ffffff;
 				font-size: 25px;
 				font-family: 'Manrope', Arial, sans-serif;
-				/* If you need a background for the text (as in Cytoscape),
-     you'll need to render a separate rectangle behind the text.
-     This snippet just sets the text styling. */
+			}
+			#minimap-container {
+				position: fixed;
+				bottom: 10px;
+				right: 10px;
+				width: 400px;
+				height: 100px;
+				z-index: 9999;
+				background: transparent; /* Transparent background */
+				border: 1px solid #ccc;
+				border-radius: 25px;
+				overflow: hidden;
+				pointer-events: none; /* Do not block mouse events */
 			}
 		</style>
 	</head>
 	<body>
 		<div id="title">Permit ReBAC Graph</div>
 		<svg></svg>
+		<div id="minimap-container"></div>
+
 		<script>
 			/***********************
 			 * 1. DATA & HIERARCHY
@@ -256,7 +268,6 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 			}
 
 			const forest = flatToForestLayered(graphData.nodes, graphData.edges);
-			console.log('Forest:', forest);
 			// Wrap the forest in a dummy root.
 			const dummyRoot = { id: 'dummy_root', name: 'Root', children: forest };
 
@@ -266,7 +277,7 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 			// -----------------------------
 			// 2. LAYOUT: Compute Tree Layout
 			// -----------------------------
-			const layoutWidth = window.innerWidth * 100; //  horizontal space 
+			const layoutWidth = window.innerWidth * 100; //  horizontal space
 			const layoutHeight = (window.innerHeight - 100) * 4; // Vertical space
 
 			const treeLayout = d3
@@ -284,7 +295,7 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 				}
 			});
 			// --- horizontal spacing without disturbing user nodes ---
-			const minSpacing = 1250; 
+			const minSpacing = 1250;
 
 			const nodesByLayer = d3.group(
 				rootHierarchy
@@ -331,7 +342,7 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 				);
 
 			const minAllowedX = 50;
-			const maxAllowedX = layoutWidth - 50; 
+			const maxAllowedX = layoutWidth + 5000;
 
 			// Adjust layer 1: shift its nodes so that the group average x matches the baseline.
 			if (group1.length > 0) {
@@ -354,7 +365,7 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 
 				// Sort the group by x.
 				group45.sort((a, b) => a.x - b.x);
-				const maxGap = 20050; 
+				const maxGap = 1050;
 				for (let i = 1; i < group45.length; i++) {
 					const gap = group45[i].x - group45[i - 1].x;
 					if (gap > maxGap) {
@@ -364,7 +375,7 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 			}
 
 			// ---- NEW: Reassign resource-instance nodes in layer 4 to layer 7 if too far horizontally from connected user nodes ----
-			const maxAllowedDistance = 1000; 
+			const maxAllowedDistance = 1500;
 
 			rootHierarchy.descendants().forEach(d => {
 				// Check only resource-instance nodes currently in layer 4.
@@ -403,6 +414,41 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 				}
 			});
 
+			// --- Center each user node (layer 2) based on its layer 3 children only ---
+			const userNodes = rootHierarchy
+				.descendants()
+				.filter(
+					d =>
+						d.data.layer === 2 && (d.data.classes || '').includes('user-node'),
+				);
+
+			userNodes.forEach(user => {
+				// Filter children of the user node that are in layer 3.
+				const childrenLayer3 = (user.children || []).filter(
+					child => child.data.layer === 3,
+				);
+				if (childrenLayer3.length > 0) {
+					// Compute the average x of these children.
+					const avgChildX = d3.mean(childrenLayer3, child => child.x);
+					// Set the user node's x coordinate to this average.
+					user.x = avgChildX;
+				}
+			});
+
+			// Only adjust spacing for layer 2 nodes (user-nodes)
+			const layer2Nodes = nodesByLayer.get(2);
+			if (layer2Nodes) {
+				layer2Nodes.sort((a, b) => a.x - b.x);
+				const minUserSpacing = 4000; // set your desired minimum gap for user nodes
+				for (let i = 1; i < layer2Nodes.length; i++) {
+					const prev = layer2Nodes[i - 1];
+					const curr = layer2Nodes[i];
+					if (curr.x - prev.x < minUserSpacing) {
+						curr.x = prev.x + minUserSpacing;
+					}
+				}
+			}
+
 			// -----------------------------
 			// 3. RENDERING: Create SVG and Container Group (unchanged)
 			// -----------------------------
@@ -433,7 +479,6 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 				.attr('height', layoutHeight + 200000)
 				.attr('fill', 'url(#squarePattern)');
 
-			
 			const mainNodes = rootHierarchy
 				.descendants()
 				.filter(d => d.data.id !== 'dummy_root');
@@ -443,7 +488,7 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 				.enter()
 				.append('g')
 				.attr('class', d => 'node-main ' + (d.data.classes || ''))
-				.attr('transform', d => \`translate(\${d.x}, \${d.y})\`)
+				.attr('transform', d =>  \`translate(\${d.x}, \${d.y})\`)
 				.call(
 					d3
 						.drag()
@@ -548,7 +593,7 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 						const iconWidth = 24;
 						const iconScale = 3.9;
 
-						const iconCenterX = bbox.x + 30;
+						const iconCenterX = bbox.x + 5;
 						const iconCenterY = bbox.y + bbox.height / 1.6;
 
 						const personPlusStarPath = \`
@@ -577,7 +622,7 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 
 						nodeSel
 							.append('path')
-							.attr('d', personPlusStarPath.trim())
+							.attr('d', personPlusStarPath.trim()   )
 							.attr('fill', 'none')
 							.attr('stroke', 'rgb(67, 48, 43)')
 							.attr('stroke-width', 2.3)
@@ -606,7 +651,7 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 				// Insert the rounded rectangle behind the text (common to all):
 				requestAnimationFrame(() => {
 					const bbox = textSel.node().getBBox();
-					const paddingX = 40;
+					const paddingX = 120;
 					const paddingY = 42;
 					const rectWidth = bbox.width + paddingX;
 					const rectHeight = bbox.height + paddingY;
@@ -660,7 +705,7 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 				.attr('cy', d => d.y);
 
 			// -----------------------------
-			// 7. RENDER PORT EDGES 
+			// 7. RENDER PORT EDGES
 			// -----------------------------
 			const portEdges = rootHierarchy.links().map(link => ({
 				source: link.source.data.id + '_out',
@@ -675,7 +720,6 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 						) || {}
 					).classes || 'relationship-connection',
 			}));
-			console.log(portEdges);
 
 			// Generate extra port edges from extraRelationships by traversing the hierarchy.
 			const extraPortEdges = [];
@@ -694,6 +738,27 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 
 			const allEdges = portEdges.concat(extraPortEdges);
 
+			// A helper function that returns a hover opacity based on the target node's layer.
+			// (Assumes that the portData for each port includes a "layer" property.)
+			function getEdgeHoverOpacity(edgeData) {
+				// Look up the target port data.
+				const targetPort = portData.find(n => n.id === edgeData.target);
+				if (targetPort) {
+					const layer = targetPort.layer;
+					// Adjust these values as desired.
+					if (layer === 2 || layer === 3) {
+						return 0.8; // Full opacity for baseline (user) nodes
+					} else if (layer === 4) {
+						return 0.7; // Slightly lower for layer 4
+					} else if (layer === 7) {
+						return 0.2; // Lower for layer 7
+					} else if (layer === 8) {
+						return 0.2; // Even lower for layer 8
+					}
+				}
+				return 1; // default
+			}
+
 			// Render extra port edges.
 			const extraPortEdgeSel = g
 				.selectAll('path.extra-port-link')
@@ -701,8 +766,10 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 				.enter()
 				.append('path')
 				.attr('class', d => 'link extra-port-link ' + (d.classes || ''))
-				.attr('d', portLinkGenerator) 
-				.style('opacity', 0.5);
+				.attr('d', portLinkGenerator)
+				.style('opacity', function (edge) {
+					return getEdgeHoverOpacity(edge);
+				});
 
 			const portEdgeSel = g
 				.selectAll('path.port-link')
@@ -711,7 +778,9 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 				.append('path')
 				.attr('class', d => 'link port-link ' + (d.classes || ''))
 				.attr('d', portLinkGenerator)
-				.style('opacity', 0.5);
+				.style('opacity', function (edge) {
+					return getEdgeHoverOpacity(edge);
+				});
 			function portLinkGenerator(d) {
 				const sourceCircle =
 					g.select(\`circle.node-port[id="\${d.source}"]\`).node() ||
@@ -765,6 +834,8 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 				g.selectAll('path.extra-port-link').attr('d', portLinkGenerator);
 				updateEdgeLabels();
 			}
+
+			// Also update the dot after node drag events.
 			nodeGroup.call(
 				d3
 					.drag()
@@ -785,17 +856,18 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 			);
 
 			// -----------------------------
-			// 9. ENABLE ZOOM AND PAN 
+			// 9. ENABLE ZOOM AND PAN
 			// -----------------------------
 			const zoomBehavior = d3
 				.zoom()
-				.scaleExtent([6, 22])
+				.scaleExtent([2, 22])
 				.on('zoom', event => {
 					g.attr('transform', event.transform);
+					updateMinimapViewport(); // Call update function on every zoom (which includes panning)
 				});
 			svg.call(zoomBehavior);
 			g.attr('transform', 'translate(0,0)');
-			const initialScale = 10; 
+			const initialScale = 10;
 
 			requestAnimationFrame(() => {
 				const svgWidth = svg.node().clientWidth;
@@ -963,7 +1035,7 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 			tooltip.style.borderRadius = '12px';
 			tooltip.style.fontFamily = "'Manrope', Arial, sans-serif";
 			tooltip.style.fontSize = '11.5px';
-			tooltip.style.whiteSpace = 'pre-line'; 
+			tooltip.style.whiteSpace = 'pre-line';
 			tooltip.style.display = 'none';
 			document.body.appendChild(tooltip);
 
@@ -971,7 +1043,9 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 				.on('mouseover', function (event, d) {
 					let tooltipText = d.data.name;
 					if ((d.data.classes || '').includes('resource-instance-node')) {
-						tooltipText += \`'\n'\` + d.data.id2;
+						tooltipText +=
+							\`
+\` + d.data.id2;
 					}
 					tooltip.innerText = tooltipText;
 					tooltip.style.display = 'block';
@@ -990,6 +1064,17 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 						.duration(200)
 						.style('opacity', 2);
 
+					// For connected extra port edges:
+					g.selectAll('path.extra-port-link')
+						.filter(
+							edge =>
+								edge.source === d.data.id + '_out' ||
+								edge.target === d.data.id + '_in',
+						)
+						.transition()
+						.duration(200)
+						.style('opacity', 1);
+
 					// For connected edge label groups:
 					g.selectAll('g.edge-label-group')
 						.filter(
@@ -999,7 +1084,7 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 						)
 						.transition()
 						.duration(200)
-						.style('opacity', 1.5);
+						.style('opacity', 2);
 				})
 				.on('mouseout', function (event, d) {
 					tooltip.style.display = 'none';
@@ -1012,7 +1097,17 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 						)
 						.transition()
 						.duration(200)
-						.style('opacity', 0.5);
+						.style('opacity', edge => getEdgeHoverOpacity(edge));
+
+					g.selectAll('path.extra-port-link')
+						.filter(
+							edge =>
+								edge.source === d.data.id + '_out' ||
+								edge.target === d.data.id + '_in',
+						)
+						.transition()
+						.duration(200)
+						.style('opacity', edge => getEdgeHoverOpacity(edge));
 
 					g.selectAll('g.edge-label-group')
 						.filter(
@@ -1028,6 +1123,101 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 			// Ensure that all node groups are raised above edges.
 			g.selectAll('g.node-main').raise();
 			g.selectAll('circle.node-port').raise();
+
+			setTimeout(() => {
+				// ===== MINI-MAP SETUP =====
+				// Create the minimap container (if not already in HTML)
+				const miniMapContainer = document.getElementById('minimap-container');
+
+				// Create the mini-map SVG inside the container.
+				const miniSvg = d3
+					.select(miniMapContainer)
+					.append('svg')
+					.attr('width', 200)
+					.attr('height', 200)
+					.attr('style', 'background: transparent !important;');
+
+				// ----- CLONE THE MAIN GRAPH (INCLUDING BACKGROUND) -----
+				// Assume your main graph group variable is "g"
+				const graphClone = g.node().cloneNode(true);
+
+				// Append the cloned graph into a new group inside miniSvg.
+				const miniG = miniSvg.append('g');
+				miniG.node().appendChild(graphClone);
+
+				// ----- FIXED SCALE & CENTERING (Option B) -----
+				// Compute the bounding box of the cloned graph (which includes your huge background)
+				const bbox = graphClone.getBBox();
+				if (bbox.width === 0 || bbox.height === 0) {
+					console.warn(
+						'Graph bounding box is empty! Check if elements are rendered.',
+					);
+					return;
+				}
+				// Compute a fixed scale factor so that the entire background fits in 200px width.
+				// For your background, 200 / 336600 ≈ 0.000594.
+				const fixedScale = Math.min(1200 / bbox.width, 600 / bbox.height);
+
+				// Compute the center of the cloned graph’s bounding box.
+				const graphCenter = {
+					x: bbox.x + bbox.width / 2.2,
+					y: bbox.y + bbox.height / 1.7,
+				};
+				// The minimap’s center for a 200x200 container is (100,100).
+				const miniCenter = { x: 400 / 4, y: 400 / 4 };
+				// Compute translation so that the graph center aligns with the minimap center.
+				const fixedTranslateX = miniCenter.x - fixedScale * graphCenter.x;
+				const fixedTranslateY = miniCenter.y - fixedScale * graphCenter.y;
+
+				// Apply the fixed transform (translation and scale) to the cloned graph.
+				d3.select(graphClone).attr(
+					'transform',
+					\`translate(\${fixedTranslateX}, \${fixedTranslateY}) scale(\${fixedScale})\`,
+				);
+
+				// ----- VIEWPORT INDICATOR -----
+				// Add a small dot (radius 3) to represent the center of the main viewport.
+				const viewportDot = miniSvg
+					.append('circle')
+					.attr('r', 2.3)
+					.attr('fill', 'rgba(161, 140, 130, 0.5)')
+					.attr('pointer-events', 'none');
+				viewportDot.raise();
+
+				// ----- UPDATE FUNCTION: Sync Mini-Map Viewport Indicator -----
+				function updateMinimapViewport() {
+					// Use the transform on the main group "g" (which is moved when you pan)
+					const t = d3.zoomTransform(g.node());
+					const miniWidth = miniMapContainer.clientWidth;
+					const miniHeight = miniMapContainer.clientHeight;
+					const mainWidth = svg.node().clientWidth;
+					const mainHeight = svg.node().clientHeight;
+
+					// Compute the center of the visible area in graph coordinates.
+					// (Using t.invert on the center of the main svg)
+					const mainCenter = t.invert([mainWidth / 2, mainHeight / 2]);
+
+					// Map that center into minimap coordinates using your fixed scale and translation.
+					let miniX = mainCenter[0] * fixedScale + fixedTranslateX;
+					let miniY = mainCenter[1] * fixedScale + fixedTranslateY;
+
+					// OPTIONAL: Add an extra positive offset on the X-axis if needed.
+					const extraOffsetX = 30; // adjust this value as desired
+					miniX += extraOffsetX;
+
+					// Clamp the dot so it stays within the minimap container.
+					miniX = Math.max(0, Math.min(miniWidth, miniX));
+					miniY = Math.max(0, Math.min(miniHeight, miniY));
+
+					// Update the viewport dot's position.
+					viewportDot.attr('cx', miniX).attr('cy', miniY);
+				}
+				window.updateMinimapViewport = updateMinimapViewport;
+
+				// Attach this function to your main SVG's zoom event so it updates on any pan/zoom.
+				svg.on('zoom.minimap', updateMinimapViewport);
+				updateMinimapViewport();
+			}, 1000);
 		</script>
 	</body>
 </html>
