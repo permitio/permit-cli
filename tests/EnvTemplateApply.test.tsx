@@ -8,6 +8,15 @@ import { useApiKeyApi } from '../source/hooks/useApiKeyApi.js';
 import delay from 'delay';
 
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+vi.mock('keytar', () => {
+	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+	const keytar = {
+		setPassword: vi.fn().mockResolvedValue(demoPermitKey),
+		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
+		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
+	};
+	return { ...keytar, default: keytar };
+});
 
 vi.mock('../source/lib/auth.js', async () => {
 	const original = await vi.importActual('../source/lib/auth.js');
