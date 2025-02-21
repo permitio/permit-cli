@@ -13,7 +13,7 @@ import {
 	getRepoList,
 } from '../source/lib/gitops/utils.js';
 import { loadAuthToken, TokenType } from '../source/lib/auth.js';
-import { useApiKeyApi } from '../../source/hooks/useApiKeyApi';
+import { useApiKeyApi } from '../source/hooks/useApiKeyApi';
 import * as keytar from 'keytar';
 import SelectProject from '../source/components/SelectProject';
 import { useProjectAPI } from '../source/hooks/useProjectAPI';
