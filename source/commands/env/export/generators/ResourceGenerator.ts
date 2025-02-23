@@ -15,6 +15,7 @@ interface ActionData {
 }
 
 interface AttributeData {
+	name: string;
 	type: string;
 	required?: boolean;
 }
@@ -26,6 +27,7 @@ interface ResourceData {
 	urn?: string;
 	actions: Record<string, ActionData>;
 	attributes?: Record<string, AttributeData>;
+	depends_on?: string[];
 }
 
 interface ActionBlockRead {
@@ -34,7 +36,9 @@ interface ActionBlockRead {
 }
 
 interface AttributeBlockRead {
-	type?: string;
+	type: string;
+	description?: string;
+	name?: string;
 	required?: boolean;
 }
 
@@ -54,6 +58,7 @@ export class ResourceGenerator implements HCLGenerator {
 	async generateHCL(): Promise<string> {
 		try {
 			const resources = await this.permit.api.resources.list();
+
 			const validResources = resources
 				.filter(resource => resource.key !== '__user')
 				.map(resource => ({
@@ -62,13 +67,14 @@ export class ResourceGenerator implements HCLGenerator {
 					description: resource.description,
 					urn: resource.urn,
 					actions: this.transformActions(resource.actions || {}),
-					attributes: this.transformAttributes(resource.attributes),
+					attributes: this.transformAttributes(resource.attributes || {}),
 					depends_on: [],
 				}));
 
 			if (validResources.length === 0) return '';
 			return '\n# Resources\n' + this.template({ resources: validResources });
 		} catch (error) {
+			console.error('Error generating HCL:', error);
 			this.warningCollector.addWarning(`Failed to export resources: ${error}`);
 			return '';
 		}
@@ -81,8 +87,8 @@ export class ResourceGenerator implements HCLGenerator {
 
 		for (const [key, action] of Object.entries(actions)) {
 			transformedActions[key] = {
-				name: action.name || key,
-				description: action.description,
+				name: action.name || this.capitalizeFirstLetter(key),
+				...(action.description && { description: action.description }),
 			};
 		}
 
@@ -90,15 +96,15 @@ export class ResourceGenerator implements HCLGenerator {
 	}
 
 	private transformAttributes(
-		attributes: Record<string, AttributeBlockRead> | undefined,
-	): Record<string, AttributeData> | undefined {
-		if (!attributes) return undefined;
+		attributes: Record<string, AttributeBlockRead>,
+	): Record<string, AttributeData> {
 		const transformedAttributes: Record<string, AttributeData> = {};
 
 		for (const [key, attribute] of Object.entries(attributes)) {
 			transformedAttributes[key] = {
-				type: this.normalizeAttributeType(attribute.type || 'string'),
-				required: attribute.required,
+				name: attribute.name || this.generateAttributeName(key),
+				type: this.normalizeAttributeType(attribute.type),
+				...(attribute.required && { required: attribute.required }),
 			};
 		}
 
@@ -110,7 +116,20 @@ export class ResourceGenerator implements HCLGenerator {
 			boolean: 'bool',
 			array: 'array',
 			string: 'string',
+			number: 'number',
+			json: 'json',
 		};
 		return typeMap[type.toLowerCase()] || type;
+	}
+
+	private capitalizeFirstLetter(str: string): string {
+		return str.charAt(0).toUpperCase() + str.slice(1);
+	}
+
+	private generateAttributeName(key: string): string {
+		return key
+			.split(/[_\s]|(?=[A-Z])/)
+			.map(word => this.capitalizeFirstLetter(word))
+			.join(' ');
 	}
 }

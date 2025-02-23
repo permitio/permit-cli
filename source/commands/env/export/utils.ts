@@ -20,7 +20,7 @@ export function createWarningCollector(): WarningCollector {
 	};
 }
 
-export const generateProviderBlock = (key: string) => `
+export const generateProviderBlock = () => `
 terraform {
   required_providers {
     permitio = {
@@ -30,7 +30,13 @@ terraform {
   }
 }
 
+variable "PERMIT_API_KEY" {
+  type        = string
+  description = "The API key for the Permit.io API"
+}
+
 provider "permitio" {
-  api_key = "${key}"
+  api_url = "https://api.permit.io"
+  api_key = var.PERMIT_API_KEY
 }
 `;

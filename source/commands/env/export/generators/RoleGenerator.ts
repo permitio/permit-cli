@@ -86,12 +86,13 @@ export class RoleGenerator implements HCLGenerator {
 				return '';
 			}
 
+			const defaultRoles = new Set(['viewer', 'editor', 'admin']);
 			const validRoles: RoleData[] = [];
 			const rolesDependencies = new Map<string, string[]>();
 
 			// Process standalone roles first
 			for (const role of rolesArray) {
-				if (!role.key.includes(':')) {
+				if (!role.key.includes(':') && !defaultRoles.has(role.key)) {
 					validRoles.push({
 						key: role.key,
 						name: role.name,
@@ -119,6 +120,8 @@ export class RoleGenerator implements HCLGenerator {
 					const roles = resource.roles as ResourceRoles;
 
 					for (const [roleKey, roleData] of Object.entries(roles)) {
+						if (defaultRoles.has(roleKey)) continue; // Exclude default roles
+
 						const dependencies = [`permitio_resource.${resourceKey}`];
 
 						if (roleData.extends?.length) {

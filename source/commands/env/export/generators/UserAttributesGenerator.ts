@@ -23,9 +23,11 @@ export class UserAttributesGenerator implements HCLGenerator {
 		private permit: Permit,
 		private warningCollector: WarningCollector,
 	) {
+		// Register Handlebars helpers for formatting
 		Handlebars.registerHelper('formatDescription', function (text) {
 			if (!text) return '';
 
+			// Decode HTML entities
 			const decoded = text.replace(/&[^;]+;/g, match => {
 				const entities: Record<string, string> = {
 					'&quot;': '"',
@@ -41,7 +43,6 @@ export class UserAttributesGenerator implements HCLGenerator {
 			return decoded.replace(/[\\"]/g, '\\$&');
 		});
 
-		// Load and compile template
 		this.template = this.loadTemplate();
 	}
 
@@ -51,30 +52,46 @@ export class UserAttributesGenerator implements HCLGenerator {
 		try {
 			const templatePath = join(__dirname, '../templates/user-attribute.hcl');
 			const templateContent = readFileSync(templatePath, 'utf-8');
+
+			if (!templateContent) {
+				throw new Error('Template content is empty');
+			}
+
 			return Handlebars.compile(templateContent, { noEscape: true });
 		} catch (error) {
-			throw new Error(`Failed to load user attribute template: ${error}`);
+			throw new Error(
+				`Failed to load user attribute template: ${error instanceof Error ? error.message : String(error)}`,
+			);
 		}
 	}
 
 	private async getUserAttributes(): Promise<UserAttributeData[]> {
-		const userResource = await this.permit.api.resources.get('__user');
-		if (!userResource?.attributes) {
-			return [];
-		}
+		try {
+			const userResource = await this.permit.api.resources.get('__user');
 
-		// Filter and transform attributes
-		return Object.entries(userResource.attributes)
-			.filter(([_, attr]) => {
-				const description = attr.description?.toLowerCase() || '';
-				return !description.includes('built in attribute');
-			})
-			.map(([key, attr]) => ({
-				resourceKey: this.generateResourceKey(key),
-				key,
-				type: this.normalizeAttributeType(attr.type),
-				description: attr.description,
-			}));
+			if (!userResource?.attributes) {
+				return [];
+			}
+
+			return Object.entries(userResource.attributes)
+				.filter(([_, attr]) => {
+					const description = attr.description?.toLowerCase() || '';
+					return !description.includes('built in attribute');
+				})
+				.map(([key, attr]) => ({
+					resourceKey: this.generateResourceKey(key),
+					key,
+					type: this.normalizeAttributeType(attr.type),
+					description: attr.description,
+				}));
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error ? error.message : String(error);
+			this.warningCollector.addWarning(
+				`Error fetching user attributes: ${errorMessage}`,
+			);
+			throw error;
+		}
 	}
 
 	private generateResourceKey(key: string): string {
@@ -82,15 +99,26 @@ export class UserAttributesGenerator implements HCLGenerator {
 	}
 
 	private normalizeAttributeType(type: string): string {
-		// Map attribute types to supported HCL types
 		const typeMap: Record<string, string> = {
 			string: 'string',
 			number: 'number',
 			boolean: 'bool',
+			bool: 'bool',
 			array: 'array',
 			object: 'json',
+			json: 'json',
+			time: 'string',
 		};
-		return typeMap[type.toLowerCase()] || 'string';
+
+		const normalizedType = typeMap[type.toLowerCase()];
+		if (!normalizedType) {
+			this.warningCollector.addWarning(
+				`Unknown attribute type: ${type}, using 'string' as default`,
+			);
+			return 'string';
+		}
+
+		return normalizedType;
 	}
 
 	async generateHCL(): Promise<string> {
@@ -103,6 +131,10 @@ export class UserAttributesGenerator implements HCLGenerator {
 
 			const header = '\n# User Attributes\n';
 			const content = this.template({ attributes });
+
+			if (!content.trim()) {
+				throw new Error('Generated HCL content is empty');
+			}
 
 			return header + content;
 		} catch (error) {
