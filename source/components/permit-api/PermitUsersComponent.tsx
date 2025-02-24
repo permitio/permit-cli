@@ -15,6 +15,18 @@ type FetchOptions = {
 	role?: string;
 };
 
+type ApiResponse = {
+	data: Array<{
+		key: string;
+		email: string;
+		first_name: string;
+		last_name: string;
+		roles: Array<{ role: string; tenant: string }>;
+	}>;
+	total_count: number;
+	page?: number;
+};
+
 const isObjectEmpty = (object: object) => {
 	return Object.keys(object).length === 0;
 };
@@ -41,9 +53,9 @@ const truncateKey = (key: string, expand = false) => {
 
 const fetchAllPages = async (
 	baseUrl: string,
-	headers: HeadersInit,
+	headers: RequestInit['headers'],
 	options: FetchOptions,
-): Promise<{ data: any[]; total_count: number }> => {
+): Promise<ApiResponse> => {
 	const queryParams = new URLSearchParams({
 		page: '1',
 		per_page: String(options.perPage),
@@ -78,6 +90,7 @@ const fetchAllPages = async (
 	return {
 		data: [...firstPageData.data, ...otherPages.flat()],
 		total_count: firstPageData.total_count,
+		page: firstPageData.page,
 	};
 };
 
@@ -86,11 +99,10 @@ export default function PermitUsersComponent({ options }: Props) {
 	const [status, setStatus] = useState<'processing' | 'done' | 'error'>(
 		'processing',
 	);
-	const [result, setResult] = useState<{
-		data: object[];
-		total_count?: number;
-		page?: number;
-	}>({ data: [] });
+	const [result, setResult] = useState<ApiResponse>({
+		data: [],
+		total_count: 0,
+	});
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
 	useEffect(() => {
@@ -136,7 +148,7 @@ export default function PermitUsersComponent({ options }: Props) {
 							const listUrl = options.tenantKey
 								? `${baseUrl}/tenants/${
 										options.tenantKey
-									}/users?${queryParams.toString()}`
+								  }/users?${queryParams.toString()}`
 								: `${baseUrl}/users?${queryParams.toString()}`;
 
 							response = await fetch(listUrl, { headers });
@@ -195,7 +207,7 @@ export default function PermitUsersComponent({ options }: Props) {
 				setResult(data);
 				setStatus('done');
 			} catch (error) {
-				setResult({ data: [] });
+				setResult({ data: [], total_count: 0 });
 				setStatus('error');
 				setErrorMessage(
 					error instanceof Error ? error.message : 'Unknown error occurred',
@@ -204,7 +216,7 @@ export default function PermitUsersComponent({ options }: Props) {
 		};
 
 		performAction();
-	}, [options, auth.scope]);
+	}, [options, auth.scope, auth.authToken]);
 
 	return (
 		<Box flexDirection="column">
