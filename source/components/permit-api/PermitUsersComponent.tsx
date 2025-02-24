@@ -136,7 +136,7 @@ export default function PermitUsersComponent({ options }: Props) {
 							const listUrl = options.tenantKey
 								? `${baseUrl}/tenants/${
 										options.tenantKey
-								  }/users?${queryParams.toString()}`
+									}/users?${queryParams.toString()}`
 								: `${baseUrl}/users?${queryParams.toString()}`;
 
 							response = await fetch(listUrl, { headers });
