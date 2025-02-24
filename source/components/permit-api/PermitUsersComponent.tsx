@@ -196,13 +196,15 @@ export default function PermitUsersComponent({ options }: Props) {
 
 				const data = await response.json();
 				if (options.action === 'list') {
-					data.data = data.data.map((user: any, index: number) => ({
-						'#': (options.page - 1) * options.perPage + index + 1,
-						...user,
-						key: truncateKey(user.key, options.expandKey),
-						tenant: getTenant(user.roles),
-						roles: formatRoles(user.roles),
-					}));
+					data.data = data.data.map(
+						(user: ApiResponse['data'][0], index: number) => ({
+							'#': (options.page - 1) * options.perPage + index + 1,
+							...user,
+							key: truncateKey(user.key, options.expandKey),
+							tenant: getTenant(user.roles),
+							roles: formatRoles(user.roles),
+						}),
+					);
 				}
 				setResult(data);
 				setStatus('done');
