@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from 'ink-testing-library';
-import Apply from '../source/commands/env/template/apply';
+import List from '../source/commands/env/template/list.js';
 import { vi, describe, it, expect } from 'vitest';
 import { loadAuthToken } from '../source/lib/auth.js';
 import { useEnvironmentApi } from '../source/hooks/useEnvironmentApi.js';
@@ -62,9 +62,10 @@ vi.mock('../source/hooks/useApiKeyApi', async () => {
 
 describe('Apply Command', () => {
 	it('Should display the values', async () => {
-		const { stdout } = render(<Apply options={{ key: demoPermitKey }}></Apply>);
+		const { stdout } = render(<List options={{ key: demoPermitKey }}></List>);
 		await delay(50);
-		expect(stdout.lastFrame()).contains('❯ fga-tradeoffs\n');
-		expect(stdout.lastFrame()).contains('mesa-verde-banking-demo');
+		expect(stdout.lastFrame()).contains('Templates List');
+		expect(stdout.lastFrame()).contains('• fga-tradeoffs');
+		expect(stdout.lastFrame()).contains('• mesa-verde-banking-demo');
 	});
 });
