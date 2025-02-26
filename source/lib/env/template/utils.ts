@@ -62,7 +62,7 @@ export async function ApplyTemplateLocally(
 		const runCommand = (cmd: string) => {
 			return new Promise<string>((resolve, reject) => {
 				exec(cmd, { cwd: tempDir }, (error, stdout, stderr) => {
-					if (error) return reject(`Error: ${error.message}`);
+					if (error) return reject(`${error.message}`);
 					if (stderr) return reject(`Terraform Error: ${stderr}`);
 					resolve(stdout);
 				});
