@@ -4,7 +4,9 @@ import zod from 'zod';
 import { type infer as zInfer } from 'zod';
 import { AuthProvider } from '../../../components/AuthProvider.js';
 import ApplyComponent from '../../../components/env/template/ApplyComponent.js';
+
 export const description = 'A apply command to run the TF file';
+
 export const options = zod.object({
 	key: zod
 		.string()

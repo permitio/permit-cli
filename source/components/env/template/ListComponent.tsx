@@ -1,5 +1,6 @@
 import React from 'react';
 import { getFiles } from '../../../lib/env/template/utils.js';
+
 import { Text, Box } from 'ink';
 
 export default function ListComponent() {

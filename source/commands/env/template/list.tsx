@@ -7,6 +7,7 @@ import ListComponent from '../../../components/env/template/ListComponent.js';
 
 export const description =
 	'A simple command which lists all the terraform templates available.';
+
 export const options = zod.object({
 	key: zod
 		.string()
