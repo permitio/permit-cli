@@ -16,7 +16,7 @@ interface RoleData {
 	extends?: string[];
 	dependencies: string[];
 	description?: string;
-	attributes?: Record<string, any>;
+	attributes?: Record<string, unknown>;
 }
 
 interface RoleRead {
@@ -25,7 +25,7 @@ interface RoleRead {
 	description?: string;
 	permissions?: string[];
 	extends?: string[];
-	attributes?: Record<string, any>;
+	attributes?: Record<string, unknown>;
 }
 
 interface ResourceRole {
@@ -33,7 +33,7 @@ interface ResourceRole {
 	description?: string;
 	permissions?: string[];
 	extends?: string[];
-	attributes?: Record<string, any>;
+	attributes?: Record<string, unknown>;
 }
 
 interface ResourceRoles {
@@ -49,7 +49,7 @@ export class RoleGenerator implements HCLGenerator {
 		private warningCollector: WarningCollector,
 	) {
 		// Register Handlebars helpers
-		Handlebars.registerHelper('json', function (context: any) {
+		Handlebars.registerHelper('json', function (context: string[] | unknown) {
 			if (Array.isArray(context)) {
 				return `[${context.map(item => `"${item}"`).join(', ')}]`;
 			}
@@ -58,7 +58,7 @@ export class RoleGenerator implements HCLGenerator {
 
 		Handlebars.registerHelper(
 			'attributes',
-			function (context: Record<string, any>) {
+			function (context: Record<string, unknown>) {
 				if (!context) return '';
 				const entries = Object.entries(context);
 				if (entries.length === 0) return '';

@@ -74,7 +74,7 @@ export class UserAttributesGenerator implements HCLGenerator {
 			}
 
 			return Object.entries(userResource.attributes)
-				.filter(([_, attr]) => {
+				.filter(([, attr]) => {
 					const description = attr.description?.toLowerCase() || '';
 					return !description.includes('built in attribute');
 				})
