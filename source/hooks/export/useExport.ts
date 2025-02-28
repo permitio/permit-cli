@@ -39,7 +39,7 @@ export const useExport = (apiKey: string) => {
 # Environment: ${scope?.environment_id || 'unknown'}
 # Project: ${scope?.project_id || 'unknown'}
 # Organization: ${scope?.organization_id || 'unknown'}
-${generateProviderBlock(apiKey)}`;
+${generateProviderBlock()}`;
 
 			const generators = [
 				new ResourceGenerator(permit, warningCollector),

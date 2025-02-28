@@ -28,7 +28,7 @@ export class UserAttributesGenerator implements HCLGenerator {
 			if (!text) return '';
 
 			// Decode HTML entities
-			const decoded = text.replace(/&[^;]+;/g, match => {
+			const decoded = text.replace(/&[^;]+;/g, (match: string) => {
 				const entities: Record<string, string> = {
 					'&quot;': '"',
 					'&#x27;': "'",
@@ -38,7 +38,7 @@ export class UserAttributesGenerator implements HCLGenerator {
 				};
 				return entities[match] || match;
 			});
-
+			
 			// Escape special characters for HCL
 			return decoded.replace(/[\\"]/g, '\\$&');
 		});
