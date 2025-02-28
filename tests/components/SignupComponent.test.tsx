@@ -20,7 +20,9 @@ describe('SignupComponent', () => {
 	beforeEach(() => {
 		mockOnSuccess = vi.fn();
 		mockCreateOrg = vi.fn();
-		(useOrganisationApi as jest.Mock).mockReturnValue({ createOrg: mockCreateOrg });
+		(useOrganisationApi as jest.Mock).mockReturnValue({
+			createOrg: mockCreateOrg,
+		});
 	});
 
 	it('should display the default organization name and allow confirmation', async () => {
@@ -28,7 +30,7 @@ describe('SignupComponent', () => {
 			<SignupComponent
 				accessToken="mock-access-token"
 				onSuccess={mockOnSuccess}
-			/>
+			/>,
 		);
 
 		expect(lastFrame()).toMatch(/Welcome! Create your Workspace/);
@@ -38,18 +40,16 @@ describe('SignupComponent', () => {
 		stdin.write('y');
 		stdin.write(enter);
 		await delay(50);
-
 	});
 
 	it('should allow the user to enter a custom organization name', async () => {
-
 		mockCreateOrg.mockResolvedValue({ error: null });
 
 		const { lastFrame, stdin } = render(
 			<SignupComponent
 				accessToken="mock-access-token"
 				onSuccess={mockOnSuccess}
-			/>
+			/>,
 		);
 
 		expect(lastFrame()).toMatch(/Welcome! Create your Workspace/);
@@ -66,7 +66,6 @@ describe('SignupComponent', () => {
 		stdin.write(customName);
 		stdin.write(enter);
 		await delay(50);
-
 	});
 
 	it('should display a spinner while creating an organization', async () => {
@@ -75,7 +74,7 @@ describe('SignupComponent', () => {
 			<SignupComponent
 				accessToken="mock-access-token"
 				onSuccess={mockOnSuccess}
-			/>
+			/>,
 		);
 
 		// Confirm the default organization name
@@ -94,7 +93,7 @@ describe('SignupComponent', () => {
 			<SignupComponent
 				accessToken="mock-access-token"
 				onSuccess={mockOnSuccess}
-			/>
+			/>,
 		);
 
 		// Confirm the default organization name
@@ -113,7 +112,7 @@ describe('SignupComponent', () => {
 			<SignupComponent
 				accessToken="mock-access-token"
 				onSuccess={mockOnSuccess}
-			/>
+			/>,
 		);
 
 		// Confirm the default organization name
