@@ -118,7 +118,7 @@ export class RoleDerivationGenerator implements HCLGenerator {
 	): ResourceRelation[] {
 		const relations: ResourceRelation[] = [];
 
-		for (const [_, data] of resourceMap.entries()) {
+		for (const [, data] of resourceMap.entries()) {
 			if (Array.isArray(data.relations)) {
 				for (const relation of data.relations) {
 					if (
