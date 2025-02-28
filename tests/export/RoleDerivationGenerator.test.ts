@@ -6,7 +6,7 @@ import Handlebars from 'handlebars';
 // Mock the file system operations
 vi.mock('fs', () => ({
   readFileSync: vi.fn().mockReturnValue(`{{#each derivations}}
-resource "permitio_role_derivation" "{{resource_id}}" {
+resource "permitio_role_derivation" "{{id}}" {
   resource    = "{{resource}}"
   role        = "{{role}}"
   linked_by   = "{{linked_by}}"
@@ -20,7 +20,7 @@ resource "permitio_role_derivation" "{{resource_id}}" {
 }));
 
 // Register the json helper for Handlebars
-Handlebars.registerHelper('json', function(context) {
+Handlebars.registerHelper('json', function (context) {
   return JSON.stringify(context);
 });
 
@@ -41,7 +41,17 @@ describe('RoleDerivationGenerator', () => {
             id: 'role1',
             key: 'document_user',
             resource: 'document',
-            name: 'User'
+            name: 'User',
+            // Added granted_to so derivations will be generated
+            granted_to: {
+              users_with_role: [
+                {
+                  role: 'document_user',
+                  on_resource: 'document',
+                  linked_by_relation: 'parent',
+                },
+              ],
+            },
           }
         ]),
       },
@@ -50,7 +60,7 @@ describe('RoleDerivationGenerator', () => {
           {
             key: 'parent',
             subject_resource: 'document',
-            object_resource: 'document'
+            object_resource: 'document',
           }
         ])
       }
@@ -78,7 +88,7 @@ describe('RoleDerivationGenerator', () => {
           list: vi.fn().mockResolvedValue([
             {
               id: 'res1'
-              
+
             },
           ]),
         },

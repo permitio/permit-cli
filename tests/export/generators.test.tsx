@@ -32,45 +32,59 @@ describe('Generators', () => {
 
   describe('RoleGenerator', () => {
     it('generates valid HCL for roles', async () => {
-      // Mock the required resources with roles data
-      const mockResourcesWithRoles = [{
-        key: 'document',
-        name: 'Document',
-        roles: {
-          admin: {
-            name: 'Administrator',
-            permissions: ['document:read']
-          }
-        }
-      }];
+      
+      const mockResourcesWithRoles = [
+        {
+          key: 'document',
+          name: 'Document',
+          roles: {
+            custom_admin: {
+              name: 'Administrator',
+              permissions: ['document:read'],
+            },
+          },
+        },
+      ];
 
       const mockPermitWithRoles = {
         api: {
           ...permit.api,
           resources: {
-            list: vi.fn().mockResolvedValue(mockResourcesWithRoles)
+            list: vi.fn().mockResolvedValue(mockResourcesWithRoles),
           },
           roles: {
-            list: vi.fn().mockResolvedValue([{
-              key: 'user',
-              name: 'User',
-              description: 'Application user'
-            }])
-          }
-        }
+            list: vi.fn().mockResolvedValue([
+              {
+                key: 'user',
+                name: 'User',
+                description: 'Application user',
+              },
+            ]),
+          },
+        },
       };
 
       const generator = new RoleGenerator(mockPermitWithRoles as any, warningCollector);
       const hcl = await generator.generateHCL();
-      
+
       expect(hcl).toContain('resource "permitio_role"');
       expect(hcl).toContain('user');
-      expect(hcl).toContain('admin');
+      // Expect the resource-specific role key (custom_admin) to be present.
+      expect(hcl).toContain('custom_admin');
     });
   });
 
   describe('UserAttributesGenerator', () => {
     it('generates valid HCL for user attributes', async () => {
+      // Ensure that permit.api.resources exists and define its "get" method.
+      if (!permit.api.resources) {
+        permit.api.resources = {};
+      }
+      permit.api.resources.get = vi.fn().mockResolvedValue({
+        attributes: {
+          [mockUserAttributes[0].key]: mockUserAttributes[0],
+        },
+      });
       const generator = new UserAttributesGenerator(permit, warningCollector);
       const hcl = await generator.generateHCL();
       expect(hcl).toContain('resource "permitio_user_attribute"');
