@@ -38,7 +38,7 @@ export class UserAttributesGenerator implements HCLGenerator {
 				};
 				return entities[match] || match;
 			});
-			
+
 			// Escape special characters for HCL
 			return decoded.replace(/[\\"]/g, '\\$&');
 		});
