@@ -1,5 +1,5 @@
 {{#each derivations}}
-resource "permitio_role_derivation" "{{resource_id}}" {
+resource "permitio_role_derivation" "{{id}}" {
   role        = permitio_role.{{role}}.key
   on_resource = permitio_resource.{{on_resource}}.key
   to_role     = permitio_role.{{to_role}}.key
@@ -7,8 +7,11 @@ resource "permitio_role_derivation" "{{resource_id}}" {
   linked_by   = permitio_relation.{{linked_by}}.key
   depends_on = [
     {{#each dependencies}}
-    {{this}},
+    {{this}}{{#unless @last}},{{/unless}}
     {{/each}}
   ]
 }
+{{#unless @last}}
+
+{{/unless}}
 {{/each}}
