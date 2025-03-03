@@ -9,7 +9,7 @@ export enum MethodE {
 /**
  * Type definition for API responses.
  */
-interface FetchResponse<T = unknown> {
+export interface FetchResponse<T = unknown> {
 	success: boolean;
 	data?: T;
 	error?: string;

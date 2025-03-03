@@ -5,27 +5,16 @@ import { options } from '../../commands/api/users/list.js';
 import { useAuth } from '../AuthProvider.js';
 import TableComponent from '../ui/Table.js';
 import Spinner from 'ink-spinner';
+import { usersApi, type UserData } from '../../utils/permitApi.js';
 
 type Props = {
 	options: zInfer<typeof options>;
 };
 
-type FetchOptions = {
-	perPage: number;
-	role?: string;
-};
-
-type ApiResponse = {
-	data: Array<{
-		key: string;
-		email: string;
-		first_name: string;
-		last_name: string;
-		roles: Array<{ role: string; tenant: string }>;
-	}>;
-	total_count: number;
-	page?: number;
-};
+interface TableUserData extends Omit<UserData, 'roles'> {
+	'#': number;
+	roles: string;
+}
 
 const isObjectEmpty = (object: object) => {
 	return Object.keys(object).length === 0;
@@ -51,89 +40,58 @@ const truncateKey = (key: string, expand = false) => {
 	return key.length > 7 ? key.slice(0, 7) + '...' : key;
 };
 
-const fetchAllPages = async (
-	baseUrl: string,
-	headers: RequestInit['headers'],
-	options: FetchOptions,
-): Promise<ApiResponse> => {
-	// ... existing fetchAllPages implementation
-};
-
 export default function PermitUsersListComponent({ options }: Props) {
 	const auth = useAuth();
 	const [status, setStatus] = useState<'processing' | 'done' | 'error'>(
 		'processing',
 	);
-	const [result, setResult] = useState<ApiResponse>({
+	const [result, setResult] = useState<{
+		data: TableUserData[];
+		total_count: number;
+		page: number;
+	}>({
 		data: [],
 		total_count: 0,
+		page: 1,
 	});
+
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
 	useEffect(() => {
-		const performAction = async () => {
-			let baseUrl = '';
+		const fetchData = async () => {
 			try {
-				baseUrl = `https://api.permit.io/v2/facts/${
-					auth.scope.project_id || options.projectId
-				}/${auth.scope.environment_id || options.envId}`;
-				const headers = {
-					Authorization: `Bearer ${auth.authToken || options.apiKey}`,
-					'Content-Type': 'application/json',
-				};
+				const response = await usersApi.list({
+					auth,
+					projectId: options.projectId,
+					envId: options.envId,
+					apiKey: options.apiKey,
+					page: options.page,
+					perPage: options.perPage,
+					role: options.role,
+					tenantKey: options.tenantKey,
+				});
 
-				let response;
-				if (options.all) {
-					let listUrl = options.tenantKey
-						? `${baseUrl}/tenants/${options.tenantKey}/users`
-						: `${baseUrl}/users`;
-
-					if (options.role) {
-						listUrl += `?role=${options.role}`;
-					}
-
-					const allData = await fetchAllPages(listUrl, headers, {
-						perPage: options.perPage,
-						role: options.role,
-					});
-					response = { ok: true, json: () => Promise.resolve(allData) };
-				} else {
-					const queryParams = new URLSearchParams({
-						page: String(options.page),
-						per_page: String(options.perPage),
-					});
-
-					if (options.role) {
-						queryParams.append('role', options.role);
-					}
-
-					const listUrl = options.tenantKey
-						? `${baseUrl}/tenants/${
-								options.tenantKey
-							}/users?${queryParams.toString()}`
-						: `${baseUrl}/users?${queryParams.toString()}`;
-
-					response = await fetch(listUrl, { headers });
+				if (!response.success) {
+					throw new Error(response.error);
 				}
 
-				if (!response.ok) {
-					throw new Error(`API request failed: ${response.statusText}`);
-				}
+				const rawUsersData = response.data?.data || [];
+				const usersData: TableUserData[] = rawUsersData.map((user, index) => ({
+					...user,
+					'#': (options.page - 1) * options.perPage + index + 1,
+					key: truncateKey(user.key, options.expandKey),
+					tenant: getTenant(user.roles),
+					roles: formatRoles(user.roles),
+				}));
 
-				const data = await response.json();
-				data.data = data.data.map(
-					(user: ApiResponse['data'][0], index: number) => ({
-						'#': (options.page - 1) * options.perPage + index + 1,
-						...user,
-						key: truncateKey(user.key, options.expandKey),
-						tenant: getTenant(user.roles),
-						roles: formatRoles(user.roles),
-					}),
-				);
-				setResult(data);
+				setResult({
+					data: usersData,
+					total_count: response.data?.total_count || 0,
+					page: response.data?.page || 1,
+				});
 				setStatus('done');
 			} catch (error) {
-				setResult({ data: [], total_count: 0 });
+				setResult({ data: [], total_count: 0, page: 0 });
 				setStatus('error');
 				setErrorMessage(
 					error instanceof Error ? error.message : 'Unknown error occurred',
@@ -141,8 +99,8 @@ export default function PermitUsersListComponent({ options }: Props) {
 			}
 		};
 
-		performAction();
-	}, [options, auth.scope, auth.authToken]);
+		fetchData();
+	}, [options, auth]);
 
 	return (
 		<Box flexDirection="column">

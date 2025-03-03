@@ -4,6 +4,7 @@ import { type infer as zInfer } from 'zod';
 import { options } from '../../commands/api/users/assign.js';
 import { useAuth } from '../AuthProvider.js';
 import Spinner from 'ink-spinner';
+import { usersApi } from '../../utils/permitApi.js';
 
 type Props = {
 	options: zInfer<typeof options>;
@@ -18,40 +19,30 @@ export default function PermitUsersAssignComponent({ options }: Props) {
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
 	useEffect(() => {
-		const performAction = async () => {
+		const assignRole = async () => {
 			try {
-				const baseUrl = `https://api.permit.io/v2/facts/${
-					auth.scope.project_id || options.projectId
-				}/${auth.scope.environment_id || options.envId}`;
-
-				const headers = {
-					Authorization: `Bearer ${auth.authToken || options.apiKey}`,
-					'Content-Type': 'application/json',
-				};
-
 				if (!options.userId || !options.roleKey || !options.tenantKey) {
 					throw new Error(
 						'User ID, role key, and tenant key are required for assignment',
 					);
 				}
 
-				const response = await fetch(`${baseUrl}/role_assignments`, {
-					method: 'POST',
-					headers,
-					body: JSON.stringify({
-						role: options.roleKey,
-						tenant: options.tenantKey,
-						user: options.userId,
-					}),
+				const response = await usersApi.assign({
+					auth,
+					projectId: options.projectId,
+					envId: options.envId,
+					apiKey: options.apiKey,
+					userId: options.userId,
+					roleKey: options.roleKey,
+					tenantKey: options.tenantKey,
 				});
 
-				if (!response.ok) {
-					setResult(await response.json());
-					throw new Error(`API request failed: ${response.statusText}`);
+				if (!response.success) {
+					setResult(response.data || {});
+					throw new Error(response.error);
 				}
 
-				const data = await response.json();
-				setResult(data);
+				setResult(response.data || {});
 				setStatus('done');
 			} catch (error) {
 				setStatus('error');
@@ -61,8 +52,8 @@ export default function PermitUsersAssignComponent({ options }: Props) {
 			}
 		};
 
-		performAction();
-	}, [options, auth.scope, auth.authToken]);
+		assignRole();
+	}, [options, auth]);
 
 	return (
 		<Box flexDirection="column">
