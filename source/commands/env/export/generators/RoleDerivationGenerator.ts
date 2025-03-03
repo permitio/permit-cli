@@ -24,11 +24,11 @@ interface PaginatedResponse<T> {
 
 interface RoleDerivationData {
 	id: string;
-	resource: string;
 	role: string;
-	linked_by: string;
 	on_resource: string;
 	to_role: string;
+	resource: string;
+	linked_by: string;
 	dependencies: string[];
 }
 
@@ -184,6 +184,12 @@ export class RoleDerivationGenerator implements HCLGenerator {
 		return `${sanitizeId(sourceRole)}_to_${sanitizeId(targetRole)}`;
 	}
 
+	// Generate Terraform-friendly role resource name from role key
+	private generateTerraformRoleName(resourceKey: string, roleKey: string): string {
+		// For resource roles, format as resource_role
+		return `${resourceKey}_${roleKey}`;
+	}
+
 	private async generateDerivations(
 		resourceMap: Map<string, ResourceData>,
 	): Promise<RoleDerivationData[]> {
@@ -210,6 +216,10 @@ export class RoleDerivationGenerator implements HCLGenerator {
 					const targetResourceKey = resourceKey;
 					const targetRoleKey = role.key;
 
+					// Generate proper Terraform resource names for roles
+					const sourceTfRoleName = this.generateTerraformRoleName(sourceResourceKey, sourceRoleKey);
+					const targetTfRoleName = this.generateTerraformRoleName(targetResourceKey, targetRoleKey);
+
 					const mappingKey = `${sourceResourceKey}:${relationKey}:${targetResourceKey}`;
 					const relationMapping = relationMappings.get(mappingKey);
 
@@ -226,18 +236,18 @@ export class RoleDerivationGenerator implements HCLGenerator {
 					);
 
 					const dependencies: string[] = [
-						`permitio_role.${sourceRoleKey}`,
+						`permitio_role.${sourceTfRoleName}`,
 						`permitio_resource.${sourceResourceKey}`,
-						`permitio_role.${targetRoleKey}`,
+						`permitio_role.${targetTfRoleName}`,
 						`permitio_resource.${targetResourceKey}`,
 						`permitio_relation.${relationMapping.terraformResourceName}`,
 					];
 
 					derivations.push({
 						id: derivationId,
-						role: sourceRoleKey,
+						role: sourceTfRoleName,
 						on_resource: sourceResourceKey,
-						to_role: targetRoleKey,
+						to_role: targetTfRoleName,
 						resource: targetResourceKey,
 						linked_by: relationMapping.terraformResourceName,
 						dependencies: dependencies,

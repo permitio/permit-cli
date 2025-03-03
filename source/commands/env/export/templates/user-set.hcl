@@ -9,5 +9,12 @@ resource "permitio_user_set" "{{key}}" {
   resource = "{{resource}}"
   {{/if}}
   conditions = jsonencode({{{formatConditions conditions}}})
+  {{#if depends_on.length}}
+  depends_on = [
+    {{#each depends_on}}
+    {{this}}{{#unless @last}},{{/unless}}
+    {{/each}}
+  ]
+  {{/if}}
 }
 {{/each}}
