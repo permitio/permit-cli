@@ -1,15 +1,8 @@
 import React from 'react';
-import { AuthProvider } from '../../components/AuthProvider.js';
-import PermitUsersComponent from '../../components/permit-api/PermitUsersComponent.js';
-import {
-	type infer as zInfer,
-	string,
-	object,
-	enum as zEnum,
-	boolean,
-	number,
-} from 'zod';
+import { AuthProvider } from '../../../components/AuthProvider.js';
+import { type infer as zInfer, string, object, boolean, number } from 'zod';
 import { option } from 'pastel';
+import PermitUsersListComponent from '../../../components/api/PermitUsersListComponent.js';
 
 export const options = object({
 	apiKey: string()
@@ -31,32 +24,6 @@ export const options = object({
 		.describe(
 			option({
 				description: 'Permit.io Environment ID',
-			}),
-		),
-	action: zEnum(['list', 'assign', 'unassign']).describe(
-		option({
-			description: 'Action to perform on users (list/assign/unassign)',
-		}),
-	),
-	userId: string()
-		.optional()
-		.describe(
-			option({
-				description: 'User ID for assign/unassign operations',
-			}),
-		),
-	roleKey: string()
-		.optional()
-		.describe(
-			option({
-				description: 'Role key for assign/unassign operations',
-			}),
-		),
-	tenantKey: string()
-		.optional()
-		.describe(
-			option({
-				description: 'Tenant key for assign/unassign operations',
 			}),
 		),
 	expandKey: boolean()
@@ -94,6 +61,14 @@ export const options = object({
 				alias: 'r',
 			}),
 		),
+	tenantKey: string()
+		.optional()
+		.describe(
+			option({
+				description: 'Filter users by tenant',
+				alias: 't',
+			}),
+		),
 	all: boolean()
 		.optional()
 		.default(false)
@@ -109,10 +84,10 @@ type Props = {
 	options: zInfer<typeof options>;
 };
 
-export default function Users({ options }: Props) {
+export default function List({ options }: Props) {
 	return (
 		<AuthProvider scope={'environment'} permit_key={options.apiKey}>
-			<PermitUsersComponent options={options} />
+			<PermitUsersListComponent options={{ ...options }} />
 		</AuthProvider>
 	);
 }

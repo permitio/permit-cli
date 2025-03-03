@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Text } from 'ink';
 import { type infer as zInfer } from 'zod';
-import { options } from '../../commands/permit-api/users.js';
+import { options } from '../../commands/api/users.js';
 import { useAuth } from '../../components/AuthProvider.js';
 import TableComponent from '../ui/Table.js';
 import Spinner from 'ink-spinner';
@@ -148,7 +148,7 @@ export default function PermitUsersComponent({ options }: Props) {
 							const listUrl = options.tenantKey
 								? `${baseUrl}/tenants/${
 										options.tenantKey
-									}/users?${queryParams.toString()}`
+								  }/users?${queryParams.toString()}`
 								: `${baseUrl}/users?${queryParams.toString()}`;
 
 							response = await fetch(listUrl, { headers });
