@@ -34,7 +34,7 @@ const TableComponent = ({
 
 		/* Calculate column width based on header and content length */
 		const columnWidthArray = headers.map((header: string) => {
-			if (typeof updatedRows?.[0][header] === 'string') {
+			if (typeof updatedRows?.[0]?.[header] === 'string') {
 				if (header.length > updatedRows?.[0][header].length) {
 					return header.length * 2;
 				}
