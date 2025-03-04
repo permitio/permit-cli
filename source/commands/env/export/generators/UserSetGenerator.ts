@@ -57,7 +57,7 @@ export class UserSetGenerator implements HCLGenerator {
 					const description = attr.description?.toLowerCase() || '';
 					return !description.includes('built in attribute');
 				})
-				.map(([key, attr]) => ({
+				.map(([key]) => ({
 					key,
 					id: `user_${key.toLowerCase().replace(/[^a-z0-9_]/g, '_')}`,
 				}));
@@ -71,7 +71,6 @@ export class UserSetGenerator implements HCLGenerator {
 	// Detect user attributes referenced in conditions
 	private detectDependencies(conditions: object): string[] {
 		const stringifiedConditions = JSON.stringify(conditions);
-
 		return this.userAttributes
 			.filter(attr => {
 				// Check if the attribute is referenced in the condition using pattern "subject.<attr_key>"
