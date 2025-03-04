@@ -26,7 +26,7 @@ describe('UserAttributesGenerator', () => {
         },
       },
     };
-    
+
     warningCollector = createWarningCollector();
     generator = new UserAttributesGenerator(
       mockPermit as unknown as Permit,
@@ -36,10 +36,10 @@ describe('UserAttributesGenerator', () => {
 
   it('generates valid HCL for user attributes', async () => {
     const hcl = await generator.generateHCL();
-    
+
     // Check that the HCL contains the user attributes header
     expect(hcl).toContain('# User Attributes');
-    
+
     // Check that attribute entries are present without focusing on specific formatting
     expect(hcl).toContain('permitio_user_attribute');
     expect(hcl).toContain('department');
@@ -54,7 +54,7 @@ describe('UserAttributesGenerator', () => {
     mockPermit.api.resources.get.mockResolvedValueOnce({
       attributes: {}
     });
-    
+
     const hcl = await generator.generateHCL();
     expect(hcl).toBe('');
   });
@@ -67,19 +67,19 @@ describe('UserAttributesGenerator', () => {
         },
       },
     });
-    
+
     const hcl = await generator.generateHCL();
-    
+
     // Check for the attribute presence
     expect(hcl).toContain('permitio_user_attribute');
     expect(hcl).toContain('simple');
     expect(hcl).toContain('type');
     expect(hcl).toContain('string');
-    
-    // Ensure no description line is present
+
+    // Expect a description line with an empty value
     const lines = hcl.split('\n');
-    const descriptionLines = lines.filter(line => line.includes('description'));
-    expect(descriptionLines.length).toBe(0);
+    const descriptionLine = lines.find(line => line.includes('description'));
+    expect(descriptionLine).toMatch(/description\s*=\s*""/);
   });
 
   it('filters out built-in attributes', async () => {
@@ -95,12 +95,12 @@ describe('UserAttributesGenerator', () => {
         },
       },
     });
-    
+
     const hcl = await generator.generateHCL();
-    
+
     // Should include the custom attribute
     expect(hcl).toContain('department');
-    
+
     // Should not include the built-in attribute
     expect(hcl).not.toContain('email');
     expect(hcl).not.toContain('Built in attribute for email');
@@ -110,21 +110,21 @@ describe('UserAttributesGenerator', () => {
     mockPermit.api.resources.get.mockRejectedValueOnce(
       new Error('API Error'),
     );
-    
+
     const hcl = await generator.generateHCL();
     expect(hcl).toBe('');
-    
+
     // Check that a warning was recorded
     const warnings = warningCollector.getWarnings();
     expect(warnings.length).toBeGreaterThan(0);
-    
+
     // Check for both warning messages
-    const fetchErrorWarning = warnings.find(w => 
+    const fetchErrorWarning = warnings.find(w =>
       w.includes('Error fetching user attributes')
     );
     expect(fetchErrorWarning).toBeDefined();
-    
-    const exportErrorWarning = warnings.find(w => 
+
+    const exportErrorWarning = warnings.find(w =>
       w.includes('Failed to export user attributes')
     );
     expect(exportErrorWarning).toBeDefined();
@@ -144,22 +144,22 @@ describe('UserAttributesGenerator', () => {
         },
       },
     });
-    
+
     const hcl = await generator.generateHCL();
-    
+
     // Check normalized keys are present
     expect(hcl).toContain('boolField');
     expect(hcl).toContain('jsonField');
     expect(hcl).toContain('unknownField');
-    
+
     // Use regex matching to account for formatting differences in the generated HCL
     expect(hcl).toMatch(/type\s*=\s*"bool"/);
     expect(hcl).toMatch(/type\s*=\s*"json"/);
-    expect(hcl).toMatch(/type\s*=\s*"string"/); // Unknown type defaults to string
-    
+    expect(hcl).toMatch(/type\s*=\s*"string"/);
+
     // Check for warning about unknown type
     const warnings = warningCollector.getWarnings();
-    const unknownTypeWarning = warnings.find(w => 
+    const unknownTypeWarning = warnings.find(w =>
       w.includes('Unknown attribute type: unknown')
     );
     expect(unknownTypeWarning).toBeDefined();
