@@ -139,18 +139,6 @@ export class RoleDerivationGenerator implements HCLGenerator {
 		return relations;
 	}
 
-	private generateTerraformRelationName(relation: RelationRead): string {
-		if (
-			!relation.subject_resource ||
-			!relation.object_resource ||
-			!relation.key
-		) {
-			throw new Error(`Invalid relation: missing required properties`);
-		}
-
-		return `${relation.subject_resource}_${relation.object_resource}`;
-	}
-
 	private buildRelationMappings(
 		relations: ResourceRelation[],
 	): Map<string, TerraformRelationMapping> {
@@ -164,14 +152,13 @@ export class RoleDerivationGenerator implements HCLGenerator {
 			if (!relation.key) continue;
 
 			const mappingKey = `${sourceResourceKey}:${relation.key}:${targetResourceKey}`;
-			const terraformResourceName =
-				this.generateTerraformRelationName(relation);
 
+			// Use the actual relation key as seen in the expected output
 			relationMappings.set(mappingKey, {
 				relationKey: relation.key,
 				sourceResource: sourceResourceKey,
 				targetResource: targetResourceKey,
-				terraformResourceName,
+				terraformResourceName: `${sourceResourceKey}_${targetResourceKey}`,
 			});
 		}
 
@@ -179,18 +166,8 @@ export class RoleDerivationGenerator implements HCLGenerator {
 	}
 
 	private createDerivationId(sourceRole: string, targetRole: string): string {
-		const sanitizeId = (str: string) =>
-			str.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase();
-		return `${sanitizeId(sourceRole)}_to_${sanitizeId(targetRole)}`;
-	}
-
-	// Generate Terraform-friendly role resource name from role key
-	private generateTerraformRoleName(
-		resourceKey: string,
-		roleKey: string,
-	): string {
-		// For resource roles, format as resource_role
-		return `${resourceKey}_${roleKey}`;
+		// Create the ID in the format "source_target" without "to"
+		return `${sourceRole}_${targetRole}`;
 	}
 
 	private async generateDerivations(
@@ -219,16 +196,6 @@ export class RoleDerivationGenerator implements HCLGenerator {
 					const targetResourceKey = resourceKey;
 					const targetRoleKey = role.key;
 
-					// Generate proper Terraform resource names for roles
-					const sourceTfRoleName = this.generateTerraformRoleName(
-						sourceResourceKey,
-						sourceRoleKey,
-					);
-					const targetTfRoleName = this.generateTerraformRoleName(
-						targetResourceKey,
-						targetRoleKey,
-					);
-
 					const mappingKey = `${sourceResourceKey}:${relationKey}:${targetResourceKey}`;
 					const relationMapping = relationMappings.get(mappingKey);
 
@@ -245,21 +212,21 @@ export class RoleDerivationGenerator implements HCLGenerator {
 					);
 
 					const dependencies: string[] = [
-						`permitio_role.${sourceTfRoleName}`,
+						`permitio_role.${sourceRoleKey}`,
 						`permitio_resource.${sourceResourceKey}`,
-						`permitio_role.${targetTfRoleName}`,
+						`permitio_role.${targetRoleKey}`,
 						`permitio_resource.${targetResourceKey}`,
 						`permitio_relation.${relationMapping.terraformResourceName}`,
 					];
 
 					derivations.push({
 						id: derivationId,
-						role: sourceTfRoleName,
+						role: sourceRoleKey,
 						on_resource: sourceResourceKey,
-						to_role: targetTfRoleName,
+						to_role: targetRoleKey,
 						resource: targetResourceKey,
 						linked_by: relationMapping.terraformResourceName,
-						dependencies: dependencies,
+						dependencies,
 					});
 				}
 			}

@@ -70,22 +70,8 @@ export class ResourceSetGenerator implements HCLGenerator {
 		}
 	}
 
-	// Detect resource attributes referenced in conditions
 	private detectAdditionalDependencies(): string[] {
-		// Return empty array as we're not currently using this for dependencies
 		const dependencies: string[] = [];
-
-		// The following code can be uncommented and expanded when we implement
-		// detection of dependencies from condition attributes
-		/*
-		const stringifiedConditions =
-			typeof conditions === 'string' ? conditions : JSON.stringify(conditions);
-		const attrPattern = new RegExp(`"resource\\.([^"\\s.]+)"`, 'g');
-		const matches = [...stringifiedConditions.matchAll(attrPattern)];
-		const referencedAttrs = matches.map(m => m[1]);
-		// Process referenced attributes to add dependencies
-		*/
-
 		return dependencies;
 	}
 
@@ -109,8 +95,6 @@ export class ResourceSetGenerator implements HCLGenerator {
 					// Start with resource dependency
 					const dependencies = [`permitio_resource.${resourceKey}`];
 
-					// Add any additional detected dependencies
-					// Currently not using conditions for dependency detection
 					const additionalDeps = this.detectAdditionalDependencies();
 					dependencies.push(...additionalDeps);
 
