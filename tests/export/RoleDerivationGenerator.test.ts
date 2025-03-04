@@ -5,7 +5,7 @@ import Handlebars from 'handlebars';
 
 // Mock the file system operations
 vi.mock('fs', () => ({
-  readFileSync: vi.fn().mockReturnValue(`{{#each derivations}}
+	readFileSync: vi.fn().mockReturnValue(`{{#each derivations}}
 resource "permitio_role_derivation" "{{id}}" {
   resource    = "{{resource}}"
   role        = "{{role}}"
@@ -21,166 +21,165 @@ resource "permitio_role_derivation" "{{id}}" {
 
 // Register the json helper for Handlebars
 Handlebars.registerHelper('json', function (context) {
-  return JSON.stringify(context);
+	return JSON.stringify(context);
 });
 
 describe('RoleDerivationGenerator', () => {
-  const mockPermit = {
-    api: {
-      resources: {
-        list: vi.fn().mockResolvedValue([
-          {
-            id: 'res1',
-            key: 'document',
-          }
-        ]),
-      },
-      resourceRoles: {
-        list: vi.fn().mockResolvedValue([
-          {
-            id: 'role1',
-            key: 'document_user',
-            resource: 'document',
-            name: 'User',
-            // Added granted_to so derivations will be generated
-            granted_to: {
-              users_with_role: [
-                {
-                  role: 'document_user',
-                  on_resource: 'document',
-                  linked_by_relation: 'parent',
-                },
-              ],
-            },
-          }
-        ]),
-      },
-      resourceRelations: {
-        list: vi.fn().mockResolvedValue([
-          {
-            key: 'parent',
-            subject_resource: 'document',
-            object_resource: 'document',
-          }
-        ])
-      }
-    },
-  };
+	const mockPermit = {
+		api: {
+			resources: {
+				list: vi.fn().mockResolvedValue([
+					{
+						id: 'res1',
+						key: 'document',
+					},
+				]),
+			},
+			resourceRoles: {
+				list: vi.fn().mockResolvedValue([
+					{
+						id: 'role1',
+						key: 'document_user',
+						resource: 'document',
+						name: 'User',
+						// Added granted_to so derivations will be generated
+						granted_to: {
+							users_with_role: [
+								{
+									role: 'document_user',
+									on_resource: 'document',
+									linked_by_relation: 'parent',
+								},
+							],
+						},
+					},
+				]),
+			},
+			resourceRelations: {
+				list: vi.fn().mockResolvedValue([
+					{
+						key: 'parent',
+						subject_resource: 'document',
+						object_resource: 'document',
+					},
+				]),
+			},
+		},
+	};
 
-  it('generates valid HCL for role derivations', async () => {
-    const generator = new RoleDerivationGenerator(
-      mockPermit as any,
-      createWarningCollector(),
-    );
+	it('generates valid HCL for role derivations', async () => {
+		const generator = new RoleDerivationGenerator(
+			mockPermit as any,
+			createWarningCollector(),
+		);
 
-    const hcl = await generator.generateHCL();
+		const hcl = await generator.generateHCL();
 
-    expect(hcl).toContain('# Role Derivations');
-    expect(hcl).toContain('resource "permitio_role_derivation"');
-    expect(hcl).toContain('resource    = "document"');
-    expect(hcl).toContain('role        = "document_user"');
-  });
+		expect(hcl).toContain('# Role Derivations');
+		expect(hcl).toContain('resource "permitio_role_derivation"');
+		expect(hcl).toContain('resource    = "document"');
+		expect(hcl).toContain('role        = "document_user"');
+	});
 
-  it('handles resources with missing keys', async () => {
-    const mockPermitWithInvalidResource = {
-      api: {
-        resources: {
-          list: vi.fn().mockResolvedValue([
-            {
-              id: 'res1'
+	it('handles resources with missing keys', async () => {
+		const mockPermitWithInvalidResource = {
+			api: {
+				resources: {
+					list: vi.fn().mockResolvedValue([
+						{
+							id: 'res1',
+						},
+					]),
+				},
+				resourceRoles: {
+					list: vi.fn().mockResolvedValue([]),
+				},
+				resourceRelations: {
+					list: vi.fn().mockResolvedValue([]),
+				},
+			},
+		};
 
-            },
-          ]),
-        },
-        resourceRoles: {
-          list: vi.fn().mockResolvedValue([])
-        },
-        resourceRelations: {
-          list: vi.fn().mockResolvedValue([])
-        }
-      },
-    };
+		const warningCollector = createWarningCollector();
+		const generator = new RoleDerivationGenerator(
+			mockPermitWithInvalidResource as any,
+			warningCollector,
+		);
 
-    const warningCollector = createWarningCollector();
-    const generator = new RoleDerivationGenerator(
-      mockPermitWithInvalidResource as any,
-      warningCollector,
-    );
+		const hcl = await generator.generateHCL();
+		expect(hcl).toBe('');
+		expect(warningCollector.getWarnings()).toHaveLength(0);
+	});
 
-    const hcl = await generator.generateHCL();
-    expect(hcl).toBe('');
-    expect(warningCollector.getWarnings()).toHaveLength(0);
-  });
+	it('handles API errors gracefully', async () => {
+		const errorMockPermit = {
+			api: {
+				resources: {
+					list: vi.fn().mockRejectedValue(new Error('API Error')),
+				},
+			},
+		};
 
-  it('handles API errors gracefully', async () => {
-    const errorMockPermit = {
-      api: {
-        resources: {
-          list: vi.fn().mockRejectedValue(new Error('API Error')),
-        },
-      },
-    };
+		const warningCollector = createWarningCollector();
+		const generator = new RoleDerivationGenerator(
+			errorMockPermit as any,
+			warningCollector,
+		);
 
-    const warningCollector = createWarningCollector();
-    const generator = new RoleDerivationGenerator(
-      errorMockPermit as any,
-      warningCollector,
-    );
+		const hcl = await generator.generateHCL();
+		expect(hcl).toBe('');
+		expect(warningCollector.getWarnings()).toContain(
+			'Failed to gather resources: Error: API Error',
+		);
+	});
 
-    const hcl = await generator.generateHCL();
-    expect(hcl).toBe('');
-    expect(warningCollector.getWarnings()).toContain(
-      'Failed to gather resources: Error: API Error'
-    );
-  });
+	it('handles empty resources list', async () => {
+		const emptyMockPermit = {
+			api: {
+				resources: {
+					list: vi.fn().mockResolvedValue([]),
+				},
+			},
+		};
 
-  it('handles empty resources list', async () => {
-    const emptyMockPermit = {
-      api: {
-        resources: {
-          list: vi.fn().mockResolvedValue([]),
-        },
-      },
-    };
+		const generator = new RoleDerivationGenerator(
+			emptyMockPermit as any,
+			createWarningCollector(),
+		);
 
-    const generator = new RoleDerivationGenerator(
-      emptyMockPermit as any,
-      createWarningCollector(),
-    );
+		const hcl = await generator.generateHCL();
+		expect(hcl).toBe('');
+	});
 
-    const hcl = await generator.generateHCL();
-    expect(hcl).toBe('');
-  });
+	it('handles role derivation list errors', async () => {
+		const mockPermitWithDerivationError = {
+			api: {
+				resources: {
+					list: vi.fn().mockResolvedValue([
+						{
+							id: 'res1',
+							key: 'document',
+						},
+					]),
+				},
+				resourceRoles: {
+					list: vi.fn().mockRejectedValue(new Error('Derivation API Error')),
+				},
+				resourceRelations: {
+					list: vi.fn().mockResolvedValue([]),
+				},
+			},
+		};
 
-  it('handles role derivation list errors', async () => {
-    const mockPermitWithDerivationError = {
-      api: {
-        resources: {
-          list: vi.fn().mockResolvedValue([
-            {
-              id: 'res1',
-              key: 'document',
-            },
-          ]),
-        },
-        resourceRoles: {
-          list: vi.fn().mockRejectedValue(new Error('Derivation API Error')),
-        },
-        resourceRelations: {
-          list: vi.fn().mockResolvedValue([])
-        }
-      },
-    };
+		const warningCollector = createWarningCollector();
+		const generator = new RoleDerivationGenerator(
+			mockPermitWithDerivationError as any,
+			warningCollector,
+		);
 
-    const warningCollector = createWarningCollector();
-    const generator = new RoleDerivationGenerator(
-      mockPermitWithDerivationError as any,
-      warningCollector,
-    );
-
-    const hcl = await generator.generateHCL();
-    expect(warningCollector.getWarnings()).toContain(
-      'Failed to gather data for resource \'document\': Error: Derivation API Error'
-    );
-  });
+		const hcl = await generator.generateHCL();
+		expect(warningCollector.getWarnings()).toContain(
+			"Failed to gather data for resource 'document': Error: Derivation API Error",
+		);
+	});
 });

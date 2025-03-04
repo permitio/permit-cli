@@ -6,7 +6,7 @@ import { join } from 'path';
 
 // Mock fs and path modules
 vi.mock('fs', () => ({
-  readFileSync: vi.fn().mockReturnValue(`
+	readFileSync: vi.fn().mockReturnValue(`
     {{#each sets}}
     resource "permitio_user_set" "{{key}}" {
       key = "{{key}}"
@@ -20,125 +20,127 @@ vi.mock('fs', () => ({
       conditions = "{{conditions}}"
     }
     {{/each}}
-  `)
+  `),
 }));
 
 describe('UserSetGenerator', () => {
-  let warningCollector: WarningCollector;
-  let mockPermit: any;
+	let warningCollector: WarningCollector;
+	let mockPermit: any;
 
-  beforeEach(() => {
-    warningCollector = {
-      addWarning: vi.fn(),
-      getWarnings: vi.fn().mockReturnValue([]),
-    };
-    mockPermit = {
-      api: {
-        conditionSets: {
-          list: vi.fn(),
-        },
-      },
-    };
-  });
+	beforeEach(() => {
+		warningCollector = {
+			addWarning: vi.fn(),
+			getWarnings: vi.fn().mockReturnValue([]),
+		};
+		mockPermit = {
+			api: {
+				conditionSets: {
+					list: vi.fn(),
+				},
+			},
+		};
+	});
 
-  it('generates empty string when no condition sets exist', async () => {
-    mockPermit.api.conditionSets.list.mockResolvedValue([]);
-    const generator = new UserSetGenerator(mockPermit, warningCollector);
-    const result = await generator.generateHCL();
-    expect(result).toBe('');
-  });
+	it('generates empty string when no condition sets exist', async () => {
+		mockPermit.api.conditionSets.list.mockResolvedValue([]);
+		const generator = new UserSetGenerator(mockPermit, warningCollector);
+		const result = await generator.generateHCL();
+		expect(result).toBe('');
+	});
 
-  it('generates valid HCL for user sets', async () => {
-    const mockConditionSets = [
-      {
-        key: 'us_based',
-        name: 'US Based Users',
-        description: 'Users from United States',
-        type: 'userset',
-        conditions: { location: 'US' },
-        resource_id: null,
-      },
-      {
-        key: 'premium_users',
-        name: 'Premium Users',
-        type: 'userset',
-        // Supply a valid JSON string so JSON.parse succeeds.
-        conditions: '"user.subscription == \\"premium\\""',
-        resource_id: 'subscription',
-      },
-      {
-        key: 'resource_set',
-        name: 'Resource Set',
-        type: 'resourceset',
-        conditions: {},
-      },
-    ];
+	it('generates valid HCL for user sets', async () => {
+		const mockConditionSets = [
+			{
+				key: 'us_based',
+				name: 'US Based Users',
+				description: 'Users from United States',
+				type: 'userset',
+				conditions: { location: 'US' },
+				resource_id: null,
+			},
+			{
+				key: 'premium_users',
+				name: 'Premium Users',
+				type: 'userset',
+				// Supply a valid JSON string so JSON.parse succeeds.
+				conditions: '"user.subscription == \\"premium\\""',
+				resource_id: 'subscription',
+			},
+			{
+				key: 'resource_set',
+				name: 'Resource Set',
+				type: 'resourceset',
+				conditions: {},
+			},
+		];
 
-    mockPermit.api.conditionSets.list.mockResolvedValue(mockConditionSets);
-    const generator = new UserSetGenerator(mockPermit, warningCollector);
-    const result = await generator.generateHCL();
+		mockPermit.api.conditionSets.list.mockResolvedValue(mockConditionSets);
+		const generator = new UserSetGenerator(mockPermit, warningCollector);
+		const result = await generator.generateHCL();
 
-    // Check for header.
-    expect(result).toContain('# User Sets');
+		// Check for header.
+		expect(result).toContain('# User Sets');
 
-    // Check first user set.
-    expect(result).toContain('resource "permitio_user_set" "us_based"');
-    expect(result).toContain('key = "us_based"');
-    expect(result).toContain('name = "US Based Users"');
-    expect(result).toContain('description = "Users from United States"');
-    // Since conditions is an object, it will be coerced to "[object Object]".
-    expect(result).toContain('conditions = "[object Object]"');
+		// Check first user set.
+		expect(result).toContain('resource "permitio_user_set" "us_based"');
+		expect(result).toContain('key = "us_based"');
+		expect(result).toContain('name = "US Based Users"');
+		expect(result).toContain('description = "Users from United States"');
+		// Since conditions is an object, it will be coerced to "[object Object]".
+		expect(result).toContain('conditions = "[object Object]"');
 
-    // Check second user set.
-    expect(result).toContain('resource "permitio_user_set" "premium_users"');
-    expect(result).toContain('key = "premium_users"');
-    expect(result).toContain('name = "Premium Users"');
-    expect(result).toContain('resource = "subscription"');
-    expect(result).toContain('conditions = "user.subscription &#x3D;&#x3D; &quot;premium&quot;"');
+		// Check second user set.
+		expect(result).toContain('resource "permitio_user_set" "premium_users"');
+		expect(result).toContain('key = "premium_users"');
+		expect(result).toContain('name = "Premium Users"');
+		expect(result).toContain('resource = "subscription"');
+		expect(result).toContain(
+			'conditions = "user.subscription &#x3D;&#x3D; &quot;premium&quot;"',
+		);
 
-    // Ensure resource set is not included.
-    expect(result).not.toContain('resource_set');
-  });
+		// Ensure resource set is not included.
+		expect(result).not.toContain('resource_set');
+	});
 
-  it('handles errors when fetching condition sets', async () => {
-    mockPermit.api.conditionSets.list.mockRejectedValue(new Error('API error'));
-    const generator = new UserSetGenerator(mockPermit, warningCollector);
-    const result = await generator.generateHCL();
+	it('handles errors when fetching condition sets', async () => {
+		mockPermit.api.conditionSets.list.mockRejectedValue(new Error('API error'));
+		const generator = new UserSetGenerator(mockPermit, warningCollector);
+		const result = await generator.generateHCL();
 
-    expect(result).toBe('');
-    expect(warningCollector.addWarning).toHaveBeenCalledWith(
-      expect.stringContaining('Failed to export user sets')
-    );
-  });
+		expect(result).toBe('');
+		expect(warningCollector.addWarning).toHaveBeenCalledWith(
+			expect.stringContaining('Failed to export user sets'),
+		);
+	});
 
-  it('handles empty or invalid conditions', async () => {
-    const mockConditionSets = [
-      {
-        key: 'empty_conditions',
-        name: 'Empty Conditions',
-        type: 'userset',
-        // Supply a valid JSON empty string.
-        conditions: '""',
-        resource_id: null,
-      },
-      {
-        key: 'null_conditions',
-        name: 'Null Conditions',
-        type: 'userset',
-        conditions: null,
-        resource_id: null,
-      },
-    ];
+	it('handles empty or invalid conditions', async () => {
+		const mockConditionSets = [
+			{
+				key: 'empty_conditions',
+				name: 'Empty Conditions',
+				type: 'userset',
+				// Supply a valid JSON empty string.
+				conditions: '""',
+				resource_id: null,
+			},
+			{
+				key: 'null_conditions',
+				name: 'Null Conditions',
+				type: 'userset',
+				conditions: null,
+				resource_id: null,
+			},
+		];
 
-    mockPermit.api.conditionSets.list.mockResolvedValue(mockConditionSets);
-    const generator = new UserSetGenerator(mockPermit, warningCollector);
-    const result = await generator.generateHCL();
+		mockPermit.api.conditionSets.list.mockResolvedValue(mockConditionSets);
+		const generator = new UserSetGenerator(mockPermit, warningCollector);
+		const result = await generator.generateHCL();
 
-    expect(result).toContain('resource "permitio_user_set" "empty_conditions"');
-    expect(result).toContain('conditions = ""');
+		expect(result).toContain('resource "permitio_user_set" "empty_conditions"');
+		expect(result).toContain('conditions = ""');
 
-    expect(result).toContain('resource "permitio_user_set" "null_conditions"');
-    
-    expect(result).toContain('conditions = ""');
-  });
+		expect(result).toContain('resource "permitio_user_set" "null_conditions"');
+
+		expect(result).toContain('conditions = ""');
+	});
 });
