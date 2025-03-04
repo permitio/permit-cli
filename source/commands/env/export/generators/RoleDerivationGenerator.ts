@@ -185,7 +185,10 @@ export class RoleDerivationGenerator implements HCLGenerator {
 	}
 
 	// Generate Terraform-friendly role resource name from role key
-	private generateTerraformRoleName(resourceKey: string, roleKey: string): string {
+	private generateTerraformRoleName(
+		resourceKey: string,
+		roleKey: string,
+	): string {
 		// For resource roles, format as resource_role
 		return `${resourceKey}_${roleKey}`;
 	}
@@ -217,8 +220,14 @@ export class RoleDerivationGenerator implements HCLGenerator {
 					const targetRoleKey = role.key;
 
 					// Generate proper Terraform resource names for roles
-					const sourceTfRoleName = this.generateTerraformRoleName(sourceResourceKey, sourceRoleKey);
-					const targetTfRoleName = this.generateTerraformRoleName(targetResourceKey, targetRoleKey);
+					const sourceTfRoleName = this.generateTerraformRoleName(
+						sourceResourceKey,
+						sourceRoleKey,
+					);
+					const targetTfRoleName = this.generateTerraformRoleName(
+						targetResourceKey,
+						targetRoleKey,
+					);
 
 					const mappingKey = `${sourceResourceKey}:${relationKey}:${targetResourceKey}`;
 					const relationMapping = relationMappings.get(mappingKey);
