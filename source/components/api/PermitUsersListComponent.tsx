@@ -17,6 +17,9 @@ interface TableUserData extends Omit<UserData, 'roles'> {
 	roles: string; // Flattened for display
 }
 
+// UI configuration constants
+const MAX_KEY_LENGTH = 7;
+
 // UI helpers - consider moving to separate utils if reused
 const isObjectEmpty = (object: object) => {
 	return Object.keys(object).length === 0;
@@ -31,15 +34,17 @@ const getTenant = (roles: Array<{ role: string; tenant: string }>) => {
 	if (!roles.length) return '';
 	const tenant = roles[0]?.tenant || '';
 	return tenant
-		? tenant.length > 7
-			? tenant.slice(0, 7) + '...'
+		? tenant.length > MAX_KEY_LENGTH
+			? tenant.slice(0, MAX_KEY_LENGTH) + '...'
 			: tenant
 		: '';
 };
 
 const truncateKey = (key: string, expand = false) => {
 	if (expand) return key;
-	return key.length > 7 ? key.slice(0, 7) + '...' : key;
+	return key.length > MAX_KEY_LENGTH
+		? key.slice(0, MAX_KEY_LENGTH) + '...'
+		: key;
 };
 
 // Main component handles data fetching, transformation and display
