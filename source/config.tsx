@@ -6,6 +6,7 @@ export const PERMIT_API_URL = 'https://api.permit.io';
 export const PERMIT_API_STATISTICS_URL =
 	'https://pdp-statistics.api.permit.io/v2/stats';
 export const API_URL = 'https://api.permit.io/v2/';
+export const FACTS_API_URL = 'https://api.permit.io/v2/facts/';
 export const API_PDPS_CONFIG_URL = `${API_URL}pdps/me/config`;
 export const PERMIT_ORIGIN_URL = 'https://app.permit.io';
 

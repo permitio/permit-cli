@@ -1,5 +1,6 @@
 import { fetchUtil, MethodE } from './fetchUtil.js';
 import type { AuthContextType } from '../components/AuthProvider.js';
+import { FACTS_API_URL } from '../config.js';
 
 type PermitApiOptions = {
 	auth: AuthContextType;
@@ -15,7 +16,7 @@ export async function permitApi<T>(
 	body?: object,
 	queryParams?: Record<string, string>,
 ) {
-	const baseUrl = `https://api.permit.io/v2/facts/${
+	const baseUrl = `${FACTS_API_URL}${
 		auth.scope.project_id || projectId
 	}/${auth.scope.environment_id || envId}`;
 
