@@ -23,7 +23,6 @@ interface RoleData {
 export class RoleGenerator implements HCLGenerator {
 	name = 'roles';
 	private template: TemplateDelegate<{ roles: RoleData[] }>;
-	private usedTerraformIds: Set<string> = new Set();
 
 	constructor(
 		private permit: Permit,
@@ -97,11 +96,6 @@ export class RoleGenerator implements HCLGenerator {
 
 	async generateHCL(): Promise<string> {
 		try {
-			console.log('Starting role generation...');
-
-			// Reset the used terraform IDs tracking
-			this.usedTerraformIds = new Set<string>();
-
 			// Track used terraform IDs to detect duplicates
 			const usedTerraformIds = new Set<string>();
 
@@ -111,10 +105,6 @@ export class RoleGenerator implements HCLGenerator {
 				this.permit.api.resources.list(),
 			]);
 
-			console.log(
-				`Fetched ${Array.isArray(rolesResponse) ? rolesResponse.length : 'unknown'} roles and ${Array.isArray(resourcesResponse) ? resourcesResponse.length : 'unknown'} resources`,
-			);
-
 			// Prepare roles array and ensure it's valid
 			const roles = Array.isArray(rolesResponse) ? rolesResponse : [];
 			const resources = Array.isArray(resourcesResponse)
@@ -122,7 +112,6 @@ export class RoleGenerator implements HCLGenerator {
 				: [];
 
 			if (roles.length === 0 && resources.length === 0) {
-				console.log('No roles or resources found, returning empty string');
 				return '';
 			}
 
@@ -132,9 +121,6 @@ export class RoleGenerator implements HCLGenerator {
 			// Map to store the terraform ID for each role to handle dependencies
 			const roleIdMap = new Map<string, string>();
 
-			// Process standalone roles (non-resource specific)
-			console.log('Processing standalone roles...');
-
 			// Define default roles to skip
 			const defaultRoleKeys = ['viewer', 'editor', 'admin'];
 
@@ -142,7 +128,6 @@ export class RoleGenerator implements HCLGenerator {
 				const role = roles.find(r => r.key === roleKey);
 				if (role) {
 					roleIdMap.set(role.key, role.key);
-					console.log(`Skipping default role: ${role.key}`);
 				}
 			}
 
@@ -152,12 +137,11 @@ export class RoleGenerator implements HCLGenerator {
 			);
 			for (const role of otherRoles) {
 				const terraformId = this.generateTerraformId(role.key);
-				console.log(
-					`Processing standalone role: ${role.key} with terraform ID: ${terraformId}`,
-				);
 
 				if (usedTerraformIds.has(terraformId)) {
-					console.warn(`Duplicate terraform ID detected: ${terraformId}`);
+					this.warningCollector.addWarning(
+						`Duplicate terraform ID detected: ${terraformId}`,
+					);
 				}
 				usedTerraformIds.add(terraformId);
 
@@ -169,8 +153,10 @@ export class RoleGenerator implements HCLGenerator {
 					name: role.name || role.key,
 					description: role.description,
 					permissions: role.permissions || [],
-					extends: role.extends || [],
-					attributes: role.attributes,
+					extends: (role as any).extends || [],
+					attributes: role.attributes
+						? (role.attributes as Record<string, unknown>)
+						: undefined,
 					dependencies: [],
 				});
 			}
@@ -212,15 +198,8 @@ export class RoleGenerator implements HCLGenerator {
 
 			// Now process the sorted resource roles
 			for (const { resourceKey, roleKey, roleData } of sortedResourceRoles) {
-				console.log(
-					`Processing resource role: ${roleKey} for resource: ${resourceKey}`,
-				);
-
 				// Generate a unique terraform ID for this resource-role combination
 				const terraformId = this.generateTerraformId(roleKey, resourceKey);
-				console.log(
-					`Generated terraform ID: ${terraformId} for role ${roleKey} of resource ${resourceKey}`,
-				);
 
 				if (usedTerraformIds.has(terraformId)) {
 					this.warningCollector.addWarning(
@@ -229,7 +208,6 @@ export class RoleGenerator implements HCLGenerator {
 					// In case of duplicate, force using resource prefix
 					const uniqueId = `${resourceKey}__${roleKey}`;
 					roleIdMap.set(`${resourceKey}:${roleKey}`, uniqueId);
-					console.log(`Using alternative ID: ${uniqueId} due to conflict`);
 				} else {
 					usedTerraformIds.add(terraformId);
 					roleIdMap.set(`${resourceKey}:${roleKey}`, terraformId);
@@ -240,11 +218,6 @@ export class RoleGenerator implements HCLGenerator {
 				if (roleData.permissions && Array.isArray(roleData.permissions)) {
 					permissions = this.extractPermissions(roleData.permissions).sort();
 				}
-
-				console.log(
-					`Role ${roleKey} for resource ${resourceKey} has permissions:`,
-					permissions,
-				);
 
 				// All resource roles depend on their resource
 				const dependencies = [`permitio_resource.${resourceKey}`];
@@ -259,12 +232,13 @@ export class RoleGenerator implements HCLGenerator {
 					extends: roleData.extends,
 					dependencies,
 					description: roleData.description,
-					attributes: roleData.attributes,
+					attributes: roleData.attributes
+						? (roleData.attributes as Record<string, unknown>)
+						: undefined,
 				});
 			}
 
 			// Process role extension dependencies
-			console.log('Processing role extension dependencies...');
 			for (const role of validRoles) {
 				if (!role.extends || role.extends.length === 0) continue;
 
@@ -294,14 +268,10 @@ export class RoleGenerator implements HCLGenerator {
 				}
 			}
 
-			console.log(`Generated ${validRoles.length} valid roles`);
-
 			// Render template with all processed roles
 			const result = '\n# Roles\n' + this.template({ roles: validRoles });
-			console.log('Generated HCL content for roles');
 			return result;
 		} catch (error) {
-			console.error('Error generating roles HCL:', error);
 			this.warningCollector.addWarning(`Failed to export roles: ${error}`);
 			return '';
 		}

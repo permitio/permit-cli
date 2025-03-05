@@ -55,8 +55,6 @@ interface RelationData {
 export class RelationGenerator implements HCLGenerator {
 	name = 'relation';
 	private template: Handlebars.TemplateDelegate<{ relations: RelationData[] }>;
-	// Store all relations and their ID mappings
-	private relations: RelationData[] = [];
 	private relationIdMap = new Map<string, string>();
 
 	constructor(
@@ -180,8 +178,6 @@ export class RelationGenerator implements HCLGenerator {
 			this.warningCollector.addWarning(`Failed to fetch resources: ${error}`);
 		}
 
-		// Store all relations for later use
-		this.relations = relations;
 		return relations;
 	}
 
