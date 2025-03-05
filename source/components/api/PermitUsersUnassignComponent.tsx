@@ -10,8 +10,10 @@ type Props = {
 	options: zInfer<typeof options>;
 };
 
+// Handles role unassignment operations with real-time feedback
 export default function PermitUsersUnassignComponent({ options }: Props) {
 	const auth = useAuth();
+	// Mirror assign component state management for consistency
 	const [status, setStatus] = useState<'processing' | 'done' | 'error'>(
 		'processing',
 	);
@@ -21,6 +23,7 @@ export default function PermitUsersUnassignComponent({ options }: Props) {
 	useEffect(() => {
 		const unassignRole = async () => {
 			try {
+				// Validate required fields before making API call
 				if (!options.userId || !options.roleKey || !options.tenantKey) {
 					throw new Error(
 						'User ID, role key, and tenant key are required for unassignment',
@@ -37,6 +40,7 @@ export default function PermitUsersUnassignComponent({ options }: Props) {
 					tenantKey: options.tenantKey,
 				});
 
+				// Handle both success and error responses uniformly
 				if (!response.success) {
 					setResult(response.data || {});
 					throw new Error(response.error);
@@ -55,6 +59,7 @@ export default function PermitUsersUnassignComponent({ options }: Props) {
 		unassignRole();
 	}, [options, auth]);
 
+	// Maintain consistent UI feedback pattern across role management operations
 	return (
 		<Box flexDirection="column">
 			{status === 'processing' && <Spinner type="dots" />}

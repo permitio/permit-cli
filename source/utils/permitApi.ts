@@ -35,6 +35,7 @@ export async function permitApi<T>(
 	);
 }
 
+// Core interfaces for API interactions - keep in sync with Permit.io OpenAPI spec
 export interface UserData {
 	key: string;
 	email: string;
@@ -43,6 +44,7 @@ export interface UserData {
 	roles: Array<{ role: string; tenant: string }>;
 }
 
+// Response interfaces mirror API contract - consider generating from OpenAPI
 export interface ListUsersResponse {
 	data: UserData[];
 	total_count: number;
@@ -55,6 +57,7 @@ export interface RoleAssignmentResponse {
 	tenant: string;
 }
 
+// Request interfaces ensure type safety across all API calls
 export interface ListUsersRequest extends PermitApiOptions {
 	page?: number;
 	perPage?: number;
@@ -68,8 +71,10 @@ export interface RoleAssignmentRequest extends PermitApiOptions {
 	tenantKey: string;
 }
 
+// Centralized API client - single source of truth for all Permit.io API calls
 export const usersApi = {
 	list: (options: ListUsersRequest) => {
+		// Support both global and tenant-scoped user listing
 		const endpoint = options.tenantKey
 			? `tenants/${options.tenantKey}/users`
 			: 'users';
@@ -86,6 +91,7 @@ export const usersApi = {
 		);
 	},
 
+	// Role assignment endpoints follow RBAC best practices
 	assign: (options: RoleAssignmentRequest) => {
 		return permitApi<RoleAssignmentResponse>(
 			'role_assignments',

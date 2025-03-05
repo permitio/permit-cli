@@ -11,11 +11,13 @@ type Props = {
 	options: zInfer<typeof options>;
 };
 
+// Transforms API data into table-friendly format while preserving type safety
 interface TableUserData extends Omit<UserData, 'roles'> {
-	'#': number;
-	roles: string;
+	'#': number; // Row number for better UX
+	roles: string; // Flattened for display
 }
 
+// UI helpers - consider moving to separate utils if reused
 const isObjectEmpty = (object: object) => {
 	return Object.keys(object).length === 0;
 };
@@ -40,8 +42,10 @@ const truncateKey = (key: string, expand = false) => {
 	return key.length > 7 ? key.slice(0, 7) + '...' : key;
 };
 
+// Main component handles data fetching, transformation and display
 export default function PermitUsersListComponent({ options }: Props) {
 	const auth = useAuth();
+	// Track loading/error states for better UX
 	const [status, setStatus] = useState<'processing' | 'done' | 'error'>(
 		'processing',
 	);
@@ -57,6 +61,7 @@ export default function PermitUsersListComponent({ options }: Props) {
 
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+	// Transform API response into display-ready format
 	useEffect(() => {
 		const fetchData = async () => {
 			try {

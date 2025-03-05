@@ -10,17 +10,21 @@ type Props = {
 	options: zInfer<typeof options>;
 };
 
+// Handles role assignment operations with real-time feedback
 export default function PermitUsersAssignComponent({ options }: Props) {
 	const auth = useAuth();
+	// Track operation state for better UX feedback
 	const [status, setStatus] = useState<'processing' | 'done' | 'error'>(
 		'processing',
 	);
+	// Store API response for both success and error cases
 	const [result, setResult] = useState<object>({});
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
 	useEffect(() => {
 		const assignRole = async () => {
 			try {
+				// Validate required fields before making API call
 				if (!options.userId || !options.roleKey || !options.tenantKey) {
 					throw new Error(
 						'User ID, role key, and tenant key are required for assignment',
@@ -37,6 +41,7 @@ export default function PermitUsersAssignComponent({ options }: Props) {
 					tenantKey: options.tenantKey,
 				});
 
+				// Handle both success and error responses uniformly
 				if (!response.success) {
 					setResult(response.data || {});
 					throw new Error(response.error);
@@ -55,6 +60,7 @@ export default function PermitUsersAssignComponent({ options }: Props) {
 		assignRole();
 	}, [options, auth]);
 
+	// Provide clear visual feedback for all operation states
 	return (
 		<Box flexDirection="column">
 			{status === 'processing' && <Spinner type="dots" />}
