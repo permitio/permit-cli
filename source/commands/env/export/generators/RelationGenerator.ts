@@ -78,7 +78,6 @@ export class RelationGenerator implements HCLGenerator {
 		relation: RelationRead,
 		objectResource: string,
 	): string {
-		
 		const objectFirstRelations = ['owner', 'part'];
 
 		if (relation.key && objectFirstRelations.includes(relation.key)) {

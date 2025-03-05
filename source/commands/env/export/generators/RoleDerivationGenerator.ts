@@ -26,6 +26,8 @@ export class RoleDerivationGenerator implements HCLGenerator {
 
 	// Store the relation ID mapping from RelationGenerator
 	private relationIdMap = new Map<string, string>();
+	// Store the role ID mapping from RoleGenerator
+	private roleIdMap = new Map<string, string>();
 
 	constructor(
 		private permit: Permit,
@@ -42,6 +44,34 @@ export class RoleDerivationGenerator implements HCLGenerator {
 	// Method to set relation ID map from RelationGenerator
 	public setRelationIdMap(relationIdMap: Map<string, string>): void {
 		this.relationIdMap = relationIdMap;
+	}
+
+	// Method to set role ID map from RoleGenerator
+	public setRoleIdMap(roleIdMap: Map<string, string>): void {
+		this.roleIdMap = roleIdMap;
+	}
+
+	// Helper method to get the correct Terraform ID for a role
+	private getRoleTerraformId(roleKey: string, resourceKey: string): string {
+		// First check if we have a specific resource-role mapping
+		const resourceRoleKey = `${resourceKey}:${roleKey}`;
+		if (this.roleIdMap.has(resourceRoleKey)) {
+			return this.roleIdMap.get(resourceRoleKey)!;
+		}
+
+		// Then check if we have a general role mapping
+		if (this.roleIdMap.has(roleKey)) {
+			return this.roleIdMap.get(roleKey)!;
+		}
+
+		// If it's a simple role (like editor), use resource__role pattern
+		const simpleRoles = ['editor', 'viewer', 'admin'];
+		if (simpleRoles.includes(roleKey)) {
+			return `${resourceKey}__${roleKey}`;
+		}
+
+		// Return the role key as a fallback
+		return roleKey;
 	}
 
 	// Helper method to find the correct relation Terraform resource name
@@ -85,6 +115,26 @@ export class RoleDerivationGenerator implements HCLGenerator {
 		}
 
 		return normalPattern;
+	}
+
+	// Helper to create a meaningful derivation ID
+	private createDerivationId(
+		sourceResourceKey: string,
+		sourceRoleKey: string,
+		targetResourceKey: string,
+		targetRoleKey: string,
+	): string {
+		// For simple roles like editor, use the resource names with the role names
+		const simpleRoles = ['editor', 'viewer', 'admin'];
+		if (
+			simpleRoles.includes(sourceRoleKey) ||
+			simpleRoles.includes(targetRoleKey)
+		) {
+			return `${sourceResourceKey}_${sourceRoleKey}_to_${targetResourceKey}_${targetRoleKey}`;
+		}
+
+		// For more specific roles, just use the role names
+		return `${sourceRoleKey}_to_${targetRoleKey}`;
 	}
 
 	async generateHCL(): Promise<string> {
@@ -143,14 +193,29 @@ export class RoleDerivationGenerator implements HCLGenerator {
 								continue;
 							}
 
-							// Create a derivation ID based on source and target roles
-							const id = `${sourceRoleKey}_${targetRoleKey}`;
+							// Get the correct Terraform role IDs
+							const sourceTerraformRoleId = this.getRoleTerraformId(
+								sourceRoleKey,
+								sourceResourceKey,
+							);
+							const targetTerraformRoleId = this.getRoleTerraformId(
+								targetRoleKey,
+								targetResourceKey,
+							);
+
+							// Create a meaningful derivation ID
+							const id = this.createDerivationId(
+								sourceResourceKey,
+								sourceRoleKey,
+								targetResourceKey,
+								targetRoleKey,
+							);
 
 							// Standard dependencies
 							const dependencies = [
-								`permitio_role.${sourceRoleKey}`,
+								`permitio_role.${sourceTerraformRoleId}`,
 								`permitio_resource.${sourceResourceKey}`,
-								`permitio_role.${targetRoleKey}`,
+								`permitio_role.${targetTerraformRoleId}`,
 								`permitio_resource.${targetResourceKey}`,
 								`permitio_relation.${relationResourceName}`,
 							];
@@ -158,9 +223,9 @@ export class RoleDerivationGenerator implements HCLGenerator {
 							// Add this derivation
 							derivations.push({
 								id,
-								role: sourceRoleKey,
+								role: sourceTerraformRoleId,
 								on_resource: sourceResourceKey,
-								to_role: targetRoleKey,
+								to_role: targetTerraformRoleId,
 								resource: targetResourceKey,
 								linked_by: relationResourceName,
 								dependencies,
