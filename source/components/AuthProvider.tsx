@@ -23,7 +23,7 @@ import SelectProject from './SelectProject.js';
 import { useAuthApi } from '../hooks/useAuthApi.js';
 
 // Define the AuthContext type
-type AuthContextType = {
+export type AuthContextType = {
 	authToken: string;
 	loading: boolean;
 	error?: string | null;
