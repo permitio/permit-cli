@@ -11,7 +11,4 @@ resource "permitio_role_derivation" "{{id}}" {
     {{/each}}
   ]
 }
-{{#unless @last}}
-
-{{/unless}}
 {{/each}}

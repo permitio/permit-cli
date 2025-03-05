@@ -16,12 +16,6 @@ interface ConditionSetRuleData {
 	permission: string;
 }
 
-interface ConditionSetRule {
-	user_set: string;
-	resource_set: string;
-	permission: string;
-}
-
 export class ConditionSetGenerator implements HCLGenerator {
 	name = 'condition set rules';
 	private template: Handlebars.TemplateDelegate<{
@@ -39,41 +33,45 @@ export class ConditionSetGenerator implements HCLGenerator {
 
 	async generateHCL(): Promise<string> {
 		try {
-			// Get all rules by passing wildcard values for required fields
-			const rules = await this.permit.api.conditionSetRules.list({
-				userSetKey: '*',
-				permissionKey: '*',
-				resourceSetKey: '*',
-			});
+			// Get all condition set rules
+			const conditionSetRules = await this.permit.api.conditionSetRules.list(
+				{},
+			);
 
-			if (!rules || !Array.isArray(rules) || rules.length === 0) {
+			if (!conditionSetRules || conditionSetRules.length === 0) {
 				return '';
 			}
 
-			const validRules = rules
-				.map((rule: ConditionSetRule) => {
+			// Process each rule to create the HCL data
+			const validRules = conditionSetRules
+				.map(rule => {
 					try {
-						const cleanUserSet = rule.user_set.replace('__autogen_', '');
-						const cleanResourceSet = rule.resource_set;
+						// Extract user set and resource set keys
+						const userSetKey = rule.user_set;
+						const resourceSetKey = rule.resource_set;
+						const permissionKey = rule.permission;
 
-						const key = `allow_${cleanResourceSet}`;
+						// Create a unique identifier for this rule
+						const ruleKey = `${createSafeId(userSetKey)}_${createSafeId(resourceSetKey)}_${createSafeId(permissionKey)}`;
 
 						return {
-							key: createSafeId(key),
-							userSet: createSafeId(cleanUserSet),
-							resourceSet: createSafeId(cleanResourceSet),
-							permission: rule.permission,
+							key: ruleKey,
+							userSet: createSafeId(userSetKey),
+							resourceSet: createSafeId(resourceSetKey),
+							permission: permissionKey,
 						};
-					} catch (ruleError) {
+					} catch (error) {
 						this.warningCollector.addWarning(
-							`Failed to export condition set rule: ${ruleError}`,
+							`Failed to process condition set rule: ${error}`,
 						);
 						return null;
 					}
 				})
 				.filter((rule): rule is ConditionSetRuleData => rule !== null);
 
-			if (validRules.length === 0) return '';
+			if (validRules.length === 0) {
+				return '';
+			}
 
 			// Return generated HCL
 			return '\n# Condition Set Rules\n' + this.template({ rules: validRules });

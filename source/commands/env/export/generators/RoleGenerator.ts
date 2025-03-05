@@ -74,6 +74,30 @@ export class RoleGenerator implements HCLGenerator {
 		);
 	}
 
+	// Helper method to format role keys with resource_ prefix when needed
+	private formatRoleKey(roleKey: string, resourceKey?: string): string {
+		const defaultRoles = new Set(['viewer', 'editor', 'admin']);
+
+		// If it's a default role or already has a resource prefix, leave it as is
+		if (
+			defaultRoles.has(roleKey) ||
+			(roleKey.includes('_') && !defaultRoles.has(roleKey))
+		) {
+			return roleKey;
+		}
+		// Add resource prefix for resource-specific roles
+		if (resourceKey) {
+			return `${resourceKey}_${roleKey}`;
+		}
+		// Return as-is for global roles
+		return roleKey;
+	}
+
+	// Helper to get the correct role reference for Terraform
+	private getRoleTerraformRef(roleKey: string): string {
+		return `permitio_role.${roleKey}`;
+	}
+
 	async generateHCL(): Promise<string> {
 		try {
 			const [roles, resources] = await Promise.all([
@@ -107,7 +131,9 @@ export class RoleGenerator implements HCLGenerator {
 					if (role.extends?.length) {
 						rolesDependencies.set(
 							role.key,
-							role.extends.map(ext => `permitio_role.${ext}`),
+							role.extends.map(ext =>
+								this.getRoleTerraformRef(this.formatRoleKey(ext)),
+							),
 						);
 					}
 				}
@@ -122,11 +148,16 @@ export class RoleGenerator implements HCLGenerator {
 					for (const [roleKey, roleData] of Object.entries(roles)) {
 						if (defaultRoles.has(roleKey)) continue; // Exclude default roles
 
+						// Format the key as resource_role
+						const formattedKey = this.formatRoleKey(roleKey, resourceKey);
+
 						const dependencies = [`permitio_resource.${resourceKey}`];
 
 						if (roleData.extends?.length) {
 							roleData.extends.forEach(ext => {
-								dependencies.push(`permitio_role.${ext}`);
+								// Format extension references properly
+								const formattedExt = this.formatRoleKey(ext, resourceKey);
+								dependencies.push(this.getRoleTerraformRef(formattedExt));
 							});
 						}
 
@@ -141,11 +172,13 @@ export class RoleGenerator implements HCLGenerator {
 							.filter(Boolean);
 
 						validRoles.push({
-							key: roleKey,
+							key: formattedKey, // Use the resource_role format for the key value
 							name: roleData.name,
 							resource: resourceKey,
 							permissions,
-							extends: roleData.extends,
+							extends: roleData.extends?.map(ext =>
+								this.formatRoleKey(ext, resourceKey),
+							),
 							dependencies,
 							description: roleData.description,
 							attributes: roleData.attributes,
@@ -154,6 +187,7 @@ export class RoleGenerator implements HCLGenerator {
 				}
 			}
 
+			// Handle dependencies for roles that extend other roles
 			validRoles.forEach(role => {
 				const deps = rolesDependencies.get(role.key);
 				if (deps) {
