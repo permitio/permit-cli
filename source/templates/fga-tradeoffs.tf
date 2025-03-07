@@ -2,7 +2,7 @@ terraform {
   required_providers {
     permitio = {
       source  = "permitio/permit-io"
-      version = "~> 0.0.12"
+      version = "~> 0.0.14"
     }
   }
 }

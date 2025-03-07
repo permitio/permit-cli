@@ -2,7 +2,7 @@ terraform {
   required_providers {
     permitio = {
       source  = "permitio/permit-io"
-      version = "~> 0.0.12"
+      version = "~> 0.0.14"
     }
   }
 }
@@ -158,6 +158,24 @@ resource "permitio_resource_set" "Large_Wire" {
   depends_on = [permitio_resource.Wire_Transfer]
 }
 
+resource "permitio_user_attribute" "location" {
+  key  = "location"
+  type = "string"
+  description = "Location of the user"
+}
+
+resource "permitio_user_attribute" "strongAuth" {
+  key = "strongAuth"
+  type = "bool"
+  description = "Strong Auth enabled"
+}
+
+resource "permitio_user_attribute" "country" {
+  key = "country"
+  type = "string"
+  description = "User permanent country"
+}
+
 resource "permitio_user_set" "Safe_Owners" {
   key  = "Safe_Owners"
   name = "Safe Owners"
@@ -177,6 +195,7 @@ resource "permitio_user_set" "Safe_Owners" {
       }
     ]
   })
+  depends_on = [permitio_user_attribute.location, permitio_user_attribute.country, permitio_role.AccountOwner]
 }
 
 resource "permitio_user_set" "Unsafe_Owners" {
@@ -198,6 +217,7 @@ resource "permitio_user_set" "Unsafe_Owners" {
       }
     ]
   })
+  depends_on = [permitio_user_attribute.location, permitio_user_attribute.country, permitio_role.AccountOwner]
 }
 
 resource "permitio_user_set" "Strong_Auth_Owners" {
@@ -217,6 +237,7 @@ resource "permitio_user_set" "Strong_Auth_Owners" {
       }
     ]
   })
+  depends_on = [permitio_user_attribute.strongAuth, permitio_role.AccountOwner]
 }
 
 resource "permitio_role" "AccountOwner" {

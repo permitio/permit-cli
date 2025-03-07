@@ -68,7 +68,7 @@ export async function ApplyTemplateLocally(
 				});
 			});
 		};
-		await runCommand('terrafrom init');
+		await runCommand('terraform init');
 		const applyOutput = await runCommand(
 			`terraform apply -auto-approve ${tempPath}`,
 		);
