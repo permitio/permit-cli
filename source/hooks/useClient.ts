@@ -299,6 +299,7 @@ const useClient = () => {
 				FetchResponse<PdpPaths[Path]['post'], Init, 'application/json'>,
 				'error'
 			> & { error: string | null }
+			// eslint-disable-next-line sonarjs/no-identical-functions
 		> => {
 			const globalScope = globalScopeGetterSetter.scopeGetter();
 
@@ -350,6 +351,7 @@ const useClient = () => {
 				FetchResponse<PdpPaths[Path]['delete'], Init, 'application/json'>,
 				'error'
 			> & { error: string | null }
+			// eslint-disable-next-line sonarjs/no-identical-functions
 		> => {
 			const globalScope = globalScopeGetterSetter.scopeGetter();
 
