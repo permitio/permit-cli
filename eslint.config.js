@@ -7,7 +7,7 @@ import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import prettierPlugin from 'eslint-plugin-prettier';
 import js from '@eslint/js';
 import prettierConfig from 'eslint-config-prettier';
-import globals from "globals";
+import globals from 'globals';
 
 const compat = new FlatCompat({
 	baseDirectory: import.meta.url,

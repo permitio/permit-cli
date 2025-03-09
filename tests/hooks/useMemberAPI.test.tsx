@@ -26,6 +26,7 @@ describe('useMemberApi', () => {
 			});
 
 			const inviteMember = async () => {
+
 				const { data: result } = await inviteNewMember(body, 'dummy_name', 'dummy_email');
 				return result ? 'Member invited' : 'Failed to invite member';
 			};
@@ -57,6 +58,7 @@ describe('useMemberApi', () => {
 			const inviteMember = async () => {
 				const { data: result } = await inviteNewMember(body, 'dummy_name', 'dummy_email');
 				return result ? 'Member invited' : 'Failed to invite member';
+
 			};
 			const [result, setResult] = React.useState<string | null>(null);
 			inviteMember().then(res => setResult(res));

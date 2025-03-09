@@ -5,6 +5,7 @@ import Policy from '../source/commands/opa/policy';
 import delay from 'delay';
 import * as keytar from "keytar"
 import { useUnauthenticatedApi } from '../source/hooks/useUnauthenticatedApi';
+
 global.fetch = vi.fn();
 const enter = '\r';
 vi.mock('keytar', () => {
@@ -27,6 +28,7 @@ vi.mock('../source/lib/auth.js', async () => {
 });
 vi.mock('../source/hooks/useUnauthenticatedApi', async() => {
 	const original = await vi.importActual('../source/hooks/useUnauthenticatedApi');
+
 	return {
 		...original,
 		useUnauthenticatedApi: () => ({
@@ -50,12 +52,11 @@ vi.mock('../source/hooks/useUnauthenticatedApi', async() => {
 					project_id: 'proj1',
 					organization_id: 'org1',
 				},
-				error: null
-			})
+				error: null,
+			}),
 		}),
-	}
+	};
 });
-
 
 describe('OPA Policy Command', () => {
 	it('should render the policy command', async () => {

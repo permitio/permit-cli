@@ -11,9 +11,7 @@ import delay from 'delay';
 import SelectComponent from '../source/components/env/SelectComponent';
 import { useUnauthenticatedApi } from '../source/hooks/useUnauthenticatedApi';
 
-
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
-
 
 // vi.mock('../source/hooks/useApiKeyApi.js', () => ({
 // 	useApiKeyApi: vi.fn(() => ({
@@ -22,18 +20,22 @@ const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 // 	})),
 // }));
 
-vi.mock('../source/components/AuthProvider.tsx', async() => {
-	const original = await vi.importActual('../source/components/AuthProvider.tsx');
+vi.mock('../source/components/AuthProvider.tsx', async () => {
+	const original = await vi.importActual(
+		'../source/components/AuthProvider.tsx',
+	);
 	return {
 		...original,
 		useAuth: () => ({
 			authToken: demoPermitKey,
-		})
-	}
-})
+		}),
+	};
+});
+
 
 vi.mock('../source/hooks/useUnauthenticatedApi', async() => {
 	const original = await vi.importActual('../source/hooks/useUnauthenticatedApi');
+
 	return {
 		...original,
 		useUnauthenticatedApi: () => ({
@@ -57,12 +59,11 @@ vi.mock('../source/hooks/useUnauthenticatedApi', async() => {
 					project_id: 'proj1',
 					organization_id: 'org1',
 				},
-				error: null
-			})
+				error: null,
+			}),
 		}),
-	}
+	};
 });
-
 
 vi.mock('../source/commands/login.js', () => ({
 	__esModule: true,
@@ -91,13 +92,11 @@ afterEach(() => {
 
 describe('Select Component', () => {
 	it('should display loading state initially', async () => {
-
 		const { lastFrame } = render(<SelectComponent key={demoPermitKey} />);
 		expect(lastFrame()).toMatch(/Loading your environment/);
 	});
 
 	it('should handle environment selection successfully', async () => {
-
 		// Mock saveAuthToken
 		vi.mocked(saveAuthToken).mockResolvedValueOnce();
 
@@ -119,7 +118,6 @@ describe('Select Component', () => {
 		expect(lastFrame()).toMatch(/Environment: Env1 selected successfully/);
 	});
 	it('should handle environment selection failure', async () => {
-
 		// Mock saveAuthToken
 		vi.mocked(saveAuthToken).mockRejectedValueOnce('Failed to save token');
 
@@ -134,7 +132,7 @@ describe('Select Component', () => {
 			return null;
 		});
 
-		const { lastFrame } = render(<SelectComponent key={demoPermitKey } />);
+		const { lastFrame } = render(<SelectComponent key={demoPermitKey} />);
 
 		await delay(100); // Allow async operations to complete
 
@@ -153,7 +151,7 @@ describe('Select Component', () => {
 			);
 			return null;
 		});
-		const { lastFrame } = render(<SelectComponent key={demoPermitKey}/>);
+		const { lastFrame } = render(<SelectComponent key={demoPermitKey} />);
 		await delay(100); // Allow async operations to complete
 		expect(lastFrame()).toMatch(/Environment: Env1 selected successfully/);
 	});

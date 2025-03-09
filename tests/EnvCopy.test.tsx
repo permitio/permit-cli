@@ -39,36 +39,6 @@ beforeEach(() => {
 	});
 });
 
-
-// vi.mock('../source/hooks/useUnauthenticatedApi', async() => {
-// 	const original = await vi.importActual('../source/hooks/useUnauthenticatedApi');
-// 	return {
-// 		...original,
-// 		useUnauthenticatedApi: () => ({
-// 			getApiKeyScope: vi.fn().mockResolvedValue({
-// 				data: {
-// 					project_id: 'proj1',
-// 					organization_id: 'org1',
-// 				},
-// 				error: null,
-// 				status: 200,
-// 			}),
-// 			getProjectEnvironmentApiKey: vi.fn().mockResolvedValue({
-// 				data: { secret: 'test-secret' },
-// 				error: null,
-// 			}),
-// 			validateApiKeyScope: vi.fn().mockResolvedValue({
-// 				valid: true,
-// 				scope: {
-// 					project_id: 'proj1',
-// 					organization_id: 'org1',
-// 				},
-// 				error: null
-// 			})
-// 		}),
-// 	}
-// });
-
 vi.mock('../source/hooks/useUnauthenticatedApi', () => ({
 	useUnauthenticatedApi: vi.fn(() => ({
 		validateApiKeyScope: vi.fn(),
@@ -86,12 +56,9 @@ vi.mock('keytar', () => {
 			return demoPermitKey
 		}),
 		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
-
 	};
 	return { ...keytar, default: keytar };
 });
-
-
 
 afterEach(() => {
 	vi.restoreAllMocks();

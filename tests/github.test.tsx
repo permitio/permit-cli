@@ -82,6 +82,7 @@ vi.mock('../source/hooks/usePolicyGitReposApi.js', () => ({
 
 vi.mock('../source/hooks/useUnauthenticatedApi', async() => {
 	const original = await vi.importActual('../source/hooks/useUnauthenticatedApi');
+
 	return {
 		...original,
 		useUnauthenticatedApi: () => ({
@@ -105,22 +106,11 @@ vi.mock('../source/hooks/useUnauthenticatedApi', async() => {
 					project_id: 'proj1',
 					organization_id: 'org1',
 				},
-				error: null
-			})
+				error: null,
+			}),
 		}),
-	}
+	};
 });
-
-// vi.mock('keytar', () => {
-// 	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
-// 	const keytar = {
-// 		setPassword: vi.fn().mockResolvedValue(demoPermitKey),
-// 		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
-// 		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
-//
-// 	};
-// 	return { ...keytar, default: keytar };
-// });
 
 const enter = '\r';
 const arrowUp = '\u001B[A';

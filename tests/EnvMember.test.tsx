@@ -9,6 +9,7 @@ import delay from 'delay';
 import * as keytar from "keytar"
 import { useUnauthenticatedApi } from '../source/hooks/useUnauthenticatedApi';
 
+
 vi.mock('../source/hooks/useUnauthenticatedApi', () => ({
 	useUnauthenticatedApi: vi.fn(() => ({
 		validateApiKeyScope: vi.fn(),
@@ -32,11 +33,9 @@ vi.mock('keytar', () => {
 		setPassword: vi.fn().mockResolvedValue(demoPermitKey),
 		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
 		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
-
 	};
 	return { ...keytar, default: keytar };
 });
-
 
 beforeEach(() => {
 	vi.restoreAllMocks();
@@ -94,12 +93,12 @@ describe('Member Component', () => {
 		stdin.write(enter);
 		await delay(50);
 		stdin.write(enter);
-		await delay(50)
-		stdin.write("dummy_name")
+		await delay(50);
+		stdin.write('dummy_name');
 		await delay(50);
 		stdin.write(enter);
-		await delay(50)
-		stdin.write("dummy_email")
+		await delay(50);
+		stdin.write('dummy_email');
 		await delay(50);
 		stdin.write(enter);
 		await delay(100);
@@ -138,7 +137,17 @@ describe('Member Component', () => {
 		});
 
 		const { lastFrame, stdin } = render(
-			<Member options={{ key: 'valid_api_key', project:'proj1', environment: 'env1', email: 'email1', role: 'read', inviterEmail: 'email2', inviterName: 'name1' }} />,
+			<Member
+				options={{
+					key: 'valid_api_key',
+					project: 'proj1',
+					environment: 'env1',
+					email: 'email1',
+					role: 'read',
+					inviterEmail: 'email2',
+					inviterName: 'name1',
+				}}
+			/>,
 		);
 
 		await delay(100);

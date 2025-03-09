@@ -11,8 +11,10 @@ vi.mock('../../source/lib/auth', () => ({
 	loadAuthToken: vi.fn(),
 }));
 
+
 vi.mock('../../source/hooks/useUnauthenticatedApi', async() => {
 	const original = await vi.importActual('../../source/hooks/useUnauthenticatedApi');
+
 	return {
 		...original,
 		useUnauthenticatedApi: () => ({
@@ -36,10 +38,10 @@ vi.mock('../../source/hooks/useUnauthenticatedApi', async() => {
 					project_id: 'proj1',
 					organization_id: 'org1',
 				},
-				error: null
-			})
+				error: null,
+			}),
 		}),
-	}
+	};
 });
 
 describe('PDP Component', () => {
@@ -47,9 +49,7 @@ describe('PDP Component', () => {
 		(loadAuthToken as any).mockResolvedValueOnce(
 			'permit_key_'.concat('a'.repeat(97)),
 		);
-		const { lastFrame } = render(
-			<Run options={{ opa: 8181 }}/>
-		);
+		const { lastFrame } = render(<Run options={{ opa: 8181 }} />);
 		expect(lastFrame()?.toString()).toMatch('Loading Token');
 		await delay(50);
 		expect(lastFrame()?.toString()).toMatch(

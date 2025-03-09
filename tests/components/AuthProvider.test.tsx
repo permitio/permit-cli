@@ -1,7 +1,11 @@
 import React from 'react';
 import { render } from 'ink-testing-library';
 import { AuthProvider, useAuth } from '../../source/components/AuthProvider.js';
-import { authCallbackServer, browserAuth, loadAuthToken } from '../../source/lib/auth.js';
+import {
+	authCallbackServer,
+	browserAuth,
+	loadAuthToken,
+} from '../../source/lib/auth.js';
 import { describe, it, expect, vi } from 'vitest';
 import { Text } from 'ink';
 import delay from 'delay';
@@ -29,7 +33,6 @@ vi.mock('keytar', () => {
 		setPassword: vi.fn().mockResolvedValue(demoPermitKey),
 		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
 		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
-
 	};
 	return { ...keytar, default: keytar };
 });
@@ -58,7 +61,7 @@ describe('AuthProvider', () => {
 				project_id: 'proj1',
 				organization_id: 'org1',
 			}),
-			status: 200
+			status: 200,
 		});
 
 		const { lastFrame } = render(
@@ -89,9 +92,7 @@ describe('AuthProvider', () => {
 	});
 
 	it('should display project if scope is project or greater', async () => {
-		(loadAuthToken as any).mockRejectedValue(
-			new Error('Failed to load token'),
-		);
+		(loadAuthToken as any).mockRejectedValue(new Error('Failed to load token'));
 		vi.mocked(browserAuth).mockResolvedValue('verifier');
 		vi.mocked(authCallbackServer).mockResolvedValue('browser_token');
 		(fetch as any).mockResolvedValueOnce({
@@ -182,11 +183,10 @@ describe('AuthProvider', () => {
 	});
 
 	it('should display project if scope is environment', async () => {
-		(loadAuthToken as any).mockRejectedValue(
-			new Error('Failed to load token'),
-		);
+		(loadAuthToken as any).mockRejectedValue(new Error('Failed to load token'));
 		vi.mocked(browserAuth).mockResolvedValue('verifier');
 		vi.mocked(authCallbackServer).mockResolvedValue('browser_token');
+
 		(fetch as any).mockResolvedValueOnce({
 			...getMockFetchResponse(),
 			ok: true,
@@ -226,21 +226,21 @@ describe('AuthProvider', () => {
 			json: async () => ([
 					{ id: 'proj1', name: 'Project 1' },
 					{ id: 'proj2', name: 'Project 2' },
-				]
-			)
-		})
+				],
+			})
 			.mockResolvedValueOnce({
 				...getMockFetchResponse(),
 			ok: true,
 			status: 200,
 			error: null,
 			json: async () => ([
+
 					{ id: 'env1', name: 'Env 1' },
 					{ id: 'env2', name: 'Env 2' },
-				]
-			)
-		})
+				],
+			})
 			.mockResolvedValueOnce({
+
 				...getMockFetchResponse(),
 			ok: true,
 			status: 200,
