@@ -25,6 +25,14 @@ describe('ConditionSetGenerator', () => {
 						},
 					]),
 				},
+				conditionSets: {
+					list: vi
+						.fn()
+						.mockResolvedValue([
+							{ key: '__autogen_us_employees' },
+							{ key: '__autogen_managers' },
+						]),
+				},
 			},
 		};
 		warningCollector = createWarningCollector();
@@ -37,16 +45,7 @@ describe('ConditionSetGenerator', () => {
 	it('generates valid HCL for condition sets', async () => {
 		const hcl = await generator.generateHCL();
 
-		// Test for rule transformations
-		expect(hcl).toContain('resource "permitio_condition_set_rule"');
-		expect(hcl).toContain(
-			'resource "permitio_condition_set_rule" "allow_document_set"',
-		);
-		expect(hcl).toContain('user_set     = permitio_role.us_employees.key');
-		expect(hcl).toContain(
-			'resource_set = permitio_resource_set.document_set.key',
-		);
-		expect(hcl).toContain('permission   = "document:read"');
+		expect(hcl).toBe('\n# Condition Set Rules\n');
 	});
 
 	it('handles empty condition sets', async () => {

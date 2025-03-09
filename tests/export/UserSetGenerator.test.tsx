@@ -4,7 +4,7 @@ import type { WarningCollector } from '../../source/commands/env/export/types';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-// Mock fs and path modules
+// Mock fs module
 vi.mock('fs', () => ({
 	readFileSync: vi.fn().mockReturnValue(`
     {{#each sets}}
@@ -62,7 +62,6 @@ describe('UserSetGenerator', () => {
 				key: 'premium_users',
 				name: 'Premium Users',
 				type: 'userset',
-				// Supply a valid JSON string so JSON.parse succeeds.
 				conditions: '"user.subscription == \\"premium\\""',
 				resource_id: 'subscription',
 			},
@@ -136,11 +135,12 @@ describe('UserSetGenerator', () => {
 		const generator = new UserSetGenerator(mockPermit, warningCollector);
 		const result = await generator.generateHCL();
 
-		expect(result).toContain('resource "permitio_user_set" "empty_conditions"');
-		expect(result).toContain('conditions = ""');
-
-		expect(result).toContain('resource "permitio_user_set" "null_conditions"');
-
-		expect(result).toContain('conditions = ""');
+		expect(result).toBe('');
+		expect(warningCollector.addWarning).toHaveBeenCalledWith(
+			'User set "empty_conditions" has no valid conditions and will be skipped.',
+		);
+		expect(warningCollector.addWarning).toHaveBeenCalledWith(
+			'User set "null_conditions" has no valid conditions and will be skipped.',
+		);
 	});
 });

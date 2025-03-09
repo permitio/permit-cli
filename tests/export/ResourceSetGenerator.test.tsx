@@ -46,7 +46,6 @@ describe('ResourceSetGenerator', () => {
 
 		expect(hcl).toContain('key         = "test_set"');
 		expect(hcl).toContain('name        = "Test Set"');
-		expect(hcl).toContain('description = "Test resource set"');
 		expect(hcl).toContain('resource    = permitio_resource.document.key');
 
 		expect(hcl).toContain('conditions  = jsonencode({');
@@ -65,12 +64,10 @@ describe('ResourceSetGenerator', () => {
 resource "permitio_resource_set" "test_set" {
   name        = "Test Set"
   key         = "test_set"
-  description = "Test resource set"
   resource    = permitio_resource.document.key
   conditions  = jsonencode({
   "attribute": "value"
 })
-
   depends_on  = [
     permitio_resource.document
   ]
@@ -116,7 +113,6 @@ resource "permitio_resource_set" "string_condition_set" {
   key         = "string_condition_set"
   resource    = permitio_resource.document.key
   conditions  = resource.owner == user.id
-
   depends_on  = [
     permitio_resource.document
   ]

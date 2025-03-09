@@ -78,7 +78,7 @@ describe('RoleDerivationGenerator', () => {
 		expect(hcl).toContain('# Role Derivations');
 		expect(hcl).toContain('resource "permitio_role_derivation"');
 		expect(hcl).toContain('resource    = "document"');
-		expect(hcl).toContain('role        = "document_user"');
+		expect(hcl).toContain('role        = "document__document_user"');
 	});
 
 	it('handles resources with missing keys', async () => {
@@ -129,7 +129,7 @@ describe('RoleDerivationGenerator', () => {
 		const hcl = await generator.generateHCL();
 		expect(hcl).toBe('');
 		expect(warningCollector.getWarnings()).toContain(
-			'Failed to gather resources: Error: API Error',
+			'Failed to generate role derivations: Error: API Error',
 		);
 	});
 
@@ -178,8 +178,9 @@ describe('RoleDerivationGenerator', () => {
 		);
 
 		const hcl = await generator.generateHCL();
+
 		expect(warningCollector.getWarnings()).toContain(
-			"Failed to gather data for resource 'document': Error: Derivation API Error",
+			"Failed to process roles for resource 'document': Error: Derivation API Error",
 		);
 	});
 });
