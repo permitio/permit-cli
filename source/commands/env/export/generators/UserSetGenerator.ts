@@ -27,7 +27,6 @@ export class UserSetGenerator implements HCLGenerator {
 	name = 'user set';
 	private template: TemplateDelegate<{ sets: UserSetData[] }>;
 	private userAttributes: UserAttribute[] = [];
-	private availableUserAttributes: Set<string> = new Set();
 
 	constructor(
 		private permit: Permit,
@@ -52,11 +51,6 @@ export class UserSetGenerator implements HCLGenerator {
 		try {
 			const userResource = await this.permit.api.resources.get('__user');
 			if (!userResource?.attributes) return;
-
-			// Store available attribute keys for validation
-			this.availableUserAttributes = new Set(
-				Object.keys(userResource.attributes),
-			);
 
 			this.userAttributes = Object.entries(userResource.attributes)
 				.filter(([, attr]) => {
@@ -97,7 +91,7 @@ export class UserSetGenerator implements HCLGenerator {
 	}
 
 	// Process conditions for Terraform
-	private processConditions(conditions: any): any {
+	private processConditions(conditions: unknown): unknown {
 		if (!conditions) return conditions;
 
 		if (typeof conditions !== 'object') return conditions;
@@ -110,9 +104,11 @@ export class UserSetGenerator implements HCLGenerator {
 		}
 
 		// Process object properties
-		const result: any = {};
+		const result: Record<string, unknown> = {};
 
-		for (const [key, value] of Object.entries(conditions)) {
+		for (const [key, value] of Object.entries(
+			conditions as Record<string, unknown>,
+		)) {
 			// Add proper dependencies but don't modify the condition
 			const cleanValue = this.processConditions(value);
 			if (cleanValue !== null) {
@@ -130,44 +126,43 @@ export class UserSetGenerator implements HCLGenerator {
 
 			const conditionSets = await this.permit.api.conditionSets.list({});
 
-			const validSets = conditionSets
-				.filter(set => set.type === 'userset')
-				.map(set => {
-					const conditions =
-						typeof set.conditions === 'string'
-							? JSON.parse(set.conditions)
-							: set.conditions;
+			const userSets: UserSetData[] = [];
 
-					// Process conditions for Terraform
-					const processedConditions = this.processConditions(conditions);
+			for (const set of conditionSets.filter(set => set.type === 'userset')) {
+				const conditions =
+					typeof set.conditions === 'string'
+						? JSON.parse(set.conditions)
+						: set.conditions;
 
-					// If all conditions were invalid, add a warning and skip this set
-					if (!processedConditions) {
-						this.warningCollector.addWarning(
-							`User set "${set.key}" has no valid conditions and will be skipped.`,
-						);
-						return null;
-					}
+				// Process conditions for Terraform
+				const processedConditions = this.processConditions(conditions);
 
-					// Detect user attribute dependencies
-					const dependencies = this.detectDependencies(conditions);
+				// If all conditions were invalid, add a warning and skip this set
+				if (!processedConditions) {
+					this.warningCollector.addWarning(
+						`User set "${set.key}" has no valid conditions and will be skipped.`,
+					);
+					continue;
+				}
 
-					return {
-						key: createSafeId(set.key),
-						name: set.name,
-						description: set.description,
-						conditions: processedConditions,
-						resource: set.resource_id?.toString(),
-						depends_on: dependencies,
-					};
-				})
-				.filter(Boolean); // Remove null entries
+				// Detect user attribute dependencies
+				const dependencies = this.detectDependencies(conditions);
 
-			if (validSets.length === 0) {
+				userSets.push({
+					key: createSafeId(set.key),
+					name: set.name,
+					description: set.description,
+					conditions: processedConditions as object,
+					resource: set.resource_id?.toString(),
+					depends_on: dependencies,
+				});
+			}
+
+			if (userSets.length === 0) {
 				return '';
 			}
 
-			return '\n# User Sets\n' + this.template({ sets: validSets });
+			return '\n# User Sets\n' + this.template({ sets: userSets });
 		} catch (error) {
 			this.warningCollector.addWarning(`Failed to export user sets: ${error}`);
 			return '';

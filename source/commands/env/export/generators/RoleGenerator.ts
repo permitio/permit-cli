@@ -20,6 +20,25 @@ interface RoleData {
 	attributes?: Record<string, unknown>;
 }
 
+// Interface representing a role from the Permit API
+interface RoleFromAPI {
+	key: string;
+	name?: string;
+	description?: string;
+	permissions?: string[];
+	extends?: string[];
+	attributes?: Record<string, unknown>;
+}
+
+// Define a role data structure from the Permit API resource roles
+interface RoleDataFromAPI {
+	name?: string;
+	description?: string;
+	permissions?: string[];
+	extends?: string[];
+	attributes?: Record<string, unknown>;
+}
+
 export class RoleGenerator implements HCLGenerator {
 	name = 'roles';
 	private template: TemplateDelegate<{ roles: RoleData[] }>;
@@ -130,7 +149,7 @@ export class RoleGenerator implements HCLGenerator {
 			const resourceRoles: Array<{
 				resourceKey: string;
 				roleKey: string;
-				roleData: any;
+				roleData: RoleDataFromAPI;
 			}> = [];
 
 			for (const resource of resources) {
@@ -141,7 +160,11 @@ export class RoleGenerator implements HCLGenerator {
 				}
 
 				Object.entries(resource.roles).forEach(([roleKey, roleData]) => {
-					resourceRoles.push({ resourceKey, roleKey, roleData });
+					resourceRoles.push({
+						resourceKey,
+						roleKey,
+						roleData: roleData as RoleDataFromAPI,
+					});
 				});
 			}
 
@@ -162,7 +185,7 @@ export class RoleGenerator implements HCLGenerator {
 
 				// If this role key appears multiple times across resources, use a prefixed version
 				if (
-					roleKeyCount.get(roleKey) > 1 ||
+					(roleKeyCount.get(roleKey) ?? 0) > 1 ||
 					usedTerraformIds.has(terraformId)
 				) {
 					terraformId = `${resourceKey}__${roleKey}`;
@@ -198,9 +221,7 @@ export class RoleGenerator implements HCLGenerator {
 					extends: roleData.extends,
 					dependencies,
 					description: roleData.description,
-					attributes: roleData.attributes
-						? (roleData.attributes as Record<string, unknown>)
-						: undefined,
+					attributes: roleData.attributes,
 				});
 			}
 
@@ -234,16 +255,17 @@ export class RoleGenerator implements HCLGenerator {
 					});
 				}
 
+				// Cast the role to our RoleFromAPI interface to access the extends property
+				const typedRole = role as unknown as RoleFromAPI;
+
 				validRoles.push({
 					key: role.key,
 					terraformId,
 					name: role.name || role.key,
 					description: role.description,
 					permissions: role.permissions || [],
-					extends: (role as any).extends || [],
-					attributes: role.attributes
-						? (role.attributes as Record<string, unknown>)
-						: undefined,
+					extends: typedRole.extends || [],
+					attributes: role.attributes as Record<string, unknown> | undefined,
 					dependencies: dependencies,
 				});
 			}
