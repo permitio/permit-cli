@@ -21,6 +21,8 @@ type RoleAssignment = {
 	resourceInstance: string;
 };
 
+const ResourceInstanceClass = 'resource-instance-node';
+
 // Generate Graph Data
 export const generateGraphData = (
 	resources: ResourceInstance[],
@@ -30,7 +32,7 @@ export const generateGraphData = (
 	const nodes: { data: { id: string; label: string }; classes?: string }[] =
 		resources.map(resource => ({
 			data: { id: resource.id, label: ` ${resource.label}`, id2: resource.id2 },
-			classes: 'resource-instance-node',
+			classes: ResourceInstanceClass,
 		}));
 
 	const edges: {
@@ -129,7 +131,7 @@ export const generateGraphData = (
 						id: assignment.resourceInstance,
 						label: `${assignment.resourceInstance}`,
 					},
-					classes: 'resource-instance-node',
+					classes: ResourceInstanceClass,
 				});
 				existingNodeIds.add(assignment.resourceInstance);
 			}
@@ -156,7 +158,7 @@ export const generateGraphData = (
 					id: edge.data.target,
 					label: `Node ${edge.data.target}`,
 				},
-				classes: 'resource-instance-node',
+				classes: ResourceInstanceClass,
 			});
 			existingNodeIds.add(edge.data.target);
 		}

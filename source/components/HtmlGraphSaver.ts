@@ -2,7 +2,38 @@ import { writeFileSync } from 'fs';
 import { resolve } from 'path';
 import open from 'open';
 
-export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
+// Define the data structure for a graph node's data
+interface GraphNodeData {
+	id: string;
+	label: string;
+}
+
+// Define a graph node; `classes` is optional
+interface GraphNode {
+	data: GraphNodeData;
+	classes?: string;
+}
+
+// Define the data structure for a graph edge's data
+interface GraphEdgeData {
+	source: string;
+	target: string;
+	label: string;
+}
+
+// Define a graph edge; here `classes` is required
+interface GraphEdge {
+	data: GraphEdgeData;
+	classes: string;
+}
+
+// Define the overall GraphData structure
+interface GraphData {
+	nodes: GraphNode[];
+	edges: GraphEdge[];
+}
+
+export const saveHTMLGraph = (graphData: GraphData) => {
 	const outputHTMLPath = resolve(process.cwd(), 'permit-graph.html');
 	const htmlTemplate = `
 <!doctype html>
@@ -149,6 +180,32 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 				font-size: 25px;
 				font-family: 'Manrope', Arial, sans-serif;
 			}
+
+			/* Zoom Controls Styling */
+			#zoom-controls {
+				position: fixed;
+				bottom: 10px;
+				left: 10px;
+				display: flex;
+				flex-direction: column;
+				gap: 5px;
+				z-index: 10000;
+			}
+			#zoom-controls button {
+				width: 40px;
+				height: 40px;
+				border: none;
+				border-radius: 5px;
+				background-color: rgb(254, 248, 244);
+				color: rgb(69, 30, 17);
+				font-size: 24px;
+				font-weight: bold;
+				cursor: pointer;
+			}
+			#zoom-controls button svg {
+				width: 24px;
+				height: 24px;
+			}
 			#minimap-container {
 				position: fixed;
 				bottom: 10px;
@@ -168,6 +225,12 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 		<div id="title">Permit ReBAC Graph</div>
 		<svg></svg>
 		<div id="minimap-container"></div>
+		<!-- Zoom controls on bottom left -->
+		<div id="zoom-controls">
+			<button id="zoom-in">+</button>
+			<button id="zoom-out">–</button>
+			<button id="lock-toggle"></button>
+		</div>
 
 		<script>
 			/***********************
@@ -296,6 +359,17 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 			});
 			// --- horizontal spacing without disturbing user nodes ---
 			const minSpacing = 1250;
+			const maxSpacing = 3000; // maximum gap allowed between layer 1 nodes
+
+			const baselineNodes = rootHierarchy
+				.descendants()
+				.filter(
+					d =>
+						d.data.layer !== undefined &&
+						(d.data.layer === 2 || d.data.layer === 3),
+				);
+			const baselineAvgX =
+				baselineNodes.length > 0 ? d3.mean(baselineNodes, d => d.x) : null;
 
 			const nodesByLayer = d3.group(
 				rootHierarchy
@@ -320,18 +394,65 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 			});
 			// --- Horizontal Alignment Adjustment with Combined Layers 4 & 5 and Clamping ---
 			// Compute baseline x from layers 2 and 3.
-			const baselineNodes = rootHierarchy
-				.descendants()
-				.filter(
-					d =>
-						d.data.layer !== undefined &&
-						(d.data.layer === 2 || d.data.layer === 3),
-				);
-			const baselineAvgX = d3.mean(baselineNodes, d => d.x);
+			// If layer 2 is missing (and thus layer 3 is absent), center all nodes evenly.
+			if (!nodesByLayer.has(2)) {
+				const allNodes = rootHierarchy
+					.descendants()
+					.filter(d => d.data.id !== 'dummy_root');
+				allNodes.sort((a, b) => a.x - b.x);
+				const total = allNodes.length;
+				const spacing = layoutWidth / (total + 50);
+				allNodes.forEach((node, i) => {
+					node.x = spacing * (i + 1);
+				});
+			} else {
+				// Otherwise, align layer 1 with the baseline of layers 2 and 3.
 
-			const group1 = rootHierarchy
-				.descendants()
-				.filter(d => d.data.layer !== undefined && d.data.layer === 1);
+				const group1 = rootHierarchy
+					.descendants()
+					.filter(d => d.data.layer === 1);
+				const minAllowedX = 50;
+				const maxAllowedX = layoutWidth + 5000;
+				if (group1.length > 0) {
+					const group1AvgX = d3.mean(group1, d => d.x);
+					const shift1 = baselineAvgX - group1AvgX;
+					group1.forEach(d => {
+						d.x += shift1;
+						d.x = Math.max(minAllowedX, Math.min(d.x, maxAllowedX));
+					});
+				}
+			}
+
+			// For layer 1, enforce min and max spacing.
+			if (nodesByLayer.has(1)) {
+				const layer1Nodes = nodesByLayer.get(1);
+				layer1Nodes.sort((a, b) => a.x - b.x);
+				for (let i = 1; i < layer1Nodes.length; i++) {
+					const prev = layer1Nodes[i - 1];
+					const curr = layer1Nodes[i];
+					if (curr.x - prev.x < minSpacing) {
+						curr.x = prev.x + minSpacing;
+					}
+					if (curr.x - prev.x > maxSpacing) {
+						curr.x = prev.x + maxSpacing;
+					}
+				}
+			}
+
+			// --- Combined Group (Layers 4 & 5) Alignment ---
+			// Determine effective baseline for group45.
+			// Priority: layers 2/3 > layer 1 > fallback (center of layout).
+			let effectiveBaseline;
+			if (baselineNodes.length > 0) {
+				effectiveBaseline = d3.mean(baselineNodes, d => d.x);
+			} else if (nodesByLayer.has(1)) {
+				const group1 = rootHierarchy
+					.descendants()
+					.filter(d => d.data.layer === 1);
+				effectiveBaseline = d3.mean(group1, d => d.x);
+			} else {
+				effectiveBaseline = layoutWidth / 2;
+			}
 
 			const group45 = rootHierarchy
 				.descendants()
@@ -341,29 +462,19 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 						(d.data.layer === 4 || d.data.layer === 5),
 				);
 
-			const minAllowedX = 50;
-			const maxAllowedX = layoutWidth + 5000;
-
-			// Adjust layer 1: shift its nodes so that the group average x matches the baseline.
-			if (group1.length > 0) {
-				const group1AvgX = d3.mean(group1, d => d.x);
-				const shift1 = baselineAvgX - group1AvgX;
-				group1.forEach(d => {
-					d.x += shift1;
-					d.x = Math.max(minAllowedX, Math.min(d.x, maxAllowedX));
-				});
-			}
+			const minAllowedXFor45 = 50;
+			const maxAllowedXFor45 = layoutWidth + 5000;
 
 			// Adjust combined group (layers 4 and 5):
 			if (group45.length > 0) {
 				const group45AvgX = d3.mean(group45, d => d.x);
-				const shift45 = baselineAvgX - group45AvgX;
+				const shift45 = effectiveBaseline - group45AvgX;
 				group45.forEach(d => {
 					d.x += shift45;
-					d.x = Math.max(minAllowedX, Math.min(d.x, maxAllowedX));
+					d.x = Math.max(minAllowedXFor45, Math.min(d.x, maxAllowedXFor45));
 				});
 
-				// Sort the group by x.
+				// Enforce maximum gap between adjacent nodes.
 				group45.sort((a, b) => a.x - b.x);
 				const maxGap = 1050;
 				for (let i = 1; i < group45.length; i++) {
@@ -470,25 +581,34 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 						"<rect x='18' y='18' width='7' height='7' fill='#ccc' />",
 				);
 
+			// Create a main group with translation.
 			const g = svg.append('g').attr('transform', 'translate(50,50)');
 
-			g.insert('rect', ':first-child')
+			// Create two subgroups: one for the background and one for the content.
+			const bgGroup = g.append('g').attr('class', 'bg-group');
+			const contentGroup = g.append('g').attr('class', 'content-group');
+
+			// Insert the background rectangle into the bgGroup.
+			bgGroup
+				.insert('rect', ':first-child')
 				.attr('x', -100000)
 				.attr('y', -100000)
 				.attr('width', layoutWidth + 200000)
 				.attr('height', layoutHeight + 200000)
 				.attr('fill', 'url(#squarePattern)');
 
+			// Render nodes into the contentGroup.
 			const mainNodes = rootHierarchy
 				.descendants()
 				.filter(d => d.data.id !== 'dummy_root');
-			const nodeGroup = g
+
+			const nodeGroup = contentGroup
 				.selectAll('g.node-main')
 				.data(mainNodes)
 				.enter()
 				.append('g')
 				.attr('class', d => 'node-main ' + (d.data.classes || ''))
-				.attr('transform', d =>  \`translate(\${d.x}, \${d.y})\`)
+				.attr('transform', d => \`translate(\${d.x}, \${d.y})\`)
 				.call(
 					d3
 						.drag()
@@ -835,14 +955,23 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 				updateEdgeLabels();
 			}
 
+			let nodesLocked = false;
+			const lockOpenIcon = \`<svg class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-vubbuv" focusable="false" aria-hidden="true" viewBox="0 0 24 24" data-testid="LockOpenOutlinedIcon"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h2c0-1.66 1.34-3 3-3s3 1.34 3 3v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"></path></svg>\`;
+			const lockClosedIcon = \`<svg class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-vubbuv" focusable="false" aria-hidden="true" viewBox="0 0 24 24" data-testid="LockOutlinedIcon"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"></path></svg>\`;
+
+			const lockToggleButton = document.getElementById('lock-toggle');
+			lockToggleButton.innerHTML = lockOpenIcon;
+
 			// Also update the dot after node drag events.
 			nodeGroup.call(
 				d3
 					.drag()
 					.on('start', function (event, d) {
+					    if (nodesLocked) return;
 						d3.select(this).classed('dragging', true);
 					})
 					.on('drag', function (event, d) {
+					    if (nodesLocked) return;
 						d.x = event.x;
 						d.y = event.y;
 						d3.select(this).attr('transform', \`translate(\${d.x}, \${d.y})\`);
@@ -851,6 +980,7 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 						updateEdgeLabels();
 					})
 					.on('end', function (event, d) {
+					    if (nodesLocked) return;
 						d3.select(this).classed('dragging', false);
 					}),
 			);
@@ -862,13 +992,34 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 				.zoom()
 				.scaleExtent([2, 22])
 				.on('zoom', event => {
+					// Apply zoom to the entire group (both bgGroup and contentGroup)
 					g.attr('transform', event.transform);
-					updateMinimapViewport(); // Call update function on every zoom (which includes panning)
+					updateMinimapViewport(); // Update minimap on every zoom (including panning)
 				});
 			svg.call(zoomBehavior);
 			g.attr('transform', 'translate(0,0)');
 			const initialScale = 10;
 
+			// Zoom control buttons functionality.
+			const zoomInButton = document.getElementById('zoom-in');
+			const zoomOutButton = document.getElementById('zoom-out');
+			zoomInButton.addEventListener('click', () => {
+				svg.transition().call(zoomBehavior.scaleBy, 1.2);
+			});
+			zoomOutButton.addEventListener('click', () => {
+				svg.transition().call(zoomBehavior.scaleBy, 0.8);
+			});
+
+			// Lock toggle button remains unchanged.
+			lockToggleButton.addEventListener('click', () => {
+				nodesLocked = !nodesLocked;
+				lockToggleButton.innerHTML = nodesLocked
+					? lockClosedIcon
+					: lockOpenIcon;
+			});
+
+			// Compute the center for initial zoom.
+			// Use contentGroup (which excludes the huge background) for the bounding box.
 			requestAnimationFrame(() => {
 				const svgWidth = svg.node().clientWidth;
 				const svgHeight = svg.node().clientHeight;
@@ -877,7 +1028,7 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 
 				let centerPoint = null;
 
-				// Filter all nodes (excluding dummy_root) that have "user-node" in their classes.
+				// Filter for user nodes from the hierarchy.
 				const userNodes = rootHierarchy
 					.descendants()
 					.filter(
@@ -890,7 +1041,7 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 					let maxCount = -1;
 					let mostConnectedUser = null;
 
-					// For each user node, count the number of connections.
+					// Count connections for each user node.
 					userNodes.forEach(node => {
 						const count = graphData.edges.reduce((acc, edge) => {
 							return (
@@ -907,7 +1058,8 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 						}
 					});
 
-					if (mostConnectedUser) {
+					// Use the most connected user if it has at least one connection.
+					if (mostConnectedUser && maxCount > 0) {
 						centerPoint = {
 							x: mostConnectedUser.x - mostConnectedUser.x / 11,
 							y: mostConnectedUser.y - mostConnectedUser.y * -0.7,
@@ -915,16 +1067,21 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 					}
 				}
 
-				// Fallback: center on the entire graph's bounding box if no user node was found.
+				// Fallback: center on the entire content.
 				if (!centerPoint) {
-					const bbox = g.node().getBBox();
-					centerPoint = {
-						x: bbox.x + bbox.width / 2,
-						y: bbox.y + bbox.height / 2,
-					};
+					const bbox = contentGroup.node().getBBox();
+					if (bbox.width === 0 || bbox.height === 0) {
+						// Use layout center if bounding box is degenerate.
+						centerPoint = { x: layoutWidth / 2, y: layoutHeight / 2 };
+					} else {
+						centerPoint = {
+							x: bbox.x + (bbox.width / 2) -5000,
+							y: bbox.y + bbox.height / 2,
+						};
+					}
 				}
 
-				// Calculate the translation so that centerPoint is placed at the center of the SVG.
+				// Calculate translation to place the computed center at the SVG center.
 				const translateX = centerX - initialScale * centerPoint.x;
 				const translateY = centerY - initialScale * centerPoint.y;
 				const initialTransform = d3.zoomIdentity
@@ -1126,57 +1283,66 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 
 			setTimeout(() => {
 				// ===== MINI-MAP SETUP =====
-				// Create the minimap container (if not already in HTML)
 				const miniMapContainer = document.getElementById('minimap-container');
+				if (!miniMapContainer) return;
 
-				// Create the mini-map SVG inside the container.
+				// Use the container's fixed dimensions from your styles:
+				const miniWidth = 400; // as defined in CSS
+				const miniHeight = 100; // as defined in CSS
+				const margin = 10; // margin to prevent content from touching the edges
+
+				// Create the minimap SVG inside the container.
 				const miniSvg = d3
 					.select(miniMapContainer)
 					.append('svg')
-					.attr('width', 200)
-					.attr('height', 200)
-					.attr('style', 'background: transparent !important;');
+					.attr('width', miniWidth)
+					.attr('height', miniHeight)
+					.style('background', 'transparent');
 
-				// ----- CLONE THE MAIN GRAPH (INCLUDING BACKGROUND) -----
-				// Assume your main graph group variable is "g"
-				const graphClone = g.node().cloneNode(true);
+				// ----- CLONE THE MAIN GRAPH CONTENT (EXCLUDING BACKGROUND) -----
+				// Clone only the contentGroup, so we ignore the huge background in bgGroup.
+				const graphClone = contentGroup.node().cloneNode(true);
+				// Remove any existing transform so that getBBox() reflects the natural layout.
+				graphClone.removeAttribute('transform');
 
-				// Append the cloned graph into a new group inside miniSvg.
 				const miniG = miniSvg.append('g');
 				miniG.node().appendChild(graphClone);
 
-				// ----- FIXED SCALE & CENTERING (Option B) -----
-				// Compute the bounding box of the cloned graph (which includes your huge background)
-				const bbox = graphClone.getBBox();
+				// ----- FIXED SCALE & CENTERING -----
+				// Compute the bounding box of the cloned content.
+				let bbox = graphClone.getBBox();
 				if (bbox.width === 0 || bbox.height === 0) {
 					console.warn(
 						'Graph bounding box is empty! Check if elements are rendered.',
 					);
 					return;
 				}
-				// Compute a fixed scale factor so that the entire background fits in 200px width.
-				// For your background, 200 / 336600 ≈ 0.000594.
-				const fixedScale = Math.min(1200 / bbox.width, 600 / bbox.height);
 
-				// Compute the center of the cloned graph’s bounding box.
-				const graphCenter = {
-					x: bbox.x + bbox.width / 2.2,
-					y: bbox.y + bbox.height / 1.7,
+				// Calculate scale factors so that the entire bounding box fits inside the minimap (with margin).
+				const scaleX = (miniWidth - 2 * margin) / bbox.width;
+				const scaleY = (miniHeight - 2 * margin) / bbox.height;
+				const fixedScale = Math.min(scaleX, scaleY);
+
+				// Compute the center of the cloned content's bounding box.
+				const contentCenter = {
+					x: bbox.x + bbox.width / 2,
+					y: bbox.y + bbox.height / 2,
 				};
-				// The minimap’s center for a 200x200 container is (100,100).
-				const miniCenter = { x: 400 / 4, y: 400 / 4 };
-				// Compute translation so that the graph center aligns with the minimap center.
-				const fixedTranslateX = miniCenter.x - fixedScale * graphCenter.x;
-				const fixedTranslateY = miniCenter.y - fixedScale * graphCenter.y;
 
-				// Apply the fixed transform (translation and scale) to the cloned graph.
+				// The desired center in the minimap is at (miniWidth/2, miniHeight/2)
+				const desiredCenter = { x: miniWidth / 2, y: miniHeight / 2 };
+
+				// Compute translation so that the content's center aligns with the minimap's center.
+				const translateX = desiredCenter.x - fixedScale * contentCenter.x;
+				const translateY = desiredCenter.y - fixedScale * contentCenter.y;
+
+				// Apply the computed transform (translation and scale) to the cloned content.
 				d3.select(graphClone).attr(
 					'transform',
-					\`translate(\${fixedTranslateX}, \${fixedTranslateY}) scale(\${fixedScale})\`,
+					\`translate(\${translateX}, \${translateY}) scale(\${fixedScale})\`,
 				);
 
 				// ----- VIEWPORT INDICATOR -----
-				// Add a small dot (radius 3) to represent the center of the main viewport.
 				const viewportDot = miniSvg
 					.append('circle')
 					.attr('r', 2.3)
@@ -1186,35 +1352,32 @@ export const saveHTMLGraph = (graphData: { nodes: any[]; edges: any[] }) => {
 
 				// ----- UPDATE FUNCTION: Sync Mini-Map Viewport Indicator -----
 				function updateMinimapViewport() {
-					// Use the transform on the main group "g" (which is moved when you pan)
 					const t = d3.zoomTransform(g.node());
 					const miniWidth = miniMapContainer.clientWidth;
 					const miniHeight = miniMapContainer.clientHeight;
 					const mainWidth = svg.node().clientWidth;
 					const mainHeight = svg.node().clientHeight;
 
-					// Compute the center of the visible area in graph coordinates.
-					// (Using t.invert on the center of the main svg)
+					// Compute the center of the visible area in main graph coordinates.
 					const mainCenter = t.invert([mainWidth / 2, mainHeight / 2]);
 
-					// Map that center into minimap coordinates using your fixed scale and translation.
-					let miniX = mainCenter[0] * fixedScale + fixedTranslateX;
-					let miniY = mainCenter[1] * fixedScale + fixedTranslateY;
+					// Map that center into minimap coordinates using the fixed scale and translation.
+					let miniX = mainCenter[0] * fixedScale + translateX;
+					let miniY = mainCenter[1] * fixedScale + translateY;
 
-					// OPTIONAL: Add an extra positive offset on the X-axis if needed.
-					const extraOffsetX = 30; // adjust this value as desired
-					miniX += extraOffsetX;
+					// Add extra offset in X by 30 pixels.
+					miniX += 80;
 
-					// Clamp the dot so it stays within the minimap container.
-					miniX = Math.max(0, Math.min(miniWidth, miniX));
-					miniY = Math.max(0, Math.min(miniHeight, miniY));
+					const dotRadius = 2.3; // The radius of the viewport dot.
+					miniX = Math.max(dotRadius, Math.min(miniWidth - dotRadius, miniX));
+					miniY = Math.max(dotRadius, Math.min(miniHeight - dotRadius, miniY));
 
-					// Update the viewport dot's position.
 					viewportDot.attr('cx', miniX).attr('cy', miniY);
 				}
+
 				window.updateMinimapViewport = updateMinimapViewport;
 
-				// Attach this function to your main SVG's zoom event so it updates on any pan/zoom.
+				// Attach update function to the main SVG's zoom event.
 				svg.on('zoom.minimap', updateMinimapViewport);
 				updateMinimapViewport();
 			}, 1000);

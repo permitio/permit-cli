@@ -8,6 +8,7 @@ import { generateGraphData } from '../components/generateGraphData.js';
 import zod from 'zod';
 import { option } from 'pastel';
 import { useAuth } from '../components/AuthProvider.js'; // Import useAuth
+import { ActiveState } from './EnvironmentSelection.js';
 
 // Define types
 type Relationship = {
@@ -54,10 +55,12 @@ export default function Graph({ options }: Props) {
 	);
 	const [projects, setProjects] = useState<[]>([]);
 	const [environments, setEnvironments] = useState<[]>([]);
-	const [selectedProject, setSelectedProject] = useState<any | null>(null);
-	const [selectedEnvironment, setSelectedEnvironment] = useState<any | null>(
+	const [selectedProject, setSelectedProject] = useState<ActiveState | null>(
 		null,
 	);
+	const [selectedEnvironment, setSelectedEnvironment] =
+		useState<ActiveState | null>(null);
+	const [noData, setNoData] = useState(false);
 
 	// Resolve the authToken on mount
 	useEffect(() => {
@@ -269,7 +272,23 @@ export default function Graph({ options }: Props) {
 					relationsMap,
 					allRoleAssignmentsData,
 				);
-				saveHTMLGraph(graphData);
+
+				// If no nodes exist, update the flag and skip saving
+				if (graphData.nodes.length === 0) {
+					setNoData(true);
+					setLoading(false);
+					return;
+				}
+
+				// Ensure classes is always a string
+				const updatedGraphData = {
+					...graphData,
+					edges: graphData.edges.map(edge => ({
+						...edge,
+						classes: edge.classes || '',
+					})),
+				};
+				saveHTMLGraph(updatedGraphData);
 				setLoading(false);
 			} catch (err) {
 				console.error('Error fetching graph data:', err);
@@ -297,6 +316,11 @@ export default function Graph({ options }: Props) {
 		return <Text color="red">{authError || error}</Text>;
 	}
 
+	// If no graph data is present, show a specific message
+	if (noData) {
+		return <Text>Environment does not contain any data</Text>;
+	}
+
 	// State rendering
 	if (state === 'project' && projects.length > 0) {
 		return (
@@ -305,7 +329,7 @@ export default function Graph({ options }: Props) {
 				<SelectInput
 					items={projects}
 					onSelect={project => {
-						setSelectedProject(project);
+						setSelectedProject(project as ActiveState);
 						setState('environment');
 					}}
 				/>
@@ -320,7 +344,7 @@ export default function Graph({ options }: Props) {
 				<SelectInput
 					items={environments}
 					onSelect={environment => {
-						setSelectedEnvironment(environment);
+						setSelectedEnvironment(environment as ActiveState);
 						setState('graph');
 					}}
 				/>
