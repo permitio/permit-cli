@@ -49,6 +49,10 @@ export class RoleDerivationGenerator implements HCLGenerator {
 	// Method to set role ID map from RoleGenerator
 	public setRoleIdMap(roleIdMap: Map<string, string>): void {
 		this.roleIdMap = roleIdMap;
+		console.log(
+			'Role ID map received in RoleDerivationGenerator:',
+			Object.fromEntries(this.roleIdMap.entries()),
+		);
 	}
 
 	// Helper method to get the correct Terraform ID for a role
@@ -56,22 +60,28 @@ export class RoleDerivationGenerator implements HCLGenerator {
 		// First check if we have a specific resource-role mapping
 		const resourceRoleKey = `${resourceKey}:${roleKey}`;
 		if (this.roleIdMap.has(resourceRoleKey)) {
-			return this.roleIdMap.get(resourceRoleKey)!;
+			const id = this.roleIdMap.get(resourceRoleKey)!;
+			console.log(`Found role ID for ${resourceRoleKey}: ${id}`);
+			return id;
 		}
 
 		// Then check if we have a general role mapping
 		if (this.roleIdMap.has(roleKey)) {
-			return this.roleIdMap.get(roleKey)!;
+			const id = this.roleIdMap.get(roleKey)!;
+			console.log(`Found general role ID for ${roleKey}: ${id}`);
+			return id;
 		}
 
-		// If it's a simple role (like editor), use resource__role pattern
-		const simpleRoles = ['editor', 'viewer', 'admin'];
-		if (simpleRoles.includes(roleKey)) {
-			return `${resourceKey}__${roleKey}`;
-		}
+		// If it's not found in the map, log a warning and use a safe fallback
+		console.warn(
+			`Role ID not found for ${roleKey} on resource ${resourceKey}. Using fallback.`,
+		);
+		this.warningCollector.addWarning(
+			`Role ID not found for ${roleKey} on resource ${resourceKey}. Using fallback.`,
+		);
 
-		// Return the role key as a fallback
-		return roleKey;
+		// Fallback - create a safe ID based on both resource and role
+		return `${resourceKey}__${roleKey}`;
 	}
 
 	// Helper method to find the correct relation Terraform resource name
@@ -124,17 +134,8 @@ export class RoleDerivationGenerator implements HCLGenerator {
 		targetResourceKey: string,
 		targetRoleKey: string,
 	): string {
-		// For simple roles like editor, use the resource names with the role names
-		const simpleRoles = ['editor', 'viewer', 'admin'];
-		if (
-			simpleRoles.includes(sourceRoleKey) ||
-			simpleRoles.includes(targetRoleKey)
-		) {
-			return `${sourceResourceKey}_${sourceRoleKey}_to_${targetResourceKey}_${targetRoleKey}`;
-		}
-
-		// For more specific roles, just use the role names
-		return `${sourceRoleKey}_to_${targetRoleKey}`;
+		// Make sure the derivation ID is unique for the specific resources and roles
+		return `${sourceResourceKey}_${sourceRoleKey}_to_${targetResourceKey}_${targetRoleKey}`;
 	}
 
 	async generateHCL(): Promise<string> {

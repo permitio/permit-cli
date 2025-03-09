@@ -60,6 +60,19 @@ ${generateProviderBlock()}`;
       const rolesHCL = await roleGenerator.generateHCL();
       if (rolesHCL) hcl += rolesHCL;
 
+      // Get role ID map and share with role derivation generator
+      if (typeof roleGenerator.getRoleIdMap === 'function') {
+        const roleIdMap = roleGenerator.getRoleIdMap();
+        if (typeof roleDerivationGenerator.setRoleIdMap === 'function') {
+          roleDerivationGenerator.setRoleIdMap(roleIdMap);
+          console.log("Shared role ID map with RoleDerivationGenerator");
+        } else {
+          console.warn("RoleDerivationGenerator does not implement setRoleIdMap method");
+        }
+      } else {
+        console.warn("RoleGenerator does not implement getRoleIdMap method");
+      }
+
       // Process user attributes
       setState(prev => ({ ...prev, status: `Exporting user attributes...` }));
       const userAttributesHCL = await userAttributesGenerator.generateHCL();
@@ -71,10 +84,16 @@ ${generateProviderBlock()}`;
       if (relationsHCL) hcl += relationsHCL;
 
       // Get relation ID map and share with role derivation generator
-      const relationIdMap = relationGenerator.getRelationIdMap();
-	  
-      if (typeof roleDerivationGenerator.setRelationIdMap === 'function') {
-        roleDerivationGenerator.setRelationIdMap(relationIdMap);
+      if (typeof relationGenerator.getRelationIdMap === 'function') {
+        const relationIdMap = relationGenerator.getRelationIdMap();
+        if (typeof roleDerivationGenerator.setRelationIdMap === 'function') {
+          roleDerivationGenerator.setRelationIdMap(relationIdMap);
+          console.log("Shared relation ID map with RoleDerivationGenerator");
+        } else {
+          console.warn("RoleDerivationGenerator does not implement setRelationIdMap method");
+        }
+      } else {
+        console.warn("RelationGenerator does not implement getRelationIdMap method");
       }
 
       // Process condition sets
@@ -92,7 +111,7 @@ ${generateProviderBlock()}`;
       const userSetsHCL = await userSetGenerator.generateHCL();
       if (userSetsHCL) hcl += userSetsHCL;
 
-      // Process role derivations last (now with relation ID map)
+      // Process role derivations last (now with both relation and role ID maps)
       setState(prev => ({ ...prev, status: `Exporting role derivations...` }));
       const roleDerivationsHCL = await roleDerivationGenerator.generateHCL();
       if (roleDerivationsHCL) hcl += roleDerivationsHCL;
