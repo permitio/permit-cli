@@ -6,15 +6,16 @@ import { AuthProvider } from '../../source/components/AuthProvider';
 import delay from 'delay';
 import { loadAuthToken } from '../../source/lib/auth';
 import Run from '../../source/commands/pdp/run';
+import { useUnauthenticatedApi } from '../../source/hooks/useUnauthenticatedApi';
 vi.mock('../../source/lib/auth', () => ({
 	loadAuthToken: vi.fn(),
 }));
 
-vi.mock('../../source/hooks/useApiKeyApi', async() => {
-	const original = await vi.importActual('../../source/hooks/useApiKeyApi');
+vi.mock('../../source/hooks/useUnauthenticatedApi', async() => {
+	const original = await vi.importActual('../../source/hooks/useUnauthenticatedApi');
 	return {
 		...original,
-		useApiKeyApi: () => ({
+		useUnauthenticatedApi: () => ({
 			getApiKeyScope: vi.fn().mockResolvedValue({
 				response: {
 					environment_id: 'env1',

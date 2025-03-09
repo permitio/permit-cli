@@ -1,63 +1,43 @@
-import { apiCall } from '../lib/api.js';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
+import { components } from '../lib/api/v1.js';
+import useClient from './useClient.js';
+// import { authenticatedApiClient } from '../lib/api.js';
 
-type Environment = {
-	key: string;
-	id: string;
-	organization_id: string;
-	project_id: string;
-	created_at: string;
-	updated_at: string;
-	avp_policy_store_id?: string;
-	name: string;
-	description?: string;
-	custom_branch_name?: string;
-	jwks?: Record<string, unknown>;
-	settings?: Record<string, unknown>;
-	email_configuration: string;
-};
+export type EnvironmentCopy = components['schemas']['EnvironmentCopy'];
 
 export const useEnvironmentApi = () => {
-	const getEnvironments = async (
-		projectId: string,
-		accessToken: string,
-		cookie?: string | null,
-	) => {
-		return await apiCall<Environment[]>(
-			`v2/projects/${projectId}/envs`,
-			accessToken,
-			cookie ?? '',
-		);
-	};
+	const { authenticatedApiClient } = useClient();
 
-	const getEnvironment = async (
-		projectId: string,
-		environmentId: string,
-		accessToken: string,
-		cookie?: string | null,
-	) => {
-		return await apiCall<Environment>(
-			`v2/projects/${projectId}/envs/${environmentId}`,
-			accessToken,
-			cookie ?? '',
-		);
-	};
+	const getEnvironments = useCallback(
+		async (project_id: string) => {
+			return await authenticatedApiClient().GET(`/v2/projects/{proj_id}/envs`, {
+				proj_id: project_id,
+			});
+		},
+		[authenticatedApiClient],
+	);
 
-	const copyEnvironment = async (
-		projectId: string,
-		environmentId: string,
-		accessToken: string,
-		cookie: string | null,
-		body: object,
-	) => {
-		return await apiCall(
-			`v2/projects/${projectId}/envs/${environmentId}/copy`,
-			accessToken,
-			cookie ?? '',
-			'POST',
-			JSON.stringify(body),
-		);
-	};
+	const getEnvironment = useCallback(
+		async (project_id: string, environment_id: string) => {
+			return await authenticatedApiClient().GET(
+				`/v2/projects/{proj_id}/envs/{env_id}`,
+				{ proj_id: project_id, env_id: environment_id },
+			);
+		},
+		[authenticatedApiClient],
+	);
+
+	const copyEnvironment = useCallback(
+		async (proj_id: string, env_id: string, body: EnvironmentCopy) => {
+			return await authenticatedApiClient().POST(
+				`/v2/projects/{proj_id}/envs/{env_id}/copy`,
+				{ xyz: proj_id, env_id },
+				body,
+				undefined,
+			);
+		},
+		[authenticatedApiClient],
+	);
 
 	return useMemo(
 		() => ({
@@ -65,6 +45,6 @@ export const useEnvironmentApi = () => {
 			getEnvironment,
 			copyEnvironment,
 		}),
-		[],
+		[copyEnvironment, getEnvironment, getEnvironments],
 	);
 };

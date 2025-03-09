@@ -1,79 +1,59 @@
 import { useCallback, useMemo } from 'react';
-import { apiCall } from '../lib/api.js';
 import { TokenType, tokenType } from '../lib/auth.js';
+import { components } from '../lib/api/v1.js';
+import useClient from './useClient.js';
+// import { authenticatedApiClient } from '../lib/api.js';
 
 export interface ApiKeyScope {
 	organization_id: string;
-	project_id: string | null;
-	environment_id: string | null;
+	project_id?: string;
+	environment_id?: string;
 }
 
-type MemberAccessObj = 'org' | 'project' | 'env';
-type MemberAccessLevel = 'admin' | 'write' | 'read' | 'no_access';
-type APIKeyOwnerType = 'pdp_config' | 'member' | 'elements';
+export type MemberAccessObj = 'org' | 'project' | 'env';
 
-interface ApiKeyResponse {
-	organization_id: string; // UUID
-	project_id?: string; // UUID (optional)
-	environment_id?: string; // UUID (optional)
-	object_type?: MemberAccessObj; // Default: "env"
-	access_level?: MemberAccessLevel; // Default: "admin"
-	owner_type: APIKeyOwnerType;
-	name?: string;
-	id: string; // UUID
-	secret?: string;
-	created_at: string;
-	last_used_at?: string; // date-time
-}
-
-interface PaginatedApiKeyResponse {
-	data: ApiKeyResponse[];
-	total_count: number; // >= 0
-	page_count?: number; // Default: 0
-}
+export type ApiKeyCreate = components['schemas']['APIKeyCreate'];
 
 export const useApiKeyApi = () => {
-	const getProjectEnvironmentApiKey = async (
-		projectId: string,
-		environmentId: string,
-		cookie: string,
-		accessToken: string | null,
-	) => {
-		return await apiCall(
-			`v2/api-key/${projectId}/${environmentId}`,
-			accessToken ?? '',
-			cookie,
-		);
-	};
+	const { authenticatedApiClient } = useClient();
 
-	const getApiKeyScope = async (accessToken: string) => {
-		return await apiCall<ApiKeyScope>(`v2/api-key/scope`, accessToken);
-	};
+	const getProjectEnvironmentApiKey = useCallback(
+		async (environmentId: string) => {
+			return await authenticatedApiClient().GET(
+				`/v2/api-key/{proj_id}/{env_id}`,
+				{ env_id: environmentId },
+			);
+		},
+		[authenticatedApiClient],
+	);
 
-	const getApiKeyList = async (
-		objectType: MemberAccessObj,
-		accessToken: string,
-		cookie?: string | null,
-		projectId?: string | null,
-	) => {
-		return await apiCall<PaginatedApiKeyResponse>(
-			`v2/api-key?object_type=${objectType}${projectId ? '&proj_id=' + projectId : ''}`,
-			accessToken,
-			cookie ?? '',
-		);
-	};
+	const getApiKeyScope = useCallback(async () => {
+		return await authenticatedApiClient().GET(`/v2/api-key/scope`);
+	}, [authenticatedApiClient]);
 
-	const getApiKeyById = async (
-		apiKeyId: string,
-		accessToken: string,
-		cookie?: string | null,
-	) => {
-		return await apiCall<ApiKeyResponse>(
-			`v2/api-key/${apiKeyId}`,
-			accessToken,
-			cookie ?? '',
-		);
-	};
+	const getApiKeyList = useCallback(
+		async (objectType: MemberAccessObj, projectId?: string | null) => {
+			return await authenticatedApiClient().GET(
+				`/v2/api-key`,
+				undefined,
+				undefined,
+				{
+					object_type: objectType,
+					proj_id: projectId === null ? undefined : projectId,
+				},
+			);
+		},
+		[authenticatedApiClient],
+	);
+
+	const getApiKeyById = useCallback(
+		async (apiKeyId: string) => {
+			return await authenticatedApiClient().GET(`/v2/api-key/{api_key_id}`, {
+				api_key_id: apiKeyId,
+			});
+		},
+		[authenticatedApiClient],
+	);
 
 	const validateApiKey = useCallback((apiKey: string) => {
 		return apiKey && tokenType(apiKey) === TokenType.APIToken;
@@ -94,26 +74,26 @@ export const useApiKeyApi = () => {
 					error: 'Please provide a valid api key',
 				};
 			}
-			const { response: scope, error: err } = await getApiKeyScope(apiKey);
+			const { data: scope, error: err } = await getApiKeyScope();
 
 			if (err) {
 				error = err;
 			}
-			if (keyLevel === 'organization') {
+			if (keyLevel === 'organization' && scope) {
 				if (scope.environment_id || scope.project_id) {
 					valid = false;
 					error = 'Please provide an organization level API key';
 				} else if (scope.organization_id) {
 					valid = true;
 				}
-			} else if (keyLevel === 'project') {
+			} else if (keyLevel === 'project' && scope) {
 				if (scope.environment_id) {
 					valid = false;
 					error = 'Please provide a project level API key or above.';
 				} else if (scope.project_id || scope.organization_id) {
 					valid = true;
 				}
-			} else if (keyLevel === 'environment') {
+			} else if (keyLevel === 'environment' && scope) {
 				if (scope.environment_id || scope.project_id || scope.organization_id) {
 					valid = true;
 				} else {
@@ -122,22 +102,19 @@ export const useApiKeyApi = () => {
 			}
 			return { valid, scope, error };
 		},
-		[validateApiKey],
+		[getApiKeyScope, validateApiKey],
 	);
 
-	const createApiKey = async (
-		token: string,
-		body: string,
-		cookie?: string | null,
-	) => {
-		return await apiCall<ApiKeyResponse>(
-			'v2/api-key',
-			token,
-			cookie,
-			'POST',
-			body,
-		);
-	};
+	const createApiKey = useCallback(
+		async (body: ApiKeyCreate) => {
+			return await authenticatedApiClient().POST(
+				'/v2/api-key',
+				undefined,
+				body,
+			);
+		},
+		[authenticatedApiClient],
+	);
 
 	return useMemo(
 		() => ({
@@ -149,6 +126,14 @@ export const useApiKeyApi = () => {
 			validateApiKeyScope,
 			validateApiKey,
 		}),
-		[validateApiKey, validateApiKeyScope],
+		[
+			createApiKey,
+			getApiKeyById,
+			getApiKeyList,
+			getApiKeyScope,
+			getProjectEnvironmentApiKey,
+			validateApiKey,
+			validateApiKeyScope,
+		],
 	);
 };

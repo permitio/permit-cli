@@ -4,6 +4,7 @@ import SelectInput from 'ink-select-input';
 import Spinner from 'ink-spinner';
 import { ActiveState } from './EnvironmentSelection.js';
 import { useEnvironmentApi } from '../hooks/useEnvironmentApi.js';
+import { useUnauthenticatedApi } from '../hooks/useUnauthenticatedApi.js';
 
 type Props = {
 	accessToken: string;
@@ -11,6 +12,7 @@ type Props = {
 	activeProject: ActiveState;
 	onComplete: (environment: ActiveState) => void;
 	onError: (error: string) => void;
+	notInAuthContext?: boolean;
 };
 
 const SelectEnvironment: React.FC<Props> = ({
@@ -19,11 +21,14 @@ const SelectEnvironment: React.FC<Props> = ({
 	onComplete,
 	activeProject,
 	onError,
+	notInAuthContext,
 }) => {
 	const [environments, setEnvironments] = useState<ActiveState[]>([]);
 	const [state, setState] = useState<boolean>(true);
 
 	const { getEnvironments } = useEnvironmentApi();
+	const { getEnvironments: getEnvironmentsUnauthenticated } =
+		useUnauthenticatedApi();
 
 	const handleEnvironmentSelect = (environment: object) => {
 		const selectedEnv = environment as ActiveState;
@@ -32,13 +37,15 @@ const SelectEnvironment: React.FC<Props> = ({
 
 	useEffect(() => {
 		const fetchEnvironments = async () => {
-			const { response: environments, error } = await getEnvironments(
-				activeProject.value,
-				accessToken,
-				cookie,
-			);
+			const { data: environments, error } = notInAuthContext
+				? await getEnvironmentsUnauthenticated(
+						activeProject.value,
+						accessToken,
+						cookie,
+					)
+				: await getEnvironments(activeProject.value);
 
-			if (error) {
+			if (error || !environments) {
 				onError(
 					`Failed to load environments for project "${activeProject.label}". Reason: ${error}. Please check your network connection or credentials and try again.`,
 				);
@@ -61,6 +68,8 @@ const SelectEnvironment: React.FC<Props> = ({
 		activeProject.value,
 		cookie,
 		getEnvironments,
+		getEnvironmentsUnauthenticated,
+		notInAuthContext,
 		onComplete,
 		onError,
 	]);

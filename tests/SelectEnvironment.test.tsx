@@ -16,7 +16,7 @@ describe('SelectEnvironment Component', () => {
 	it('should display loading state initially', () => {
 		const mockGetEnvironments = vi.fn(() =>
 			Promise.resolve({
-				response: [
+				data: [
 					{ id: 'env1', name: 'Environment 1' },
 					{ id: 'env2', name: 'Environment 2' },
 				],
@@ -45,7 +45,7 @@ describe('SelectEnvironment Component', () => {
 	it('should display environments after loading', async () => {
 		const mockGetEnvironments = vi.fn(() =>
 			Promise.resolve({
-				response: [
+				data: [
 					{ id: 'env1', name: 'Environment 1' },
 					{ id: 'env2', name: 'Environment 2' },
 				],
@@ -91,7 +91,7 @@ describe('SelectEnvironment Component', () => {
 	it('should handle errors when fetching environments fails', async () => {
 		const mockGetEnvironments = vi.fn(() =>
 			Promise.resolve({
-				response: null,
+				data: undefined,
 				error: 'Network error',
 			}),
 		);
@@ -123,7 +123,7 @@ describe('SelectEnvironment Component', () => {
 	it('should handle empty environment list gracefully', async () => {
 		const mockGetEnvironments = vi.fn(() =>
 			Promise.resolve({
-				response: [],
+				data: [],
 				error: null,
 			}),
 		);

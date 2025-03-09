@@ -4,26 +4,37 @@ import Spinner from 'ink-spinner';
 import { browserAuth, authCallbackServer } from '../lib/auth.js';
 import { useAuthApi } from '../hooks/useAuthApi.js';
 import { useApiKeyApi } from '../hooks/useApiKeyApi.js';
+import { useUnauthenticatedApi } from '../hooks/useUnauthenticatedApi.js';
 
 type LoginFlowProps = {
 	apiKey?: string;
 	onSuccess: (accessToken: string, cookie: string) => void;
 	onError: (error: string) => void;
+	notInAuthContext?: boolean;
 };
 
 const LoginFlow: React.FC<LoginFlowProps> = ({
 	apiKey,
 	onSuccess,
 	onError,
+	notInAuthContext,
 }) => {
 	const [loading, setLoading] = useState<boolean>(true);
 
 	const { getLogin } = useAuthApi();
+
 	const { validateApiKey } = useApiKeyApi();
+	const { validateApiKey: validateApiKeyUnauthenticated } =
+		useUnauthenticatedApi();
 
 	useEffect(() => {
 		const authenticateUser = async () => {
-			if (apiKey && validateApiKey(apiKey)) {
+			if (
+				apiKey &&
+				(notInAuthContext
+					? validateApiKeyUnauthenticated(apiKey)
+					: validateApiKey(apiKey))
+			) {
 				onSuccess(apiKey, '');
 			} else if (apiKey) {
 				onError(
@@ -52,7 +63,15 @@ const LoginFlow: React.FC<LoginFlowProps> = ({
 		setLoading(true);
 		authenticateUser();
 		setLoading(false);
-	}, [apiKey, getLogin, onError, onSuccess, validateApiKey]);
+	}, [
+		apiKey,
+		getLogin,
+		notInAuthContext,
+		onError,
+		onSuccess,
+		validateApiKey,
+		validateApiKeyUnauthenticated,
+	]);
 
 	return loading ? (
 		<Text>

@@ -16,7 +16,7 @@ describe('SelectProject Component', () => {
 	it('should display loading state initially', () => {
 		const mockGetProjects = vi.fn(() =>
 			Promise.resolve({
-				response: [
+				data: [
 					{ id: 'proj1', name: 'Project 1' },
 					{ id: 'proj2', name: 'Project 2' },
 				],
@@ -42,7 +42,7 @@ describe('SelectProject Component', () => {
 	it('should display projects after loading', async () => {
 		const mockGetProjects = vi.fn(() =>
 			Promise.resolve({
-				response: [
+				data: [
 					{ id: 'proj1', name: 'Project 1' },
 					{ id: 'proj2', name: 'Project 2' },
 				],
@@ -85,7 +85,7 @@ describe('SelectProject Component', () => {
 	it('should handle errors when fetching projects fails', async () => {
 		const mockGetProjects = vi.fn(() =>
 			Promise.resolve({
-				response: null,
+				data: null,
 				error: 'Network error',
 			}),
 		);
@@ -114,7 +114,7 @@ describe('SelectProject Component', () => {
 	it('should handle empty project list gracefully', async () => {
 		const mockGetProjects = vi.fn(() =>
 			Promise.resolve({
-				response: [],
+				data: [],
 				error: null,
 			}),
 		);

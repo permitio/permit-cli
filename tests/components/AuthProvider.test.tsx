@@ -5,7 +5,7 @@ import { authCallbackServer, browserAuth, loadAuthToken } from '../../source/lib
 import { describe, it, expect, vi } from 'vitest';
 import { Text } from 'ink';
 import delay from 'delay';
-import * as keytar from "keytar"
+import { getMockFetchResponse } from '../utils.js';
 
 
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
@@ -51,6 +51,7 @@ describe('AuthProvider', () => {
 	it('should display children when token is loaded successfully', async () => {
 		(loadAuthToken as any).mockResolvedValue(demoPermitKey);
 		(fetch as any).mockResolvedValueOnce({
+			...getMockFetchResponse(),
 			ok: true,
 			json: async () => ({
 				environment_id: 'env1',
@@ -94,6 +95,7 @@ describe('AuthProvider', () => {
 		vi.mocked(browserAuth).mockResolvedValue('verifier');
 		vi.mocked(authCallbackServer).mockResolvedValue('browser_token');
 		(fetch as any).mockResolvedValueOnce({
+			...getMockFetchResponse(),
 			ok: true,
 			status: 200,
 			headers: {
@@ -102,15 +104,17 @@ describe('AuthProvider', () => {
 			json: async () => ({}),
 			error: null,
 		}).mockResolvedValueOnce({
+			...getMockFetchResponse(),
 			ok: true,
 			status: 200,
 			error: null,
 			json: async () => ([
-					{ id: 'org1', name: 'Organization 1' },
-					{ id: 'org2', name: 'Organization 2' },
+					{ id: 'org1', name: 'OrganizationReadWithAPIKey 1' },
+					{ id: 'org2', name: 'OrganizationReadWithAPIKey 2' },
 				]
 			)
 		}).mockResolvedValueOnce({
+			...getMockFetchResponse(),
 			ok: true,
 			status: 200,
 			headers: {
@@ -119,6 +123,7 @@ describe('AuthProvider', () => {
 			json: async () => ({}),
 			error: null,
 		}).mockResolvedValueOnce({
+			...getMockFetchResponse(),
 			ok: true,
 			status: 200,
 			error: null,
@@ -128,6 +133,7 @@ describe('AuthProvider', () => {
 				]
 			)
 		}).mockResolvedValueOnce({
+			...getMockFetchResponse(),
 			ok: true,
 			status: 200,
 			error: null,
@@ -138,6 +144,7 @@ describe('AuthProvider', () => {
 				}
 			)
 		}).mockResolvedValueOnce({
+			...getMockFetchResponse(),
 			ok: true,
 			status: 200,
 			error: null,
@@ -146,6 +153,7 @@ describe('AuthProvider', () => {
 
 			)
 		}).mockResolvedValueOnce({
+			...getMockFetchResponse(),
 			ok: true,
 			status: 200,
 			error: null,
@@ -180,6 +188,7 @@ describe('AuthProvider', () => {
 		vi.mocked(browserAuth).mockResolvedValue('verifier');
 		vi.mocked(authCallbackServer).mockResolvedValue('browser_token');
 		(fetch as any).mockResolvedValueOnce({
+			...getMockFetchResponse(),
 			ok: true,
 			status: 200,
 			headers: {
@@ -189,16 +198,18 @@ describe('AuthProvider', () => {
 			error: null,
 		})
 			.mockResolvedValueOnce({
+				...getMockFetchResponse(),
 			ok: true,
 			status: 200,
 			error: null,
 			json: async () => ([
-					{ id: 'org1', name: 'Organization 1' },
-					{ id: 'org2', name: 'Organization 2' },
+					{ id: 'org1', name: 'OrganizationReadWithAPIKey 1' },
+					{ id: 'org2', name: 'OrganizationReadWithAPIKey 2' },
 				]
 			)
 		})
 			.mockResolvedValueOnce({
+				...getMockFetchResponse(),
 			ok: true,
 			status: 200,
 			headers: {
@@ -208,6 +219,7 @@ describe('AuthProvider', () => {
 			error: null,
 		})
 			.mockResolvedValueOnce({
+				...getMockFetchResponse(),
 			ok: true,
 			status: 200,
 			error: null,
@@ -218,6 +230,7 @@ describe('AuthProvider', () => {
 			)
 		})
 			.mockResolvedValueOnce({
+				...getMockFetchResponse(),
 			ok: true,
 			status: 200,
 			error: null,
@@ -228,6 +241,7 @@ describe('AuthProvider', () => {
 			)
 		})
 			.mockResolvedValueOnce({
+				...getMockFetchResponse(),
 			ok: true,
 			status: 200,
 			error: null,
@@ -237,6 +251,7 @@ describe('AuthProvider', () => {
 			)
 		})
 			.mockResolvedValueOnce({
+				...getMockFetchResponse(),
 			ok: true,
 			status: 200,
 			error: null,
@@ -248,6 +263,7 @@ describe('AuthProvider', () => {
 			)
 		})
 			.mockResolvedValueOnce({
+				...getMockFetchResponse(),
 			ok: true,
 			status: 200,
 			error: null,

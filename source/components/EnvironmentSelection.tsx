@@ -7,6 +7,7 @@ import { useApiKeyApi } from '../hooks/useApiKeyApi.js';
 import { useEnvironmentApi } from '../hooks/useEnvironmentApi.js';
 import { useOrganisationApi } from '../hooks/useOrganisationApi.js';
 import { Text } from 'ink';
+import { useUnauthenticatedApi } from '../hooks/useUnauthenticatedApi.js';
 
 export interface ActiveState {
 	label: string;
@@ -24,6 +25,7 @@ type Props = {
 		secret: string,
 	) => void;
 	onError: (error: string) => void;
+	notInAuthContext?: boolean;
 };
 
 const EnvironmentSelection: React.FC<Props> = ({
@@ -32,6 +34,7 @@ const EnvironmentSelection: React.FC<Props> = ({
 	onComplete,
 	onError,
 	workspace,
+	notInAuthContext,
 }) => {
 	const defaultActiveState: ActiveState = {
 		label: '',
@@ -48,11 +51,17 @@ const EnvironmentSelection: React.FC<Props> = ({
 	const [envCookie, setEnvCookie] = useState<string | undefined>(undefined);
 
 	const isBrowserMode = !!cookie;
-
 	const { authSwitchOrgs } = useAuthApi();
-	const { getProjectEnvironmentApiKey, getApiKeyScope } = useApiKeyApi();
 	const { getEnvironment } = useEnvironmentApi();
 	const { getOrg } = useOrganisationApi();
+	const { getProjectEnvironmentApiKey, getApiKeyScope } = useApiKeyApi();
+
+	const {
+		getProjectEnvironmentApiKey: getProjectEnvironmentApiKeyUnauthenticated,
+		getApiKeyScope: getApiKeyScopeUnauthenticated,
+		getOrg: getOrgUnauthenticated,
+		getEnvironment: getEnvironmentUnauthenticated,
+	} = useUnauthenticatedApi();
 
 	const stableOnComplete = useCallback(onComplete, [onComplete]);
 	const stableOnError = useCallback(onError, [onError]);
@@ -62,14 +71,16 @@ const EnvironmentSelection: React.FC<Props> = ({
 		if (!cookie) {
 			(async () => {
 				const {
-					response: scope,
+					data: scope,
 					error,
-					status,
-				} = await getApiKeyScope(accessToken);
+					response,
+				} = notInAuthContext
+					? await getApiKeyScopeUnauthenticated(accessToken)
+					: await getApiKeyScope();
 
-				if (error) {
+				if (error || !scope) {
 					let errorMsg;
-					if (status === 401) {
+					if (response.status === 401) {
 						errorMsg = `Invalid ApiKey, ${error}`;
 					} else {
 						errorMsg = `Error while getting scopes for the ApiKey: ${error}`;
@@ -79,24 +90,28 @@ const EnvironmentSelection: React.FC<Props> = ({
 				}
 				if (scope.environment_id && scope.project_id) {
 					setState('user-key');
-					const { response: environment } = await getEnvironment(
-						scope.project_id,
-						scope.environment_id,
-						accessToken,
-						cookie,
-					);
-					const { response: organization } = await getOrg(
-						scope.organization_id,
-						accessToken,
-						cookie,
-					);
+					const { data: environment } = notInAuthContext
+						? await getEnvironmentUnauthenticated(
+								scope.project_id,
+								scope.environment_id,
+								accessToken,
+								cookie,
+							)
+						: await getEnvironment(scope.project_id, scope.environment_id);
+					const { data: organization } = notInAuthContext
+						? await getOrgUnauthenticated(
+								scope.organization_id,
+								accessToken,
+								cookie,
+							)
+						: await getOrg(scope.organization_id);
 					stableOnComplete(
-						{ label: organization.name, value: organization.id },
+						{ label: organization?.name ?? '', value: organization?.id ?? '' },
 						{
 							label: '',
-							value: environment.project_id,
+							value: environment?.project_id ?? '',
 						},
-						{ label: environment.name, value: environment.id },
+						{ label: environment?.name ?? '', value: environment?.id ?? '' },
 						accessToken,
 					);
 				} else {
@@ -114,6 +129,10 @@ const EnvironmentSelection: React.FC<Props> = ({
 		getOrg,
 		stableOnError,
 		stableOnComplete,
+		notInAuthContext,
+		getApiKeyScopeUnauthenticated,
+		getEnvironmentUnauthenticated,
+		getOrgUnauthenticated,
 	]);
 
 	const handleSelectActiveOrganization = useCallback(
@@ -146,14 +165,15 @@ const EnvironmentSelection: React.FC<Props> = ({
 
 	const handleSelectActiveEnvironment = useCallback(
 		async (environment: ActiveState) => {
-			const { response, error } = await getProjectEnvironmentApiKey(
-				activeProject.value,
-				environment.value,
-				cookie ?? '',
-				accessToken,
-			);
+			const { data: response, error } = notInAuthContext
+				? await getProjectEnvironmentApiKeyUnauthenticated(
+						activeProject.value,
+						environment.value,
+						cookie ?? '',
+					)
+				: await getProjectEnvironmentApiKey(environment.value);
 
-			if (error) {
+			if (error || !response) {
 				stableOnError(`Error while getting Environment Secret: ${error}`);
 				return;
 			}
@@ -163,15 +183,16 @@ const EnvironmentSelection: React.FC<Props> = ({
 				activeOrganization,
 				activeProject,
 				environment,
-				response.secret,
+				response.secret ?? '',
 			);
 		},
 		[
-			accessToken,
 			activeOrganization,
 			activeProject,
 			cookie,
 			getProjectEnvironmentApiKey,
+			getProjectEnvironmentApiKeyUnauthenticated,
+			notInAuthContext,
 			stableOnComplete,
 			stableOnError,
 		],
@@ -189,6 +210,7 @@ const EnvironmentSelection: React.FC<Props> = ({
 					onComplete={handleSelectActiveOrganization}
 					onError={stableOnError}
 					workspace={workspace}
+					notInAuthContext={notInAuthContext}
 				/>
 			)}
 
@@ -198,6 +220,7 @@ const EnvironmentSelection: React.FC<Props> = ({
 					cookie={envCookie}
 					onComplete={handleSelectActiveProject}
 					onError={stableOnError}
+					notInAuthContext={notInAuthContext}
 				/>
 			)}
 
@@ -208,6 +231,7 @@ const EnvironmentSelection: React.FC<Props> = ({
 					activeProject={activeProject}
 					onComplete={handleSelectActiveEnvironment}
 					onError={stableOnError}
+					notInAuthContext={notInAuthContext}
 				/>
 			)}
 		</>
