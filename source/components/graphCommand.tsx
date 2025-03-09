@@ -19,12 +19,37 @@ type Relationship = {
 	Object: string;
 };
 
+interface APIResourceInstanceRole {
+	resource_instance: string;
+	resource: string;
+	role: string;
+}
+
+interface APITenant {
+	tenant: string;
+	roles: string[];
+	status: string;
+	resource_instance_roles?: APIResourceInstanceRole[];
+}
+
+interface APIUser {
+	key: string;
+	email: string;
+	associated_tenants?: APITenant[];
+}
+
 type RoleAssignment = {
 	user: string;
 	email: string;
 	role: string;
 	resourceInstance: string;
 };
+
+interface APIRelationship {
+	subject: string;
+	relation: string;
+	object: string;
+}
 
 export const options = zod.object({
 	apiKey: zod
@@ -53,8 +78,8 @@ export default function Graph({ options }: Props) {
 	const [state, setState] = useState<'project' | 'environment' | 'graph'>(
 		'project',
 	);
-	const [projects, setProjects] = useState<[]>([]);
-	const [environments, setEnvironments] = useState<[]>([]);
+	const [projects, setProjects] = useState<ActiveState[]>([]);
+	const [environments, setEnvironments] = useState<ActiveState[]>([]);
 	const [selectedProject, setSelectedProject] = useState<ActiveState | null>(
 		null,
 	);
@@ -80,12 +105,14 @@ export default function Graph({ options }: Props) {
 			try {
 				setLoading(true);
 				const { response: projects } = await apiCall('v2/projects', authToken);
-				setProjects(
-					projects['map']((project: any) => ({
+				// Map projectsData to ActiveState[]
+				const mappedProjects: ActiveState[] = projects.map(
+					(project: { name: string; id: string }) => ({
 						label: project.name,
 						value: project.id,
-					})),
+					}),
 				);
+				setProjects(mappedProjects);
 				setLoading(false);
 			} catch (err) {
 				console.error('Error fetching projects:', err);
@@ -110,12 +137,13 @@ export default function Graph({ options }: Props) {
 					`v2/projects/${selectedProject.value}/envs`,
 					authToken,
 				);
-				setEnvironments(
-					environments['map']((env: any) => ({
+				const mappedEnvironments: ActiveState[] = environments.map(
+					(env: { name: string; id: string }) => ({
 						label: env.name,
 						value: env.id,
-					})),
+					}),
 				);
+				setEnvironments(mappedEnvironments);
 				setLoading(false);
 			} catch (err) {
 				console.error('Error fetching environments:', err);
@@ -146,7 +174,7 @@ export default function Graph({ options }: Props) {
 					id: string;
 					id2: string;
 					key: string;
-					relationships?: any[];
+					relationships?: APIRelationship[];
 				}[] = [];
 				let allRoleAssignmentsData: RoleAssignment[] = [];
 				const relationsMap = new Map<string, Relationship[]>();
@@ -159,14 +187,22 @@ export default function Graph({ options }: Props) {
 					const resourceArray =
 						resourceResponse.response.data || resourceResponse.response;
 
-					const resourcesData = resourceArray.map((res: any) => ({
-						label: `${res.resource}#${res.resource_id}`,
-						value: res.id,
-						id: res.id,
-						id2: `${res.resource}:${res.key}`,
-						key: res.key,
-						relationships: res.relationships || [],
-					}));
+					const resourcesData = resourceArray.map(
+						(res: {
+							resource: string;
+							resource_id: string;
+							id: string;
+							key: string;
+							relationships?: APIRelationship[];
+						}) => ({
+							label: `${res.resource}#${res.resource_id}`,
+							value: res.id,
+							id: res.id,
+							id2: `${res.resource}:${res.key}`,
+							key: res.key,
+							relationships: res.relationships || [],
+						}),
+					);
 
 					allResourcesData = [...allResourcesData, ...resourcesData];
 
@@ -181,30 +217,40 @@ export default function Graph({ options }: Props) {
 					id2ToLabelMap.set(resource.id2, resource.id);
 				});
 
-				allResourcesData.forEach((resource: any) => {
-					const relationsData = resource.relationships || [];
-					relationsMap.set(
-						resource.id,
-						relationsData.map((relation: any) => {
-							// Check if relation.object matches any id2
-							const matchedLabel = id2ToLabelMap.get(relation.object);
-							const matchedsubjectid = id2ToLabelMap.get(relation.subject);
+				allResourcesData.forEach(
+					(resource: {
+						label: string;
+						value: string;
+						id: string;
+						id2: string;
+						key: string;
+						relationships?: APIRelationship[];
+					}) => {
+						const relationsData: APIRelationship[] =
+							resource.relationships || [];
+						relationsMap.set(
+							resource.id,
+							relationsData.map((relation: APIRelationship): Relationship => {
+								// Check if relation.object matches any id2
+								const matchedLabel = id2ToLabelMap.get(relation.object);
+								const matchedsubjectid = id2ToLabelMap.get(relation.subject);
 
-							// Convert relation.relation to uppercase
-							const relationLabel = relation.relation
-								? relation.relation.toUpperCase()
-								: 'UNKNOWN RELATION';
+								// Convert relation.relation to uppercase
+								const relationLabel = relation.relation
+									? relation.relation.toUpperCase()
+									: 'UNKNOWN RELATION';
 
-							return {
-								label: relationLabel,
-								objectId: matchedLabel || relation.object,
-								Object: relation.object,
-								subjectId: matchedsubjectid || relation.subject,
-								id: resource.id,
-							};
-						}),
-					);
-				});
+								return {
+									label: relationLabel,
+									objectId: matchedLabel || relation.object,
+									Object: relation.object,
+									subjectId: matchedsubjectid || relation.subject,
+									id: resource.id,
+								};
+							}),
+						);
+					},
+				);
 
 				Page = 1;
 				hasMoreData = true;
@@ -215,25 +261,25 @@ export default function Graph({ options }: Props) {
 						authToken,
 					);
 
-					const users = roleResponse.response?.data || [];
+					const users: APIUser[] = roleResponse.response?.data || [];
 
-					users.forEach((user: any) => {
+					users.forEach((user: APIUser) => {
 						const usernames = user.key;
 						const email = user.email;
 
 						// Check if the user has associated tenants
 						if (user.associated_tenants?.length) {
-							user.associated_tenants.forEach((tenant: any) => {
+							user.associated_tenants.forEach((tenant: APITenant) => {
 								if (tenant.resource_instance_roles?.length) {
 									tenant.resource_instance_roles.forEach(
-										(resourceInstanceRole: any) => {
+										(resourceInstanceRole: APIResourceInstanceRole) => {
 											const resourceInstanceId =
 												id2ToLabelMap.get(
 													`${resourceInstanceRole.resource}:${resourceInstanceRole.resource_instance}`,
 												) || resourceInstanceRole.resource_instance;
 
 											allRoleAssignmentsData.push({
-												user: usernames || 'Unknown User',
+												user: usernames || 'Unknown User found',
 												email: email || '',
 												role: resourceInstanceRole.role || 'Unknown Role',
 												resourceInstance:
