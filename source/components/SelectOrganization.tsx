@@ -37,19 +37,6 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 		onComplete({ label: selectedOrg.label, value: selectedOrg.value });
 	};
 
-	// useEffect(() => {
-	// 	console.log('SELECT_ORGANIZATION');
-	// }, [
-	// 	accessToken,
-	// 	cookie,
-	// 	getOrgs,
-	// 	getOrgsUnauthenticated,
-	// 	notInAuthContext,
-	// 	onComplete,
-	// 	onError,
-	// 	workspace,
-	// ]);
-
 	useEffect(() => {
 		const fetchOrgs = async () => {
 			const { data: orgs, error } = notInAuthContext

@@ -33,7 +33,6 @@ type AuthContextType = {
 	loading: boolean;
 	error?: string | null;
 	scope: ApiKeyScope;
-	// authenticatedApiClient: Client<paths, `${string}/${string}`>;
 };
 
 // Create an AuthContext with the correct type
@@ -117,9 +116,7 @@ export function AuthProvider({
 					throw Error('Invalid token scope, redirecting to login of choice');
 				}
 				setAuthToken(token);
-				// if (keyScope) {
 				setCurrentScope(keyScope);
-				// }
 			} catch {
 				setState(redirect_scope);
 			}
@@ -360,7 +357,6 @@ export function AuthProvider({
 							loading: loading,
 							error: error,
 							scope: currentScope,
-							// authenticatedApiClient: createClient({ baseUrl: PERMIT_API_URL }),
 						}}
 					>
 						{!loading && !error && children}

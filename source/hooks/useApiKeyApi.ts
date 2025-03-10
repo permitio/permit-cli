@@ -2,7 +2,6 @@ import { useCallback, useMemo } from 'react';
 import { TokenType, tokenType } from '../lib/auth.js';
 import { components } from '../lib/api/v1.js';
 import useClient from './useClient.js';
-// import { authenticatedApiClient } from '../lib/api.js';
 
 export interface ApiKeyScope {
 	organization_id: string;

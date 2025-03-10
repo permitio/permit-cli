@@ -1,7 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { components } from '../lib/api/v1.js';
 import useClient from './useClient.js';
-// import { authenticatedApiClient } from '../lib/api.js';
 
 export type EnvironmentCopy = components['schemas']['EnvironmentCopy'];
 
