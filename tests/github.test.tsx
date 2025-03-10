@@ -7,7 +7,7 @@ import GitHub from '../source/commands/gitops/create/github.js';
 import delay from 'delay';
 import { vi, describe, it, expect } from 'vitest';
 import { useProjectAPI } from '../source/hooks/useProjectAPI.js';
-import { usePolicyGitReposApi } from '../source/hooks/usePolicyGitReposApi';
+import { usePolicyGitReposApi } from '../source/hooks/usePolicyGitReposApi.js';
 
 
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
@@ -179,7 +179,6 @@ describe('RepositoryKey  Component', () => {
 		const onRepoKeySubmit = vi.fn();
 		const onError = vi.fn();
 		const projectName = 'project1';
-		const accessToken = 'permit_key_'.concat('a'.repeat(97));
 		const mockGetProjects = vi.fn(() =>
 			Promise.resolve({
 				data: [
@@ -224,7 +223,6 @@ describe('RepositoryKey  Component', () => {
 		const onRepoKeySubmit = vi.fn();
 		const onError = vi.fn();
 		const projectName = 'project1';
-		const accessToken = 'permit_key_'.concat('a'.repeat(97));
 		const mockGetProjects = vi.fn(() =>
 			Promise.resolve({
 				data: [
@@ -270,7 +268,6 @@ describe('RepositoryKey  Component', () => {
 		const onRepoKeySubmit = vi.fn();
 		const onError = vi.fn();
 		const projectName = 'project1';
-		const accessToken = 'permit_key_'.concat('a'.repeat(97));
 		const mockGetProjects = vi.fn(() =>
 			Promise.resolve({
 				data: [

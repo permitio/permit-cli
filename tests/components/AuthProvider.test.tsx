@@ -226,7 +226,7 @@ describe('AuthProvider', () => {
 			json: async () => ([
 					{ id: 'proj1', name: 'Project 1' },
 					{ id: 'proj2', name: 'Project 2' },
-				],
+				]),
 			})
 			.mockResolvedValueOnce({
 				...getMockFetchResponse(),
@@ -237,7 +237,7 @@ describe('AuthProvider', () => {
 
 					{ id: 'env1', name: 'Env 1' },
 					{ id: 'env2', name: 'Env 2' },
-				],
+				]),
 			})
 			.mockResolvedValueOnce({
 
