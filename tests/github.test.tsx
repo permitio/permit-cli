@@ -9,6 +9,23 @@ import { vi, describe, it, expect } from 'vitest';
 import { useProjectAPI } from '../source/hooks/useProjectAPI.js';
 import { usePolicyGitReposApi } from '../source/hooks/usePolicyGitReposApi.js';
 
+import * as keytar from 'keytar';
+
+vi.mock('keytar', () => {
+	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+
+	const keytar = {
+		setPassword: vi.fn().mockResolvedValue(() => {
+			return demoPermitKey
+		}),
+		getPassword: vi.fn().mockResolvedValue(() => {
+			return demoPermitKey
+		}),
+		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
+	};
+	return { ...keytar, default: keytar };
+});
+
 
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 
@@ -36,42 +53,9 @@ vi.mock('../source/lib/gitops/utils.ts', () => (({
 		privateKey:
 			' ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEYpTS7khEGR+PDWsNveNP6ffFNEhoRwrG0+DckrqaJT help@permit.io',
 	})),
-// 	usePolicyGitReposApi: vi.fn(() =>
-// 		Promise.resolve([
-// 			{ id: 1, name: 'Project 1', key: 'proj1' },
-// 			{ id: 2, name: 'Project 2', key: 'proj2' },
-// 		]),
-// 	),
-// 	getRepoList: vi.fn(() =>
-// 		Promise.resolve([
-// 			{ status: 'active', key: 'repo1' },
-// 			{ status: 'active', key: 'repo2' },
-// 		]),
-// 	),
-// 	generateSSHKey: vi.fn(() => ({
-// 		publicKey:
-// 			' ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEYpTS7khEGR+PDWsNveNP6ffFNEhoRwrG0+DckrqaJT help@permit.io',
-// 		privateKey:
-// 			' ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEYpTS7khEGR+PDWsNveNP6ffFNEhoRwrG0+DckrqaJT help@permit.io',
-// 	})),
-// 	activateRepo: vi.fn(() => Promise.resolve(true)),
-// 	configurePermit: vi.fn(() =>
-// 		Promise.resolve({ id: '1', status: 'active', key: 'repo1' }),
-// 	),
 })));
 
 
-// vi.mock('../source/hooks/usePolicyGitReposApi', async () => {
-// 	// const original = await vi.importActual('../source/hooks/usePolicyGitReposApi');
-//
-// 	return {
-// 		// ...original,
-// 		usePolicyGitReposApi: () => ({
-// 			getRepoList: vi.fn()
-// 		})
-// 	}
-//
-// });
 
 vi.mock('../source/hooks/usePolicyGitReposApi.js', () => ({
 	usePolicyGitReposApi: vi.fn(() => ({
