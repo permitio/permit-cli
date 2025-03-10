@@ -84,7 +84,8 @@ describe('UserSetGenerator', () => {
 		expect(result).toContain('resource "permitio_user_set" "us_based"');
 		expect(result).toContain('key = "us_based"');
 		expect(result).toContain('name = "US Based Users"');
-		expect(result).toContain('description = "Users from United States"');
+		expect(result).not.toContain('description = "Users from United States"');
+
 		// Since conditions is an object, it will be coerced to "[object Object]".
 		expect(result).toContain('conditions = "[object Object]"');
 
@@ -118,7 +119,6 @@ describe('UserSetGenerator', () => {
 				key: 'empty_conditions',
 				name: 'Empty Conditions',
 				type: 'userset',
-				// Supply a valid JSON empty string.
 				conditions: '""',
 				resource_id: null,
 			},

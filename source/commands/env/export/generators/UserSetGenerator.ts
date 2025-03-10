@@ -12,8 +12,6 @@ const __dirname = dirname(__filename);
 interface UserSetData {
 	key: string;
 	name: string;
-	// Remove description from the interface since it's causing issues with the provider
-	// description?: string;
 	conditions: object;
 	resource?: string;
 	depends_on: string[];
@@ -34,8 +32,8 @@ export class UserSetGenerator implements HCLGenerator {
 		private warningCollector: WarningCollector,
 	) {
 		Handlebars.registerHelper('formatConditions', function (conditions) {
-			// This is a more robust HCL formatter that handles complex nested structures
-			const formatHCL = (obj: any, indent = 0): string => {
+			// Robust HCL formatter that handles complex nested structures
+			const formatHCL = (obj: unknown, indent = 0): string => {
 				if (obj === null || obj === undefined) return 'null';
 
 				// Primitive types
@@ -62,20 +60,26 @@ export class UserSetGenerator implements HCLGenerator {
 					const innerIndentStr = '  '.repeat(indent + 1);
 
 					// Special handling for complex operators that may cause issues
-					if (Object.keys(obj).length === 1) {
-						const key = Object.keys(obj)[0];
-						const value = obj[key];
+					const keys = Object.keys(obj);
+					if (keys.length === 1) {
+						// Get the first and only key
+						const key = keys[0];
 
-						// Special handling for array operators like array_intersect
-						if (
-							key === 'array_intersect' ||
-							key === 'array_contains' ||
-							key === 'string_contains'
-						) {
-							// If the value is a string with commas, assume it's a list of values
-							if (typeof value === 'string' && value.includes(',')) {
-								// Use heredoc syntax for long lists
-								return `{\n${innerIndentStr}${key} = <<EOT\n${value}\nEOT\n${indentStr}}`;
+						if (key !== undefined) {
+							const objAsRecord = obj as Record<string, unknown>;
+							const value = objAsRecord[key];
+
+							// Special handling for array operators like array_intersect
+							if (
+								key === 'array_intersect' ||
+								key === 'array_contains' ||
+								key === 'string_contains'
+							) {
+								// If the value is a string with commas, assume it's a list of values
+								if (typeof value === 'string' && value.includes(',')) {
+									// Use heredoc syntax for long lists
+									return `{\n${innerIndentStr}${key} = <<EOT\n${value}\nEOT\n${indentStr}}`;
+								}
 							}
 						}
 					}
@@ -98,12 +102,10 @@ export class UserSetGenerator implements HCLGenerator {
 			return formatHCL(conditions);
 		});
 
-		// Load the template and modify it to remove the description field
 		let templateContent = readFileSync(
 			join(__dirname, '../templates/user-set.hcl'),
 			'utf-8',
 		);
-		// Remove any template lines containing description
 		templateContent = templateContent.replace(/^\s*description\s*=.*\n?/gm, '');
 		const cleanTemplate = templateContent.replace(/^#.*\n?/gm, '');
 		this.template = Handlebars.compile(cleanTemplate);
@@ -213,8 +215,6 @@ export class UserSetGenerator implements HCLGenerator {
 				userSets.push({
 					key: createSafeId(set.key),
 					name: set.name,
-					// Remove description to avoid provider inconsistency issues
-					// description: set.description,
 					conditions: processedConditions as object,
 					resource: set.resource_id?.toString(),
 					depends_on: dependencies,
