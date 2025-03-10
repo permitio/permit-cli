@@ -476,7 +476,7 @@ export const saveHTMLGraph = (graphData: GraphData) => {
 
 				// Enforce maximum gap between adjacent nodes.
 				group45.sort((a, b) => a.x - b.x);
-				const maxGap = 1050;
+				const maxGap = 1200;
 				for (let i = 1; i < group45.length; i++) {
 					const gap = group45[i].x - group45[i - 1].x;
 					if (gap > maxGap) {
@@ -709,12 +709,12 @@ export const saveHTMLGraph = (graphData: GraphData) => {
 					requestAnimationFrame(() => {
 						const bbox = textSel.node().getBBox();
 
-						const iconMargin = 10;
+						const iconMargin = 9;
 						const iconWidth = 24;
-						const iconScale = 3.9;
+						const iconScale = 3.8;
 
-						const iconCenterX = bbox.x + 5;
-						const iconCenterY = bbox.y + bbox.height / 1.6;
+						const iconCenterX = bbox.x + 7.5;
+						const iconCenterY = bbox.y + bbox.height / 1.5;
 
 						const personPlusStarPath = \`
   M12,2
@@ -771,7 +771,7 @@ export const saveHTMLGraph = (graphData: GraphData) => {
 				// Insert the rounded rectangle behind the text (common to all):
 				requestAnimationFrame(() => {
 					const bbox = textSel.node().getBBox();
-					const paddingX = 120;
+					const paddingX = 145;
 					const paddingY = 42;
 					const rectWidth = bbox.width + paddingX;
 					const rectHeight = bbox.height + paddingY;
