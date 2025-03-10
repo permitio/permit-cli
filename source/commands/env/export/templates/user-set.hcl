@@ -1,15 +1,19 @@
+# Template for user sets
 {{#each sets}}
 resource "permitio_user_set" "{{key}}" {
   key = "{{key}}"
   name = "{{name}}"
-  {{#if description}}description = "{{description}}"{{/if}}
+  # Description field removed to avoid provider inconsistency issues
   conditions = jsonencode({{{formatConditions conditions}}})
-  {{#if depends_on.length}}
+{{#if resource}}
+  resource = "{{resource}}"
+{{/if}}
+{{#if depends_on.length}}
   depends_on = [
-    {{#each depends_on}}{{this}}{{#unless @last}},{{/unless}}
+    {{#each depends_on}}
+    {{this}}{{#unless @last}},{{/unless}}
     {{/each}}
   ]
-  {{/if}}
+{{/if}}
 }
-
 {{/each}}
