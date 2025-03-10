@@ -1,0 +1,17 @@
+{
+  "name": "permit-terraform-server",
+  "version": "1.0.0",
+  "description": "A minimal server to proxy TF apply request and eliminate the need to have it installed locally",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "info@permit.io",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}
