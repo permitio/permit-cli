@@ -63,21 +63,21 @@ export interface ListUsersRequest extends PermitApiOptions {
 	page?: number;
 	perPage?: number;
 	role?: string;
-	tenantKey?: string;
+	tenant?: string;
 }
 
 export interface RoleAssignmentRequest extends PermitApiOptions {
-	userId: string;
-	roleKey: string;
-	tenantKey: string;
+	user: string;
+	role: string;
+	tenant: string;
 }
 
 // Centralized API client - single source of truth for all Permit.io API calls
 export const usersApi = {
-	list: (options: ListUsersRequest) => {
+	list: async (options: ListUsersRequest) => {
 		// Support both global and tenant-scoped user listing
-		const endpoint = options.tenantKey
-			? `tenants/${options.tenantKey}/users`
+		const endpoint = options.tenant
+			? `tenants/${options.tenant}/users`
 			: 'users';
 		return permitApi<ListUsersResponse>(
 			endpoint,
@@ -93,24 +93,24 @@ export const usersApi = {
 	},
 
 	// Role assignment endpoints follow RBAC best practices
-	assign: (options: RoleAssignmentRequest) => {
+	assign: async (options: RoleAssignmentRequest) => {
 		return permitApi<RoleAssignmentResponse>(
 			'role_assignments',
 			options,
 			MethodE.POST,
 			{
-				user: options.userId,
-				role: options.roleKey,
-				tenant: options.tenantKey,
+				user: options.user,
+				role: options.role,
+				tenant: options.tenant,
 			},
 		);
 	},
 
-	unassign: (options: RoleAssignmentRequest) => {
+	unassign: async (options: RoleAssignmentRequest) => {
 		return permitApi<void>('role_assignments', options, MethodE.DELETE, {
-			user: options.userId,
-			role: options.roleKey,
-			tenant: options.tenantKey,
+			user: options.user,
+			role: options.role,
+			tenant: options.tenant,
 		});
 	},
 };

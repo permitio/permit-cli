@@ -3,7 +3,6 @@ import { render } from 'ink-testing-library';
 import { describe, vi, it, expect, afterEach, beforeEach } from 'vitest';
 import delay from 'delay';
 import List from '../source/commands/api/users/list.js';
-import * as keytar from 'keytar';
 import { useApiKeyApi } from '../source/hooks/useApiKeyApi.js';
 import Assign from '../source/commands/api/users/assign.js';
 import Unassign from '../source/commands/api/users/unassign.js';
@@ -182,9 +181,9 @@ describe('API Users Commands', () => {
 
 			const options = {
 				apiKey: demoPermitKey,
-				userId: 'user1',
-				roleKey: 'admin',
-				tenantKey: 'tenant1',
+				user: 'user1',
+				role: 'admin',
+				tenant: 'tenant1',
 			};
 
 			const { lastFrame } = render(<Assign options={options} />);
@@ -226,9 +225,9 @@ describe('API Users Commands', () => {
 
 			const options = {
 				apiKey: demoPermitKey,
-				userId: 'user1',
-				roleKey: 'admin',
-				tenantKey: 'tenant1',
+				user: 'user1',
+				role: 'admin',
+				tenant: 'tenant1',
 			};
 
 			const { lastFrame } = render(<Unassign options={options} />);

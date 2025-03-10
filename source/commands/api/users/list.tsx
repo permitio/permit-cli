@@ -61,7 +61,7 @@ export const options = object({
 				alias: 'r',
 			}),
 		),
-	tenantKey: string()
+	tenant: string()
 		.optional()
 		.describe(
 			option({

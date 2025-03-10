@@ -26,17 +26,17 @@ export const options = object({
 				description: 'Permit.io Environment ID',
 			}),
 		),
-	userId: string().describe(
+	user: string().describe(
 		option({
 			description: 'User ID to unassign role from',
 		}),
 	),
-	roleKey: string().describe(
+	role: string().describe(
 		option({
 			description: 'Role key to unassign',
 		}),
 	),
-	tenantKey: string().describe(
+	tenant: string().describe(
 		option({
 			description: 'Tenant key for the role unassignment',
 		}),

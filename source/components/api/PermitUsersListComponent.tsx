@@ -78,7 +78,7 @@ export default function PermitUsersListComponent({ options }: Props) {
 					page: options.page,
 					perPage: options.perPage,
 					role: options.role,
-					tenantKey: options.tenantKey,
+					tenant: options.tenant,
 				});
 
 				if (!response.success) {

@@ -25,7 +25,7 @@ export default function PermitUsersAssignComponent({ options }: Props) {
 		const assignRole = async () => {
 			try {
 				// Validate required fields before making API call
-				if (!options.userId || !options.roleKey || !options.tenantKey) {
+				if (!options.user || !options.role || !options.tenant) {
 					throw new Error(
 						'User ID, role key, and tenant key are required for assignment',
 					);
@@ -36,9 +36,9 @@ export default function PermitUsersAssignComponent({ options }: Props) {
 					projectId: options.projectId,
 					envId: options.envId,
 					apiKey: options.apiKey,
-					userId: options.userId,
-					roleKey: options.roleKey,
-					tenantKey: options.tenantKey,
+					user: options.user,
+					role: options.role,
+					tenant: options.tenant,
 				});
 
 				// Handle both success and error responses uniformly
