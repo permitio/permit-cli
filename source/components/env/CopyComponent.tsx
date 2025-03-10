@@ -1,7 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Text } from 'ink';
 import { TextInput } from '@inkjs/ui';
-import { useEnvironmentApi } from '../../hooks/useEnvironmentApi.js';
+import {
+	EnvironmentCopy,
+	useEnvironmentApi,
+} from '../../hooks/useEnvironmentApi.js';
 import EnvironmentSelection, {
 	ActiveState,
 } from '../../components/EnvironmentSelection.js';
@@ -41,7 +44,9 @@ export default function CopyComponent({
 		| 'copying'
 		| 'done'
 	>('loading');
-	const [projectFrom, setProjectFrom] = useState<string | null>(null);
+	const [projectFrom, setProjectFrom] = useState<string | null | undefined>(
+		null,
+	);
 	const [envToName, setEnvToName] = useState<string | undefined>(name);
 	const [envFrom, setEnvFrom] = useState<string | undefined>(from);
 	const [envToDescription, setEnvToDescription] = useState<string | undefined>(
@@ -97,9 +102,7 @@ export default function CopyComponent({
 			const { error } = await copyEnvironment(
 				projectFrom ?? '',
 				envFrom ?? '',
-				authToken ?? '',
-				null,
-				body,
+				body as EnvironmentCopy,
 			);
 			if (error) {
 				setError(`Error while copying Environment: ${error}`);

@@ -2,16 +2,23 @@ import React from 'react';
 import { render } from 'ink-testing-library';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import Copy from '../source/commands/env/copy.js';
-import { useApiKeyApi } from '../source/hooks/useApiKeyApi.js';
+import { useApiKeyApi, useUnauthenticatedApi } from '../source/hooks/useUnauthenticatedApi.js';
 import { useEnvironmentApi } from '../source/hooks/useEnvironmentApi.js';
 import EnvironmentSelection from '../source/components/EnvironmentSelection.js';
+import { TokenType, tokenType } from '../source/lib/auth.js';
+
 import delay from 'delay';
 import * as keytar from 'keytar';
 
-vi.mock('../source/hooks/useApiKeyApi.js', () => ({
-	useApiKeyApi: vi.fn(() => ({
-		validateApiKeyScope: vi.fn(),
-	})),
+
+vi.mock('../source/lib/auth.js', () => ({
+	browserAuth: vi.fn(),
+	authCallbackServer: vi.fn(),
+	tokenType: vi.fn(),
+	TokenType: {
+		APIToken: 'APIToken',
+		Invalid: 'Invalid'
+	},
 }));
 
 vi.mock('../source/hooks/useEnvironmentApi.js', () => ({
@@ -32,11 +39,22 @@ beforeEach(() => {
 	});
 });
 
+vi.mock('../source/hooks/useUnauthenticatedApi', () => ({
+	useUnauthenticatedApi: vi.fn(() => ({
+		validateApiKeyScope: vi.fn(),
+	})),
+}));
+
 vi.mock('keytar', () => {
 	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+
 	const keytar = {
-		setPassword: vi.fn().mockResolvedValue(demoPermitKey),
-		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
+		setPassword: vi.fn().mockResolvedValue(() => {
+			return demoPermitKey
+		}),
+		getPassword: vi.fn().mockResolvedValue(() => {
+			return demoPermitKey
+		}),
 		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
 	};
 	return { ...keytar, default: keytar };
@@ -46,9 +64,15 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
+
+
 describe('Copy Component', () => {
+
+
 	it('should handle successful environment copy flow using arguments', async () => {
-		vi.mocked(useApiKeyApi).mockReturnValue({
+		vi.mocked(tokenType).mockReturnValue(TokenType.APIToken);
+
+		vi.mocked(useUnauthenticatedApi).mockReturnValue({
 			validateApiKeyScope: vi.fn(() =>
 				Promise.resolve({
 					valid: true,
@@ -94,7 +118,8 @@ describe('Copy Component', () => {
 	});
 
 	it('should handle invalid API key gracefully', async () => {
-		vi.mocked(useApiKeyApi).mockReturnValue({
+
+		vi.mocked(useUnauthenticatedApi).mockReturnValue({
 			validateApiKeyScope: vi.fn(() =>
 				Promise.resolve({
 					valid: false,
@@ -102,6 +127,8 @@ describe('Copy Component', () => {
 				}),
 			),
 		});
+
+		vi.mocked(tokenType).mockReturnValue(TokenType.Invalid);
 
 		const { lastFrame } = render(<Copy options={{ key: 'invalid_api_key' }} />);
 
@@ -112,7 +139,8 @@ describe('Copy Component', () => {
 	});
 
 	it('should handle successful environment copy flow using the wizard', async () => {
-		vi.mocked(useApiKeyApi).mockReturnValue({
+
+		vi.mocked(useUnauthenticatedApi).mockReturnValue({
 			validateApiKeyScope: vi.fn(() =>
 				Promise.resolve({
 					valid: true,
@@ -123,6 +151,8 @@ describe('Copy Component', () => {
 				}),
 			),
 		});
+
+		vi.mocked(tokenType).mockReturnValue(TokenType.APIToken);
 
 		vi.mocked(useEnvironmentApi).mockReturnValue({
 			copyEnvironment: vi.fn(() =>

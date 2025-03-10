@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Newline, Text } from 'ink';
-import { CLOUD_PDP_URL } from '../../config.js';
 import Spinner from 'ink-spinner';
 import { inspect } from 'util';
 import { parseAttributes } from '../../utils/attributes.js';
 import { PDPCheckProps } from '../../commands/pdp/check.js';
-import { useAuth } from '../AuthProvider.js';
+import {
+	AuthorizationQuery,
+	useCheckPdpApi,
+} from '../../hooks/useCheckPdpApi.js';
 
 interface AllowedResult {
 	allow?: boolean;
@@ -15,10 +17,10 @@ export default function PDPCheckComponent({ options }: PDPCheckProps) {
 	const [error, setError] = useState('');
 	const [res, setRes] = useState<AllowedResult>({ allow: undefined });
 
-	const auth = useAuth();
+	const { getAllowedCheck } = useCheckPdpApi();
 
 	useEffect(() => {
-		const queryPDP = async (apiKey: string) => {
+		const queryPDP = async () => {
 			try {
 				const userAttrs = options.userAttributes
 					? parseAttributes(options.userAttributes)
@@ -27,32 +29,27 @@ export default function PDPCheckComponent({ options }: PDPCheckProps) {
 					? parseAttributes(options.resourceAttributes)
 					: {};
 
-				const response = await fetch(
-					`${options.pdpurl || CLOUD_PDP_URL}/allowed`,
-					{
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-							...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
-						},
-						body: JSON.stringify({
-							user: {
-								key: options.user,
-								...userAttrs,
-							},
-							resource: {
-								type: options.resource.includes(':')
-									? options.resource.split(':')[0]
-									: options.resource,
-								key: options.resource.includes(':')
-									? options.resource.split(':')[1]
-									: '',
-								tenant: options.tenant,
-								...resourceAttrs,
-							},
-							action: options.action,
-						}),
+				const body = {
+					user: {
+						key: options.user,
+						...userAttrs,
 					},
+					resource: {
+						type:
+							(options.resource.includes(':')
+								? options.resource.split(':')[0]
+								: options.resource) ?? '',
+						key: options.resource.includes(':')
+							? options.resource.split(':')[1]
+							: '',
+						tenant: options.tenant,
+						...resourceAttrs,
+					},
+					action: options.action,
+				};
+				const { data, response } = await getAllowedCheck(
+					body as AuthorizationQuery,
+					options.pdpurl,
 				);
 
 				if (!response.ok) {
@@ -61,7 +58,7 @@ export default function PDPCheckComponent({ options }: PDPCheckProps) {
 					return;
 				}
 
-				setRes(await response.json());
+				setRes({ allow: data?.allow });
 			} catch (err) {
 				if (err instanceof Error) {
 					setError(err.message);
@@ -71,13 +68,8 @@ export default function PDPCheckComponent({ options }: PDPCheckProps) {
 			}
 		};
 
-		if (auth.error) {
-			setError(auth.error);
-		}
-		if (!auth.loading) {
-			queryPDP(auth.authToken);
-		}
-	}, [auth, options]);
+		queryPDP();
+	}, [getAllowedCheck, options]);
 
 	return (
 		<>

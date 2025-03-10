@@ -10,7 +10,7 @@ import Pastel from 'pastel';
 
 describe('Cli script', () => {
 	it('Should run the pastel app', async () => {
-		await import('../source/cli');
+		await import('../source/cli.js');
 		expect(Pastel).toHaveBeenCalled();
 		const pastelInstance = Pastel.mock.results[0].value;
 		expect(pastelInstance.run).toHaveBeenCalled();

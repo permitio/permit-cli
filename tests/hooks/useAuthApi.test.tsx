@@ -1,5 +1,5 @@
-import { useAuthApi } from '../../source/hooks/useAuthApi';
-import { apiCall } from '../../source/lib/api';
+import { useAuthApi } from '../../source/hooks/useAuthApi.js';
+import { apiCall } from '../../source/lib/api.js';
 import { vi, expect, it, describe, beforeEach } from 'vitest';
 import React from 'react';
 import { render } from 'ink-testing-library';
@@ -28,7 +28,7 @@ describe('useAuthApi', () => {
 					'access-token',
 					'cookie',
 				);
-				return result.success ? 'Organization switched' : 'Failed to switch';
+				return result.success ? 'OrganizationReadWithAPIKey switched' : 'Failed to switch';
 			};
 			switchOrg().then(res => setResult(res));
 			return <Text>{result}</Text>;
@@ -36,7 +36,7 @@ describe('useAuthApi', () => {
 
 		const { lastFrame } = render(<TestComponent />);
 		await vi.waitFor(() => {
-			expect(lastFrame()).toBe('Organization switched');
+			expect(lastFrame()).toBe('OrganizationReadWithAPIKey switched');
 		});
 	});
 
@@ -74,7 +74,7 @@ describe('useAuthApi', () => {
 					'access-token',
 					'cookie',
 				);
-				return result.success ? 'Organization switched' : 'Failed to switch';
+				return result.success ? 'OrganizationReadWithAPIKey switched' : 'Failed to switch';
 			};
 			switchOrg().then(res => setResult(res));
 			return <Text>{result}</Text>;

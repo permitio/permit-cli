@@ -1,6 +1,7 @@
 import { apiCall } from '../lib/api.js';
 import { useMemo } from 'react';
 
+// NO_DEPRECATION: This endpoints below are not present in openapi-spec
 export const useAuthApi = () => {
 	const authSwitchOrgs = async (
 		workspaceId: string,

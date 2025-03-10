@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
-import { generateSSHKey } from '../../lib/gitops/utils.js';
 import clipboard from 'clipboardy';
+import { generateSSHKey } from '../../lib/gitops/utils.js';
 
 type Props = {
 	onSSHKeySubmit: (sshKey: string, sshUrl: string) => void;

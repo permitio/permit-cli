@@ -5,7 +5,7 @@ import { TextInput } from '@inkjs/ui';
 
 import { ApiKeyScope } from '../../hooks/useApiKeyApi.js';
 import SelectInput from 'ink-select-input';
-import { useMemberApi } from '../../hooks/useMemberApi.js';
+import { OrgMemberCreate, useMemberApi } from '../../hooks/useMemberApi.js';
 import EnvironmentSelection, {
 	ActiveState,
 } from '../../components/EnvironmentSelection.js';
@@ -31,7 +31,7 @@ type Props = {
 
 interface MemberInviteResult {
 	memberEmail: string;
-	memberRole: string;
+	memberRole: 'admin' | 'write' | 'read' | 'no_access';
 }
 
 export default function MemberComponent({
@@ -54,9 +54,9 @@ export default function MemberComponent({
 		| 'done'
 	>('loading');
 	const [keyScope, setKeyScope] = useState<ApiKeyScope>({
-		environment_id: environment ?? null,
+		environment_id: environment,
 		organization_id: '',
-		project_id: project ?? null,
+		project_id: project,
 	});
 	const [email, setEmail] = useState<string | undefined>(emailP);
 	const [role, setRole] = useState<string | undefined>(roleP);
@@ -69,14 +69,13 @@ export default function MemberComponent({
 	const [apiKey, setApiKey] = useState<string | null>(null);
 
 	const { inviteNewMember } = useMemberApi();
+	const auth = useAuth();
 
 	useEffect(() => {
 		if (error || state === 'done') {
 			process.exit(1);
 		}
 	}, [error, state]);
-
-	const auth = useAuth();
 
 	useEffect(() => {
 		if (auth.error) {
@@ -94,7 +93,7 @@ export default function MemberComponent({
 				setKeyScope(prev => ({
 					...prev,
 					organization_id: auth.scope.organization_id,
-					project_id: auth.scope.project_id ?? project ?? null,
+					project_id: auth.scope.project_id ?? project,
 				}));
 			}
 		}
@@ -102,7 +101,7 @@ export default function MemberComponent({
 
 	const handleMemberInvite = useCallback(
 		async (memberInvite: MemberInviteResult) => {
-			const requestBody = {
+			const requestBody: OrgMemberCreate = {
 				email: memberInvite.memberEmail,
 				permissions: [
 					{
@@ -114,18 +113,17 @@ export default function MemberComponent({
 			};
 
 			const { error } = await inviteNewMember(
-				apiKey ?? '',
 				requestBody,
 				inviter_name ?? '',
 				inviter_email ?? '',
 			);
 			if (error) {
-				setError(error);
+				setError(error.toString());
 				return;
 			}
 			setState('done');
 		},
-		[apiKey, inviteNewMember, inviter_email, inviter_name, keyScope],
+		[inviteNewMember, inviter_email, inviter_name, keyScope],
 	);
 
 	const onEnvironmentSelectSuccess = useCallback(
@@ -161,7 +159,7 @@ export default function MemberComponent({
 			setState('inviting');
 			handleMemberInvite({
 				memberEmail: email,
-				memberRole: role,
+				memberRole: role as 'admin' | 'write' | 'read' | 'no_access',
 			});
 		}
 	}, [

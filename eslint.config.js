@@ -22,6 +22,9 @@ const eslintConfig = [
 export default [
 	...eslintConfig,
 	{
+		ignores: ["source/lib/api/"]
+	},
+	{
 		languageOptions: {
 			parser: tsParser,
 			parserOptions: {

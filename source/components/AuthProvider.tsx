@@ -15,12 +15,17 @@ import React, {
 import { Text, Newline } from 'ink';
 import { loadAuthToken } from '../lib/auth.js';
 import Login from '../commands/login.js';
-import { ApiKeyScope, useApiKeyApi } from '../hooks/useApiKeyApi.js';
+import { ApiKeyCreate, ApiKeyScope } from '../hooks/useApiKeyApi.js';
 import { ActiveState } from './EnvironmentSelection.js';
 import LoginFlow from './LoginFlow.js';
 import SelectOrganization from './SelectOrganization.js';
 import SelectProject from './SelectProject.js';
 import { useAuthApi } from '../hooks/useAuthApi.js';
+import { useUnauthenticatedApi } from '../hooks/useUnauthenticatedApi.js';
+import {
+	globalScopeGetterSetter,
+	globalTokenGetterSetter,
+} from '../hooks/useClient.js';
 
 // Define the AuthContext type
 export type AuthContextType = {
@@ -45,7 +50,7 @@ export function AuthProvider({
 	scope,
 }: AuthProviderProps) {
 	const { validateApiKeyScope, getApiKeyList, getApiKeyById, createApiKey } =
-		useApiKeyApi();
+		useUnauthenticatedApi();
 	const { authSwitchOrgs } = useAuthApi();
 
 	const [internalAuthToken, setInternalAuthToken] = useState<string | null>(
@@ -67,7 +72,9 @@ export function AuthProvider({
 	const [organization, setOrganization] = useState<string | null>(null);
 	const [project, setProject] = useState<string | null>(null);
 	const [loading, setLoading] = useState<boolean>(true);
-	const [currentScope, setCurrentScope] = useState<ApiKeyScope | null>(null);
+	const [currentScope, setCurrentScope] = useState<
+		ApiKeyScope | null | undefined
+	>(null);
 	const [keyCreated, setKeyCreated] = useState<boolean>(false);
 
 	// Handles all the error
@@ -80,6 +87,9 @@ export function AuthProvider({
 	// Step 4 If we have collected all the data needed by auth provider we set the state to 'done'
 	useEffect(() => {
 		if (authToken.length !== 0 && currentScope) {
+			// Inject the auth token
+			globalTokenGetterSetter.tokenSetter(authToken);
+			globalScopeGetterSetter.scopeSetter(currentScope);
 			setLoading(false);
 			setState('done');
 		}
@@ -150,7 +160,7 @@ export function AuthProvider({
 					error,
 				} = await validateApiKeyScope(key ?? '', scope ?? 'environment');
 				if (!valid || error) {
-					setError(error ?? 'Invalid Key Provided');
+					setError(error?.toString() ?? 'Invalid Key Provided');
 				} else {
 					setAuthToken(key ?? '');
 					setCurrentScope(keyScope);
@@ -186,7 +196,7 @@ export function AuthProvider({
 			(state === 'project' && project)
 		) {
 			(async () => {
-				const { response, error } = await getApiKeyList(
+				const { data: response, error } = await getApiKeyList(
 					state === 'organization' ? 'org' : 'project',
 					internalAuthToken ?? '',
 					newCookie,
@@ -197,28 +207,25 @@ export function AuthProvider({
 					return;
 				}
 
-				let cliApiKey = response.data.find(
+				let cliApiKey = response?.data.find(
 					apiKey => apiKey.name === 'CLI_API_Key',
 				);
 
-				if (!cliApiKey) {
+				if (!cliApiKey && organization) {
 					setState('creating-key');
-					let body = {
+					let body: ApiKeyCreate = {
 						organization_id: organization,
 						name: 'CLI_API_Key',
 						object_type: 'org',
+						access_level: 'admin',
+						owner_type: 'member',
 					};
 					if (state === 'project') {
 						body.object_type = 'project';
-						// @ts-expect-error custom param addition
-						body.project_id = project;
+						body.project_id = project ?? '';
 					}
-					const { response: creationResponse, error: creationError } =
-						await createApiKey(
-							internalAuthToken ?? '',
-							JSON.stringify(body),
-							newCookie,
-						);
+					const { data: creationResponse, error: creationError } =
+						await createApiKey(internalAuthToken ?? '', body, newCookie);
 					if (creationError) {
 						setError(`Error while creating Key: ${creationError}`);
 					}
@@ -226,7 +233,7 @@ export function AuthProvider({
 					setKeyCreated(true);
 				}
 				const apiKeyId = cliApiKey?.id ?? '';
-				const { response: secret, error: err } = await getApiKeyById(
+				const { data: secret, error: err } = await getApiKeyById(
 					apiKeyId,
 					internalAuthToken ?? '',
 					newCookie,
@@ -235,11 +242,11 @@ export function AuthProvider({
 					setError(`Error while getting api key by id: ${err}`);
 					return;
 				}
-				setAuthToken(secret.secret ?? '');
+				setAuthToken(secret?.secret ?? '');
 				setCurrentScope({
-					organization_id: secret.organization_id,
-					project_id: secret.project_id ?? null,
-					environment_id: secret.environment_id ?? null,
+					organization_id: secret?.organization_id ?? '',
+					project_id: secret?.project_id ?? undefined,
+					environment_id: secret?.environment_id ?? undefined,
 				});
 			})();
 		}
@@ -281,7 +288,11 @@ export function AuthProvider({
 			{state === 'loading' && <Text>Loading Token</Text>}
 			{(state === 'organization' || state === 'project') && (
 				<>
-					<LoginFlow onSuccess={onLoginSuccess} onError={setError} />
+					<LoginFlow
+						onSuccess={onLoginSuccess}
+						onError={setError}
+						notInAuthContext={true}
+					/>
 					{internalAuthToken && cookie && !organization && (
 						<SelectOrganization
 							accessToken={internalAuthToken}
@@ -291,6 +302,7 @@ export function AuthProvider({
 							}}
 							onError={setError}
 							cookie={cookie}
+							notInAuthContext={true}
 						/>
 					)}
 					{state === 'project' &&
@@ -303,13 +315,18 @@ export function AuthProvider({
 								onComplete={project => setProject(project.value)}
 								cookie={newCookie}
 								onError={setError}
+								notInAuthContext={true}
 							/>
 						)}
 				</>
 			)}
 			{state === 'login' && (
 				<>
-					<Login options={{}} loginSuccess={handleLoginSuccess} />
+					<Login
+						options={{}}
+						loginSuccess={handleLoginSuccess}
+						notInAuthContext={true}
+					/>
 				</>
 			)}
 			{state === 'creating-key' && (

@@ -1,5 +1,7 @@
-import { apiCall } from '../lib/api.js';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
+import { components } from '../lib/api/v1.js';
+import useClient from './useClient.js';
+// import { authenticatedApiClient } from '../lib/api.js';
 
 export interface UsageLimits {
 	mau: number;
@@ -7,49 +9,39 @@ export interface UsageLimits {
 	billing_tier: string;
 }
 
+export type OrganizationCreate = components['schemas']['OrganizationCreate'];
+export type OrganizationReadWithAPIKey =
+	components['schemas']['OrganizationReadWithAPIKey'];
+
 export type Settings = object;
 
-export interface Organization {
-	key: string;
-	id: string;
-	is_enterprise: boolean;
-	usage_limits: UsageLimits;
-	created_at: string;
-	updated_at: string;
-	name: string;
-	settings: Settings;
-}
-
 export const useOrganisationApi = () => {
-	const getOrgs = async (accessToken: string, cookie: string) => {
-		return await apiCall<Organization[]>('v2/orgs', accessToken, cookie);
-	};
+	const { authenticatedApiClient } = useClient();
 
-	const getOrg = async (
-		organizationId: string,
-		accessToken: string,
-		cookie?: string | null,
-	) => {
-		return await apiCall<Organization>(
-			`v2/orgs/${organizationId}`,
-			accessToken,
-			cookie,
-		);
-	};
+	const getOrgs = useCallback(async () => {
+		return await authenticatedApiClient().GET('/v2/orgs');
+	}, [authenticatedApiClient]);
 
-	const createOrg = async (
-		body: object,
-		accessToken: string,
-		cookie?: string | null,
-	) => {
-		return await apiCall<Organization>(
-			`v2/orgs`,
-			accessToken,
-			cookie ?? '',
-			'POST',
-			JSON.stringify(body),
-		);
-	};
+	const getOrg = useCallback(
+		async (org_id: string) => {
+			return await authenticatedApiClient().GET(`/v2/orgs/{org_id}`, {
+				org_id,
+			});
+		},
+		[authenticatedApiClient],
+	);
+
+	const createOrg = useCallback(
+		async (body: OrganizationCreate) => {
+			return await authenticatedApiClient().POST(
+				`/v2/orgs`,
+				undefined,
+				body,
+				undefined,
+			);
+		},
+		[authenticatedApiClient],
+	);
 
 	return useMemo(
 		() => ({
@@ -57,6 +49,6 @@ export const useOrganisationApi = () => {
 			getOrg,
 			createOrg,
 		}),
-		[],
+		[createOrg, getOrg, getOrgs],
 	);
 };
