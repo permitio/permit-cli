@@ -990,7 +990,7 @@ export const saveHTMLGraph = (graphData: GraphData) => {
 			// -----------------------------
 			const zoomBehavior = d3
 				.zoom()
-				.scaleExtent([2, 22])
+				.scaleExtent([7.5, 22])
 				.on('zoom', event => {
 					// Apply zoom to the entire group (both bgGroup and contentGroup)
 					g.attr('transform', event.transform);
@@ -998,7 +998,7 @@ export const saveHTMLGraph = (graphData: GraphData) => {
 				});
 			svg.call(zoomBehavior);
 			g.attr('transform', 'translate(0,0)');
-			const initialScale = 10;
+			const initialScale = 12;
 
 			// Zoom control buttons functionality.
 			const zoomInButton = document.getElementById('zoom-in');
