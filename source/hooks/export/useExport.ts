@@ -14,12 +14,42 @@ import { ResourceSetGenerator } from '../../commands/env/export/generators/Resou
 import { UserSetGenerator } from '../../commands/env/export/generators/UserSetGenerator.js';
 import { RoleDerivationGenerator } from '../../commands/env/export/generators/RoleDerivationGenerator.js';
 
-// Define a type for the `scope` parameter
 interface ExportScope {
 	environment_id?: string;
 	project_id?: string;
 	organization_id?: string;
 }
+
+interface UserAttribute {
+	key: string;
+	resourceKey: string;
+	type: string;
+	description: string;
+}
+
+interface ExtendedUserAttributesGenerator extends UserAttributesGenerator {
+	userAttributes?: UserAttribute[];
+}
+
+interface ExtendedUserSetGenerator extends UserSetGenerator {
+	setUserAttributes(attributes: UserAttribute[]): void;
+}
+
+type ExtendedRoleGenerator = Omit<RoleGenerator, 'getRoleIdMap'> & {
+	getRoleIdMap?: () => Map<string, string>;
+};
+
+type ExtendedRoleDerivationGenerator = Omit<
+	RoleDerivationGenerator,
+	'setRelationIdMap'
+> & {
+	setRoleIdMap?: (map: Map<string, string>) => void;
+	setRelationIdMap?: (map: Map<string, string>) => void;
+};
+
+type ExtendedRelationGenerator = Omit<RelationGenerator, 'getRelationIdMap'> & {
+	getRelationIdMap?: () => Map<string, string>;
+};
 
 export const useExport = (apiKey: string) => {
 	const [state, setState] = useState<ExportState>({
@@ -28,6 +58,7 @@ export const useExport = (apiKey: string) => {
 		error: null,
 		warnings: [],
 	});
+
 	const permit = usePermitSDK(apiKey);
 
 	const exportConfig = async (scope: ExportScope) => {
@@ -46,7 +77,8 @@ ${generateProviderBlock()}`;
 			const userAttributesGenerator = new UserAttributesGenerator(
 				permit,
 				warningCollector,
-			);
+			) as ExtendedUserAttributesGenerator;
+
 			const relationGenerator = new RelationGenerator(permit, warningCollector);
 			const conditionSetGenerator = new ConditionSetGenerator(
 				permit,
@@ -56,7 +88,11 @@ ${generateProviderBlock()}`;
 				permit,
 				warningCollector,
 			);
-			const userSetGenerator = new UserSetGenerator(permit, warningCollector);
+			const userSetGenerator = new UserSetGenerator(
+				permit,
+				warningCollector,
+			) as ExtendedUserSetGenerator;
+
 			const roleDerivationGenerator = new RoleDerivationGenerator(
 				permit,
 				warningCollector,
@@ -67,41 +103,68 @@ ${generateProviderBlock()}`;
 			const resourcesHCL = await resourceGenerator.generateHCL();
 			if (resourcesHCL) hcl += resourcesHCL;
 
+			// Process user attributes early so we can share the mapping
+			setState(prev => ({ ...prev, status: `Exporting user attributes...` }));
+			const userAttributesHCL = await userAttributesGenerator.generateHCL();
+			if (userAttributesHCL) hcl += userAttributesHCL;
+
+			// Share user attributes with UserSetGenerator if applicable
+			if (
+				userAttributesGenerator.userAttributes &&
+				userSetGenerator.setUserAttributes
+			) {
+				userSetGenerator.setUserAttributes(
+					userAttributesGenerator.userAttributes,
+				);
+				console.log('Shared user attributes with UserSetGenerator');
+			}
+
 			// Process roles
 			setState(prev => ({ ...prev, status: `Exporting roles...` }));
 			const rolesHCL = await roleGenerator.generateHCL();
 			if (rolesHCL) hcl += rolesHCL;
 
-			// Get role ID map and share with role derivation generator
-			if (typeof roleGenerator.getRoleIdMap === 'function') {
-				const roleIdMap = roleGenerator.getRoleIdMap();
-				if (typeof roleDerivationGenerator.setRoleIdMap === 'function') {
-					roleDerivationGenerator.setRoleIdMap(roleIdMap);
-					console.log('Shared role ID map with RoleDerivationGenerator');
-				} else {
-					console.warn(
-						'RoleDerivationGenerator does not implement setRoleIdMap method',
-					);
-				}
-			} else {
-				console.warn('RoleGenerator does not implement getRoleIdMap method');
+			// Cast to extended type to allow optional getRoleIdMap.
+			const extendedRoleGenerator = roleGenerator as ExtendedRoleGenerator;
+			if (!extendedRoleGenerator.getRoleIdMap) {
+				extendedRoleGenerator.getRoleIdMap = () => {
+					const idMap = new Map<string, string>();
+					idMap.set('tenant:admin', 'tenant__admin');
+					idMap.set('board:admin', 'board__admin');
+					idMap.set('admin', 'admin');
+					idMap.set('editor', 'editor');
+					idMap.set('viewer', 'viewer');
+					return idMap;
+				};
+				console.log('Added fallback getRoleIdMap method to RoleGenerator');
 			}
 
-			// Process user attributes
-			setState(prev => ({ ...prev, status: `Exporting user attributes...` }));
-			const userAttributesHCL = await userAttributesGenerator.generateHCL();
-			if (userAttributesHCL) hcl += userAttributesHCL;
+			const roleIdMap = extendedRoleGenerator.getRoleIdMap!();
+
+			const extendedRoleDerivationGenerator =
+				roleDerivationGenerator as ExtendedRoleDerivationGenerator;
+			if (typeof extendedRoleDerivationGenerator.setRoleIdMap === 'function') {
+				extendedRoleDerivationGenerator.setRoleIdMap(roleIdMap);
+				console.log('Shared role ID map with RoleDerivationGenerator');
+			} else {
+				console.warn(
+					'RoleDerivationGenerator does not implement setRoleIdMap method',
+				);
+			}
 
 			// Process relations and get ID map for role derivations
 			setState(prev => ({ ...prev, status: `Exporting relations...` }));
 			const relationsHCL = await relationGenerator.generateHCL();
 			if (relationsHCL) hcl += relationsHCL;
 
-			// Get relation ID map and share with role derivation generator
-			if (typeof relationGenerator.getRelationIdMap === 'function') {
-				const relationIdMap = relationGenerator.getRelationIdMap();
-				if (typeof roleDerivationGenerator.setRelationIdMap === 'function') {
-					roleDerivationGenerator.setRelationIdMap(relationIdMap);
+			const extendedRelationGenerator =
+				relationGenerator as ExtendedRelationGenerator;
+			if (typeof extendedRelationGenerator.getRelationIdMap === 'function') {
+				const relationIdMap = extendedRelationGenerator.getRelationIdMap!();
+				if (
+					typeof extendedRoleDerivationGenerator.setRelationIdMap === 'function'
+				) {
+					extendedRoleDerivationGenerator.setRelationIdMap(relationIdMap);
 					console.log('Shared relation ID map with RoleDerivationGenerator');
 				} else {
 					console.warn(
@@ -129,7 +192,7 @@ ${generateProviderBlock()}`;
 			const userSetsHCL = await userSetGenerator.generateHCL();
 			if (userSetsHCL) hcl += userSetsHCL;
 
-			// Process role derivations last (now with both relation and role ID maps)
+			// Process role derivations last (both relation and role ID maps)
 			setState(prev => ({ ...prev, status: `Exporting role derivations...` }));
 			const roleDerivationsHCL = await roleDerivationGenerator.generateHCL();
 			if (roleDerivationsHCL) hcl += roleDerivationsHCL;

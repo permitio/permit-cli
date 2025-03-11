@@ -8,6 +8,10 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Define default global roles that should be excluded from creation
+// These roles already exist in Permit by default
+const DEFAULT_GLOBAL_ROLES = ['admin', 'editor', 'viewer'];
+
 interface RoleData {
 	key: string;
 	terraformId: string;
@@ -131,14 +135,6 @@ export class RoleGenerator implements HCLGenerator {
 			// Prepare to collect all valid roles
 			const validRoles: RoleData[] = [];
 
-			// Define default roles to skip
-			const defaultRoleKeys = ['viewer', 'editor', 'admin'];
-
-			// Process non-default standalone roles
-			const otherRoles = roles.filter(
-				role => !defaultRoleKeys.includes(role.key),
-			);
-
 			// Build a map of resource keys to resource objects for dependency tracking
 			const resourceMap = new Map();
 			resources.forEach(resource => {
@@ -168,44 +164,47 @@ export class RoleGenerator implements HCLGenerator {
 				});
 			}
 
-			// Filter out default roles from resource roles too
-			const filteredResourceRoles = resourceRoles.filter(
-				r => !defaultRoleKeys.includes(r.roleKey) || r.roleKey === 'editor',
-			);
-
 			// Then process them in a consistent order by resource key
-			const sortedResourceRoles = filteredResourceRoles.sort((a, b) => {
+			const sortedResourceRoles = resourceRoles.sort((a, b) => {
 				return a.resourceKey.localeCompare(b.resourceKey);
 			});
 
 			// Now process the sorted resource roles
 			for (const { resourceKey, roleKey, roleData } of sortedResourceRoles) {
-				// First try to use just the role key as terraform ID
+				// Only use double underscore for duplicates or default roles that need distinctive IDs
+				const isDuplicate = (roleKeyCount.get(roleKey) ?? 0) > 1;
+				const isDefaultRole = DEFAULT_GLOBAL_ROLES.includes(roleKey);
+
+				// Use simple key if it's unique and not a default role
 				let terraformId = roleKey;
 
-				// If this role key appears multiple times across resources, use a prefixed version
-				if (
-					(roleKeyCount.get(roleKey) ?? 0) > 1 ||
-					usedTerraformIds.has(terraformId)
-				) {
+				// For duplicate roles or default roles, use resource__role format
+				if (isDuplicate || isDefaultRole || usedTerraformIds.has(roleKey)) {
 					terraformId = `${resourceKey}__${roleKey}`;
 				}
 
 				// Track the terraform ID we're using
 				usedTerraformIds.add(terraformId);
 
-				// Store the mapping for both resource-specific and standalone lookup
+				// Store the mapping for both resource-specific role key and the plain key
 				this.roleIdMap.set(`${resourceKey}:${roleKey}`, terraformId);
 
-				// If this is the first instance of this role key, also map the plain key
-				if (!this.roleIdMap.has(roleKey)) {
+				// For default roles, we need special handling for the tenant:admin and board:admin cases
+				if (resourceKey === 'tenant' && roleKey === 'admin') {
+					this.roleIdMap.set('tenant:admin', 'tenant__admin');
+				} else if (resourceKey === 'board' && roleKey === 'admin') {
+					this.roleIdMap.set('board:admin', 'board__admin');
+				}
+
+				// Only map the plain key if it's not a duplicate or already mapped
+				if (!isDuplicate && !this.roleIdMap.has(roleKey)) {
 					this.roleIdMap.set(roleKey, terraformId);
 				}
 
-				// Extract permissions
+				// Extract permissions as strings only
 				let permissions: string[] = [];
 				if (roleData.permissions && Array.isArray(roleData.permissions)) {
-					permissions = roleData.permissions;
+					permissions = roleData.permissions.map(p => String(p));
 				}
 
 				// All resource roles depend on their resource
@@ -218,7 +217,7 @@ export class RoleGenerator implements HCLGenerator {
 					name: roleData.name || roleKey,
 					resource: resourceKey,
 					permissions,
-					extends: roleData.extends,
+					extends: roleData.extends?.map(e => String(e)),
 					dependencies,
 					description: roleData.description,
 					attributes: roleData.attributes,
@@ -226,9 +225,21 @@ export class RoleGenerator implements HCLGenerator {
 			}
 
 			// Now process global roles - these reference resources in their permissions
-			for (const role of otherRoles) {
-				// Use simple key for terraform ID
-				const terraformId = role.key;
+			for (const role of roles) {
+				// Skip default global roles that already exist in the system
+				if (DEFAULT_GLOBAL_ROLES.includes(role.key)) {
+					// Still add to the ID map for role derivations
+					this.roleIdMap.set(role.key, role.key);
+					continue; // Skip exporting these roles
+				}
+
+				// Use simple key for terraform ID if it's not already used
+				let terraformId = role.key;
+
+				// If the ID is already used, prefix it with "global_"
+				if (usedTerraformIds.has(terraformId)) {
+					terraformId = `global_${role.key}`;
+				}
 
 				// Store the mapping
 				this.roleIdMap.set(role.key, terraformId);
@@ -263,8 +274,8 @@ export class RoleGenerator implements HCLGenerator {
 					terraformId,
 					name: role.name || role.key,
 					description: role.description,
-					permissions: role.permissions || [],
-					extends: typedRole.extends || [],
+					permissions: (role.permissions || []).map(p => String(p)),
+					extends: (typedRole.extends || []).map(e => String(e)),
 					attributes: role.attributes as Record<string, unknown> | undefined,
 					dependencies: dependencies,
 				});

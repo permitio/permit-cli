@@ -19,13 +19,15 @@ interface UserSetData {
 
 interface UserAttribute {
 	key: string;
-	id: string;
+	resourceKey: string;
+	type: string;
+	description: string;
 }
 
 export class UserSetGenerator implements HCLGenerator {
 	name = 'user set';
 	private template: TemplateDelegate<{ sets: UserSetData[] }>;
-	private userAttributes: UserAttribute[] = [];
+	private sharedUserAttributes: UserAttribute[] = [];
 
 	constructor(
 		private permit: Permit,
@@ -111,19 +113,41 @@ export class UserSetGenerator implements HCLGenerator {
 		this.template = Handlebars.compile(cleanTemplate);
 	}
 
+	// Method to receive shared user attributes from UserAttributesGenerator
+	public setUserAttributes(attributes: UserAttribute[]): void {
+		this.sharedUserAttributes = attributes;
+		console.log(
+			`Received ${attributes.length} user attributes from UserAttributesGenerator`,
+		);
+	}
+
 	private async fetchUserAttributes(): Promise<void> {
+		// If we already have user attributes from the UserAttributesGenerator, use them
+		if (this.sharedUserAttributes.length > 0) {
+			console.log('Using shared user attributes');
+			return;
+		}
+
 		try {
+			console.log('Fetching user attributes directly');
 			const userResource = await this.permit.api.resources.get('__user');
 			if (!userResource?.attributes) return;
 
-			this.userAttributes = Object.entries(userResource.attributes)
+			// Use the same naming convention that UserAttributesGenerator uses
+			this.sharedUserAttributes = Object.entries(userResource.attributes)
+				.filter(
+					([key]) =>
+						!['key', 'roles', 'email', 'first_name', 'last_name'].includes(key),
+				)
 				.filter(([, attr]) => {
 					const description = attr.description?.toLowerCase() || '';
 					return !description.includes('built in attribute');
 				})
-				.map(([key]) => ({
+				.map(([key, attr]) => ({
 					key,
-					id: `user_${key.toLowerCase().replace(/[^a-z0-9_]/g, '_')}`,
+					resourceKey: `user_${key.toLowerCase().replace(/[^a-z0-9_]/g, '_')}`,
+					type: attr.type,
+					description: attr.description || '',
 				}));
 		} catch (error) {
 			this.warningCollector.addWarning(
@@ -137,8 +161,8 @@ export class UserSetGenerator implements HCLGenerator {
 		const stringifiedConditions = JSON.stringify(conditions);
 		const deps = new Set<string>();
 
-		// Check for attributes in user.<attribute> pattern
-		for (const attr of this.userAttributes) {
+		// Check for attributes in user.<attribute> and subject.<attribute> patterns
+		for (const attr of this.sharedUserAttributes) {
 			// Match both "user.<key>" and "subject.<key>" patterns
 			const userPattern = `"user.${attr.key}"`;
 			const subjectPattern = `"subject.${attr.key}"`;
@@ -147,7 +171,7 @@ export class UserSetGenerator implements HCLGenerator {
 				stringifiedConditions.includes(userPattern) ||
 				stringifiedConditions.includes(subjectPattern)
 			) {
-				deps.add(`permitio_user_attribute.${attr.id}`);
+				deps.add(`permitio_user_attribute.${attr.resourceKey}`);
 			}
 		}
 
@@ -185,7 +209,7 @@ export class UserSetGenerator implements HCLGenerator {
 
 	async generateHCL(): Promise<string> {
 		try {
-			// First fetch user attributes to build dependency list
+			// Get user attributes first (either shared or fetched)
 			await this.fetchUserAttributes();
 
 			const conditionSets = await this.permit.api.conditionSets.list({});

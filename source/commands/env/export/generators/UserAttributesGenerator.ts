@@ -31,23 +31,22 @@ export class UserAttributesGenerator implements HCLGenerator {
 		private permit: Permit,
 		private warningCollector: WarningCollector,
 	) {
-		// Register Handlebars helpers for formatting
+		// Register a simple helper that creates extremely safe descriptions for HCL
 		Handlebars.registerHelper('formatDescription', function (text) {
 			if (!text) return '';
-			// Decode HTML entities
-			const decoded = text.replace(/&[^;]+;/g, (match: string) => {
-				const entities: Record<string, string> = {
-					'&quot;': '"',
-					'&#x27;': "'",
-					'&amp;': '&',
-					'&lt;': '<',
-					'&gt;': '>',
-				};
-				return entities[match] || match;
-			});
-			// Escape special characters for HCL
-			return decoded.replace(/[\\"]/g, '\\$&');
+
+			// First, normalize the string to remove any non-basic characters
+			const sanitized = text
+				// Replace non-alphanumeric, non-basic punctuation with spaces
+				.replace(/[^\w\s.,!?()-]/g, ' ')
+				// Collapse multiple spaces into one
+				.replace(/\s+/g, ' ')
+				// Trim spaces
+				.trim();
+
+			return sanitized;
 		});
+
 		this.template = this.loadTemplate();
 	}
 
