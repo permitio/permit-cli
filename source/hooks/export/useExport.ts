@@ -116,7 +116,6 @@ ${generateProviderBlock()}`;
 				userSetGenerator.setUserAttributes(
 					userAttributesGenerator.userAttributes,
 				);
-				console.log('Shared user attributes with UserSetGenerator');
 			}
 
 			// Process roles
@@ -145,7 +144,6 @@ ${generateProviderBlock()}`;
 				roleDerivationGenerator as ExtendedRoleDerivationGenerator;
 			if (typeof extendedRoleDerivationGenerator.setRoleIdMap === 'function') {
 				extendedRoleDerivationGenerator.setRoleIdMap(roleIdMap);
-				console.log('Shared role ID map with RoleDerivationGenerator');
 			} else {
 				console.warn(
 					'RoleDerivationGenerator does not implement setRoleIdMap method',
@@ -165,7 +163,6 @@ ${generateProviderBlock()}`;
 					typeof extendedRoleDerivationGenerator.setRelationIdMap === 'function'
 				) {
 					extendedRoleDerivationGenerator.setRelationIdMap(relationIdMap);
-					console.log('Shared relation ID map with RoleDerivationGenerator');
 				} else {
 					console.warn(
 						'RoleDerivationGenerator does not implement setRelationIdMap method',
