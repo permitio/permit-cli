@@ -129,7 +129,6 @@ export class UserSetGenerator implements HCLGenerator {
 		}
 
 		try {
-			console.log('Fetching user attributes directly');
 			const userResource = await this.permit.api.resources.get('__user');
 			if (!userResource?.attributes) return;
 

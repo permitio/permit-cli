@@ -139,9 +139,6 @@ export class RoleDerivationGenerator implements HCLGenerator {
 			const derivations: RoleDerivationData[] = [];
 			const processedDerivations = new Set<string>();
 
-			// Log the roleIdMap for debugging
-			console.debug('Role ID Map:', [...this.roleIdMap.entries()]);
-
 			for (const resource of resources) {
 				if (!resource.key) continue;
 
