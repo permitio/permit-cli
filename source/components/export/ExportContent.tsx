@@ -1,5 +1,5 @@
 import React from 'react';
-import { useEffect, useState, FC } from 'react';
+import { useEffect, useState, FC, useRef } from 'react';
 import { useApiKeyApi } from '../../hooks/useApiKeyApi.js';
 import { useAuth } from '../../components/AuthProvider.js';
 import { ExportOptions } from '../../commands/env/export/types.js';
@@ -16,10 +16,15 @@ export const ExportContent: FC<{ options: ExportOptions }> = ({
 	const key = apiKey || authToken;
 	const { state, setState, exportConfig } = useExport(key);
 	const [hclOutput, setHclOutput] = useState<string | null>(null);
+	const hasRunRef = useRef(false);
 
 	useEffect(() => {
+		if (hasRunRef.current) return;
+		hasRunRef.current = true;
+
 		let isSubscribed = true;
 
+		// Define an async function for the export process
 		const runExport = async () => {
 			if (!key) {
 				setState({
@@ -106,19 +111,21 @@ export const ExportContent: FC<{ options: ExportOptions }> = ({
 			}
 		};
 
+		// Execute the export process
 		runExport();
 
+		// Return cleanup function
 		return () => {
 			isSubscribed = false;
 		};
-	}, [key, file, validateApiKeyScope]);
+	}, []);
 
 	return (
 		<>
 			<ExportStatus state={state} file={file} />
 			{!file && hclOutput && (
 				<Text>
-					<Text>{hclOutput}</Text> {/* Wrap HCL output in <Text> */}
+					<Text>{hclOutput}</Text>
 				</Text>
 			)}
 			{state.error && <Text color="red">{state.error}</Text>}
