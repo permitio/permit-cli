@@ -6,29 +6,15 @@ import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { RelationRead, ResourceRead } from 'permitio/build/main/openapi/types';
+import he from 'he';
 
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirPath = dirname(currentFilePath);
 
-// Helper function to unescape HTML entities
+// Helper function to unescape HTML entities using the he library
 function unescapeHtml(text: string | undefined): string {
 	if (!text) return '';
-
-	const entities = {
-		'&amp;': '&',
-		'&lt;': '<',
-		'&gt;': '>',
-		'&quot;': '"',
-		'&#x27;': "'",
-		'&#39;': "'",
-		'&#x2F;': '/',
-		'&#47;': '/',
-	};
-
-	return text.replace(
-		/&amp;|&lt;|&gt;|&quot;|&#x27;|&#39;|&#x2F;|&#47;/g,
-		match => entities[match as keyof typeof entities],
-	);
+	return he.decode(text);
 }
 
 interface PaginatedResponse<T> {

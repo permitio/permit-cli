@@ -37,7 +37,6 @@ export default [
 				RequestInit: 'readonly',
 				fetch: 'readonly',
 				process: 'readonly',
-				console: 'readonly',
 			},
 		},
 	},

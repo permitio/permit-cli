@@ -45,23 +45,7 @@ export class ResourceSetGenerator implements HCLGenerator {
 			this.warningCollector.addWarning(
 				`Failed to load resource set template: ${error}`,
 			);
-			// Provide a fallback template in case file loading fails
-			this.template = Handlebars.compile(`
-# Resource Sets
-{{#each sets}}
-resource "permitio_resource_set" "{{key}}" {
-  name        = "{{name}}"
-  key         = "{{key}}"
-  resource    = permitio_resource.{{resource}}.key
-  conditions  = {{{conditions}}}
-  depends_on  = [
-    {{#each depends_on}}
-    {{this}}{{#unless @last}},{{/unless}}
-    {{/each}}
-  ]
-}
-{{/each}}
-      `);
+			throw new Error(`Unable to load resource set template: ${error}`);
 		}
 	}
 
@@ -119,7 +103,6 @@ resource "permitio_resource_set" "{{key}}" {
 					return {
 						key: createSafeId(set.key),
 						name: set.name,
-						// description field removed from returned object
 						conditions: this.formatConditions(conditions),
 						resource: resourceKey,
 						depends_on: dependencies,

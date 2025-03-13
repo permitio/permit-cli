@@ -24,17 +24,7 @@ interface RoleData {
 	attributes?: Record<string, unknown>;
 }
 
-// Interface representing a role from the Permit API
-interface RoleFromAPI {
-	key: string;
-	name?: string;
-	description?: string;
-	permissions?: string[];
-	extends?: string[];
-	attributes?: Record<string, unknown>;
-}
-
-// Define a role data structure from the Permit API resource roles
+//role data structure
 interface RoleDataFromAPI {
 	name?: string;
 	description?: string;
@@ -43,17 +33,37 @@ interface RoleDataFromAPI {
 	attributes?: Record<string, unknown>;
 }
 
+// Interface for API response data
+interface PermitData {
+	roles: any[];
+	resources: any[];
+}
+
 export class RoleGenerator implements HCLGenerator {
 	name = 'roles';
 	private template: TemplateDelegate<{ roles: RoleData[] }>;
 	// This map will track the role key to terraform ID mapping
 	private roleIdMap = new Map<string, string>();
+	// Track used terraform IDs to detect duplicates
+	private usedTerraformIds = new Set<string>();
+	// Map from role key to count of occurrences
+	private roleKeyCount = new Map<string, number>();
+	// Resource map for dependency tracking
+	private resourceMap = new Map<string, any>();
 
 	constructor(
 		private permit: Permit,
 		private warningCollector: WarningCollector,
 	) {
 		// Register Handlebars helpers
+		this.registerHandlebarsHelpers();
+		this.template = Handlebars.compile(
+			readFileSync(join(__dirname, '../templates/role.hcl'), 'utf-8'),
+		);
+	}
+
+	// Register all Handlebars helpers
+	private registerHandlebarsHelpers(): void {
 		Handlebars.registerHelper('json', function (context: string[] | unknown) {
 			if (Array.isArray(context)) {
 				return `[${context.map(item => `"${item}"`).join(', ')}]`;
@@ -79,10 +89,6 @@ export class RoleGenerator implements HCLGenerator {
   }`;
 			},
 		);
-
-		this.template = Handlebars.compile(
-			readFileSync(join(__dirname, '../templates/role.hcl'), 'utf-8'),
-		);
 	}
 
 	// Method to get the role ID mapping
@@ -90,14 +96,9 @@ export class RoleGenerator implements HCLGenerator {
 		return this.roleIdMap;
 	}
 
-	async generateHCL(): Promise<string> {
+	// Fetch data from Permit API
+	private async fetchPermitData(): Promise<PermitData> {
 		try {
-			// Track used terraform IDs to detect duplicates
-			const usedTerraformIds = new Set<string>();
-			// Map from role key to count of occurrences
-			const roleKeyCount = new Map<string, number>();
-
-			// Fetch roles and resources from Permit API
 			const [rolesResponse, resourcesResponse] = await Promise.all([
 				this.permit.api.roles.list(),
 				this.permit.api.resources.list(),
@@ -109,211 +110,297 @@ export class RoleGenerator implements HCLGenerator {
 				? resourcesResponse
 				: [];
 
+			return { roles, resources };
+		} catch (error) {
+			this.warningCollector.addWarning(
+				`Failed to fetch data from Permit API: ${error}`,
+			);
+			return { roles: [], resources: [] };
+		}
+	}
+
+	// Count occurrences of role keys to identify potential duplicates
+	private countRoleKeyOccurrences(roles: any[], resources: any[]): void {
+		this.roleKeyCount.clear();
+
+		// Helper to increment the count for a key
+		const countRoleKey = (key: string) => {
+			this.roleKeyCount.set(key, (this.roleKeyCount.get(key) || 0) + 1);
+		};
+
+		// Count standalone roles
+		for (const role of roles) {
+			countRoleKey(role.key);
+		}
+
+		// Count resource roles
+		for (const resource of resources) {
+			if (!resource.roles || typeof resource.roles !== 'object') continue;
+
+			Object.keys(resource.roles).forEach(roleKey => {
+				countRoleKey(roleKey);
+			});
+		}
+	}
+
+	// Build a map of resource keys to resource objects for dependency tracking
+	private buildResourceMap(resources: any[]): void {
+		this.resourceMap.clear();
+		resources.forEach(resource => {
+			if (resource.key) {
+				this.resourceMap.set(resource.key, resource);
+			}
+		});
+	}
+
+	// Generate Terraform ID for a role
+	private generateTerraformId(
+		roleKey: string,
+		resourceKey?: string,
+		isDuplicate = false,
+	): string {
+		let terraformId = roleKey;
+
+		const isDefaultRole = DEFAULT_GLOBAL_ROLES.includes(roleKey);
+
+		// For duplicate roles or default roles, use resource__role format
+		if (isDuplicate || isDefaultRole || this.usedTerraformIds.has(roleKey)) {
+			terraformId = resourceKey
+				? `${resourceKey}__${roleKey}`
+				: `global_${roleKey}`;
+		}
+
+		// Track the terraform ID we're using
+		this.usedTerraformIds.add(terraformId);
+		return terraformId;
+	}
+
+	// Process resource-specific roles
+	private processResourceRoles(resources: any[]): RoleData[] {
+		const resourceRoles: Array<{
+			resourceKey: string;
+			roleKey: string;
+			roleData: RoleDataFromAPI;
+		}> = [];
+
+		// Collect all resource roles
+		for (const resource of resources) {
+			const resourceKey = resource.key;
+			if (!resourceKey) continue;
+
+			if (!resource.roles || typeof resource.roles !== 'object') {
+				continue;
+			}
+
+			Object.entries(resource.roles).forEach(([roleKey, roleData]) => {
+				resourceRoles.push({
+					resourceKey,
+					roleKey,
+					roleData: roleData as RoleDataFromAPI,
+				});
+			});
+		}
+
+		// Sort them by resource key for consistent output
+		const sortedResourceRoles = resourceRoles.sort((a, b) => {
+			return a.resourceKey.localeCompare(b.resourceKey);
+		});
+
+		// Process each resource role
+		const validRoles: RoleData[] = [];
+		for (const { resourceKey, roleKey, roleData } of sortedResourceRoles) {
+			// Check if this role key has duplicates
+			const isDuplicate = (this.roleKeyCount.get(roleKey) ?? 0) > 1;
+
+			// Generate Terraform ID
+			const terraformId = this.generateTerraformId(
+				roleKey,
+				resourceKey,
+				isDuplicate,
+			);
+
+			// Map the role ID for future reference
+			this.mapRoleId(resourceKey, roleKey, terraformId);
+
+			// Extract permissions as strings only
+			let permissions: string[] = [];
+			if (roleData.permissions && Array.isArray(roleData.permissions)) {
+				permissions = roleData.permissions.map((p: any) => String(p));
+			}
+
+			// All resource roles depend on their resource
+			const dependencies = [`permitio_resource.${resourceKey}`];
+
+			// Add the resource role
+			validRoles.push({
+				key: roleKey,
+				terraformId,
+				name: roleData.name || roleKey,
+				resource: resourceKey,
+				permissions,
+				extends: roleData.extends?.map((e: any) => String(e)),
+				dependencies,
+				description: roleData.description,
+				attributes: roleData.attributes,
+			});
+		}
+
+		return validRoles;
+	}
+
+	// Handle mapping role IDs for both resource-specific and global roles
+	private mapRoleId(
+		resourceKey: string | undefined,
+		roleKey: string,
+		terraformId: string,
+	): void {
+		if (resourceKey) {
+			// Store the mapping for resource-specific role key
+			this.roleIdMap.set(`${resourceKey}:${roleKey}`, terraformId);
+
+			// Special handling for tenant:admin and board:admin cases
+			if (resourceKey === 'tenant' && roleKey === 'admin') {
+				this.roleIdMap.set('tenant:admin', 'tenant__admin');
+			} else if (resourceKey === 'board' && roleKey === 'admin') {
+				this.roleIdMap.set('board:admin', 'board__admin');
+			}
+		}
+
+		// Only map the plain key if it's not a duplicate or already mapped
+		const isDuplicate = (this.roleKeyCount.get(roleKey) ?? 0) > 1;
+		if (!isDuplicate && !this.roleIdMap.has(roleKey)) {
+			this.roleIdMap.set(roleKey, terraformId);
+		}
+	}
+
+	// Process global (non-resource-specific) roles
+	private processGlobalRoles(roles: any[]): RoleData[] {
+		const validRoles: RoleData[] = [];
+
+		for (const role of roles) {
+			// Skip default global roles that already exist in the system
+			if (DEFAULT_GLOBAL_ROLES.includes(role.key)) {
+				// Still add to the ID map for role derivations
+				this.roleIdMap.set(role.key, role.key);
+				continue;
+			}
+
+			// Generate Terraform ID
+			const terraformId = this.generateTerraformId(role.key);
+
+			// Map the role ID
+			this.mapRoleId(undefined, role.key, terraformId);
+
+			// Build dependencies for resources mentioned in permissions
+			const dependencies = this.buildResourceDependencies(role.permissions);
+
+			validRoles.push({
+				key: role.key,
+				terraformId,
+				name: role.name || role.key,
+				description: role.description,
+				permissions: (role.permissions || []).map((p: any) => String(p)),
+				extends: (role.extends || []).map((e: any) => String(e)),
+				attributes: role.attributes as Record<string, unknown> | undefined,
+				dependencies,
+			});
+		}
+
+		return validRoles;
+	}
+
+	// Build resource dependencies based on permissions
+	private buildResourceDependencies(
+		permissions: string[] | undefined,
+	): string[] {
+		const dependencies: string[] = [];
+
+		if (!permissions || !Array.isArray(permissions)) {
+			return dependencies;
+		}
+
+		// For global roles, we need to ensure all resources referenced in permissions exist first
+		permissions.forEach(perm => {
+			// Check if permission has resource:action format
+			const parts = typeof perm === 'string' ? perm.split(':') : [];
+			if (parts.length === 2) {
+				const resourceKey = parts[0];
+				// Add resource as dependency if it exists
+				if (resourceKey && this.resourceMap.has(resourceKey)) {
+					const depRef = `permitio_resource.${resourceKey}`;
+					if (!dependencies.includes(depRef)) {
+						dependencies.push(depRef);
+					}
+				}
+			}
+		});
+
+		return dependencies;
+	}
+
+	// Resolve role extension dependencies
+	private resolveRoleDependencies(roles: RoleData[]): RoleData[] {
+		for (const role of roles) {
+			if (!role.extends || role.extends.length === 0) continue;
+
+			// For each extended role, add a dependency
+			for (const extendedRole of role.extends) {
+				// If this is a resource role, we need to check for the resource-specific role key
+				let extendedRoleTerraformId: string | undefined;
+
+				if (role.resource) {
+					// First check if there's a resource-specific role with this key
+					const resourceSpecificKey = `${role.resource}:${extendedRole}`;
+					extendedRoleTerraformId = this.roleIdMap.get(resourceSpecificKey);
+				}
+
+				// If we didn't find a resource-specific role, check for standalone role
+				if (!extendedRoleTerraformId) {
+					extendedRoleTerraformId = this.roleIdMap.get(extendedRole);
+				}
+
+				// If we found the role, add a dependency
+				if (extendedRoleTerraformId) {
+					const ref = `permitio_role.${extendedRoleTerraformId}`;
+					if (!role.dependencies.includes(ref)) {
+						role.dependencies.push(ref);
+					}
+				}
+			}
+		}
+
+		return roles;
+	}
+
+	async generateHCL(): Promise<string> {
+		try {
+			// Clear state maps and sets
+			this.usedTerraformIds.clear();
+			this.roleKeyCount.clear();
+			this.resourceMap.clear();
+			this.roleIdMap.clear();
+
+			// Fetch data from Permit API
+			const { roles, resources } = await this.fetchPermitData();
+
+			// If no data, return empty string
 			if (roles.length === 0 && resources.length === 0) {
 				return '';
 			}
 
-			// First, count occurrences of all role keys to identify potential duplicates
-			const countRoleKey = (key: string) => {
-				roleKeyCount.set(key, (roleKeyCount.get(key) || 0) + 1);
-			};
+			this.countRoleKeyOccurrences(roles, resources);
+			this.buildResourceMap(resources);
+			const resourceRoles = this.processResourceRoles(resources);
+			const globalRoles = this.processGlobalRoles(roles);
 
-			// Count standalone roles
-			for (const role of roles) {
-				countRoleKey(role.key);
-			}
+			// Combine all roles
+			const allRoles = [...resourceRoles, ...globalRoles];
 
-			// Count resource roles
-			for (const resource of resources) {
-				if (!resource.roles || typeof resource.roles !== 'object') continue;
-
-				Object.keys(resource.roles).forEach(roleKey => {
-					countRoleKey(roleKey);
-				});
-			}
-
-			// Prepare to collect all valid roles
-			const validRoles: RoleData[] = [];
-
-			// Build a map of resource keys to resource objects for dependency tracking
-			const resourceMap = new Map();
-			resources.forEach(resource => {
-				resourceMap.set(resource.key, resource);
-			});
-
-			// First process resource-specific roles
-			const resourceRoles: Array<{
-				resourceKey: string;
-				roleKey: string;
-				roleData: RoleDataFromAPI;
-			}> = [];
-
-			for (const resource of resources) {
-				const resourceKey = resource.key;
-
-				if (!resource.roles || typeof resource.roles !== 'object') {
-					continue;
-				}
-
-				Object.entries(resource.roles).forEach(([roleKey, roleData]) => {
-					resourceRoles.push({
-						resourceKey,
-						roleKey,
-						roleData: roleData as RoleDataFromAPI,
-					});
-				});
-			}
-
-			// Then process them in a consistent order by resource key
-			const sortedResourceRoles = resourceRoles.sort((a, b) => {
-				return a.resourceKey.localeCompare(b.resourceKey);
-			});
-
-			// Now process the sorted resource roles
-			for (const { resourceKey, roleKey, roleData } of sortedResourceRoles) {
-				// Only use double underscore for duplicates or default roles that need distinctive IDs
-				const isDuplicate = (roleKeyCount.get(roleKey) ?? 0) > 1;
-				const isDefaultRole = DEFAULT_GLOBAL_ROLES.includes(roleKey);
-
-				// Use simple key if it's unique and not a default role
-				let terraformId = roleKey;
-
-				// For duplicate roles or default roles, use resource__role format
-				if (isDuplicate || isDefaultRole || usedTerraformIds.has(roleKey)) {
-					terraformId = `${resourceKey}__${roleKey}`;
-				}
-
-				// Track the terraform ID we're using
-				usedTerraformIds.add(terraformId);
-
-				// Store the mapping for both resource-specific role key and the plain key
-				this.roleIdMap.set(`${resourceKey}:${roleKey}`, terraformId);
-
-				// For default roles, we need special handling for the tenant:admin and board:admin cases
-				if (resourceKey === 'tenant' && roleKey === 'admin') {
-					this.roleIdMap.set('tenant:admin', 'tenant__admin');
-				} else if (resourceKey === 'board' && roleKey === 'admin') {
-					this.roleIdMap.set('board:admin', 'board__admin');
-				}
-
-				// Only map the plain key if it's not a duplicate or already mapped
-				if (!isDuplicate && !this.roleIdMap.has(roleKey)) {
-					this.roleIdMap.set(roleKey, terraformId);
-				}
-
-				// Extract permissions as strings only
-				let permissions: string[] = [];
-				if (roleData.permissions && Array.isArray(roleData.permissions)) {
-					permissions = roleData.permissions.map(p => String(p));
-				}
-
-				// All resource roles depend on their resource
-				const dependencies = [`permitio_resource.${resourceKey}`];
-
-				// Add the resource role
-				validRoles.push({
-					key: roleKey,
-					terraformId,
-					name: roleData.name || roleKey,
-					resource: resourceKey,
-					permissions,
-					extends: roleData.extends?.map(e => String(e)),
-					dependencies,
-					description: roleData.description,
-					attributes: roleData.attributes,
-				});
-			}
-
-			// Now process global roles - these reference resources in their permissions
-			for (const role of roles) {
-				// Skip default global roles that already exist in the system
-				if (DEFAULT_GLOBAL_ROLES.includes(role.key)) {
-					// Still add to the ID map for role derivations
-					this.roleIdMap.set(role.key, role.key);
-					continue; // Skip exporting these roles
-				}
-
-				// Use simple key for terraform ID if it's not already used
-				let terraformId = role.key;
-
-				// If the ID is already used, prefix it with "global_"
-				if (usedTerraformIds.has(terraformId)) {
-					terraformId = `global_${role.key}`;
-				}
-
-				// Store the mapping
-				this.roleIdMap.set(role.key, terraformId);
-				usedTerraformIds.add(terraformId);
-
-				// Build dependencies for resources mentioned in permissions
-				const dependencies: string[] = [];
-
-				// For global roles, we need to ensure all resources referenced in permissions exist first
-				if (role.permissions && Array.isArray(role.permissions)) {
-					role.permissions.forEach(perm => {
-						// Check if permission has resource:action format
-						const parts = typeof perm === 'string' ? perm.split(':') : [];
-						if (parts.length === 2) {
-							const resourceKey = parts[0];
-							// Add resource as dependency if it exists
-							if (resourceMap.has(resourceKey)) {
-								const depRef = `permitio_resource.${resourceKey}`;
-								if (!dependencies.includes(depRef)) {
-									dependencies.push(depRef);
-								}
-							}
-						}
-					});
-				}
-
-				// Cast the role to our RoleFromAPI interface to access the extends property
-				const typedRole = role as unknown as RoleFromAPI;
-
-				validRoles.push({
-					key: role.key,
-					terraformId,
-					name: role.name || role.key,
-					description: role.description,
-					permissions: (role.permissions || []).map(p => String(p)),
-					extends: (typedRole.extends || []).map(e => String(e)),
-					attributes: role.attributes as Record<string, unknown> | undefined,
-					dependencies: dependencies,
-				});
-			}
-
-			// Process role extension dependencies
-			for (const role of validRoles) {
-				if (!role.extends || role.extends.length === 0) continue;
-
-				// For each extended role, add a dependency
-				for (const extendedRole of role.extends) {
-					// If this is a resource role, we need to check for the resource-specific role key
-					let extendedRoleTerraformId: string | undefined;
-
-					if (role.resource) {
-						// First check if there's a resource-specific role with this key
-						const resourceSpecificKey = `${role.resource}:${extendedRole}`;
-						extendedRoleTerraformId = this.roleIdMap.get(resourceSpecificKey);
-					}
-
-					// If we didn't find a resource-specific role, check for standalone role
-					if (!extendedRoleTerraformId) {
-						extendedRoleTerraformId = this.roleIdMap.get(extendedRole);
-					}
-
-					// If we found the role, add a dependency
-					if (extendedRoleTerraformId) {
-						const ref = `permitio_role.${extendedRoleTerraformId}`;
-						if (!role.dependencies.includes(ref)) {
-							role.dependencies.push(ref);
-						}
-					}
-				}
-			}
+			// Resolve role extension dependencies
+			const rolesWithDependencies = this.resolveRoleDependencies(allRoles);
 
 			// Render template with all processed roles
-			const result = '\n# Roles\n' + this.template({ roles: validRoles });
-			return result;
+			return '\n# Roles\n' + this.template({ roles: rolesWithDependencies });
 		} catch (error) {
 			this.warningCollector.addWarning(`Failed to export roles: ${error}`);
 			return '';
