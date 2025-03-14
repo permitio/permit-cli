@@ -18,6 +18,18 @@ interface RoleDerivationData {
 	dependencies: string[];
 }
 
+// Interface for role grant data structure
+interface RoleGrant {
+	role: string;
+	on_resource: string;
+	linked_by_relation: string;
+}
+
+// Interface for resource data structure
+interface PermitResource {
+	key: string;
+}
+
 export class RoleDerivationGenerator implements HCLGenerator {
 	name = 'role derivation';
 	private template: Handlebars.TemplateDelegate<{
@@ -61,7 +73,7 @@ export class RoleDerivationGenerator implements HCLGenerator {
 			return this.roleIdMap.get(resourceRoleKey)!;
 		}
 
-		// Then check if we have a general role mapping
+		//checks if we have a general role mapping
 		if (this.roleIdMap.has(roleKey)) {
 			return this.roleIdMap.get(roleKey)!;
 		}
@@ -150,13 +162,20 @@ export class RoleDerivationGenerator implements HCLGenerator {
 	}
 
 	// Fetch all resources
-	private async fetchResources() {
+	private async fetchResources(): Promise<PermitResource[]> {
 		try {
-			const resources = await this.permit.api.resources.list();
-			if (!Array.isArray(resources)) {
+			const resourceList = await this.permit.api.resources.list();
+			if (!Array.isArray(resourceList) || resourceList.length === 0) {
 				return [];
 			}
-			return resources;
+
+			// Convert to our simplified PermitResource interface
+			return resourceList.map(resource => ({
+				key:
+					typeof resource.key === 'string'
+						? resource.key
+						: String(resource.key),
+			}));
 		} catch (error) {
 			this.warningCollector.addWarning(`Failed to fetch resources: ${error}`);
 			return [];
@@ -164,31 +183,41 @@ export class RoleDerivationGenerator implements HCLGenerator {
 	}
 
 	// Build a derivation object from role grant data
-	private buildDerivation(
-		sourceRoleKey: string,
-		sourceResourceKey: string,
-		relationKey: string,
+	private processRoleGrant(
+		grantInput: unknown,
 		targetRoleKey: string,
 		targetResourceKey: string,
 	): RoleDerivationData | null {
+		// Convert the unknown grant to our interface
+		const grant = grantInput as RoleGrant;
+
+		if (
+			!grant ||
+			!grant.role ||
+			!grant.on_resource ||
+			!grant.linked_by_relation
+		) {
+			return null;
+		}
+
 		// Get the Terraform relation resource name
 		const relationResourceName = this.findRelationTerraformName(
-			sourceResourceKey,
+			grant.on_resource,
 			targetResourceKey,
-			relationKey,
+			grant.linked_by_relation,
 		);
 
 		if (!relationResourceName) {
 			this.warningCollector.addWarning(
-				`Could not determine relation resource name for ${sourceRoleKey} (${sourceResourceKey}) → ${targetRoleKey} (${targetResourceKey}) via ${relationKey}`,
+				`Could not determine relation resource name for ${grant.role} (${grant.on_resource}) → ${targetRoleKey} (${targetResourceKey}) via ${grant.linked_by_relation}`,
 			);
 			return null;
 		}
 
 		// Get the Terraform role IDs
 		const sourceTerraformRoleId = this.getRoleTerraformId(
-			sourceRoleKey,
-			sourceResourceKey,
+			grant.role,
+			grant.on_resource,
 		);
 		const targetTerraformRoleId = this.getRoleTerraformId(
 			targetRoleKey,
@@ -197,8 +226,8 @@ export class RoleDerivationGenerator implements HCLGenerator {
 
 		// Create a derivation ID
 		const id = this.createDerivationId(
-			sourceResourceKey,
-			sourceRoleKey,
+			grant.on_resource,
+			grant.role,
 			targetResourceKey,
 			targetRoleKey,
 		);
@@ -206,7 +235,7 @@ export class RoleDerivationGenerator implements HCLGenerator {
 		// Standard dependencies
 		const dependencies = this.createDependenciesList(
 			sourceTerraformRoleId,
-			sourceResourceKey,
+			grant.on_resource,
 			targetTerraformRoleId,
 			targetResourceKey,
 			relationResourceName,
@@ -215,7 +244,7 @@ export class RoleDerivationGenerator implements HCLGenerator {
 		return {
 			id,
 			role: sourceTerraformRoleId,
-			on_resource: sourceResourceKey,
+			on_resource: grant.on_resource,
 			to_role: targetTerraformRoleId,
 			resource: targetResourceKey,
 			linked_by: relationResourceName,
@@ -223,51 +252,31 @@ export class RoleDerivationGenerator implements HCLGenerator {
 		};
 	}
 
-	// Process a single role grant
-	private processRoleGrant(
-		grant: any,
-		targetRoleKey: string,
-		targetResourceKey: string,
-	): RoleDerivationData | null {
-		if (!grant.role || !grant.on_resource || !grant.linked_by_relation) {
-			return null;
-		}
-
-		const sourceRoleKey = grant.role;
-		const sourceResourceKey = grant.on_resource;
-		const relationKey = grant.linked_by_relation;
-
-		// Skip duplicates
-		const derivationKey = `${sourceRoleKey}:${sourceResourceKey}:${relationKey}:${targetRoleKey}:${targetResourceKey}`;
-		if (this.processedDerivations.has(derivationKey)) {
-			return null;
-		}
-
-		// Mark this derivation as processed
-		this.processedDerivations.add(derivationKey);
-
-		return this.buildDerivation(
-			sourceRoleKey,
-			sourceResourceKey,
-			relationKey,
-			targetRoleKey,
-			targetResourceKey,
-		);
-	}
-
 	// Process all role grants for a role
 	private async processRoleGrants(
-		role: any,
+		roleInput: unknown,
 		resourceKey: string,
 	): Promise<RoleDerivationData[]> {
 		const derivations: RoleDerivationData[] = [];
 
-		if (!role.key || !role.granted_to?.users_with_role?.length) {
+		// Handle as unknown first
+		const role = roleInput as {
+			key?: string;
+			granted_to?: {
+				users_with_role?: unknown[];
+			};
+		};
+
+		if (!role || !role.key || !role.granted_to?.users_with_role?.length) {
 			return derivations;
 		}
 
-		for (const grant of role.granted_to.users_with_role) {
-			const derivation = this.processRoleGrant(grant, role.key, resourceKey);
+		for (const grantData of role.granted_to.users_with_role) {
+			const derivation = this.processRoleGrant(
+				grantData,
+				role.key,
+				resourceKey,
+			);
 			if (derivation) {
 				derivations.push(derivation);
 			}
@@ -277,7 +286,9 @@ export class RoleDerivationGenerator implements HCLGenerator {
 	}
 
 	// Process a single resource
-	private async processResource(resource: any): Promise<RoleDerivationData[]> {
+	private async processResource(
+		resource: PermitResource,
+	): Promise<RoleDerivationData[]> {
 		if (!resource.key) {
 			return [];
 		}

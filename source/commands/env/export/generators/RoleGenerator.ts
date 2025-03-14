@@ -24,7 +24,7 @@ interface RoleData {
 	attributes?: Record<string, unknown>;
 }
 
-//role data structure
+// Role data structure from API
 interface RoleDataFromAPI {
 	name?: string;
 	description?: string;
@@ -33,10 +33,27 @@ interface RoleDataFromAPI {
 	attributes?: Record<string, unknown>;
 }
 
+// Interface for roles returned from API
+interface PermitRole {
+	key: string;
+	name: string;
+	description?: string;
+	permissions?: string[];
+	extends?: string[];
+	attributes?: Record<string, unknown>;
+}
+
+// Interface for resources returned from API
+interface PermitResource {
+	key: string;
+	name: string;
+	roles?: Record<string, RoleDataFromAPI>;
+}
+
 // Interface for API response data
 interface PermitData {
-	roles: any[];
-	resources: any[];
+	roles: PermitRole[];
+	resources: PermitResource[];
 }
 
 export class RoleGenerator implements HCLGenerator {
@@ -49,7 +66,7 @@ export class RoleGenerator implements HCLGenerator {
 	// Map from role key to count of occurrences
 	private roleKeyCount = new Map<string, number>();
 	// Resource map for dependency tracking
-	private resourceMap = new Map<string, any>();
+	private resourceMap = new Map<string, PermitResource>();
 
 	constructor(
 		private permit: Permit,
@@ -105,9 +122,11 @@ export class RoleGenerator implements HCLGenerator {
 			]);
 
 			// Prepare roles array and ensure it's valid
-			const roles = Array.isArray(rolesResponse) ? rolesResponse : [];
+			const roles = Array.isArray(rolesResponse)
+				? (rolesResponse as PermitRole[])
+				: [];
 			const resources = Array.isArray(resourcesResponse)
-				? resourcesResponse
+				? (resourcesResponse as PermitResource[])
 				: [];
 
 			return { roles, resources };
@@ -120,7 +139,10 @@ export class RoleGenerator implements HCLGenerator {
 	}
 
 	// Count occurrences of role keys to identify potential duplicates
-	private countRoleKeyOccurrences(roles: any[], resources: any[]): void {
+	private countRoleKeyOccurrences(
+		roles: PermitRole[],
+		resources: PermitResource[],
+	): void {
 		this.roleKeyCount.clear();
 
 		// Helper to increment the count for a key
@@ -144,7 +166,7 @@ export class RoleGenerator implements HCLGenerator {
 	}
 
 	// Build a map of resource keys to resource objects for dependency tracking
-	private buildResourceMap(resources: any[]): void {
+	private buildResourceMap(resources: PermitResource[]): void {
 		this.resourceMap.clear();
 		resources.forEach(resource => {
 			if (resource.key) {
@@ -176,7 +198,7 @@ export class RoleGenerator implements HCLGenerator {
 	}
 
 	// Process resource-specific roles
-	private processResourceRoles(resources: any[]): RoleData[] {
+	private processResourceRoles(resources: PermitResource[]): RoleData[] {
 		const resourceRoles: Array<{
 			resourceKey: string;
 			roleKey: string;
@@ -225,7 +247,7 @@ export class RoleGenerator implements HCLGenerator {
 			// Extract permissions as strings only
 			let permissions: string[] = [];
 			if (roleData.permissions && Array.isArray(roleData.permissions)) {
-				permissions = roleData.permissions.map((p: any) => String(p));
+				permissions = roleData.permissions.map((p: string) => String(p));
 			}
 
 			// All resource roles depend on their resource
@@ -238,7 +260,7 @@ export class RoleGenerator implements HCLGenerator {
 				name: roleData.name || roleKey,
 				resource: resourceKey,
 				permissions,
-				extends: roleData.extends?.map((e: any) => String(e)),
+				extends: roleData.extends?.map((e: string) => String(e)),
 				dependencies,
 				description: roleData.description,
 				attributes: roleData.attributes,
@@ -274,7 +296,7 @@ export class RoleGenerator implements HCLGenerator {
 	}
 
 	// Process global (non-resource-specific) roles
-	private processGlobalRoles(roles: any[]): RoleData[] {
+	private processGlobalRoles(roles: PermitRole[]): RoleData[] {
 		const validRoles: RoleData[] = [];
 
 		for (const role of roles) {
@@ -299,8 +321,8 @@ export class RoleGenerator implements HCLGenerator {
 				terraformId,
 				name: role.name || role.key,
 				description: role.description,
-				permissions: (role.permissions || []).map((p: any) => String(p)),
-				extends: (role.extends || []).map((e: any) => String(e)),
+				permissions: (role.permissions || []).map((p: string) => String(p)),
+				extends: (role.extends || []).map((e: string) => String(e)),
 				attributes: role.attributes as Record<string, unknown> | undefined,
 				dependencies,
 			});
