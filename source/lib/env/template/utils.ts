@@ -2,6 +2,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { TERRAFORM_PERMIT_URL } from '../../../config.js';
 import { execSync } from 'child_process';
+import { fileURLToPath } from 'url';
+
+// Manually define __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export function getFiles(): string[] {
 	const directory = 'source/templates';
