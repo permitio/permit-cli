@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
 	getFiles,
 	ApplyTemplate,
@@ -6,7 +6,7 @@ import {
 } from '../../../lib/env/template/utils.js';
 import SelectInput from 'ink-select-input';
 import { Text } from 'ink';
-
+import Spinner from 'ink-spinner'; // Import Spinner
 import { useAuth } from '../../AuthProvider.js';
 
 type Props = {
@@ -23,6 +23,7 @@ type SelectItemType = {
 export default function ApplyComponent({ apiKey, local, template }: Props) {
 	const [errorMessage, setErrorMessage] = useState('');
 	const [successMessage, setSuccessMessage] = useState('');
+	const [isLoading, setIsLoading] = useState(false);
 	const files = getFiles();
 	const { authToken } = useAuth();
 	const key = apiKey || authToken;
@@ -32,27 +33,36 @@ export default function ApplyComponent({ apiKey, local, template }: Props) {
 		value: file,
 	}));
 
-	// Function to apply template
-	const applyTemplate = async (selectedTemplate: string) => {
-		try {
-			const message = local
-				? await ApplyTemplateLocally(selectedTemplate, key)
-				: await ApplyTemplate(selectedTemplate, key);
+	// Memoized function to apply template
+	const applyTemplate = useCallback(
+		async (selectedTemplate: string) => {
+			setIsLoading(true);
 
-			if (message.startsWith('Error')) {
-				setErrorMessage(message);
-			} else {
-				setSuccessMessage(message);
+			try {
+				const message = local
+					? await ApplyTemplateLocally(selectedTemplate, key)
+					: await ApplyTemplate(selectedTemplate, key);
+
+				if (message.startsWith('Error')) {
+					setErrorMessage(message);
+				} else {
+					setSuccessMessage(message);
+				}
+			} catch (error) {
+				setErrorMessage(error instanceof Error ? error.message : String(error));
+			} finally {
+				setIsLoading(false);
 			}
-		} catch (error) {
-			setErrorMessage(error instanceof Error ? error.message : String(error));
-		}
-	};
+		},
+		[local, key],
+	); // Dependencies ensure function remains stable
 
-	// If a template is passed as a prop, apply it immediately
-	if (template) {
-		applyTemplate(template);
-	}
+	// If a template is passed as a prop, apply it once
+	useEffect(() => {
+		if (template) {
+			applyTemplate(template);
+		}
+	}, [template, applyTemplate]); // Ensures function isn't recreated unnecessarily
 
 	// Handle user selection from SelectInput
 	const handleSelect = async (item: SelectItemType) => {
@@ -61,7 +71,12 @@ export default function ApplyComponent({ apiKey, local, template }: Props) {
 
 	return (
 		<>
-			{!template && (
+			{isLoading && (
+				<Text color="cyan">
+					<Spinner type="dots" /> Applying template...
+				</Text>
+			)}
+			{!template && !isLoading && (
 				<SelectInput items={selectionValues} onSelect={handleSelect} />
 			)}
 			{errorMessage && <Text color="red">{errorMessage}</Text>}

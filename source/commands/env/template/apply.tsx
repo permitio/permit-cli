@@ -14,7 +14,7 @@ export const options = zod.object({
 		.describe(
 			option({
 				description:
-					'Optional: API Key to be used for the environemnt to apply the terraform template.',
+					'Optional: API Key to be used for the environemnt to apply the policy template.',
 			}),
 		),
 	local: zod
@@ -23,7 +23,7 @@ export const options = zod.object({
 		.describe(
 			option({
 				description:
-					'To run the Terraform command locally instead of the server (will fail if Terraform is not installed.',
+					'To run the Terraform command locally instead of the server (will fail if Terraform is not installed).',
 			}),
 		),
 	template: zod

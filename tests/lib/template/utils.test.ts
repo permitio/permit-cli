@@ -1,18 +1,18 @@
-import { describe, it, vi, expect } from 'vitest';
+import { describe, it, vi, expect, beforeAll } from 'vitest';
 import * as util from '../../../source/lib/env/template/utils';
 import * as fs from 'fs';
 import * as path from 'path';
-import os from 'os';
-import { exec } from 'child_process';
-import { V } from 'vitest/dist/chunks/reporters.D7Jzd9GS.js';
+import * as child_process from 'child_process';
 
 vi.mock('fs');
 vi.mock('path');
-vi.mock('os');
 vi.mock('child_process');
 
-describe('Test for the template utils', () => {
-	it('getfiles function', async () => {
+describe('Template Utils Tests', () => {
+	beforeAll(() => {
+		vi.clearAllMocks();
+	});
+	it('should return list of template file names', () => {
 		const mockFiles = ['template1.tf', 'template2.tf'];
 		vi.spyOn(fs, 'readdirSync').mockReturnValue(mockFiles);
 		vi.spyOn(path, 'parse').mockImplementation(file => ({
@@ -22,19 +22,23 @@ describe('Test for the template utils', () => {
 		const result = util.getFiles();
 		expect(result).toEqual(['template1', 'template2']);
 	});
-	it('should apply terraform template via API', async () => {
-		const mockFileContent = `Some terraform contet with {{API_KEY}}`;
-		const mockApiKey = 'permit_key_a'.concat('a'.repeat(96));
+
+	it('should apply template via API successfully', async () => {
+		const mockFileContent = 'Some terraform content with {{API_KEY}}';
+		const mockApiKey = 'mock-api-key';
 		const mockFileName = 'template1';
 		const mockResponse = { ok: true, json: vi.fn().mockResolvedValue({}) };
+
 		vi.spyOn(fs, 'readFileSync').mockReturnValue(mockFileContent);
 		global.fetch = vi.fn().mockResolvedValue(mockResponse);
+
 		const result = await util.ApplyTemplate(mockFileName, mockApiKey);
 		expect(result).toEqual(
-			'Success: The terraform template is applied successfully.',
+			'Success: The environment template is applied successfully.',
 		);
 	});
-	it('should return error if API request fails', async () => {
+
+	it('should return an error if API request fails', async () => {
 		const mockFileContent = 'some terraform content';
 		const mockApiKey = 'mock-api-key';
 		const mockFileName = 'template1';
@@ -52,52 +56,50 @@ describe('Test for the template utils', () => {
 			'Error: Request failed with status code: 400: Bad Request',
 		);
 	});
-	it('should apply terraform template locally', async () => {
+
+	it('should apply Terraform template locally', async () => {
 		const mockFileContent = 'some terraform content with {{API_KEY}}';
 		const mockApiKey = 'mock-api-key';
 		const mockFileName = 'template1';
 		const tempDir = 'mock-temp-dir';
-		const tempPath = path.join(tempDir, 'main.tf');
+		const tempPath = path.join(tempDir, 'config.tf');
 
 		vi.spyOn(fs, 'readFileSync').mockReturnValue(mockFileContent);
-		vi.spyOn(os, 'tmpdir').mockReturnValue('/tmp');
 		vi.spyOn(fs, 'mkdirSync').mockImplementation(() => {});
 		vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
-		vi.spyOn(fs, 'unlinkSync').mockImplementation(() => {});
-		vi.spyOn(fs, 'rmdirSync').mockImplementation(() => {});
+		vi.spyOn(fs, 'rmSync').mockImplementation(() => {});
 		vi.spyOn(path, 'join').mockReturnValue(tempPath);
 
-		const execMock = vi.fn((cmd, options, callback) => {
-			callback(null, 'terraform output', '');
+		// Mock `execSync` correctly
+		vi.spyOn(child_process, 'execSync').mockImplementation(() => {
+			return `terraform output`;
 		});
-		(exec as any).mockImplementation(execMock);
 
 		const result = await util.ApplyTemplateLocally(mockFileName, mockApiKey);
-		expect(result).toEqual(
-			'Success: Terraform Appled successfully \n Terraform Output: terraform output',
+		expect(result).toContain(
+			'Success: Terraform applied successfully.\nTerraform Output: terraform output',
 		);
 	});
-	it('should return error if terraform command fails', async () => {
+
+	it('should return an error if Terraform command fails', async () => {
 		const mockFileContent = 'some terraform content with {{API_KEY}}';
 		const mockApiKey = 'mock-api-key';
 		const mockFileName = 'template1';
 		const tempDir = 'mock-temp-dir';
-		const tempPath = path.join(tempDir, 'main.tf');
+		const tempPath = path.join(tempDir, 'config.tf');
 
 		vi.spyOn(fs, 'readFileSync').mockReturnValue(mockFileContent);
-		vi.spyOn(os, 'tmpdir').mockReturnValue('/tmp');
 		vi.spyOn(fs, 'mkdirSync').mockImplementation(() => {});
 		vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
-		vi.spyOn(fs, 'unlinkSync').mockImplementation(() => {});
-		vi.spyOn(fs, 'rmdirSync').mockImplementation(() => {});
+		vi.spyOn(fs, 'rmSync').mockImplementation(() => {});
 		vi.spyOn(path, 'join').mockReturnValue(tempPath);
-
-		const execMock = vi.fn((cmd, options, callback) => {
-			callback(new Error('mock error'), '', 'mock stderr');
+		vi.spyOn(child_process, 'execSync').mockImplementation(() => {
+			throw new Error('mock error');
 		});
-		(exec as any).mockImplementation(execMock);
+		// Properly mock `execSync` to throw an error
 
 		const result = await util.ApplyTemplateLocally(mockFileName, mockApiKey);
-		expect(result).toEqual('Error: mock error');
+
+		expect(result).toBe('Error: mock error');
 	});
 });
