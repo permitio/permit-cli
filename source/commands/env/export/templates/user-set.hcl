@@ -1,9 +1,7 @@
-# Template for user sets
 {{#each sets}}
 resource "permitio_user_set" "{{key}}" {
   key = "{{key}}"
   name = "{{name}}"
-  # Description field removed to avoid provider inconsistency issues
   conditions = jsonencode({{{formatConditions conditions}}})
 {{#if resource}}
   resource = "{{resource}}"
