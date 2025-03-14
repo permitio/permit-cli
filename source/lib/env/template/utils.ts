@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import os from 'os';
 import { TERRAFORM_PERMIT_URL } from '../../../config.js';
 import { execSync } from 'child_process';
 
