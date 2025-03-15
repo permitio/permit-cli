@@ -1,6 +1,6 @@
 import { Permit } from 'permitio';
 import { HCLGenerator, WarningCollector } from '../types.js';
-import { createSafeId } from '../utils.js';
+import { createSafeId, fetchList } from '../utils.js';
 import Handlebars, { TemplateDelegate } from 'handlebars';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
@@ -57,7 +57,11 @@ export class ResourceGenerator implements HCLGenerator {
 
 	async generateHCL(): Promise<string> {
 		try {
-			const resources = await this.permit.api.resources.list();
+			// Use the fetchList utility to get all resources with pagination
+			const resources = await fetchList(
+				params => this.permit.api.resources.list(params),
+				{},
+			);
 
 			const validResources = resources
 				.filter(resource => resource.key !== '__user')
@@ -72,6 +76,7 @@ export class ResourceGenerator implements HCLGenerator {
 				}));
 
 			if (validResources.length === 0) return '';
+
 			return '\n# Resources\n' + this.template({ resources: validResources });
 		} catch (error) {
 			console.error('Error generating HCL:', error);
@@ -84,14 +89,12 @@ export class ResourceGenerator implements HCLGenerator {
 		actions: Record<string, ActionBlockRead>,
 	): Record<string, ActionData> {
 		const transformedActions: Record<string, ActionData> = {};
-
 		for (const [key, action] of Object.entries(actions)) {
 			transformedActions[key] = {
 				name: action.name || this.capitalizeFirstLetter(key),
 				...(action.description && { description: action.description }),
 			};
 		}
-
 		return transformedActions;
 	}
 
@@ -99,7 +102,6 @@ export class ResourceGenerator implements HCLGenerator {
 		attributes: Record<string, AttributeBlockRead>,
 	): Record<string, AttributeData> {
 		const transformedAttributes: Record<string, AttributeData> = {};
-
 		for (const [key, attribute] of Object.entries(attributes)) {
 			transformedAttributes[key] = {
 				name: attribute.name || this.generateAttributeName(key),
@@ -107,7 +109,6 @@ export class ResourceGenerator implements HCLGenerator {
 				...(attribute.required && { required: attribute.required }),
 			};
 		}
-
 		return transformedAttributes;
 	}
 

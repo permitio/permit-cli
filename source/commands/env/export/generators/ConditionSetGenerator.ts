@@ -1,6 +1,6 @@
 import { Permit } from 'permitio';
 import { HCLGenerator, WarningCollector } from '../types.js';
-import { createSafeId } from '../utils.js';
+import { createSafeId, fetchList } from '../utils.js';
 import Handlebars from 'handlebars';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
@@ -107,36 +107,13 @@ export class ConditionSetGenerator implements HCLGenerator {
 				subjectType: '',
 			};
 
-			// Implement pagination to fetch all condition set rules
-			let allConditionSetRules: ConditionSetRule[] = [];
-			let currentPage = 1;
-			const perPage = 100;
-			let hasMoreResults = true;
-
-			// Fetch all pages of condition set rules
-			while (hasMoreResults) {
-				const params = {
-					...baseParams,
-					page: currentPage,
-					perPage: perPage,
-				};
-
-				const conditionSetRulesAPI = this.permit.api
-					.conditionSetRules as unknown as ConditionSetRulesAPI;
-				const pageResults = await conditionSetRulesAPI.list(params);
-
-				if (pageResults && pageResults.length > 0) {
-					allConditionSetRules = [...allConditionSetRules, ...pageResults];
-					// Check if we got a full page of results; if not, we've reached the end
-					if (pageResults.length < perPage) {
-						hasMoreResults = false;
-					} else {
-						currentPage++;
-					}
-				} else {
-					hasMoreResults = false;
-				}
-			}
+			// Use the fetchList utility function to get all condition set rules with pagination
+			const conditionSetRulesAPI = this.permit.api
+				.conditionSetRules as unknown as ConditionSetRulesAPI;
+			const allConditionSetRules = await fetchList(
+				params => conditionSetRulesAPI.list(params),
+				baseParams,
+			);
 
 			// Get all condition sets first, then filter by type
 			const allConditionSets = await this.permit.api.conditionSets.list();

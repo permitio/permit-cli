@@ -1,6 +1,6 @@
 import { Permit } from 'permitio';
 import { HCLGenerator, WarningCollector } from '../types.js';
-import { createSafeId } from '../utils.js';
+import { createSafeId, fetchList } from '../utils.js';
 import Handlebars, { TemplateDelegate } from 'handlebars';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
@@ -51,7 +51,11 @@ export class ResourceSetGenerator implements HCLGenerator {
 
 	private async fetchResourceAttributes(): Promise<void> {
 		try {
-			const resources = await this.permit.api.resources.list();
+			const resources = await fetchList(
+				params => this.permit.api.resources.list(params),
+				{},
+			);
+
 			resources.forEach(resource => {
 				// Skip the built-in user resource
 				if (resource.key === '__user') return;
@@ -82,7 +86,10 @@ export class ResourceSetGenerator implements HCLGenerator {
 		try {
 			// First fetch resource data to build maps
 			await this.fetchResourceAttributes();
-			const resourceSets = await this.permit.api.conditionSets.list({});
+			const resourceSets = await fetchList(
+				params => this.permit.api.conditionSets.list(params),
+				{},
+			);
 
 			const validSets = resourceSets
 				.filter(set => set.type === 'resourceset' && set.resource_id)

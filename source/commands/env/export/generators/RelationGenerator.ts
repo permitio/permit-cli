@@ -1,6 +1,6 @@
 import { Permit } from 'permitio';
 import { HCLGenerator, WarningCollector } from '../types.js';
-import { createSafeId } from '../utils.js';
+import { createSafeId, fetchList } from '../utils.js';
 import Handlebars from 'handlebars';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
@@ -15,15 +15,6 @@ const currentDirPath = dirname(currentFilePath);
 function unescapeHtml(text: string | undefined): string {
 	if (!text) return '';
 	return he.decode(text);
-}
-
-interface PaginatedResponse<T> {
-	data: T[];
-	pagination?: {
-		total_count?: number;
-		page?: number;
-		per_page?: number;
-	};
 }
 
 interface RelationData {
@@ -80,8 +71,10 @@ export class RelationGenerator implements HCLGenerator {
 		this.relationIdMap.clear();
 
 		try {
-			// Get all resources first
-			const resources = await this.permit.api.resources.list();
+			const resources = await fetchList(
+				params => this.permit.api.resources.list(params),
+				{},
+			);
 
 			// Build resource map for faster lookups
 			resources.forEach(resource => {
@@ -94,17 +87,14 @@ export class RelationGenerator implements HCLGenerator {
 				if (!resource.key) continue;
 
 				try {
-					// Get relations for this resource
-					const relationsResponse =
-						await this.permit.api.resourceRelations.list({
-							resourceKey: resource.key,
-						});
-
-					// Handle both array and paginated response cases
-					const resourceRelations = Array.isArray(relationsResponse)
-						? relationsResponse
-						: (relationsResponse as PaginatedResponse<RelationRead>)?.data ||
-							[];
+					const resourceRelations = await fetchList(
+						params =>
+							this.permit.api.resourceRelations.list({
+								...params,
+								resourceKey: resource.key,
+							}),
+						{},
+					);
 
 					for (const relation of resourceRelations) {
 						if (
