@@ -53,7 +53,7 @@ export interface PaginatedResponse<T> {
 /**
  * Generic utility to fetch all pages of results from any list endpoint
  */
-export async function fetchList<T, P extends Record<string, any>>(
+export async function fetchList<T, P extends Record<string, unknown>>(
 	listFunction: (params: P) => Promise<T[] | PaginatedResponse<T>>,
 	baseParams: P,
 	page: number = 1,
