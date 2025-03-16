@@ -64,16 +64,19 @@ describe('Template Utils Tests', () => {
 		const tempDir = 'mock-temp-dir';
 		const tempPath = path.join(tempDir, 'config.tf');
 
+		// Mock filesystem operations
 		vi.spyOn(fs, 'readFileSync').mockReturnValue(mockFileContent);
 		vi.spyOn(fs, 'mkdirSync').mockImplementation(() => {});
 		vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
 		vi.spyOn(fs, 'rmSync').mockImplementation(() => {});
 		vi.spyOn(path, 'join').mockReturnValue(tempPath);
 
-		// Mock `execSync` correctly
-		vi.spyOn(child_process, 'execSync').mockImplementation(() => {
-			return `terraform output`;
-		});
+		// Mock `exec` as an async function
+		vi.spyOn(child_process, 'exec').mockImplementation(
+			(cmd, options, callback) => {
+				callback(null, 'terraform output', ''); // Simulate successful execution
+			},
+		);
 
 		const result = await util.ApplyTemplateLocally(mockFileName, mockApiKey);
 		expect(result).toContain(
@@ -88,18 +91,23 @@ describe('Template Utils Tests', () => {
 		const tempDir = 'mock-temp-dir';
 		const tempPath = path.join(tempDir, 'config.tf');
 
+		// Mock filesystem operations
 		vi.spyOn(fs, 'readFileSync').mockReturnValue(mockFileContent);
 		vi.spyOn(fs, 'mkdirSync').mockImplementation(() => {});
 		vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
 		vi.spyOn(fs, 'rmSync').mockImplementation(() => {});
 		vi.spyOn(path, 'join').mockReturnValue(tempPath);
-		vi.spyOn(child_process, 'execSync').mockImplementation(() => {
-			throw new Error('mock error');
-		});
-		// Properly mock `execSync` to throw an error
 
-		const result = await util.ApplyTemplateLocally(mockFileName, mockApiKey);
-
-		expect(result).toBe('Error: mock error');
+		// Mock `exec` to simulate failure
+		vi.spyOn(child_process, 'exec').mockImplementation(
+			(cmd, options, callback) => {
+				callback(Error('mock error'), '', 'mock error'); // Simulate failure
+			},
+		);
+		try {
+			const _ = await util.ApplyTemplateLocally(mockFileName, mockApiKey);
+		} catch (res) {
+			expect(res).toBe('Error: mock error');
+		}
 	});
 });

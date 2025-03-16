@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { TERRAFORM_PERMIT_URL } from '../../../config.js';
-import { execSync } from 'child_process';
+import { exec } from 'child_process';
 import { fileURLToPath } from 'url';
 
 // Manually define __dirname
@@ -53,6 +53,7 @@ export async function ApplyTemplateLocally(
 ): Promise<string> {
 	const tempDir = `temp-${Math.random().toString(36).substring(7)}`;
 	const TF_File = path.join(__dirname, `${tempDir}/config.tf`);
+	const tempDirPath = path.join(__dirname, tempDir);
 
 	try {
 		const tfContent = getFileContent(fileName).replace(
@@ -65,15 +66,21 @@ export async function ApplyTemplateLocally(
 		}
 		fs.writeFileSync(TF_File, tfContent, 'utf-8');
 
-		const applyOutput = execSync(
-			'terraform init && terraform apply --auto-approve',
-			{
-				cwd: path.join(__dirname, tempDir),
-				stdio: 'pipe',
-			},
-		);
-
-		return `Success: Terraform applied successfully.\nTerraform Output: ${applyOutput}`;
+		return new Promise((resolve, reject) => {
+			exec(
+				'terraform init && terraform apply --auto-approve',
+				{ cwd: tempDirPath },
+				(error, stdout, stderr) => {
+					if (error) {
+						reject(`Error: ${stderr || error.message}`);
+					} else {
+						resolve(
+							`Success: Terraform applied successfully.\nTerraform Output: ${stdout}`,
+						);
+					}
+				},
+			);
+		});
 	} catch (error) {
 		return `Error: ${error instanceof Error ? error.message : (error as string)}`;
 	} finally {

@@ -64,6 +64,7 @@ export default function ApplyComponent({ local, template }: Props) {
 
 	// Handle user selection from SelectInput
 	const handleSelect = async (item: SelectItemType) => {
+		setIsLoading(true);
 		await applyTemplate(item.value);
 	};
 
@@ -78,7 +79,10 @@ export default function ApplyComponent({ local, template }: Props) {
 			) : successMessage ? (
 				<Text color="green">{successMessage}</Text>
 			) : !template ? (
-				<SelectInput items={selectionValues} onSelect={handleSelect} />
+				<>
+					<Text>Select Template </Text>
+					<SelectInput items={selectionValues} onSelect={handleSelect} />
+				</>
 			) : null}
 		</>
 	);
