@@ -68,7 +68,7 @@ export async function ApplyTemplateLocally(
 		const applyOutput = execSync(
 			'terraform init && terraform apply --auto-approve',
 			{
-				cwd: tempDir,
+				cwd: path.join(__dirname, tempDir),
 				stdio: 'pipe',
 			},
 		);
