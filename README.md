@@ -46,6 +46,7 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
   - `copy` - copy a Permit environment with its policies to another environment
   - `member` - add and assign roles to members in Permit
   - `select` - select a different active Permit.io environment
+  - `export` - export environment configurations to different formats
 - `opa` - a collection of commands for better OPA experience
   - `policy` - print the available policies of an active OPA instance
 - `gitops create github` - configure Permit environment to use [GitOps flow](https://docs.permit.io/integrations/gitops/overview/)
@@ -178,6 +179,33 @@ This command will let you select a different active Permit.io environment. This 
 
 ```bash
 $ permit env select --key permit_key_.........
+```
+
+### `env export terraform`
+
+This command exports your Permit environment configuration as a Terraform HCL file. This is useful for users who want to start working with Terraform after configuring their Permit settings through the UI or API. The command export all environment content (resources, roles, user sets, resource sets, condition sets) in the Permit Terraform provider format.
+
+Options
+
+* key <string> (Optional) - a Permit API key to authenticate the operation. If not provided, the command will use the AuthProvider to get the API key you logged in with.
+
+* file <string> (Optional) - a file path where the exported HCL should be saved. If not provided, the output will be printed to the console.
+
+### Example
+
+### Using the permit key
+```bash
+$ permit env export terraform --key permit_key_.......... --file permit-config.tf
+```
+
+### With login session
+```bash
+$ permit env export terraform --file permit-config.tf
+```
+
+### output configuration to console 
+```bash
+permit env export terraform
 ```
 
 ---
