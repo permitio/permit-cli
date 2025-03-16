@@ -41,15 +41,11 @@ type Props = {
 	readonly options: zInfer<typeof options>;
 };
 
-export default function Apply({ options: { key, local, template } }: Props) {
+export default function Apply({ options: { apiKey, local, template } }: Props) {
 	return (
 		<>
 			<AuthProvider permit_key={apiKey} scope={'environment'}>
-				<ApplyComponent
-					apiKey={key}
-					local={local}
-					template={template}
-				></ApplyComponent>
+				<ApplyComponent local={local} template={template}></ApplyComponent>
 			</AuthProvider>
 		</>
 	);

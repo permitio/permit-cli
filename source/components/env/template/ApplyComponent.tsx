@@ -10,7 +10,6 @@ import Spinner from 'ink-spinner'; // Import Spinner
 import { useAuth } from '../../AuthProvider.js';
 
 type Props = {
-	apiKey?: string;
 	local?: boolean;
 	template?: string;
 };
@@ -20,13 +19,12 @@ type SelectItemType = {
 	value: string;
 };
 
-export default function ApplyComponent({ apiKey, local, template }: Props) {
+export default function ApplyComponent({ local, template }: Props) {
 	const [errorMessage, setErrorMessage] = useState('');
 	const [successMessage, setSuccessMessage] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
 	const files = getFiles();
-	const { authToken } = useAuth();
-	const key = apiKey || authToken;
+	const { authToken: key } = useAuth();
 
 	const selectionValues = files.map(file => ({
 		label: file,

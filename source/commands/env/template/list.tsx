@@ -24,7 +24,7 @@ type Props = {
 	readonly options: zInfer<typeof options>;
 };
 
-export default function List({ options: { key } }: Props) {
+export default function List({ options: { apiKey } }: Props) {
 	return (
 		<>
 			<AuthProvider permit_key={apiKey} scope={'environment'}>

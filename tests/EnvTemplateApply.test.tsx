@@ -62,7 +62,7 @@ vi.mock('../source/hooks/useApiKeyApi', async () => {
 
 describe('Apply Command', () => {
 	it('Should display the values', async () => {
-		const { stdout } = render(<Apply options={{ key: demoPermitKey }}></Apply>);
+		const { stdout } = render(<Apply options={{ apiKey: demoPermitKey }}></Apply>);
 		await delay(50);
 		expect(stdout.lastFrame()).contains('❯ fga-tradeoffs\n');
 		expect(stdout.lastFrame()).contains('mesa-verde-banking-demo');
