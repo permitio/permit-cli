@@ -7,9 +7,9 @@ export enum MethodE {
 }
 
 /**
- * Type definition for API responses.
+ * Generic fetch wrapper with consistent error handling and type safety
  */
-interface FetchResponse<T = unknown> {
+export interface FetchResponse<T = unknown> {
 	success: boolean;
 	data?: T;
 	error?: string;
@@ -26,7 +26,7 @@ const isBodyRequired = (method: MethodE): boolean => {
 };
 
 /**
- * Utility function to perform API requests with proper error handling.
+ * Centralized fetch utility - single point for HTTP request configuration
  */
 export async function fetchUtil<T>(
 	url: string,
@@ -35,6 +35,7 @@ export async function fetchUtil<T>(
 	headers?: Record<string, string>,
 	body?: object,
 ): Promise<FetchResponse<T>> {
+	// Consistent error handling across all API calls
 	try {
 		const response = await fetch(url, {
 			method,
