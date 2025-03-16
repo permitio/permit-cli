@@ -69,16 +69,17 @@ export default function ApplyComponent({ local, template }: Props) {
 
 	return (
 		<>
-			{isLoading && (
+			{isLoading ? (
 				<Text color="cyan">
 					<Spinner type="dots" /> Applying template...
 				</Text>
-			)}
-			{!template && !isLoading && (
+			) : errorMessage ? (
+				<Text color="red">{errorMessage}</Text>
+			) : successMessage ? (
+				<Text color="green">{successMessage}</Text>
+			) : !template ? (
 				<SelectInput items={selectionValues} onSelect={handleSelect} />
-			)}
-			{errorMessage && <Text color="red">{errorMessage}</Text>}
-			{successMessage && <Text color="green">{successMessage}</Text>}
+			) : null}
 		</>
 	);
 }

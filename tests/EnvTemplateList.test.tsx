@@ -62,7 +62,9 @@ vi.mock('../source/hooks/useApiKeyApi', async () => {
 
 describe('Apply Command', () => {
 	it('Should display the values', async () => {
-		const { stdout } = render(<List options={{ apiKey: demoPermitKey }}></List>);
+		const { stdout } = render(
+			<List options={{ apiKey: demoPermitKey }}></List>,
+		);
 		await delay(50);
 		expect(stdout.lastFrame()).contains('Templates List');
 		expect(stdout.lastFrame()).contains('• fga-tradeoffs');
