@@ -187,23 +187,26 @@ This command exports your Permit environment configuration as a Terraform HCL fi
 
 Options
 
-* key <string> (Optional) - a Permit API key to authenticate the operation. If not provided, the command will use the AuthProvider to get the API key you logged in with.
+- key <string> (Optional) - a Permit API key to authenticate the operation. If not provided, the command will use the AuthProvider to get the API key you logged in with.
 
-* file <string> (Optional) - a file path where the exported HCL should be saved. If not provided, the output will be printed to the console.
+- file <string> (Optional) - a file path where the exported HCL should be saved. If not provided, the output will be printed to the console.
 
 ### Example
 
 ### Using the permit key
+
 ```bash
 $ permit env export terraform --key permit_key_.......... --file permit-config.tf
 ```
 
 ### With login session
+
 ```bash
 $ permit env export terraform --file permit-config.tf
 ```
 
-### output configuration to console 
+### output configuration to console
+
 ```bash
 permit env export terraform
 ```
