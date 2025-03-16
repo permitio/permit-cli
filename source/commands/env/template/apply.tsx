@@ -8,7 +8,7 @@ import ApplyComponent from '../../../components/env/template/ApplyComponent.js';
 export const description = 'A apply command to run the TF file';
 
 export const options = zod.object({
-	key: zod
+	apiKey: zod
 		.string()
 		.optional()
 		.describe(
@@ -44,7 +44,7 @@ type Props = {
 export default function Apply({ options: { key, local, template } }: Props) {
 	return (
 		<>
-			<AuthProvider permit_key={key} scope={'environment'}>
+			<AuthProvider permit_key={apiKey} scope={'environment'}>
 				<ApplyComponent
 					apiKey={key}
 					local={local}

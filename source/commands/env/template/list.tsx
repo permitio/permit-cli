@@ -9,7 +9,7 @@ export const description =
 	'A simple command which lists all the terraform templates available.';
 
 export const options = zod.object({
-	key: zod
+	apiKey: zod
 		.string()
 		.optional()
 		.describe(
@@ -27,7 +27,7 @@ type Props = {
 export default function List({ options: { key } }: Props) {
 	return (
 		<>
-			<AuthProvider permit_key={key} scope={'environment'}>
+			<AuthProvider permit_key={apiKey} scope={'environment'}>
 				<ListComponent />
 			</AuthProvider>
 		</>
