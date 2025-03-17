@@ -36,21 +36,21 @@ app.post('/apply', (req, res) => {
 			return res.status(400).json({ error: 'API Key is required' });
 		}
 		generateTfFile(req.body, apiKey);
-      const { stdout, stderr } = execSync(
-        'terraform init && terraform apply -auto-approve',
-        { cwd: `${__dirname}/${tempDir}` }
-      );
-      if (stderr) {
-        res.status(500).json({ error: stderr });
-      }
-      res.json({ message: 'Terraform successful', output: stdout });
+		const { stdout, stderr } = execSync(
+			'terraform init && terraform apply -auto-approve',
+			{ cwd: `${__dirname}/${tempDir}` },
+		);
+		if (stderr) {
+			res.status(500).json({ error: stderr });
+		}
+		res.json({ message: 'Terraform successful', output: stdout });
 	} catch (error) {
 		res.status(400).json({ error: error.message });
 	} finally {
-    // Remove the temp directory
-    fs.rmSync(`${__dirname}/${tempDir}`, { recursive: true });
-    console.log('APICALL COMPLETED'); 
-  }
+		// Remove the temp directory
+		fs.rmSync(`${__dirname}/${tempDir}`, { recursive: true });
+		console.log('APICALL COMPLETED');
+	}
 });
 
 const PORT = 3000;

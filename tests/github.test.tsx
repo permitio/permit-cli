@@ -8,7 +8,6 @@ import delay from 'delay';
 import { vi, describe, it, expect } from 'vitest';
 import { useProjectAPI } from '../source/hooks/useProjectAPI.js';
 import { usePolicyGitReposApi } from '../source/hooks/usePolicyGitReposApi.js';
-
 import * as keytar from 'keytar';
 
 vi.mock('keytar', () => {

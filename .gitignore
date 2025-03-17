@@ -9,6 +9,9 @@ coverage
 # Local .terraform directories
 **/.terraform/*
 *.tf
+!templates/
+!templates/*.tf
+
 
 # .tfstate files
 *.tfstate
