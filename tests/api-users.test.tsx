@@ -20,17 +20,38 @@ vi.mock('keytar', () => {
 	return { ...keytar, default: keytar };
 });
 
-vi.mock('../source/hooks/useApiKeyApi.js', () => ({
-	useApiKeyApi: vi.fn(() => ({
-		validateApiKeyScope: vi.fn(),
-		getProjectEnvironmentApiKey: vi.fn(),
-		getApiKeyScope: vi.fn(),
-		getApiKeyList: vi.fn(),
-		getApiKeyById: vi.fn(),
-		validateApiKey: vi.fn(),
-		createApiKey: vi.fn(),
-	})),
-}));
+vi.mock('../source/hooks/useUnauthenticatedApi', async() => {
+	const original = await vi.importActual('../source/hooks/useUnauthenticatedApi');
+
+	return {
+		...original,
+		useUnauthenticatedApi: () => ({
+			getApiKeyScope: vi.fn().mockResolvedValue({
+				response: {
+					environment_id: 'env1',
+					project_id: 'proj1',
+					organization_id: 'org1',
+				},
+				error: null,
+				status: 200,
+			}),
+			getProjectEnvironmentApiKey: vi.fn().mockResolvedValue({
+				response: { secret: 'test-secret' },
+				error: null,
+			}),
+			validateApiKeyScope: vi.fn().mockResolvedValue({
+				valid: true,
+				scope: {
+					environment_id: 'env1',
+					project_id: 'proj1',
+					organization_id: 'org1',
+				},
+				error: null,
+			}),
+		}),
+	};
+});
+
 
 vi.mock('../source/lib/auth.js', async () => {
 	const original = await vi.importActual('../source/lib/auth.js');
@@ -68,25 +89,25 @@ describe('API Users List Command', () => {
 			}),
 		});
 
-		vi.mocked(useApiKeyApi).mockReturnValue({
-			validateApiKeyScope: vi.fn(() =>
-				Promise.resolve({
-					valid: true,
-					scope: {
-						project_id: 'proj1',
-						environment_id: 'env1',
-						organization_id: 'org1',
-					},
-					error: null,
-				}),
-			),
-			getProjectEnvironmentApiKey: vi.fn(),
-			getApiKeyScope: vi.fn(),
-			getApiKeyList: vi.fn(),
-			getApiKeyById: vi.fn(),
-			validateApiKey: vi.fn(),
-			createApiKey: vi.fn(),
-		});
+		// vi.mocked(useUnauthenticatedApi).mockReturnValue({
+		// 	validateApiKeyScope: vi.fn(() =>
+		// 		Promise.resolve({
+		// 			valid: true,
+		// 			scope: {
+		// 				project_id: 'proj1',
+		// 				environment_id: 'env1',
+		// 				organization_id: 'org1',
+		// 			},
+		// 			error: null,
+		// 		}),
+		// 	),
+		// 	getProjectEnvironmentApiKey: vi.fn(),
+		// 	getApiKeyScope: vi.fn(),
+		// 	getApiKeyList: vi.fn(),
+		// 	getApiKeyById: vi.fn(),
+		// 	validateApiKey: vi.fn(),
+		// 	createApiKey: vi.fn(),
+		// });
 
 		const options = {
 			apiKey: demoPermitKey,
@@ -109,25 +130,25 @@ describe('API Users List Command', () => {
 			text: async () => 'Failed to fetch users',
 		});
 
-		vi.mocked(useApiKeyApi).mockReturnValue({
-			validateApiKeyScope: vi.fn(() =>
-				Promise.resolve({
-					valid: true,
-					scope: {
-						project_id: 'proj1',
-						environment_id: 'env1',
-						organization_id: 'org1',
-					},
-					error: null,
-				}),
-			),
-			getProjectEnvironmentApiKey: vi.fn(),
-			getApiKeyScope: vi.fn(),
-			getApiKeyList: vi.fn(),
-			getApiKeyById: vi.fn(),
-			validateApiKey: vi.fn(),
-			createApiKey: vi.fn(),
-		});
+		// vi.mocked(useUnauthenticatedApi).mockReturnValue({
+		// 	validateApiKeyScope: vi.fn(() =>
+		// 		Promise.resolve({
+		// 			valid: true,
+		// 			scope: {
+		// 				project_id: 'proj1',
+		// 				environment_id: 'env1',
+		// 				organization_id: 'org1',
+		// 			},
+		// 			error: null,
+		// 		}),
+		// 	),
+		// 	getProjectEnvironmentApiKey: vi.fn(),
+		// 	getApiKeyScope: vi.fn(),
+		// 	getApiKeyList: vi.fn(),
+		// 	getApiKeyById: vi.fn(),
+		// 	validateApiKey: vi.fn(),
+		// 	createApiKey: vi.fn(),
+		// });
 
 		const options = {
 			apiKey: demoPermitKey,
@@ -159,26 +180,6 @@ describe('API Users Commands', () => {
 				}),
 			});
 
-			vi.mocked(useApiKeyApi).mockReturnValue({
-				validateApiKeyScope: vi.fn(() =>
-					Promise.resolve({
-						valid: true,
-						scope: {
-							project_id: 'proj1',
-							environment_id: 'env1',
-							organization_id: 'org1',
-						},
-						error: null,
-					}),
-				),
-				getProjectEnvironmentApiKey: vi.fn(),
-				getApiKeyScope: vi.fn(),
-				getApiKeyList: vi.fn(),
-				getApiKeyById: vi.fn(),
-				validateApiKey: vi.fn(),
-				createApiKey: vi.fn(),
-			});
-
 			const options = {
 				apiKey: demoPermitKey,
 				user: 'user1',
@@ -201,26 +202,6 @@ describe('API Users Commands', () => {
 				json: async () => ({
 					success: true,
 				}),
-			});
-
-			vi.mocked(useApiKeyApi).mockReturnValue({
-				validateApiKeyScope: vi.fn(() =>
-					Promise.resolve({
-						valid: true,
-						scope: {
-							project_id: 'proj1',
-							environment_id: 'env1',
-							organization_id: 'org1',
-						},
-						error: null,
-					}),
-				),
-				getProjectEnvironmentApiKey: vi.fn(),
-				getApiKeyScope: vi.fn(),
-				getApiKeyList: vi.fn(),
-				getApiKeyById: vi.fn(),
-				validateApiKey: vi.fn(),
-				createApiKey: vi.fn(),
 			});
 
 			const options = {

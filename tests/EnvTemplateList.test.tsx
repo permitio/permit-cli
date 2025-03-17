@@ -2,9 +2,6 @@ import React from 'react';
 import { render } from 'ink-testing-library';
 import List from '../source/commands/env/template/list.js';
 import { vi, describe, it, expect } from 'vitest';
-import { loadAuthToken } from '../source/lib/auth.js';
-import { useEnvironmentApi } from '../source/hooks/useEnvironmentApi.js';
-import { useApiKeyApi } from '../source/hooks/useApiKeyApi.js';
 import delay from 'delay';
 
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
@@ -29,11 +26,13 @@ vi.mock('../source/lib/auth.js', async () => {
 vi.mock('../source/hooks/useEnvironmentApi.js', () => ({
 	useEnvironmentApi: vi.fn(),
 }));
-vi.mock('../source/hooks/useApiKeyApi', async () => {
-	const original = await vi.importActual('../source/hooks/useApiKeyApi');
+
+vi.mock('../source/hooks/useUnauthenticatedApi', async () => {
+	const original = await vi.importActual('../source/hooks/useUnauthenticatedApi');
+
 	return {
 		...original,
-		useApiKeyApi: () => ({
+		useUnauthenticatedApi: () => ({
 			getApiKeyScope: vi.fn().mockResolvedValue({
 				response: {
 					environment_id: 'env1',

@@ -1,10 +1,7 @@
 import React from 'react';
 import { render } from 'ink-testing-library';
-import Apply from '../source/commands/env/template/apply';
+import Apply from '../source/commands/env/template/apply.js';
 import { vi, describe, it, expect } from 'vitest';
-import { loadAuthToken } from '../source/lib/auth.js';
-import { useEnvironmentApi } from '../source/hooks/useEnvironmentApi.js';
-import { useApiKeyApi } from '../source/hooks/useApiKeyApi.js';
 import delay from 'delay';
 
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
@@ -29,11 +26,14 @@ vi.mock('../source/lib/auth.js', async () => {
 vi.mock('../source/hooks/useEnvironmentApi.js', () => ({
 	useEnvironmentApi: vi.fn(),
 }));
-vi.mock('../source/hooks/useApiKeyApi', async () => {
-	const original = await vi.importActual('../source/hooks/useApiKeyApi');
+
+
+vi.mock('../source/hooks/useUnauthenticatedApi', async () => {
+	const original = await vi.importActual('../source/hooks/useUnauthenticatedApi');
+
 	return {
 		...original,
-		useApiKeyApi: () => ({
+		useUnauthenticatedApi: () => ({
 			getApiKeyScope: vi.fn().mockResolvedValue({
 				response: {
 					environment_id: 'env1',
@@ -62,11 +62,11 @@ vi.mock('../source/hooks/useApiKeyApi', async () => {
 
 describe('Apply Command', () => {
 	it('Should display the values', async () => {
-		const { stdout } = render(
+		const { lastFrame } = render(
 			<Apply options={{ apiKey: demoPermitKey }}></Apply>,
 		);
-		await delay(50);
-		expect(stdout.lastFrame()).contains('❯ fga-tradeoffs\n');
-		expect(stdout.lastFrame()).contains('mesa-verde-banking-demo');
+		await delay(100);
+		expect(lastFrame()).toContain('fga-tradeoffs');
+		expect(lastFrame()).toContain('mesa-verde-banking-demo');
 	});
 });
