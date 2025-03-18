@@ -4,6 +4,7 @@
 		"jsx": "react",
 		"moduleResolution": "node16",
 		"module": "Node16",
+		"strict": true,
 		"outDir": "dist"
 	},
 	"include": ["source"],

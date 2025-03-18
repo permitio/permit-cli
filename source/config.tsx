@@ -16,3 +16,6 @@ export const AUTH_REDIRECT_URI = `http://${AUTH_REDIRECT_HOST}:${AUTH_REDIRECT_P
 export const AUTH_PERMIT_DOMAIN = 'app.permit.io';
 export const AUTH_API_URL = 'https://api.permit.io/v1/';
 export const AUTH_PERMIT_URL = 'https://auth.permit.io';
+
+export const TERRAFORM_PERMIT_URL =
+	'https://permit-cli-terraform.up.railway.app';
