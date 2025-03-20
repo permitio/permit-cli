@@ -17,6 +17,13 @@ type Environment = {
 	email_configuration: string;
 };
 
+type CreateEnvironmentParams = {
+  name: string;
+  key: string;
+  description?: string;
+  settings?: Record<string, unknown>;
+};
+
 export const useEnvironmentApi = () => {
 	const getEnvironments = async (
 		projectId: string,
@@ -59,11 +66,42 @@ export const useEnvironmentApi = () => {
 		);
 	};
 
+	const createEnvironment = async (
+		projectId: string,
+		accessToken: string,
+		cookie: string | null,
+		params: CreateEnvironmentParams,
+	) => {
+		return await apiCall<Environment>(
+			`v2/projects/${projectId}/envs`,
+			accessToken,
+			cookie ?? '',
+			'POST',
+			JSON.stringify(params),
+		);
+	};
+
+	const deleteEnvironment = async (
+		projectId: string,
+		environmentId: string,
+		accessToken: string,
+		cookie?: string | null,
+	) => {
+		return await apiCall(
+			`v2/projects/${projectId}/envs/${environmentId}`,
+			accessToken,
+			cookie ?? '',
+			'DELETE',
+		);
+	};
+
 	return useMemo(
 		() => ({
 			getEnvironments,
 			getEnvironment,
 			copyEnvironment,
+			createEnvironment,
+			deleteEnvironment,
 		}),
 		[],
 	);
