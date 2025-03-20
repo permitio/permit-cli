@@ -247,6 +247,7 @@ The `useClient` hook exposes three methods to make api calls
 All three of them are used in the same way, albeit having different use cases.
    1. Syntax:
       ```tsx
+      const { authenticatedApiClient } = useClient();
       await authenticatedApiClient().POST(`path/xyz/{dynamic}`, // path
       	{ dynamic: 'dynamic_value' }, // path_values
       	{ key: value, uwu: owo}, // body
@@ -255,6 +256,7 @@ All three of them are used in the same way, albeit having different use cases.
       ```
    2. Example:
 	   ```tsx
+       const { authenticatedApiClient } = useClient();
 	   await authenticatedApiClient().GET(`/v2/api-key/{proj_id}/{env_id}`,
    		  { env_id: environmentId }
    	   )
