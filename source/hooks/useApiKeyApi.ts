@@ -40,16 +40,6 @@ export const useApiKeyApi = () => {
 		},
 		[authenticatedApiClient, unAuthenticatedApiClient],
 	);
-	// const getApiKeyScope = useCallback(
-	// 	async (notInAuthContext?: boolean, accessToken?: string) => {
-	// 		return accessToken
-	// 			? await unAuthenticatedApiClient(accessToken, undefined).GET(
-	// 					`/v2/api-key/scope`,
-	// 				)
-	// 			: await authenticatedApiClient().GET(`/v2/api-key/scope`);
-	// 	},
-	// 	[authenticatedApiClient, unAuthenticatedApiClient],
-	// );
 
 	const getApiKeyList = useCallback(
 		async (

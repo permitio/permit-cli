@@ -10,7 +10,6 @@ type Props = {
 	cookie?: string | null;
 	onComplete: (project: ActiveState) => void;
 	onError: (error: string) => void;
-	// notInAuthContext?: boolean;
 };
 
 const SelectProject: React.FC<Props> = ({
@@ -18,7 +17,6 @@ const SelectProject: React.FC<Props> = ({
 	cookie,
 	onComplete,
 	onError,
-	// notInAuthContext,
 }) => {
 	const [projects, setProjects] = useState<ActiveState[]>([]);
 	const [loading, setLoading] = useState(true);

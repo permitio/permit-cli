@@ -35,13 +35,11 @@ type Props = {
 		environment: ActiveState,
 		secret: string,
 	) => void;
-	notInAuthContext?: boolean;
 };
 
 export default function Login({
 	options: { key, workspace },
 	loginSuccess,
-	notInAuthContext = true,
 }: Props) {
 	const [state, setState] = useState<'login' | 'signup' | 'env' | 'done'>(
 		'login',
@@ -97,12 +95,7 @@ export default function Login({
 	return (
 		<>
 			{state == 'login' && (
-				<LoginFlow
-					apiKey={key}
-					onSuccess={onLoginSuccess}
-					onError={setError}
-					// notInAuthContext={notInAuthContext}
-				/>
+				<LoginFlow apiKey={key} onSuccess={onLoginSuccess} onError={setError} />
 			)}
 			{state === 'env' && (
 				<EnvironmentSelection
@@ -111,7 +104,6 @@ export default function Login({
 					onComplete={onEnvironmentSelectSuccess}
 					onError={setError}
 					workspace={workspace}
-					// notInAuthContext={notInAuthContext}
 				/>
 			)}
 			{state === 'signup' && (
@@ -120,7 +112,6 @@ export default function Login({
 						accessToken={accessToken}
 						cookie={cookie}
 						onSuccess={onSignupSuccess}
-						notInAuthContext={notInAuthContext}
 					/>
 				</>
 			)}

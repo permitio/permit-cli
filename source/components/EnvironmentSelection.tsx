@@ -24,7 +24,6 @@ type Props = {
 		secret: string,
 	) => void;
 	onError: (error: string) => void;
-	// notInAuthContext?: boolean;
 };
 
 const EnvironmentSelection: React.FC<Props> = ({
@@ -33,7 +32,6 @@ const EnvironmentSelection: React.FC<Props> = ({
 	onComplete,
 	onError,
 	workspace,
-	// notInAuthContext,
 }) => {
 	const defaultActiveState: ActiveState = {
 		label: '',
@@ -188,7 +186,6 @@ const EnvironmentSelection: React.FC<Props> = ({
 					onComplete={handleSelectActiveOrganization}
 					onError={stableOnError}
 					workspace={workspace}
-					// notInAuthContext={notInAuthContext}
 				/>
 			)}
 
@@ -198,7 +195,6 @@ const EnvironmentSelection: React.FC<Props> = ({
 					cookie={envCookie}
 					onComplete={handleSelectActiveProject}
 					onError={stableOnError}
-					// notInAuthContext={notInAuthContext}
 				/>
 			)}
 
@@ -209,7 +205,6 @@ const EnvironmentSelection: React.FC<Props> = ({
 					activeProject={activeProject}
 					onComplete={handleSelectActiveEnvironment}
 					onError={stableOnError}
-					// notInAuthContext={notInAuthContext}
 				/>
 			)}
 		</>

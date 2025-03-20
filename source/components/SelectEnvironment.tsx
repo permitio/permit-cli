@@ -11,7 +11,6 @@ type Props = {
 	activeProject: ActiveState;
 	onComplete: (environment: ActiveState) => void;
 	onError: (error: string) => void;
-	// notInAuthContext?: boolean;
 };
 
 const SelectEnvironment: React.FC<Props> = ({
@@ -20,7 +19,6 @@ const SelectEnvironment: React.FC<Props> = ({
 	onComplete,
 	activeProject,
 	onError,
-	// notInAuthContext,
 }) => {
 	const [environments, setEnvironments] = useState<ActiveState[]>([]);
 	const [state, setState] = useState<boolean>(true);

@@ -10,14 +10,12 @@ type LoginFlowProps = {
 	apiKey?: string;
 	onSuccess: (accessToken: string, cookie: string) => void;
 	onError: (error: string) => void;
-	// notInAuthContext?: boolean;
 };
 
 const LoginFlow: React.FC<LoginFlowProps> = ({
 	apiKey,
 	onSuccess,
 	onError,
-	// notInAuthContext,
 }) => {
 	const [loading, setLoading] = useState<boolean>(true);
 

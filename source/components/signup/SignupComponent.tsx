@@ -10,7 +10,6 @@ type SignupProp = {
 	accessToken: string;
 	cookie?: string | null;
 	onSuccess: () => void;
-	notInAuthContext?: boolean;
 };
 
 const SignupComponent: FC<SignupProp> = ({

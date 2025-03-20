@@ -320,11 +320,7 @@ export function AuthProvider({
 			)}
 			{state === 'login' && (
 				<>
-					<Login
-						options={{}}
-						loginSuccess={handleLoginSuccess}
-						notInAuthContext={true}
-					/>
+					<Login options={{}} loginSuccess={handleLoginSuccess} />
 				</>
 			)}
 			{state === 'creating-key' && (
