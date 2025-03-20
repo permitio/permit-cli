@@ -4,15 +4,14 @@ import SelectInput from 'ink-select-input';
 import Spinner from 'ink-spinner';
 import { ActiveState } from './EnvironmentSelection.js';
 import { useEnvironmentApi } from '../hooks/useEnvironmentApi.js';
-import { useUnauthenticatedApi } from '../hooks/useUnauthenticatedApi.js';
 
 type Props = {
-	accessToken: string;
+	accessToken?: string;
 	cookie?: string | null;
 	activeProject: ActiveState;
 	onComplete: (environment: ActiveState) => void;
 	onError: (error: string) => void;
-	notInAuthContext?: boolean;
+	// notInAuthContext?: boolean;
 };
 
 const SelectEnvironment: React.FC<Props> = ({
@@ -21,14 +20,12 @@ const SelectEnvironment: React.FC<Props> = ({
 	onComplete,
 	activeProject,
 	onError,
-	notInAuthContext,
+	// notInAuthContext,
 }) => {
 	const [environments, setEnvironments] = useState<ActiveState[]>([]);
 	const [state, setState] = useState<boolean>(true);
 
 	const { getEnvironments } = useEnvironmentApi();
-	const { getEnvironments: getEnvironmentsUnauthenticated } =
-		useUnauthenticatedApi();
 
 	const handleEnvironmentSelect = (environment: object) => {
 		const selectedEnv = environment as ActiveState;
@@ -37,13 +34,11 @@ const SelectEnvironment: React.FC<Props> = ({
 
 	useEffect(() => {
 		const fetchEnvironments = async () => {
-			const { data: environments, error } = notInAuthContext
-				? await getEnvironmentsUnauthenticated(
-						activeProject.value,
-						accessToken,
-						cookie,
-					)
-				: await getEnvironments(activeProject.value);
+			const { data: environments, error } = await getEnvironments(
+				activeProject.value,
+				accessToken,
+				cookie,
+			);
 
 			if (error || !environments) {
 				onError(
@@ -68,8 +63,6 @@ const SelectEnvironment: React.FC<Props> = ({
 		activeProject.value,
 		cookie,
 		getEnvironments,
-		getEnvironmentsUnauthenticated,
-		notInAuthContext,
 		onComplete,
 		onError,
 	]);

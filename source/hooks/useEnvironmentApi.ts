@@ -5,25 +5,49 @@ import useClient from './useClient.js';
 export type EnvironmentCopy = components['schemas']['EnvironmentCopy'];
 
 export const useEnvironmentApi = () => {
-	const { authenticatedApiClient } = useClient();
+	const { authenticatedApiClient, unAuthenticatedApiClient } = useClient();
 
 	const getEnvironments = useCallback(
-		async (project_id: string) => {
-			return await authenticatedApiClient().GET(`/v2/projects/{proj_id}/envs`, {
-				proj_id: project_id,
-			});
+		async (
+			project_id: string,
+			accessToken?: string,
+			cookie?: string | null,
+		) => {
+			return accessToken || cookie
+				? await unAuthenticatedApiClient(accessToken, cookie).GET(
+						`/v2/projects/{proj_id}/envs`,
+						{
+							proj_id: project_id,
+						},
+					)
+				: await authenticatedApiClient().GET(`/v2/projects/{proj_id}/envs`, {
+						proj_id: project_id,
+					});
 		},
-		[authenticatedApiClient],
+		[authenticatedApiClient, unAuthenticatedApiClient],
 	);
 
 	const getEnvironment = useCallback(
-		async (project_id: string, environment_id: string) => {
-			return await authenticatedApiClient().GET(
-				`/v2/projects/{proj_id}/envs/{env_id}`,
-				{ proj_id: project_id, env_id: environment_id },
-			);
+		async (
+			project_id: string,
+			environment_id: string,
+			accessToken?: string | null,
+			cookie?: string | null,
+		) => {
+			return accessToken || cookie
+				? await unAuthenticatedApiClient(accessToken, cookie).GET(
+						`/v2/projects/{proj_id}/envs/{env_id}`,
+						{
+							proj_id: project_id,
+							env_id: environment_id,
+						},
+					)
+				: await authenticatedApiClient().GET(
+						`/v2/projects/{proj_id}/envs/{env_id}`,
+						{ proj_id: project_id, env_id: environment_id },
+					);
 		},
-		[authenticatedApiClient],
+		[authenticatedApiClient, unAuthenticatedApiClient],
 	);
 
 	const copyEnvironment = useCallback(

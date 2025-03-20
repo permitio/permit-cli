@@ -14,44 +14,85 @@ export type MemberAccessObj = 'org' | 'project' | 'env';
 export type ApiKeyCreate = components['schemas']['APIKeyCreate'];
 
 export const useApiKeyApi = () => {
-	const { authenticatedApiClient } = useClient();
+	const { authenticatedApiClient, unAuthenticatedApiClient } = useClient();
 
 	const getProjectEnvironmentApiKey = useCallback(
-		async (environmentId: string) => {
-			return await authenticatedApiClient().GET(
-				`/v2/api-key/{proj_id}/{env_id}`,
-				{ env_id: environmentId },
-			);
+		async (environmentId: string, projectId?: string, cookie?: string) => {
+			return cookie
+				? await unAuthenticatedApiClient(undefined, cookie).GET(
+						`/v2/api-key/{proj_id}/{env_id}`,
+						{ proj_id: projectId ?? '', env_id: environmentId },
+					)
+				: await authenticatedApiClient().GET(`/v2/api-key/{proj_id}/{env_id}`, {
+						env_id: environmentId,
+					});
 		},
-		[authenticatedApiClient],
+		[authenticatedApiClient, unAuthenticatedApiClient],
 	);
 
-	const getApiKeyScope = useCallback(async () => {
-		return await authenticatedApiClient().GET(`/v2/api-key/scope`);
-	}, [authenticatedApiClient]);
+	const getApiKeyScope = useCallback(
+		async (accessToken?: string) => {
+			return accessToken
+				? await unAuthenticatedApiClient(accessToken, undefined).GET(
+						`/v2/api-key/scope`,
+					)
+				: await authenticatedApiClient().GET(`/v2/api-key/scope`);
+		},
+		[authenticatedApiClient, unAuthenticatedApiClient],
+	);
+	// const getApiKeyScope = useCallback(
+	// 	async (notInAuthContext?: boolean, accessToken?: string) => {
+	// 		return accessToken
+	// 			? await unAuthenticatedApiClient(accessToken, undefined).GET(
+	// 					`/v2/api-key/scope`,
+	// 				)
+	// 			: await authenticatedApiClient().GET(`/v2/api-key/scope`);
+	// 	},
+	// 	[authenticatedApiClient, unAuthenticatedApiClient],
+	// );
 
 	const getApiKeyList = useCallback(
-		async (objectType: MemberAccessObj, projectId?: string | null) => {
-			return await authenticatedApiClient().GET(
-				`/v2/api-key`,
-				undefined,
-				undefined,
-				{
-					object_type: objectType,
-					proj_id: projectId === null ? undefined : projectId,
-				},
-			);
+		async (
+			objectType: MemberAccessObj,
+			projectId?: string | null,
+			accessToken?: string,
+			cookie?: string | null,
+		) => {
+			return accessToken || cookie
+				? await unAuthenticatedApiClient(accessToken, cookie).GET(
+						`/v2/api-key`,
+						undefined,
+						undefined,
+						{
+							object_type: objectType,
+							proj_id: projectId === null ? undefined : projectId,
+						},
+					)
+				: await authenticatedApiClient().GET(
+						`/v2/api-key`,
+						undefined,
+						undefined,
+						{
+							object_type: objectType,
+							proj_id: projectId === null ? undefined : projectId,
+						},
+					);
 		},
-		[authenticatedApiClient],
+		[authenticatedApiClient, unAuthenticatedApiClient],
 	);
 
 	const getApiKeyById = useCallback(
-		async (apiKeyId: string) => {
-			return await authenticatedApiClient().GET(`/v2/api-key/{api_key_id}`, {
-				api_key_id: apiKeyId,
-			});
+		async (apiKeyId: string, accessToken?: string, cookie?: string | null) => {
+			return accessToken || cookie
+				? await unAuthenticatedApiClient(accessToken, cookie).GET(
+						`/v2/api-key/{api_key_id}`,
+						{ api_key_id: apiKeyId },
+					)
+				: await authenticatedApiClient().GET(`/v2/api-key/{api_key_id}`, {
+						api_key_id: apiKeyId,
+					});
 		},
-		[authenticatedApiClient],
+		[authenticatedApiClient, unAuthenticatedApiClient],
 	);
 
 	const validateApiKey = useCallback((apiKey: string) => {
@@ -73,7 +114,7 @@ export const useApiKeyApi = () => {
 					error: 'Please provide a valid api key',
 				};
 			}
-			const { data: scope, error: err } = await getApiKeyScope();
+			const { data: scope, error: err } = await getApiKeyScope(apiKey);
 
 			if (err) {
 				error = err;
@@ -105,14 +146,20 @@ export const useApiKeyApi = () => {
 	);
 
 	const createApiKey = useCallback(
-		async (body: ApiKeyCreate) => {
-			return await authenticatedApiClient().POST(
-				'/v2/api-key',
-				undefined,
-				body,
-			);
+		async (
+			body: ApiKeyCreate,
+			accessToken?: string | null,
+			cookie?: string | null,
+		) => {
+			return accessToken || cookie
+				? await unAuthenticatedApiClient(accessToken, cookie).POST(
+						'/v2/api-key',
+						undefined,
+						body,
+					)
+				: await authenticatedApiClient().POST('/v2/api-key', undefined, body);
 		},
-		[authenticatedApiClient],
+		[authenticatedApiClient, unAuthenticatedApiClient],
 	);
 
 	return useMemo(

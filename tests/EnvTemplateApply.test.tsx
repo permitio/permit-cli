@@ -28,12 +28,12 @@ vi.mock('../source/hooks/useEnvironmentApi.js', () => ({
 }));
 
 
-vi.mock('../source/hooks/useUnauthenticatedApi', async () => {
-	const original = await vi.importActual('../source/hooks/useUnauthenticatedApi');
+vi.mock('../source/hooks/useApiKeyApi', async () => {
+	const original = await vi.importActual('../source/hooks/useApiKeyApi');
 
 	return {
 		...original,
-		useUnauthenticatedApi: () => ({
+		useApiKeyApi: () => ({
 			getApiKeyScope: vi.fn().mockResolvedValue({
 				response: {
 					environment_id: 'env1',

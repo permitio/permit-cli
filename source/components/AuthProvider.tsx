@@ -15,13 +15,16 @@ import React, {
 import { Text, Newline } from 'ink';
 import { loadAuthToken } from '../lib/auth.js';
 import Login from '../commands/login.js';
-import { ApiKeyCreate, ApiKeyScope } from '../hooks/useApiKeyApi.js';
+import {
+	ApiKeyCreate,
+	ApiKeyScope,
+	useApiKeyApi,
+} from '../hooks/useApiKeyApi.js';
 import { ActiveState } from './EnvironmentSelection.js';
 import LoginFlow from './LoginFlow.js';
 import SelectOrganization from './SelectOrganization.js';
 import SelectProject from './SelectProject.js';
 import { useAuthApi } from '../hooks/useAuthApi.js';
-import { useUnauthenticatedApi } from '../hooks/useUnauthenticatedApi.js';
 import {
 	globalScopeGetterSetter,
 	globalTokenGetterSetter,
@@ -50,7 +53,8 @@ export function AuthProvider({
 	scope,
 }: AuthProviderProps) {
 	const { validateApiKeyScope, getApiKeyList, getApiKeyById, createApiKey } =
-		useUnauthenticatedApi();
+		useApiKeyApi();
+
 	const { authSwitchOrgs } = useAuthApi();
 
 	const [internalAuthToken, setInternalAuthToken] = useState<string | null>(
@@ -198,9 +202,9 @@ export function AuthProvider({
 			(async () => {
 				const { data: response, error } = await getApiKeyList(
 					state === 'organization' ? 'org' : 'project',
+					project,
 					internalAuthToken ?? '',
 					newCookie,
-					project,
 				);
 				if (error) {
 					setError(`Error while getting api key list ${error}`);
@@ -225,7 +229,7 @@ export function AuthProvider({
 						body.project_id = project ?? '';
 					}
 					const { data: creationResponse, error: creationError } =
-						await createApiKey(internalAuthToken ?? '', body, newCookie);
+						await createApiKey(body, internalAuthToken, newCookie);
 					if (creationError) {
 						setError(`Error while creating Key: ${creationError}`);
 					}
@@ -288,11 +292,7 @@ export function AuthProvider({
 			{state === 'loading' && <Text>Loading Token</Text>}
 			{(state === 'organization' || state === 'project') && (
 				<>
-					<LoginFlow
-						onSuccess={onLoginSuccess}
-						onError={setError}
-						notInAuthContext={true}
-					/>
+					<LoginFlow onSuccess={onLoginSuccess} onError={setError} />
 					{internalAuthToken && cookie && !organization && (
 						<SelectOrganization
 							accessToken={internalAuthToken}
@@ -302,7 +302,6 @@ export function AuthProvider({
 							}}
 							onError={setError}
 							cookie={cookie}
-							notInAuthContext={true}
 						/>
 					)}
 					{state === 'project' &&
@@ -315,7 +314,6 @@ export function AuthProvider({
 								onComplete={project => setProject(project.value)}
 								cookie={newCookie}
 								onError={setError}
-								notInAuthContext={true}
 							/>
 						)}
 				</>

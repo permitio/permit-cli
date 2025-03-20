@@ -9,7 +9,6 @@ import EnvironmentSelection from '../source/components/EnvironmentSelection.js';
 import { saveAuthToken } from '../source/lib/auth.js';
 import delay from 'delay';
 import SelectComponent from '../source/components/env/SelectComponent';
-import { useUnauthenticatedApi } from '../source/hooks/useUnauthenticatedApi';
 
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 
@@ -33,12 +32,12 @@ vi.mock('../source/components/AuthProvider.tsx', async () => {
 });
 
 
-vi.mock('../source/hooks/useUnauthenticatedApi', async() => {
-	const original = await vi.importActual('../source/hooks/useUnauthenticatedApi');
+vi.mock('../source/hooks/useApiKeyApi', async() => {
+	const original = await vi.importActual('../source/hooks/useApiKeyApi');
 
 	return {
 		...original,
-		useUnauthenticatedApi: () => ({
+		useApiKeyApi: () => ({
 			getApiKeyScope: vi.fn().mockResolvedValue({
 				response: {
 					environment_id: 'env1',

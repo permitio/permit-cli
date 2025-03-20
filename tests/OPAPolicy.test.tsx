@@ -4,7 +4,7 @@ import { render } from 'ink-testing-library';
 import Policy from '../source/commands/opa/policy';
 import delay from 'delay';
 import * as keytar from "keytar"
-import { useUnauthenticatedApi } from '../source/hooks/useUnauthenticatedApi';
+import { useApiKeyApi } from '../source/hooks/useApiKeyApi';
 
 global.fetch = vi.fn();
 const enter = '\r';
@@ -26,12 +26,12 @@ vi.mock('../source/lib/auth.js', async () => {
 		loadAuthToken: vi.fn(() => demoPermitKey),
 	};
 });
-vi.mock('../source/hooks/useUnauthenticatedApi', async() => {
-	const original = await vi.importActual('../source/hooks/useUnauthenticatedApi');
+vi.mock('../source/hooks/useApiKeyApi', async() => {
+	const original = await vi.importActual('../source/hooks/useApiKeyApi');
 
 	return {
 		...original,
-		useUnauthenticatedApi: () => ({
+		useApiKeyApi: () => ({
 			getApiKeyScope: vi.fn().mockResolvedValue({
 				response: {
 					environment_id: 'env1',

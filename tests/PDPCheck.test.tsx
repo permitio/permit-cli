@@ -5,7 +5,7 @@ import delay from 'delay';
 import Check from '../source/commands/pdp/check';
 import * as keytar from 'keytar';
 import { useApiKeyApi } from '../source/hooks/useApiKeyApi';
-import { useUnauthenticatedApi } from '../source/hooks/useUnauthenticatedApi';
+import { useApiKeyApi } from '../source/hooks/useApiKeyApi';
 
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 
@@ -20,8 +20,8 @@ vi.mock('keytar', () => {
 	return { ...keytar, default: keytar };
 });
 
-vi.mock('../source/hooks/useUnauthenticatedApi.js', () => ({
-	useUnauthenticatedApi: vi.fn(() => ({
+vi.mock('../source/hooks/useApiKeyApi.js', () => ({
+	useApiKeyApi: vi.fn(() => ({
 		validateApiKeyScope: vi.fn(),
 	})),
 }));
@@ -52,7 +52,7 @@ describe('PDP Check Component', () => {
 			json: async () => ({ allow: true }),
 		});
 
-		vi.mocked(useUnauthenticatedApi).mockReturnValue({
+		vi.mocked(useApiKeyApi).mockReturnValue({
 			validateApiKeyScope: vi.fn(() =>
 				Promise.resolve({
 					valid: true,
@@ -96,7 +96,7 @@ describe('PDP Check Component', () => {
 			json: async () => ({ allow: false }),
 		});
 
-		vi.mocked(useUnauthenticatedApi).mockReturnValue({
+		vi.mocked(useApiKeyApi).mockReturnValue({
 			validateApiKeyScope: vi.fn(() =>
 				Promise.resolve({
 					valid: true,
@@ -141,7 +141,7 @@ describe('PDP Check Component', () => {
 			text: async () => JSON.stringify("Error"), // Some clients might call `text()`
 		});
 
-		vi.mocked(useUnauthenticatedApi).mockReturnValue({
+		vi.mocked(useApiKeyApi).mockReturnValue({
 			validateApiKeyScope: vi.fn(() =>
 				Promise.resolve({
 					valid: true,
@@ -185,7 +185,7 @@ describe('PDP Check Component', () => {
 			json: async () => ({ allow: true }),
 		});
 
-		vi.mocked(useUnauthenticatedApi).mockReturnValue({
+		vi.mocked(useApiKeyApi).mockReturnValue({
 			validateApiKeyScope: vi.fn(() =>
 				Promise.resolve({
 					valid: true,

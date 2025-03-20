@@ -7,11 +7,10 @@ import { useMemberApi } from '../source/hooks/useMemberApi.js';
 import EnvironmentSelection from '../source/components/EnvironmentSelection.js';
 import delay from 'delay';
 import * as keytar from "keytar"
-import { useUnauthenticatedApi } from '../source/hooks/useUnauthenticatedApi';
 
 
-vi.mock('../source/hooks/useUnauthenticatedApi', () => ({
-	useUnauthenticatedApi: vi.fn(() => ({
+vi.mock('../source/hooks/useApiKeyApi', () => ({
+	useApiKeyApi: vi.fn(() => ({
 		validateApiKeyScope: vi.fn(),
 	})),
 }));
@@ -52,7 +51,7 @@ const enter = '\r';
 
 describe('Member Component', () => {
 	it('should handle successful member invite flow', async () => {
-		vi.mocked(useUnauthenticatedApi).mockReturnValue({
+		vi.mocked(useApiKeyApi).mockReturnValue({
 			validateApiKeyScope: vi.fn(() =>
 				Promise.resolve({
 					valid: true,
@@ -106,7 +105,7 @@ describe('Member Component', () => {
 		expect(lastFrame()).toMatch(/User Invited Successfully/);
 	});
 	it('should handle successful member invite flow with all flags passed', async () => {
-		vi.mocked(useUnauthenticatedApi).mockReturnValue({
+		vi.mocked(useApiKeyApi).mockReturnValue({
 			validateApiKeyScope: vi.fn(() =>
 				Promise.resolve({
 					valid: true,
@@ -156,7 +155,7 @@ describe('Member Component', () => {
 	});
 
 	it('should handle invalid API key gracefully', async () => {
-		vi.mocked(useUnauthenticatedApi).mockReturnValue({
+		vi.mocked(useApiKeyApi).mockReturnValue({
 			validateApiKeyScope: vi.fn(() =>
 				Promise.resolve({
 					valid: false,

@@ -5,7 +5,6 @@ import Spinner from 'ink-spinner';
 import randomName from '@scaleway/random-name';
 import { useOrganisationApi } from '../../hooks/useOrganisationApi.js';
 import { cleanKey } from '../../lib/env/copy/utils.js';
-import { useUnauthenticatedApi } from '../../hooks/useUnauthenticatedApi.js';
 
 type SignupProp = {
 	accessToken: string;
@@ -18,7 +17,6 @@ const SignupComponent: FC<SignupProp> = ({
 	accessToken,
 	cookie,
 	onSuccess,
-	notInAuthContext,
 }: SignupProp) => {
 	const [organizationName, setOrganizationName] = useState(randomName());
 	const [error, setError] = useState<string | null>(null);
@@ -38,24 +36,18 @@ const SignupComponent: FC<SignupProp> = ({
 	});
 
 	const { createOrg } = useOrganisationApi();
-	const { createOrg: createOrgUnauthenticated } = useUnauthenticatedApi();
 
 	const handleWorkspaceCreation = async (workspace: string) => {
 		const cleanOrgName = cleanKey(workspace);
 		setOrganizationName(cleanOrgName);
-		const { error } = notInAuthContext
-			? await createOrgUnauthenticated(
-					{
-						key: cleanOrgName,
-						name: cleanOrgName,
-					},
-					accessToken,
-					cookie,
-				)
-			: await createOrg({
-					key: cleanOrgName,
-					name: cleanOrgName,
-				});
+		const { error } = await createOrg(
+			{
+				key: cleanOrgName,
+				name: cleanOrgName,
+			},
+			accessToken,
+			cookie,
+		);
 		if (error) {
 			setError(error.toString());
 			return;

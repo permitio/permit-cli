@@ -16,31 +16,53 @@ export type OrganizationReadWithAPIKey =
 export type Settings = object;
 
 export const useOrganisationApi = () => {
-	const { authenticatedApiClient } = useClient();
+	const { authenticatedApiClient, unAuthenticatedApiClient } = useClient();
 
-	const getOrgs = useCallback(async () => {
-		return await authenticatedApiClient().GET('/v2/orgs');
-	}, [authenticatedApiClient]);
+	const getOrgs = useCallback(
+		async (accessToken?: string, cookie?: string | null) => {
+			return accessToken || cookie
+				? await unAuthenticatedApiClient(accessToken, cookie).GET('/v2/orgs')
+				: await authenticatedApiClient().GET('/v2/orgs');
+		},
+		[authenticatedApiClient, unAuthenticatedApiClient],
+	);
 
 	const getOrg = useCallback(
-		async (org_id: string) => {
-			return await authenticatedApiClient().GET(`/v2/orgs/{org_id}`, {
-				org_id,
-			});
+		async (org_id: string, accessToken?: string, cookie?: string | null) => {
+			return accessToken || cookie
+				? await unAuthenticatedApiClient(accessToken, cookie).GET(
+						`/v2/orgs/{org_id}`,
+						{
+							org_id: org_id,
+						},
+					)
+				: await authenticatedApiClient().GET(`/v2/orgs/{org_id}`, {
+						org_id,
+					});
 		},
-		[authenticatedApiClient],
+		[authenticatedApiClient, unAuthenticatedApiClient],
 	);
 
 	const createOrg = useCallback(
-		async (body: OrganizationCreate) => {
-			return await authenticatedApiClient().POST(
-				`/v2/orgs`,
-				undefined,
-				body,
-				undefined,
-			);
+		async (
+			body: OrganizationCreate,
+			accessToken?: string,
+			cookie?: string | null,
+		) => {
+			return accessToken || cookie
+				? await unAuthenticatedApiClient(accessToken, cookie).POST(
+						`/v2/orgs`,
+						undefined,
+						body,
+					)
+				: await authenticatedApiClient().POST(
+						`/v2/orgs`,
+						undefined,
+						body,
+						undefined,
+					);
 		},
-		[authenticatedApiClient],
+		[authenticatedApiClient, unAuthenticatedApiClient],
 	);
 
 	return useMemo(

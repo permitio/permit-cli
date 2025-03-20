@@ -3,6 +3,7 @@ import { render } from 'ink-testing-library';
 import List from '../source/commands/env/template/list.js';
 import { vi, describe, it, expect } from 'vitest';
 import delay from 'delay';
+import { useApiKeyApi } from '../source/hooks/useApiKeyApi';
 
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 vi.mock('keytar', () => {
@@ -27,12 +28,12 @@ vi.mock('../source/hooks/useEnvironmentApi.js', () => ({
 	useEnvironmentApi: vi.fn(),
 }));
 
-vi.mock('../source/hooks/useUnauthenticatedApi', async () => {
-	const original = await vi.importActual('../source/hooks/useUnauthenticatedApi');
+vi.mock('../source/hooks/useApiKeyApi', async () => {
+	const original = await vi.importActual('../source/hooks/useApiKeyApi');
 
 	return {
 		...original,
-		useUnauthenticatedApi: () => ({
+		useApiKeyApi: () => ({
 			getApiKeyScope: vi.fn().mockResolvedValue({
 				response: {
 					environment_id: 'env1',

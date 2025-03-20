@@ -9,6 +9,7 @@ import { vi, describe, it, expect } from 'vitest';
 import { useProjectAPI } from '../source/hooks/useProjectAPI.js';
 import { usePolicyGitReposApi } from '../source/hooks/usePolicyGitReposApi.js';
 import * as keytar from 'keytar';
+import { useApiKeyApi } from '../source/hooks/useApiKeyApi';
 
 vi.mock('keytar', () => {
 	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
@@ -63,12 +64,12 @@ vi.mock('../source/hooks/usePolicyGitReposApi.js', () => ({
 	})),
 }));
 
-vi.mock('../source/hooks/useUnauthenticatedApi', async() => {
-	const original = await vi.importActual('../source/hooks/useUnauthenticatedApi');
+vi.mock('../source/hooks/useApiKeyApi', async() => {
+	const original = await vi.importActual('../source/hooks/useApiKeyApi');
 
 	return {
 		...original,
-		useUnauthenticatedApi: () => ({
+		useApiKeyApi: () => ({
 			getApiKeyScope: vi.fn().mockResolvedValue({
 				data: {
 					environment_id: 'env1',

@@ -7,15 +7,13 @@ import {
 	OrganizationReadWithAPIKey,
 	useOrganisationApi,
 } from '../hooks/useOrganisationApi.js';
-import { useUnauthenticatedApi } from '../hooks/useUnauthenticatedApi.js';
 
 type SelectOrganizationProps = {
-	accessToken: string;
+	accessToken?: string;
 	cookie?: string | null;
 	onComplete: (organization: ActiveState) => void;
 	workspace?: string;
 	onError: (error: string) => void;
-	notInAuthContext?: boolean;
 };
 
 const SelectOrganization: React.FC<SelectOrganizationProps> = ({
@@ -24,13 +22,11 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 	onComplete,
 	workspace,
 	onError,
-	notInAuthContext,
 }) => {
 	const [orgs, setOrgs] = useState<ActiveState[] | null>(null);
 	const [loading, setLoading] = useState(true);
 
 	const { getOrgs } = useOrganisationApi();
-	const { getOrgs: getOrgsUnauthenticated } = useUnauthenticatedApi();
 
 	const handleSelectOrganization = async (organization: object) => {
 		const selectedOrg = organization as ActiveState;
@@ -39,9 +35,7 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 
 	useEffect(() => {
 		const fetchOrgs = async () => {
-			const { data: orgs, error } = notInAuthContext
-				? await getOrgsUnauthenticated(accessToken, cookie ?? '')
-				: await getOrgs();
+			const { data: orgs, error } = await getOrgs(accessToken, cookie);
 			if (error || !orgs) {
 				onError(
 					`Failed to load organizations. Reason: ${error}. Please check your network connection or credentials and try again.`,
@@ -91,16 +85,7 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 
 		fetchOrgs();
 		setLoading(false);
-	}, [
-		accessToken,
-		cookie,
-		getOrgs,
-		getOrgsUnauthenticated,
-		notInAuthContext,
-		onComplete,
-		onError,
-		workspace,
-	]);
+	}, [accessToken, cookie, getOrgs, onComplete, onError, workspace]);
 
 	return (
 		<>

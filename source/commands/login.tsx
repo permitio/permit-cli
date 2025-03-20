@@ -101,7 +101,7 @@ export default function Login({
 					apiKey={key}
 					onSuccess={onLoginSuccess}
 					onError={setError}
-					notInAuthContext={notInAuthContext}
+					// notInAuthContext={notInAuthContext}
 				/>
 			)}
 			{state === 'env' && (
@@ -111,7 +111,7 @@ export default function Login({
 					onComplete={onEnvironmentSelectSuccess}
 					onError={setError}
 					workspace={workspace}
-					notInAuthContext={notInAuthContext}
+					// notInAuthContext={notInAuthContext}
 				/>
 			)}
 			{state === 'signup' && (
