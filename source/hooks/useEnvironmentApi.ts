@@ -3,12 +3,13 @@ import { components } from '../lib/api/v1.js';
 import useClient from './useClient.js';
 
 export type EnvironmentCopy = components['schemas']['EnvironmentCopy'];
+export type Environment = components['schemas']['EnvironmentRead'];
 
 type CreateEnvironmentParams = {
-  name: string;
-  key: string;
-  description?: string;
-  settings?: Record<string, unknown>;
+	name: string;
+	key: string;
+	description?: string;
+	settings?: Record<string, never>;
 };
 
 export const useEnvironmentApi = () => {
@@ -69,34 +70,51 @@ export const useEnvironmentApi = () => {
 		[authenticatedApiClient],
 	);
 
-	const createEnvironment = async (
-		projectId: string,
-		accessToken: string,
-		cookie: string | null,
-		params: CreateEnvironmentParams,
-	) => {
-		return await apiCall<Environment>(
-			`v2/projects/${projectId}/envs`,
-			accessToken,
-			cookie ?? '',
-			'POST',
-			JSON.stringify(params),
-		);
-	};
+	const createEnvironment = useCallback(
+		async (
+			projectId: string,
+			accessToken?: string,
+			cookie?: string | null,
+			params?: CreateEnvironmentParams,
+		) => {
+			return accessToken || cookie
+				? await unAuthenticatedApiClient(accessToken, cookie).POST(
+						`/v2/projects/{proj_id}/envs`,
+						{ proj_id: projectId },
+						params,
+					)
+				: await authenticatedApiClient().POST(
+						`/v2/projects/{proj_id}/envs`,
+						{ proj_id: projectId },
+						params,
+					);
+		},
+		[authenticatedApiClient, unAuthenticatedApiClient],
+	);
 
-	const deleteEnvironment = async (
-		projectId: string,
-		environmentId: string,
-		accessToken: string,
-		cookie?: string | null,
-	) => {
-		return await apiCall(
-			`v2/projects/${projectId}/envs/${environmentId}`,
-			accessToken,
-			cookie ?? '',
-			'DELETE',
-		);
-	};
+	const deleteEnvironment = useCallback(
+		async (
+			projectId: string,
+			environmentId: string,
+			accessToken?: string,
+			cookie?: string | null,
+		) => {
+			return accessToken || cookie
+				? await unAuthenticatedApiClient(accessToken, cookie).DELETE(
+						`/v2/projects/{proj_id}/envs/{env_id}`,
+						{ proj_id: projectId, env_id: environmentId },
+						undefined,
+						undefined,
+					)
+				: await authenticatedApiClient().DELETE(
+						`/v2/projects/{proj_id}/envs/{env_id}`,
+						{ proj_id: projectId, env_id: environmentId },
+						undefined,
+						undefined,
+					);
+		},
+		[authenticatedApiClient, unAuthenticatedApiClient],
+	);
 
 	return useMemo(
 		() => ({
@@ -106,6 +124,12 @@ export const useEnvironmentApi = () => {
 			createEnvironment,
 			deleteEnvironment,
 		}),
-		[copyEnvironment, getEnvironment, getEnvironments],
+		[
+			copyEnvironment,
+			getEnvironment,
+			getEnvironments,
+			createEnvironment,
+			deleteEnvironment,
+		],
 	);
 };
