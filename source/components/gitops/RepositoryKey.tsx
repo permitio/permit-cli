@@ -1,18 +1,16 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
-import { getRepoList } from '../../lib/gitops/utils.js';
 import Spinner from 'ink-spinner';
+import { usePolicyGitReposApi } from '../../hooks/usePolicyGitReposApi.js';
 
 type Props = {
-	apiKey: string;
 	projectName: string;
 	onRepoKeySubmit: (repoKey: string) => void;
 	onError: (error: string) => void;
 };
 
 const RepositoryKey: React.FC<Props> = ({
-	apiKey,
 	projectName,
 	onRepoKeySubmit,
 	onError,
@@ -20,7 +18,8 @@ const RepositoryKey: React.FC<Props> = ({
 	const [repoKey, setRepoKey] = useState<string>('');
 	const [repolist, setRepoList] = useState<string[]>([]);
 	const [loading, setLoading] = useState<boolean>(true);
-	const Validate = async (repoKey: string): Promise<string> => {
+	const { getRepoList } = usePolicyGitReposApi();
+	const Validate = useCallback(async (repoKey: string): Promise<string> => {
 		if (repoKey.length <= 1) {
 			return 'Repository Key is required';
 		}
@@ -29,23 +28,23 @@ const RepositoryKey: React.FC<Props> = ({
 			return 'Repository Key should contain only alphanumeric characters, hyphens and underscores';
 		}
 		return '';
-	};
-
-	const fetchRepoList = useCallback(async () => {
-		try {
-			const repos = await getRepoList(apiKey, projectName);
-			const tempRepoList = repos.map(repo => repo.key);
-			setRepoList(tempRepoList);
-		} catch (error) {
-			onError(error instanceof Error ? error.message : String(error));
-		} finally {
-			setLoading(false);
-		}
-	}, [setRepoList, setLoading, onError, apiKey, projectName]);
+	}, []);
 
 	useEffect(() => {
+		const fetchRepoList = async () => {
+			const { data: repos, error } = await getRepoList(projectName);
+
+			if (error) {
+				onError(error.toString());
+			}
+
+			const tempRepoList = repos?.map(repo => repo.key);
+			setRepoList(tempRepoList ?? []);
+			setLoading(false);
+		};
 		fetchRepoList();
-	}, [fetchRepoList]);
+	}, [getRepoList, onError, projectName]);
+
 	const handleSubmit = useCallback(
 		async (repoKey: string) => {
 			const isRepositoryKeyAlreadyPresent = (repoKey: string): boolean => {
@@ -67,7 +66,7 @@ const RepositoryKey: React.FC<Props> = ({
 			}
 			onRepoKeySubmit(repoKey);
 		},
-		[onError, onRepoKeySubmit, repolist],
+		[Validate, onError, onRepoKeySubmit, repolist],
 	);
 
 	return (

@@ -1,26 +1,34 @@
-import { apiCall } from '../lib/api.js';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
+import useClient from './useClient.js';
+import { components } from '../lib/api/v1.js';
+
+export type OrgMemberCreate = components['schemas']['OrgMemberCreate'];
 
 export const useMemberApi = () => {
-	const inviteNewMember = async (
-		authToken: string,
-		body: object,
-		inviter_name: string,
-		inviter_email: string,
-	) => {
-		return await apiCall(
-			`v2/members?inviter_name=${inviter_name}&inviter_email=${inviter_email}`,
-			authToken,
-			null,
-			'POST',
-			JSON.stringify(body),
-		);
-	};
+	const { authenticatedApiClient } = useClient();
+	const inviteNewMember = useCallback(
+		async (
+			body: OrgMemberCreate,
+			inviter_name: string,
+			inviter_email: string,
+		) => {
+			return await authenticatedApiClient().POST(
+				`/v2/members`,
+				undefined,
+				body,
+				{
+					inviter_email,
+					inviter_name,
+				},
+			);
+		},
+		[authenticatedApiClient],
+	);
 
 	return useMemo(
 		() => ({
 			inviteNewMember,
 		}),
-		[],
+		[inviteNewMember],
 	);
 };

@@ -1,14 +1,11 @@
-import { useEnvironmentApi } from '../../source/hooks/useEnvironmentApi';
-import { apiCall } from '../../source/lib/api';
+import { useEnvironmentApi } from '../../source/hooks/useEnvironmentApi.js';
 import { vi, expect, it, describe, beforeEach } from 'vitest';
 import React from 'react';
 import { render } from 'ink-testing-library';
 import { Text } from 'ink';
+import { getMockFetchResponse } from '../utils.js';
 
-// Mocking the apiCall function
-vi.mock('../../source/lib/api', () => ({
-	apiCall: vi.fn(),
-}));
+global.fetch = vi.fn();
 
 describe('useEnvironmentApi', () => {
 	beforeEach(() => {
@@ -19,31 +16,31 @@ describe('useEnvironmentApi', () => {
 		const TestComponent = () => {
 			const { getEnvironments } = useEnvironmentApi();
 			const projectId = 'project-id';
-			const accessToken = 'access-token';
 
-			// Mock the apiCall to simulate a successful response
-			apiCall.mockResolvedValue([
-				{
-					key: 'env-key-1',
-					id: 'env-id-1',
-					organization_id: 'org-id',
-					project_id: 'project-id',
-					created_at: '2024-12-01',
-					updated_at: '2024-12-02',
-					email_configuration: 'email-config',
-					name: 'Env 1',
-				},
-			]);
+			(fetch as any).mockResolvedValueOnce({
+				...getMockFetchResponse(),
+				json: async () => ( [{
+						key: 'env-key-1',
+						id: 'env-id-1',
+						organization_id: 'org-id',
+						project_id: 'project-id',
+						created_at: '2024-12-01',
+						updated_at: '2024-12-02',
+						email_configuration: 'email-config',
+						name: 'Env 1',
+					}]
+				)
+			});
 
 			const fetchEnvironments = async () => {
-				const environments = await getEnvironments(projectId, accessToken);
-				return environments.length > 0
+				const { data: environments } = await getEnvironments(projectId);
+				return environments?.length ?? 0 > 0
 					? 'Environments fetched'
 					: 'No environments';
 			};
-			const [restult, setResult] = React.useState<string | null>(null);
+			const [result, setResult] = React.useState<string | null>(null);
 			fetchEnvironments().then(res => setResult(res));
-			return <Text>{restult}</Text>;
+			return <Text>{result}</Text>;
 		};
 
 		const { lastFrame } = render(<TestComponent />);
@@ -57,32 +54,33 @@ describe('useEnvironmentApi', () => {
 			const { getEnvironment } = useEnvironmentApi();
 			const projectId = 'project-id';
 			const environmentId = 'env-id-1';
-			const accessToken = 'access-token';
 
-			// Mock the apiCall to simulate a successful response
-			apiCall.mockResolvedValue({
-				key: 'env-key-1',
-				id: 'env-id-1',
-				organization_id: 'org-id',
-				project_id: 'project-id',
-				created_at: '2024-12-01',
-				updated_at: '2024-12-02',
-				email_configuration: 'email-config',
-				name: 'Env 1',
+			(fetch as any).mockResolvedValueOnce({
+				...getMockFetchResponse(),
+				json: async () => ({
+						key: 'env-key-1',
+						id: 'env-id-1',
+						organization_id: 'org-id',
+						project_id: 'project-id',
+						created_at: '2024-12-01',
+						updated_at: '2024-12-02',
+						email_configuration: 'email-config',
+						name: 'Env 1',
+
+				})
 			});
 
 			const fetchEnvironment = async () => {
-				const environment = await getEnvironment(
+				const { data: environment } = await getEnvironment(
 					projectId,
-					environmentId,
-					accessToken,
+					environmentId
 				);
 				return environment ? 'Environment fetched' : 'No environment found';
 			};
-			const [restult, setResult] = React.useState<string | null>(null);
+			const [result, setResult] = React.useState<string | null>(null);
 			fetchEnvironment().then(res => setResult(res));
 
-			return <Text>{restult}</Text>;
+			return <Text>{result}</Text>;
 		};
 
 		const { lastFrame } = render(<TestComponent />);
@@ -95,21 +93,20 @@ describe('useEnvironmentApi', () => {
 		const TestComponent = () => {
 			const { getEnvironments } = useEnvironmentApi();
 			const projectId = 'project-id';
-			const accessToken = 'access-token';
 
-			// Mock the apiCall to simulate a failed response
-			apiCall.mockResolvedValue([]);
+			(fetch as any).mockResolvedValueOnce({
+				...getMockFetchResponse(),
+				json: async () => ({ data: [] })
+			});
 
 			const fetchEnvironments = async () => {
-				const environments = await getEnvironments(projectId, accessToken);
-				return environments.length > 0
-					? 'Environments fetched'
-					: 'No environments';
+				const { data: environments } = await getEnvironments(projectId);
+				return environments?.length ?? 0 > 0 ? 'Environments fetched' : 'No environments';
 			};
-			const [restult, setResult] = React.useState<string | null>(null);
+			const [result, setResult] = React.useState<string | null>(null);
 			fetchEnvironments().then(res => setResult(res));
 
-			return <Text>{restult}</Text>;
+			return <Text>{result}</Text>;
 		};
 
 		const { lastFrame } = render(<TestComponent />);
@@ -123,22 +120,20 @@ describe('useEnvironmentApi', () => {
 			const { copyEnvironment } = useEnvironmentApi();
 			const projectId = 'project-id';
 			const environmentId = 'env-id-1';
-			const accessToken = 'access-token';
-			const cookie = 'cookie';
 			const body = { someKey: 'someValue' };
 
-			// Mock the apiCall to simulate a successful response
-			apiCall.mockResolvedValue({ success: true });
+			(fetch as any).mockResolvedValueOnce({
+				...getMockFetchResponse(),
+				json: async () => ( { success: true } )
+			});
 
 			const copyEnv = async () => {
-				const result = await copyEnvironment(
+				const { data: result } = await copyEnvironment(
 					projectId,
 					environmentId,
-					accessToken,
-					cookie,
 					body,
 				);
-				return result.success
+				return result !== undefined
 					? 'Environment copied'
 					: 'Failed to copy environment';
 			};
@@ -159,22 +154,20 @@ describe('useEnvironmentApi', () => {
 			const { copyEnvironment } = useEnvironmentApi();
 			const projectId = 'project-id';
 			const environmentId = 'env-id-1';
-			const accessToken = 'access-token';
-			const cookie = 'cookie';
 			const body = { someKey: 'someValue' };
 
-			// Mock the apiCall to simulate a failed response
-			apiCall.mockResolvedValue({ success: false });
+			(fetch as any).mockResolvedValueOnce({
+				...getMockFetchResponse(),
+				json: async () => undefined
+			});
 
 			const copyEnv = async () => {
-				const result = await copyEnvironment(
+				const { data: result } = await copyEnvironment(
 					projectId,
 					environmentId,
-					accessToken,
-					cookie,
 					body,
 				);
-				return result.success
+				return result !== undefined
 					? 'Environment copied'
 					: 'Failed to copy environment';
 			};

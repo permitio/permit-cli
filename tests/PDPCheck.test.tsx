@@ -5,6 +5,7 @@ import delay from 'delay';
 import Check from '../source/commands/pdp/check';
 import * as keytar from 'keytar';
 import { useApiKeyApi } from '../source/hooks/useApiKeyApi';
+import { useApiKeyApi } from '../source/hooks/useApiKeyApi';
 
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 
@@ -13,7 +14,7 @@ vi.mock('keytar', () => {
 	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 	const keytar = {
 		setPassword: vi.fn(),
-		getPassword: vi.fn(),
+		getPassword: vi.fn().mockResolvedValue(demoPermitKey),
 		deletePassword: vi.fn(),
 	};
 	return { ...keytar, default: keytar };
@@ -45,6 +46,9 @@ describe('PDP Check Component', () => {
 	it('should render with the given options and allow access', async () => {
 		(fetch as any).mockResolvedValue({
 			ok: true,
+			status: 200,
+			statusText: "OK",
+			headers: new Headers({ "Content-Type": "application/json" }),
 			json: async () => ({ allow: true }),
 		});
 
@@ -86,6 +90,9 @@ describe('PDP Check Component', () => {
 	it('should render with the given options and deny access', async () => {
 		(fetch as any).mockResolvedValue({
 			ok: true,
+			status: 200,
+			statusText: "OK",
+			headers: new Headers({ "Content-Type": "application/json" }),
 			json: async () => ({ allow: false }),
 		});
 
@@ -127,7 +134,11 @@ describe('PDP Check Component', () => {
 	it('should render an error when fetch fails', async () => {
 		(fetch as any).mockResolvedValueOnce({
 			ok: false,
-			text: async () => 'Error',
+			status: 200,
+			statusText: "OK",
+			headers: new Headers({ "Content-Type": "application/json" }),
+			json: async () => undefined,
+			text: async () => JSON.stringify("Error"), // Some clients might call `text()`
 		});
 
 		vi.mocked(useApiKeyApi).mockReturnValue({
@@ -168,6 +179,9 @@ describe('PDP Check Component', () => {
 	it('should render with multiple resources and allow access', async () => {
 		(fetch as any).mockResolvedValue({
 			ok: true,
+			status: 200,
+			statusText: "OK",
+			headers: new Headers({ "Content-Type": "application/json" }),
 			json: async () => ({ allow: true }),
 		});
 

@@ -1,20 +1,18 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import RepositoryKey from './RepositoryKey.js';
 import SSHKey from './SSHKey.js';
 import BranchName from './BranchName.js';
 import { Box, Text } from 'ink';
-import { configurePermit, GitConfig } from '../../lib/gitops/utils.js';
-import { useAuth } from '../AuthProvider.js';
 import SelectProject from '../SelectProject.js';
 import { ActiveState } from '../EnvironmentSelection.js';
+import {
+	usePolicyGitReposApi,
+	GitConfig,
+} from '../../hooks/usePolicyGitReposApi.js';
 type Props = {
-	authKey: string | undefined;
 	inactivateWhenValidated: boolean | undefined;
 };
-const GitHubComponent: React.FC<Props> = ({
-	authKey,
-	inactivateWhenValidated,
-}) => {
+const GitHubComponent: React.FC<Props> = ({ inactivateWhenValidated }) => {
 	const [error, setError] = useState<string>('');
 	const [projectKey, setProjectKey] = useState<string>('');
 	const [doneMessage, setDoneMessage] = useState<string>('');
@@ -29,34 +27,10 @@ const GitHubComponent: React.FC<Props> = ({
 		key: '',
 		activateWhenValidated: !inactivateWhenValidated,
 	});
-	const [ApiKey, setApiKey] = useState<string>('');
+	const { configurePermit } = usePolicyGitReposApi();
 	const [state, setState] = useState<
-		| 'apiKey'
-		| 'repositoryKey'
-		| 'sshKey'
-		| 'branch'
-		| 'project'
-		| 'done'
-		| 'error'
-	>('apiKey');
-	const { authToken } = useAuth();
-	const apiKeyRender = useCallback(() => {
-		if (authKey) {
-			setApiKey(authKey);
-			setState('project');
-		} else {
-			try {
-				setApiKey(authToken);
-				setState('project');
-			} catch (error) {
-				setError(error instanceof Error ? error.message : String(error));
-				setState('error');
-			}
-		}
-	}, [authKey, setApiKey, setState, authToken]);
-	useEffect(() => {
-		apiKeyRender();
-	}, [apiKeyRender]);
+		'repositoryKey' | 'sshKey' | 'branch' | 'project' | 'done' | 'error'
+	>('project');
 
 	const handleProjectSelect = useCallback((project: ActiveState) => {
 		setProjectKey(project.value);
@@ -78,14 +52,12 @@ const GitHubComponent: React.FC<Props> = ({
 				<SelectProject
 					onError={handleProjectSelectionError}
 					onComplete={handleProjectSelect}
-					accessToken={ApiKey}
 				/>
 			)}
 
 			{state === 'repositoryKey' && (
 				<RepositoryKey
 					projectName={projectKey}
-					apiKey={ApiKey}
 					onError={errormessage => {
 						setError(errormessage);
 						setState('error');
@@ -99,6 +71,7 @@ const GitHubComponent: React.FC<Props> = ({
 					}}
 				/>
 			)}
+
 			{state === 'sshKey' && (
 				<SSHKey
 					onError={errormessage => {
@@ -129,24 +102,26 @@ const GitHubComponent: React.FC<Props> = ({
 							...gitConfig,
 							mainBranchName: branchName,
 						};
-						try {
-							const configResponse = await configurePermit(
-								ApiKey,
-								projectKey,
-								updatedGitConfig,
-							);
-							if (configResponse.status === 'invalid') {
-								setError(
-									'Invalid configuration. Please check the configuration and try again.',
-								);
-								setState('error');
-								return;
-							}
-						} catch (error) {
-							setError(error instanceof Error ? error.message : String(error));
+
+						const { data: configResponse, error } = await configurePermit(
+							projectKey,
+							updatedGitConfig,
+						);
+
+						if (error) {
+							setError(error);
 							setState('error');
 							return;
 						}
+
+						if (configResponse?.status === 'invalid') {
+							setError(
+								'Invalid configuration. Please check the configuration and try again.',
+							);
+							setState('error');
+							return;
+						}
+
 						setState('done');
 						if (gitConfig.activateWhenValidated) {
 							setDoneMessage(

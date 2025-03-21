@@ -4,9 +4,10 @@
 		"jsx": "react",
 		"moduleResolution": "node16",
 		"module": "Node16",
+		"outDir": "dist",
+		"noUncheckedIndexedAccess": true,
 		"strict": true,
-		"outDir": "dist"
 	},
 	"include": ["source"],
-	"exclude": ["node_modules"]
+	"exclude": ["node_modules", "source/lib/api"]
 }
