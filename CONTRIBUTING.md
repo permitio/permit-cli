@@ -4,17 +4,86 @@ We would love for you to contribute to this project and help make it even better
 
 As a contributor, here are the guidelines we would like you to follow:
 
+- [General Guidelines](#general-guidelines)
 - [New Commands Guidelines](#new-command-guidelines)
 - [Code of Conduct](https://github.com/permitio/permit-cli/blob/master/CODE_OF_CONDUCT.md)
 - [Question or Problem?](#question)
 - [Issues and Bugs](#issue)
 - [Feature Requests](#feature)
 
+## General Guidelines
+
+- We are encouraging the usage of AI in the development process, but we are also require the human engineering touch on PRs. Every "blind" AI PR will be rejected.
+- Permit CLI is based on Pastel.js, and the file structure should adhere the Pastel.js file structure and best practices - to read more about Pastel.js, please visit [Pastel.js](https://github.com/vadimdemedes/pastel?tab=readme-ov-file#table-of-contents) repository.
+- The proejct is using typescript and we are using the strict mode, so please make sure to follow the typescript rules. No `any` types are allowed in general.
+- The project is using ESLint and Prettier for linting and formatting, and Vitest for testing. 
+- All the PRs should pass the lint rules, and provide >90% test coverage of the new code.
+
+### File Structure
+- Commands should be placed in the `src/commands` directory. For more guidelines, please refer to the [New Command Guidelines](#new-command-guidelines).
+- Components should be placed in the `src/components` directory. Components should be reusable by other commands and should be well documented.
+- API Calls should be placed only in hooks, and should be placed in the `src/hooks` directory. The hooks should be well documented and should be reusable by other components.
+- The `src/lib` folder is for utility functions that are used across the project. Functions there should be completly pure and do not depend on any external state.
+- All the static configuration variables should be placed in the `config.tsx` file.
+
+### Admissions
+- We are using [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for our commit messages.
+- We are using [Semantic Versioning](https://semver.org/) for our releases.
+- We try to follow the BetterCLI guidelines, and we are using the [BetterCLI](https://bettercli.dev/) for our CLI development.
+
 ## New Command Guidelines
 
-We are excited to have you onboard as a contributor to Permit CLI! 🎉
-
 For new commands, we have a few guidelines to ensure consistency and maintainability:
+- Command files (placed in `src/commands`), should contain only the argument configuration, and a root command component
+- Here are some common guidelines that should be followed when creating a new command:
+   - Should be wrapped with the `AuthProvider` component, to ensure the user is authenticated before running the command.
+   - Should have an optional `apiKey` argument that allow the user to pass the API key to the command instead of using the login flow provided by the `AuthProvider` component.
+   - Should declare the API key scope required for the command (can be `organization`, `project`, or `environment`).
+   - Should have concise documentation in the Readme file, explaining the command, its arguments, and how to use it.
+   - Should have a `desciption` and `options` object that defines the command's description and arguments.
+
+
+### Command JSX Structure
+
+The following is a template of a new command. Nothing should be changed or added to this template but the arguments and the root command component.
+
+```tsx
+import React from 'react';
+import zod from 'zod';
+import { option } from 'pastel';
+import { AuthProvider } from '../../../components/AuthProvider.js';
+// Add the command component import here
+
+export const description =
+	'Short and concise description of the command';
+
+export const options = zod.object({
+	key: zod
+		.string()
+		.optional()
+		.describe(
+			option({
+				description:
+					'The API key for the permit',
+				alias: 'k',
+			}),
+		),
+   // Add more options here
+});
+
+type Props = {
+	options: zod.infer<typeof options>;
+};
+
+export default function GitHub({ options }: Props) {
+	return (
+		<AuthProvider permit_key={options.apiKey} scope={'the_scope_requires_for_this_command'}> // The scope can be organization, project, or environment
+         {/* Add the command component here. Should be single component, with declarative name */}
+			<CommandComponent />
+		</AuthProvider>
+	);
+}
+```
 
 ## <a name="question"></a> Got a Question or Problem?
 
@@ -230,3 +299,34 @@ type AuthContextType = {
    - Displays errors and exits the process if authentication fails irrecoverably.
 
 ---
+
+# useClient Hook Documentation
+
+## Overview
+
+All three clients are a wrapper over `openapi-fetch` clients. These provide excellent typescript safety features.
+
+The `useClient` hook exposes three methods to make api calls
+1. `authenticatedApiClient`: If your component is wrapped in an `AuthProvider` use this method, it takes the context for `org_id`, `proj_id`, `env_id` and injects it in your path if needed. It also has the context for the `authToken` and you don't need to pass it to this method.
+2. `authenticatedPdpClient`: Same functionality as `authenticatedApiClient` but you can pass an optional `pdp_url` while initializing the hook, otherwise it defaults to `https://cloudpdp.api.permit.io`.
+3. `unAuthenticatedApiClient`: This is your normal api client, you need to pass all the necessary parameters manually.
+
+
+## How to use it
+All three of them are used in the same way, albeit having different use cases.
+   1. Syntax:
+      ```tsx
+      const { authenticatedApiClient } = useClient();
+      await authenticatedApiClient().POST(`path/xyz/{dynamic}`, // path
+      	{ dynamic: 'dynamic_value' }, // path_values
+      	{ key: value, uwu: owo}, // body
+      	{ page: 10 } //query
+      )
+      ```
+   2. Example:
+	   ```tsx
+       const { authenticatedApiClient } = useClient();
+	   await authenticatedApiClient().GET(`/v2/api-key/{proj_id}/{env_id}`,
+   		  { env_id: environmentId }
+   	   )
+	   ```
