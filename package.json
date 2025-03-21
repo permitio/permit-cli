@@ -60,6 +60,7 @@
 		"chalk": "^5.2.0",
 		"cpx": "^1.5.0",
 		"delay": "^6.0.0",
+		"esbuild": "0.25.1",
 		"eslint": "^9.13.0",
 		"eslint-config-prettier": "^9.1.0",
 		"eslint-config-xo-react": "^0.27.0",

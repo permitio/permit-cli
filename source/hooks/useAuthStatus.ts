@@ -151,7 +151,7 @@ export function useAuthStatus(): AuthStatusResult {
 		return () => {
 			isMounted = false;
 		};
-	}, []);
+	}, [apiKeyApi, environmentApi, orgApi, projectApi]);
 
 	return { loading, loggedIn, authData, error };
 }
