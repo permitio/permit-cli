@@ -48,7 +48,7 @@ const SignupComponent: FC<SignupProp> = ({
 			cookie,
 		);
 		if (error) {
-			setError(error);
+			setError(error.toString());
 			return;
 		}
 		setState('done');
@@ -66,7 +66,6 @@ const SignupComponent: FC<SignupProp> = ({
 	return (
 		<>
 			<Text bold>Welcome! Create your Workspace</Text>
-			{/*<Newline count={2} />*/}
 			{state === 'confirming' && (
 				<>
 					<Text>

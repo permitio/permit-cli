@@ -14,7 +14,7 @@ export interface ActiveState {
 }
 
 type Props = {
-	accessToken: string;
+	accessToken?: string;
 	cookie?: string | null;
 	workspace?: string;
 	onComplete: (
@@ -48,11 +48,10 @@ const EnvironmentSelection: React.FC<Props> = ({
 	const [envCookie, setEnvCookie] = useState<string | undefined>(undefined);
 
 	const isBrowserMode = !!cookie;
-
 	const { authSwitchOrgs } = useAuthApi();
-	const { getProjectEnvironmentApiKey, getApiKeyScope } = useApiKeyApi();
 	const { getEnvironment } = useEnvironmentApi();
 	const { getOrg } = useOrganisationApi();
+	const { getProjectEnvironmentApiKey, getApiKeyScope } = useApiKeyApi();
 
 	const stableOnComplete = useCallback(onComplete, [onComplete]);
 	const stableOnError = useCallback(onError, [onError]);
@@ -62,14 +61,14 @@ const EnvironmentSelection: React.FC<Props> = ({
 		if (!cookie) {
 			(async () => {
 				const {
-					response: scope,
+					data: scope,
 					error,
-					status,
+					response,
 				} = await getApiKeyScope(accessToken);
 
-				if (error) {
+				if (error || !scope) {
 					let errorMsg;
-					if (status === 401) {
+					if (response.status === 401) {
 						errorMsg = `Invalid ApiKey, ${error}`;
 					} else {
 						errorMsg = `Error while getting scopes for the ApiKey: ${error}`;
@@ -79,25 +78,25 @@ const EnvironmentSelection: React.FC<Props> = ({
 				}
 				if (scope.environment_id && scope.project_id) {
 					setState('user-key');
-					const { response: environment } = await getEnvironment(
+					const { data: environment } = await getEnvironment(
 						scope.project_id,
 						scope.environment_id,
 						accessToken,
 						cookie,
 					);
-					const { response: organization } = await getOrg(
+					const { data: organization } = await getOrg(
 						scope.organization_id,
 						accessToken,
 						cookie,
 					);
 					stableOnComplete(
-						{ label: organization.name, value: organization.id },
+						{ label: organization?.name ?? '', value: organization?.id ?? '' },
 						{
 							label: '',
-							value: environment.project_id,
+							value: environment?.project_id ?? '',
 						},
-						{ label: environment.name, value: environment.id },
-						accessToken,
+						{ label: environment?.name ?? '', value: environment?.id ?? '' },
+						accessToken ?? '',
 					);
 				} else {
 					setState('workspace');
@@ -146,14 +145,13 @@ const EnvironmentSelection: React.FC<Props> = ({
 
 	const handleSelectActiveEnvironment = useCallback(
 		async (environment: ActiveState) => {
-			const { response, error } = await getProjectEnvironmentApiKey(
-				activeProject.value,
+			const { data: response, error } = await getProjectEnvironmentApiKey(
 				environment.value,
+				activeProject.value,
 				cookie ?? '',
-				accessToken,
 			);
 
-			if (error) {
+			if (error || !response) {
 				stableOnError(`Error while getting Environment Secret: ${error}`);
 				return;
 			}
@@ -163,11 +161,10 @@ const EnvironmentSelection: React.FC<Props> = ({
 				activeOrganization,
 				activeProject,
 				environment,
-				response.secret,
+				response.secret ?? '',
 			);
 		},
 		[
-			accessToken,
 			activeOrganization,
 			activeProject,
 			cookie,

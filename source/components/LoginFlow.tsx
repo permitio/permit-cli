@@ -4,6 +4,7 @@ import Spinner from 'ink-spinner';
 import { browserAuth, authCallbackServer } from '../lib/auth.js';
 import { useAuthApi } from '../hooks/useAuthApi.js';
 import { useApiKeyApi } from '../hooks/useApiKeyApi.js';
+// import { useUnauthenticatedApi } from '../hooks/useUnauthenticatedApi.js';
 
 type LoginFlowProps = {
 	apiKey?: string;
@@ -19,6 +20,7 @@ const LoginFlow: React.FC<LoginFlowProps> = ({
 	const [loading, setLoading] = useState<boolean>(true);
 
 	const { getLogin } = useAuthApi();
+
 	const { validateApiKey } = useApiKeyApi();
 
 	useEffect(() => {

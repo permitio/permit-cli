@@ -230,3 +230,34 @@ type AuthContextType = {
    - Displays errors and exits the process if authentication fails irrecoverably.
 
 ---
+
+# useClient Hook Documentation
+
+## Overview
+
+All three clients are a wrapper over `openapi-fetch` clients. These provide excellent typescript safety features.
+
+The `useClient` hook exposes three methods to make api calls
+1. `authenticatedApiClient`: If your component is wrapped in an `AuthProvider` use this method, it takes the context for `org_id`, `proj_id`, `env_id` and injects it in your path if needed. It also has the context for the `authToken` and you don't need to pass it to this method.
+2. `authenticatedPdpClient`: Same functionality as `authenticatedApiClient` but you can pass an optional `pdp_url` while initializing the hook, otherwise it defaults to `https://cloudpdp.api.permit.io`.
+3. `unAuthenticatedApiClient`: This is your normal api client, you need to pass all the necessary parameters manually.
+
+
+## How to use it
+All three of them are used in the same way, albeit having different use cases.
+   1. Syntax:
+      ```tsx
+      const { authenticatedApiClient } = useClient();
+      await authenticatedApiClient().POST(`path/xyz/{dynamic}`, // path
+      	{ dynamic: 'dynamic_value' }, // path_values
+      	{ key: value, uwu: owo}, // body
+      	{ page: 10 } //query
+      )
+      ```
+   2. Example:
+	   ```tsx
+       const { authenticatedApiClient } = useClient();
+	   await authenticatedApiClient().GET(`/v2/api-key/{proj_id}/{env_id}`,
+   		  { env_id: environmentId }
+   	   )
+	   ```

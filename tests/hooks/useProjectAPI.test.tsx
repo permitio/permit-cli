@@ -1,14 +1,11 @@
-import { useProjectAPI } from '../../source/hooks/useProjectAPI';
-import { apiCall } from '../../source/lib/api';
+import { useProjectAPI } from '../../source/hooks/useProjectAPI.js';
 import { vi, expect, it, describe, beforeEach } from 'vitest';
 import React from 'react';
 import { render } from 'ink-testing-library';
 import { Text } from 'ink';
+import { getMockFetchResponse } from '../utils.js';
 
-// Mocking the apiCall function
-vi.mock('../../source/lib/api', () => ({
-	apiCall: vi.fn(),
-}));
+global.fetch = vi.fn();
 
 describe('useProjectAPI', () => {
 	beforeEach(() => {
@@ -18,12 +15,10 @@ describe('useProjectAPI', () => {
 	it('should fetch all projects', async () => {
 		const TestComponent = () => {
 			const { getProjects } = useProjectAPI();
-			const accessToken = 'access-token';
-			const cookie = 'cookie';
 
-			// Mock the apiCall to simulate a successful response
-			apiCall.mockResolvedValue([
-				{
+			(fetch as any).mockResolvedValueOnce({
+				...getMockFetchResponse(),
+				json: async () => ([{
 					key: 'project-key',
 					id: 'project-id',
 					organization_id: 'org-id',
@@ -32,15 +27,15 @@ describe('useProjectAPI', () => {
 					name: 'Project Name',
 					settings: {},
 					active_policy_repo_id: 'policy-id',
-				},
-			]);
+				}])
+			});
 
 			const fetchProjects = async () => {
-				const projects = await getProjects(accessToken, cookie);
-				return projects.length > 0 ? projects[0].name : 'No projects';
+				const { data: projects } = await getProjects();
+				return (projects?.length ?? 0 > 0) && projects ? projects[0]?.name : 'No projects';
 			};
 			const [result, setResult] = React.useState<string | null>(null);
-			fetchProjects().then(res => setResult(res));
+			fetchProjects().then(res => setResult(res ?? null));
 
 			return <Text>{result}</Text>;
 		};
@@ -57,13 +52,12 @@ describe('useProjectAPI', () => {
 			const accessToken = 'access-token';
 			const cookie = 'cookie';
 
-			// Mock the apiCall to simulate a failed response
-			apiCall.mockRejectedValue(new Error('Failed to fetch projects'));
+			(fetch as any).mockRejectedValueOnce(new Error('Failed to fetch projects'));
 
 			const fetchProjects = async () => {
 				try {
-					const projects = await getProjects(accessToken, cookie);
-					return projects.length > 0 ? projects[0].name : 'No projects';
+					const { data: projects } = await getProjects();
+					return (projects?.length ?? 0 > 0) && projects ? projects[0]?.name : 'No projects';
 				} catch (error) {
 					return error.message;
 				}

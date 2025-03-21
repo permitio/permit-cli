@@ -6,9 +6,10 @@ import { useApiKeyApi } from '../source/hooks/useApiKeyApi.js';
 import { useMemberApi } from '../source/hooks/useMemberApi.js';
 import EnvironmentSelection from '../source/components/EnvironmentSelection.js';
 import delay from 'delay';
-import * as keytar from 'keytar';
+import * as keytar from "keytar"
 
-vi.mock('../source/hooks/useApiKeyApi.js', () => ({
+
+vi.mock('../source/hooks/useApiKeyApi', () => ({
 	useApiKeyApi: vi.fn(() => ({
 		validateApiKeyScope: vi.fn(),
 	})),

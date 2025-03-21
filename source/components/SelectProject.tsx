@@ -6,7 +6,7 @@ import { ActiveState } from './EnvironmentSelection.js';
 import { useProjectAPI } from '../hooks/useProjectAPI.js';
 
 type Props = {
-	accessToken: string;
+	accessToken?: string;
 	cookie?: string | null;
 	onComplete: (project: ActiveState) => void;
 	onError: (error: string) => void;
@@ -30,12 +30,9 @@ const SelectProject: React.FC<Props> = ({
 
 	useEffect(() => {
 		const fetchProjects = async () => {
-			const { response: projects, error } = await getProjects(
-				accessToken,
-				cookie,
-			);
+			const { data: projects, error } = await getProjects(accessToken, cookie);
 
-			if (error) {
+			if (error || !projects) {
 				onError(
 					`Failed to load projects. Reason: ${error}. Please check your network connection or credentials and try again.`,
 				);
