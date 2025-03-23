@@ -3,7 +3,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { render } from 'ink-testing-library';
 import Policy from '../source/commands/opa/policy';
 import delay from 'delay';
-import * as keytar from 'keytar';
+import * as keytar from "keytar"
+import { useApiKeyApi } from '../source/hooks/useApiKeyApi';
+
 global.fetch = vi.fn();
 const enter = '\r';
 vi.mock('keytar', () => {
@@ -24,8 +26,9 @@ vi.mock('../source/lib/auth.js', async () => {
 		loadAuthToken: vi.fn(() => demoPermitKey),
 	};
 });
-vi.mock('../source/hooks/useApiKeyApi', async () => {
+vi.mock('../source/hooks/useApiKeyApi', async() => {
 	const original = await vi.importActual('../source/hooks/useApiKeyApi');
+
 	return {
 		...original,
 		useApiKeyApi: () => ({

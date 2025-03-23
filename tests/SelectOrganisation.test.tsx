@@ -5,6 +5,23 @@ import SelectOrganization from '../source/components/SelectOrganization.js';
 import { useOrganisationApi } from '../source/hooks/useOrganisationApi.js';
 import delay from 'delay';
 
+import * as keytar from 'keytar';
+
+vi.mock('keytar', () => {
+	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+
+	const keytar = {
+		setPassword: vi.fn().mockResolvedValue(() => {
+			return demoPermitKey
+		}),
+		getPassword: vi.fn().mockResolvedValue(() => {
+			return demoPermitKey
+		}),
+		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
+	};
+	return { ...keytar, default: keytar };
+});
+
 vi.mock('../source/hooks/useOrganisationApi.js', () => ({
 	useOrganisationApi: vi.fn(),
 }));
@@ -16,9 +33,9 @@ describe('SelectOrganization Component', () => {
 	it('should display loading state initially', () => {
 		const mockGetOrgs = vi.fn(() =>
 			Promise.resolve({
-				response: [
-					{ id: 'org1', name: 'Organization 1' },
-					{ id: 'org2', name: 'Organization 2' },
+				data: [
+					{ id: 'org1', name: 'OrganizationReadWithAPIKey 1' },
+					{ id: 'org2', name: 'OrganizationReadWithAPIKey 2' },
 				],
 				error: null,
 			}),
@@ -42,9 +59,9 @@ describe('SelectOrganization Component', () => {
 	it('should display organizations after loading', async () => {
 		const mockGetOrgs = vi.fn(() =>
 			Promise.resolve({
-				response: [
-					{ id: 'org1', name: 'Organization 1' },
-					{ id: 'org2', name: 'Organization 2' },
+				data: [
+					{ id: 'org1', name: 'OrganizationReadWithAPIKey 1' },
+					{ id: 'org2', name: 'OrganizationReadWithAPIKey 2' },
 				],
 				error: null,
 			}),
@@ -66,8 +83,8 @@ describe('SelectOrganization Component', () => {
 		await delay(50); // Allow async operation to complete
 
 		expect(lastFrame()).toMatch(/Select an organization/);
-		expect(lastFrame()).toMatch(/Organization 1/);
-		expect(lastFrame()).toMatch(/Organization 2/);
+		expect(lastFrame()).toMatch(/OrganizationReadWithAPIKey 1/);
+		expect(lastFrame()).toMatch(/OrganizationReadWithAPIKey 2/);
 
 		// Simulate user input to select the second organization
 		stdin.write(arrowDown);
@@ -77,7 +94,7 @@ describe('SelectOrganization Component', () => {
 
 		expect(onComplete).toHaveBeenCalledOnce();
 		expect(onComplete).toHaveBeenCalledWith({
-			label: 'Organization 2',
+			label: 'OrganizationReadWithAPIKey 2',
 			value: 'org2',
 		});
 	});
@@ -85,7 +102,7 @@ describe('SelectOrganization Component', () => {
 	it('should handle errors when fetching organizations fails', async () => {
 		const mockGetOrgs = vi.fn(() =>
 			Promise.resolve({
-				response: null,
+				data: null,
 				error: 'Network error',
 			}),
 		);
@@ -114,9 +131,9 @@ describe('SelectOrganization Component', () => {
 	it('should automatically select organization if workspace is specified and matches', async () => {
 		const mockGetOrgs = vi.fn(() =>
 			Promise.resolve({
-				response: [
-					{ id: 'org1', name: 'Organization 1' },
-					{ id: 'org2', name: 'Organization 2' },
+				data: [
+					{ id: 'org1', name: 'OrganizationReadWithAPIKey 1' },
+					{ id: 'org2', name: 'OrganizationReadWithAPIKey 2' },
 				],
 				error: null,
 			}),
@@ -130,7 +147,7 @@ describe('SelectOrganization Component', () => {
 			<SelectOrganization
 				accessToken="test_token"
 				cookie="test_cookie"
-				workspace="Organization 1"
+				workspace="OrganizationReadWithAPIKey 1"
 				onComplete={onComplete}
 				onError={vi.fn()}
 			/>,
@@ -140,7 +157,7 @@ describe('SelectOrganization Component', () => {
 
 		expect(onComplete).toHaveBeenCalledOnce();
 		expect(onComplete).toHaveBeenCalledWith({
-			label: 'Organization 1',
+			label: 'OrganizationReadWithAPIKey 1',
 			value: 'org1',
 		});
 		expect(lastFrame()).not.toMatch(/Select an organization/);
@@ -149,9 +166,9 @@ describe('SelectOrganization Component', () => {
 	it('should display an error if workspace is specified but not found', async () => {
 		const mockGetOrgs = vi.fn(() =>
 			Promise.resolve({
-				response: [
-					{ id: 'org1', name: 'Organization 1' },
-					{ id: 'org2', name: 'Organization 2' },
+				data: [
+					{ id: 'org1', name: 'OrganizationReadWithAPIKey 1' },
+					{ id: 'org2', name: 'OrganizationReadWithAPIKey 2' },
 				],
 				error: null,
 			}),
@@ -165,7 +182,7 @@ describe('SelectOrganization Component', () => {
 			<SelectOrganization
 				accessToken="test_token"
 				cookie="test_cookie"
-				workspace="Unknown Organization"
+				workspace="Unknown OrganizationReadWithAPIKey"
 				onComplete={vi.fn()}
 				onError={onError}
 			/>,
@@ -175,7 +192,7 @@ describe('SelectOrganization Component', () => {
 
 		expect(onError).toHaveBeenCalledOnce();
 		expect(onError).toHaveBeenCalledWith(
-			'Organization "Unknown Organization" not found. Please ensure the name is correct and try again.',
+			'Organization "Unknown OrganizationReadWithAPIKey" not found. Please ensure the name is correct and try again.',
 		);
 		expect(lastFrame()).not.toMatch(/Select an organization/);
 	});
