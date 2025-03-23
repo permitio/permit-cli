@@ -13,26 +13,23 @@ As a contributor, here are the guidelines we would like you to follow:
 
 ## General Guidelines
 
-- We are encouraging the usage of AI in the development process, but we are also require the human engineering touch on PRs. Every "blind" AI PR will be rejected.
+- We are encouraging the usage of AI in the development process, but we also require the human engineering touch on PRs. Every "blind" AI PR will be rejected.
 - Permit CLI is based on Pastel.js, and the file structure should adhere the Pastel.js file structure and best practices - to read more about Pastel.js, please visit [Pastel.js](https://github.com/vadimdemedes/pastel?tab=readme-ov-file#table-of-contents) repository.
-- The proejct is using typescript and we are using the strict mode, so please make sure to follow the typescript rules. No `any` types are allowed in general.
+- The project is using typescript and we are using the strict mode, so please make sure to follow the typescript rules. No `any` types are allowed in general.
 - The project is using ESLint and Prettier for linting and formatting, and Vitest for testing. 
 - All the PRs should pass the lint rules, and provide >90% test coverage of the new code.
+
 
 ### File Structure
 - Commands should be placed in the `src/commands` directory. For more guidelines, please refer to the [New Command Guidelines](#new-command-guidelines).
 - Components should be placed in the `src/components` directory. Components should be reusable by other commands and should be well documented.
-- API Calls should be placed only in hooks, and should be placed in the `src/hooks` directory. The hooks should be well documented and should be reusable by other components.
-- The `src/lib` folder is for utility functions that are used across the project. Functions there should be completly pure and do not depend on any external state.
+- API Calls should be placed only in hooks, which should be in the `src/hooks` directory. The hooks should be well documented and reusable by other components.
+   - All the API calls should be made using the `useClient` hook. The hook is working with the `AuthProvider` component, so you don't need to pass the `authToken` to the API calls.
+- The `src/lib` folder is for utility functions used across the project. Functions there should be completely pure and not depend on any external state.
 - All the static configuration variables should be placed in the `config.tsx` file.
 
-### Admissions
-- We are using [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for our commit messages.
-- We are using [Semantic Versioning](https://semver.org/) for our releases.
-- We try to follow the BetterCLI guidelines, and we are using the [BetterCLI](https://bettercli.dev/) for our CLI development.
 
 ## New Command Guidelines
-
 For new commands, we have a few guidelines to ensure consistency and maintainability:
 - Command files (placed in `src/commands`), should contain only the argument configuration, and a root command component
 - Here are some common guidelines that should be followed when creating a new command:
@@ -40,10 +37,23 @@ For new commands, we have a few guidelines to ensure consistency and maintainabi
    - Should have an optional `apiKey` argument that allow the user to pass the API key to the command instead of using the login flow provided by the `AuthProvider` component.
    - Should declare the API key scope required for the command (can be `organization`, `project`, or `environment`).
    - Should have concise documentation in the Readme file, explaining the command, its arguments, and how to use it.
-   - Should have a `desciption` and `options` object that defines the command's description and arguments.
+   - Should have a `description` and `options` object that defines the command's description and arguments.
 
 
-### Command JSX Structure
+## Issue / Bounty Participation Guidelines
+- To get an issue assigned, you need to present a clear plan of action and a clear timeline for the issue.
+- If you are not sure about the issue, you can ask for clarifications in the issue comments.
+- Before starting to work on an issue, you need to get it approved and assigned by the maintainers.
+- If the issue has a bounty, you also need to add your relevant experience in the domain of the issue to your PR description.
+- Due to the exponential growth of blind AI PRs and issue participation, every PR that is considered an AI submission will be rejected without further notice.
+
+
+### Admissions
+- We are using [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for our commit messages.
+- We are using [Semantic Versioning](https://semver.org/) for our releases.
+- We try to follow the BetterCLI guidelines, and we are using the [BetterCLI](https://bettercli.dev/) for our CLI development.
+
+### Command TSX Structure
 
 The following is a template of a new command. Nothing should be changed or added to this template but the arguments and the root command component.
 
@@ -51,7 +61,7 @@ The following is a template of a new command. Nothing should be changed or added
 import React from 'react';
 import zod from 'zod';
 import { option } from 'pastel';
-import { AuthProvider } from '../../../components/AuthProvider.js';
+import { AuthProvider } from '../../../components/AuthProvider';
 // Add the command component import here
 
 export const description =
@@ -192,7 +202,7 @@ This component is the backbone of authentication for the CLI app. It ensures a s
 
 ## **Key Features**
 
-1. **`--key<-->permitKey` Functionality:**
+1. **`--api-key<-->permitKey` Functionality:**
 
    - Users can pass a `--key` flag to provide an API key directly to the `permitKey` prop of `AuthProvider`. The component validates the key and uses it if valid + has a valid scope.
    - If not passed, the component tries to load a previously stored token or guides the user through a scope based selection and key creation flow.
