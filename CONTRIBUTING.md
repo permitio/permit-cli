@@ -44,14 +44,14 @@ For new commands, we have a few guidelines to ensure consistency and maintainabi
    - Should have a `description` and `options` object that defines the command's description and arguments.
 
 ### <a name="api-proxy-commands"></a> "API Proxy" Commands
-Some of the commands, just proxy API endpoints without any extra logic. For these commands, we are asking to keep the command as simple as possible, and to use the `useClient` hook to make the API calls.
+Some of the commands are just proxy the API endpoints without any extra logic. For these commands, we are asking to keep the command as simple as possible, and to use the `useClient` hook to make the API calls.
 
 The command behavior should be as follows:
 - All the spec and convention is available in the `useClient` hook, so you don't need to worry about constructing the API calls.
 - The project/environment that are part of the endpoint **shouldn't** be passed as an argument to the command. The `useClient` hook will automatically inject the project/environment ID to the endpoint.
 - Mandatory and optional fields are defined in the API spec, and should be reflected in the command arguments.
 - Permit API spec is available at [Permit API Spec](https://api.permit.io/v2/redoc) and the PDP API spec is available at [Permit PDP API Spec](https://pdp-api.permit.io/redoc)
-- All the endpoint components, query string parameters, and body should be accepted as arguments to the command and promptable in the command wizard.
+- All the endpoint components, query string parameters, and body should be accepted as arguments to the command and appear as being prompted in the command interactive wizard.
 - Command wizard flow should be as follows:
    - If all mandatory fields appear in the arguments, do not open a wizard and run the command
    - If some mandatory fields are missing in the argument, prompt the wizard with the possibility to skip when fields that are optional
