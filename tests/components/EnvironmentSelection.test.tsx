@@ -1,14 +1,25 @@
 import { vi, it, describe, expect, beforeEach } from 'vitest';
 import React from 'react';
 import { render } from 'ink-testing-library';
-import EnvironmentSelection from '../../source/components/EnvironmentSelection';
+import EnvironmentSelection from '../../source/components/EnvironmentSelection.js';
 import delay from 'delay';
-import { useAuthApi } from '../../source/hooks/useAuthApi';
-import { useApiKeyApi } from '../../source/hooks/useApiKeyApi';
-import { useEnvironmentApi } from '../../source/hooks/useEnvironmentApi';
-import { useOrganisationApi } from '../../source/hooks/useOrganisationApi';
-import { apiCall } from '../../source/lib/api';
-import { g } from 'vitest/dist/chunks/suite.B2jumIFP.js';
+import * as keytar from 'keytar';
+
+vi.mock('keytar', () => {
+	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+
+	const keytar = {
+		setPassword: vi.fn().mockResolvedValue(() => {
+			return demoPermitKey
+		}),
+		getPassword: vi.fn().mockResolvedValue(() => {
+			return demoPermitKey
+		}),
+		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
+	};
+	return { ...keytar, default: keytar };
+});
+
 vi.mock('../../source/lib/api', () => ({
 	apiCall: vi.fn(),
 }));
@@ -27,7 +38,7 @@ vi.mock('../../source/hooks/useAuthApi', () => ({
 vi.mock('../../source/hooks/useEnvironmentApi', () => ({
 	useEnvironmentApi: () => ({
 		getEnvironment: vi.fn().mockResolvedValue({
-			response: {
+			data: {
 				name: 'Test Env',
 				id: 'env1',
 				project_id: 'proj1',
@@ -39,7 +50,7 @@ vi.mock('../../source/hooks/useEnvironmentApi', () => ({
 vi.mock('../../source/hooks/useOrganisationApi', () => ({
 	useOrganisationApi: () => ({
 		getOrg: vi.fn().mockResolvedValue({
-			response: {
+			data: {
 				name: 'Test Org',
 				id: 'org1',
 			},
@@ -50,7 +61,7 @@ vi.mock('../../source/hooks/useOrganisationApi', () => ({
 vi.mock('../../source/hooks/useApiKeyApi', () => ({
 	useApiKeyApi: () => ({
 		getApiKeyScope: vi.fn().mockResolvedValue({
-			response: {
+			data: {
 				environment_id: 'env1',
 				project_id: 'proj1',
 				organization_id: 'org1',
@@ -59,7 +70,7 @@ vi.mock('../../source/hooks/useApiKeyApi', () => ({
 			status: 200,
 		}),
 		getProjectEnvironmentApiKey: vi.fn().mockResolvedValue({
-			response: { secret: 'test-secret' },
+			data: { secret: 'test-secret' },
 			error: null,
 		}),
 	}),

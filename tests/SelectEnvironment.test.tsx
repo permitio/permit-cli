@@ -4,6 +4,22 @@ import { describe, it, expect, vi } from 'vitest';
 import SelectEnvironment from '../source/components/SelectEnvironment.js';
 import { useEnvironmentApi } from '../source/hooks/useEnvironmentApi.js';
 import delay from 'delay';
+import * as keytar from 'keytar';
+
+vi.mock('keytar', () => {
+	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+
+	const keytar = {
+		setPassword: vi.fn().mockResolvedValue(() => {
+			return demoPermitKey
+		}),
+		getPassword: vi.fn().mockResolvedValue(() => {
+			return demoPermitKey
+		}),
+		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
+	};
+	return { ...keytar, default: keytar };
+});
 
 vi.mock('../source/hooks/useEnvironmentApi.js', () => ({
 	useEnvironmentApi: vi.fn(),
@@ -16,7 +32,7 @@ describe('SelectEnvironment Component', () => {
 	it('should display loading state initially', () => {
 		const mockGetEnvironments = vi.fn(() =>
 			Promise.resolve({
-				response: [
+				data: [
 					{ id: 'env1', name: 'Environment 1' },
 					{ id: 'env2', name: 'Environment 2' },
 				],
@@ -45,7 +61,7 @@ describe('SelectEnvironment Component', () => {
 	it('should display environments after loading', async () => {
 		const mockGetEnvironments = vi.fn(() =>
 			Promise.resolve({
-				response: [
+				data: [
 					{ id: 'env1', name: 'Environment 1' },
 					{ id: 'env2', name: 'Environment 2' },
 				],
@@ -91,7 +107,7 @@ describe('SelectEnvironment Component', () => {
 	it('should handle errors when fetching environments fails', async () => {
 		const mockGetEnvironments = vi.fn(() =>
 			Promise.resolve({
-				response: null,
+				data: undefined,
 				error: 'Network error',
 			}),
 		);
@@ -123,7 +139,7 @@ describe('SelectEnvironment Component', () => {
 	it('should handle empty environment list gracefully', async () => {
 		const mockGetEnvironments = vi.fn(() =>
 			Promise.resolve({
-				response: [],
+				data: [],
 				error: null,
 			}),
 		);

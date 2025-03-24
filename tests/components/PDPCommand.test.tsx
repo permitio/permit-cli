@@ -6,12 +6,15 @@ import { AuthProvider } from '../../source/components/AuthProvider';
 import delay from 'delay';
 import { loadAuthToken } from '../../source/lib/auth';
 import Run from '../../source/commands/pdp/run';
+import { useApiKeyApi } from '../../source/hooks/useApiKeyApi';
 vi.mock('../../source/lib/auth', () => ({
 	loadAuthToken: vi.fn(),
 }));
 
-vi.mock('../../source/hooks/useApiKeyApi', async () => {
+
+vi.mock('../../source/hooks/useApiKeyApi', async() => {
 	const original = await vi.importActual('../../source/hooks/useApiKeyApi');
+
 	return {
 		...original,
 		useApiKeyApi: () => ({

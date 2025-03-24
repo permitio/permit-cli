@@ -6,7 +6,7 @@ import { ActiveState } from './EnvironmentSelection.js';
 import { useEnvironmentApi } from '../hooks/useEnvironmentApi.js';
 
 type Props = {
-	accessToken: string;
+	accessToken?: string;
 	cookie?: string | null;
 	activeProject: ActiveState;
 	onComplete: (environment: ActiveState) => void;
@@ -32,13 +32,13 @@ const SelectEnvironment: React.FC<Props> = ({
 
 	useEffect(() => {
 		const fetchEnvironments = async () => {
-			const { response: environments, error } = await getEnvironments(
+			const { data: environments, error } = await getEnvironments(
 				activeProject.value,
 				accessToken,
 				cookie,
 			);
 
-			if (error) {
+			if (error || !environments) {
 				onError(
 					`Failed to load environments for project "${activeProject.label}". Reason: ${error}. Please check your network connection or credentials and try again.`,
 				);

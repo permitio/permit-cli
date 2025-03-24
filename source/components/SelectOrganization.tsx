@@ -4,12 +4,12 @@ import SelectInput from 'ink-select-input';
 import Spinner from 'ink-spinner';
 import { ActiveState } from './EnvironmentSelection.js';
 import {
-	Organization,
+	OrganizationReadWithAPIKey,
 	useOrganisationApi,
 } from '../hooks/useOrganisationApi.js';
 
 type SelectOrganizationProps = {
-	accessToken: string;
+	accessToken?: string;
 	cookie?: string | null;
 	onComplete: (organization: ActiveState) => void;
 	workspace?: string;
@@ -35,11 +35,8 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 
 	useEffect(() => {
 		const fetchOrgs = async () => {
-			const { response: orgs, error } = await getOrgs(
-				accessToken,
-				cookie ?? '',
-			);
-			if (error) {
+			const { data: orgs, error } = await getOrgs(accessToken, cookie);
+			if (error || !orgs) {
 				onError(
 					`Failed to load organizations. Reason: ${error}. Please check your network connection or credentials and try again.`,
 				);
@@ -47,9 +44,10 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 			}
 
 			if (workspace) {
-				let userSpecifiedOrganization: Organization | undefined = orgs.find(
-					(org: Organization) => org.name === workspace,
-				);
+				let userSpecifiedOrganization: OrganizationReadWithAPIKey | undefined =
+					orgs.find(
+						(org: OrganizationReadWithAPIKey) => org.name === workspace,
+					);
 				if (userSpecifiedOrganization) {
 					onComplete({
 						label: userSpecifiedOrganization.name,
@@ -76,7 +74,7 @@ const SelectOrganization: React.FC<SelectOrganizationProps> = ({
 				});
 			} else {
 				setOrgs(
-					orgs.map((org: Organization) => ({
+					orgs.map((org: OrganizationReadWithAPIKey) => ({
 						label: org.name,
 						value: org.id,
 					})),
