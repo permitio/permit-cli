@@ -1,6 +1,6 @@
 import React from 'react';
 import { AuthProvider } from '../components/AuthProvider.js';
-import Graph from '../components/graphCommand.js';
+import Graph from '../components/GraphCommands.js';
 import { type infer as zInfer, object, string } from 'zod';
 import { option } from 'pastel';
 
