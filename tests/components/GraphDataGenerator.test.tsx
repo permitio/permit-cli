@@ -1,8 +1,6 @@
-// generateGraphData.test.tsx
 import { describe, it, expect } from 'vitest';
-import { generateGraphData } from '../../source/components/generateGraphData'; 
+import { generateGraphData } from '../../source/components/GraphDataGenerator'; 
 
-// Dummy types for clarity (these match your definitions)
 type ResourceInstance = {
 	label: string;
 	value: string;

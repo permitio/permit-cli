@@ -4,14 +4,13 @@ import open from 'open';
 import { saveHTMLGraph } from '../../source/components/HtmlGraphSaver';
 import * as fs from 'fs';
 
-// Mock the 'open' module
 vi.mock('open', () => ({
 	default: vi.fn(() => Promise.resolve()),
 }));
 
-// Mock the 'fs' module; this must happen before the module under test is imported
 vi.mock('fs', () => ({
 	writeFileSync: vi.fn(),
+	readFileSync: vi.fn(() => '<!doctype html><html></html>'),
 }));
 
 describe('saveHTMLGraph', () => {
@@ -34,10 +33,12 @@ describe('saveHTMLGraph', () => {
 		expect(fs.writeFileSync).toHaveBeenCalledWith(
 			expectedPath,
 			expect.stringContaining('<!doctype html>'),
-			'utf8'
+			'utf8',
 		);
 
-		expect(consoleLogSpy).toHaveBeenCalledWith(`Graph saved as: ${expectedPath}`);
+		expect(consoleLogSpy).toHaveBeenCalledWith(
+			`Graph saved as: ${expectedPath}`,
+		);
 
 		expect(open).toHaveBeenCalledWith(expectedPath);
 	});
