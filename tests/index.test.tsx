@@ -22,8 +22,9 @@ vi.mock('keytar', () => {
 });
 
 describe('index file', () => {
-	it('the index file should render', () => {
+	it('the index file should render', async() => {
 		const { lastFrame } = render(<Index />);
+		await delay(100);
 		expect(lastFrame()?.toString()).toMatch(
 			/Run this command with --help for more information/,
 		);
