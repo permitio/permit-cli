@@ -5,162 +5,176 @@ import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 import { loadAuthToken } from '../../lib/auth.js';
 import { API_PDPS_CONFIG_URL } from '../../config.js';
+import { useAuth } from '../AuthProvider.js';
 
 const execAsync = promisify(exec);
 
 type Props = {
-  opa?: number;
-  printCommand?: boolean;
+	opa?: number;
+	dryRun?: boolean;
 };
 
-export default function PDPRunComponent({ opa, printCommand = false }: Props) {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [dockerCommand, setDockerCommand] = useState<string>('');
-  const [containerOutput, setContainerOutput] = useState<string>('');
-  const [containerRunning, setContainerRunning] = useState(false);
+export default function PDPRunComponent({ opa, dryRun = false }: Props) {
+	const { authToken } = useAuth();
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
+	const [dockerCommand, setDockerCommand] = useState<string>('');
+	const [containerInfo, setContainerInfo] = useState<{
+		id: string;
+		name: string;
+	} | null>(null);
+	const [dockerAvailable, setDockerAvailable] = useState(true);
 
-  useEffect(() => {
-    const generateDockerCommand = async () => {
-      try {
-        setLoading(true);
-        
-        // Get the auth token
-        const token = await loadAuthToken();
-        
-        // Fetch PDP configuration
-        const response = await fetch(API_PDPS_CONFIG_URL, {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch PDP configuration: ${response.statusText}`);
-        }
-        
-        const config = await response.json();
-        
-        // Generate the Docker command
-        const cmd = `docker run -p 7676:7676 ${
-          opa ? `-p ${opa}:8181` : ''
-        } -e PDP_API_KEY=${token} -e PDP_CONTROL_PLANE=${config.controlPlane || 'https://api.permit.io'} permitio/pdp-v2:latest`;
-        
-        setDockerCommand(cmd);
-        
-        if (!printCommand) {
-          // Check if Docker is installed
-          try {
-            await execAsync('docker --version');
-          } catch (err) {
-            throw new Error('Docker is not installed or not in PATH. Please install Docker to run the PDP container.');
-          }
-          
-          // Run the Docker command
-          try {
-            setLoading(true);
-            // Use exec to start the process but don't wait for it to complete
-            const childProcess = exec(cmd);
-            
-            setContainerRunning(true);
-            
-            // Capture stdout
-            childProcess.stdout?.on('data', (data) => {
-              setContainerOutput(prev => prev + data);
-            });
-            
-            // Capture stderr
-            childProcess.stderr?.on('data', (data) => {
-              // Some Docker output goes to stderr but isn't an error
-              if (data.includes('Error')) {
-                setError(data);
-              } else {
-                setContainerOutput(prev => prev + data);
-              }
-            });
-            
-            // Handle process exit
-            childProcess.on('exit', (code) => {
-              if (code !== 0) {
-                setError(`Docker process exited with code ${code}`);
-                setContainerRunning(false);
-              }
-            });
-            
-            // Handle process error
-            childProcess.on('error', (err) => {
-              setError(`Failed to start Docker: ${err.message}`);
-              setContainerRunning(false);
-            });
-          } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            throw new Error(`Failed to run Docker command: ${errorMessage}`);
-          }
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    generateDockerCommand();
-    
-    // Cleanup function to handle component unmounting
-    return () => {
-      // If we started a Docker container and component is unmounting, we might want to stop it
-      // This depends on the desired behavior - if you want the container to keep running, omit this
-      if (containerRunning && !printCommand) {
-        try {
-          exec('docker stop $(docker ps -q --filter ancestor=permitio/pdp-v2:latest)');
-        } catch (e) {
-          // Ignore cleanup errors
-        }
-      }
-    };
-  }, [opa, printCommand]);
+	useEffect(() => {
+		const generateDockerCommand = async () => {
+			try {
+				setLoading(true);
 
-  if (loading) {
-    return (
-      <Box>
-        <Text>
-          <Spinner type="dots" /> {printCommand ? 'Generating Docker command...' : 'Starting PDP Docker container...'}
-        </Text>
-      </Box>
-    );
-  }
+				// Use the token from AuthProvider, or load from storage if needed
+				const token = authToken || (await loadAuthToken());
 
-  if (error) {
-    return (
-      <Box flexDirection="column">
-        <Text color="red">Error: {error}</Text>
-        {!printCommand && (
-          <Text>Make sure Docker is installed and running on your system.</Text>
-        )}
-      </Box>
-    );
-  }
+				if (!token) {
+					throw new Error(
+						'No authentication token available. Please login first with `permit login`',
+					);
+				}
 
-  if (printCommand) {
-    return (
-      <Box flexDirection="column">
-        <Text>Run the following command to start the PDP container:</Text>
-        <Text>{dockerCommand}</Text>
-      </Box>
-    );
-  }
+				// Fetch PDP configuration
+				const response = await fetch(API_PDPS_CONFIG_URL, {
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`,
+					},
+				});
 
-  return (
-    <Box flexDirection="column">
-      <Text>PDP container is running on port 7676{opa ? ` with OPA exposed on port ${opa}` : ''}</Text>
-      <Text>Press Ctrl+C to stop the CLI (the container will continue running)</Text>
-      {containerOutput && (
-        <Box flexDirection="column" marginTop={1}>
-          <Text>Container output:</Text>
-          <Text>{containerOutput}</Text>
-        </Box>
-      )}
-    </Box>
-  );
+				if (!response.ok) {
+					throw new Error(
+						`Failed to fetch PDP configuration: ${response.statusText}`,
+					);
+				}
+
+				const config = await response.json();
+
+				// Generate the Docker command
+				const cmd = `docker run -d -p 7676:7676 ${
+					opa ? `-p ${opa}:8181` : ''
+				} -e PDP_API_KEY=${token} -e PDP_CONTROL_PLANE=${config.controlPlane || 'https://api.permit.io'} permitio/pdp-v2:latest`;
+
+				setDockerCommand(cmd);
+
+				if (!dryRun) {
+					// Check if Docker is installed
+					try {
+						await execAsync('docker --version');
+						setDockerAvailable(true);
+						// eslint-disable-next-line @typescript-eslint/no-unused-vars
+					} catch (_) {
+						// Not using the error value, using underscore to indicate intentionally unused
+						setDockerAvailable(false);
+						throw new Error(
+							'Docker is not installed or not in PATH. Please install Docker to run the PDP container.',
+						);
+					}
+
+					// Run the Docker command
+					if (dockerAvailable) {
+						try {
+							// Execute docker command with -d flag to run in detached mode
+							const { stdout } = await execAsync(cmd);
+
+							// Get container ID (it's returned by the command when using -d)
+							const containerId = stdout.trim();
+
+							// Get container name - using double quotes to avoid lint issue with single quotes
+							const { stdout: nameOutput } = await execAsync(
+								`docker inspect --format="{{.Name}}" ${containerId}`,
+							);
+							const containerName = nameOutput.trim().replace(/^\//, ''); // Remove leading / from name
+
+							setContainerInfo({ id: containerId, name: containerName });
+						} catch (err) {
+							const errorMessage =
+								err instanceof Error ? err.message : String(err);
+							throw new Error(`Failed to run Docker command: ${errorMessage}`);
+						}
+					}
+				}
+			} catch (err) {
+				setError(err instanceof Error ? err.message : String(err));
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		generateDockerCommand();
+
+		// No need for cleanup function - we're running Docker in detached mode,
+		// so it won't stop when the component unmounts
+	}, [opa, dryRun, authToken, dockerAvailable]);
+
+	if (loading) {
+		return (
+			<Box>
+				<Text>
+					<Spinner type="dots" />{' '}
+					{dryRun
+						? 'Generating Docker command...'
+						: 'Starting PDP Docker container...'}
+				</Text>
+			</Box>
+		);
+	}
+
+	if (error) {
+		// If Docker isn't available, still show the command
+		if (!dockerAvailable || error.includes('Docker is not installed')) {
+			return (
+				<Box flexDirection="column">
+					<Text color="yellow">
+						Docker is not available. Here&apos;s the command you can run
+						manually:
+					</Text>
+					<Text>{dockerCommand}</Text>
+					<Text color="red">Error: {error}</Text>
+				</Box>
+			);
+		}
+
+		return (
+			<Box flexDirection="column">
+				<Text color="red">Error: {error}</Text>
+				<Text>You can try running the command manually:</Text>
+				<Text>{dockerCommand}</Text>
+			</Box>
+		);
+	}
+
+	if (dryRun) {
+		return (
+			<Box flexDirection="column">
+				<Text>Run the following command to start the PDP container:</Text>
+				<Text>{dockerCommand}</Text>
+			</Box>
+		);
+	}
+
+	return (
+		<Box flexDirection="column">
+			<Text color="green">PDP container started successfully!</Text>
+			<Text>
+				Container ID: <Text color="cyan">{containerInfo?.id}</Text>
+			</Text>
+			<Text>
+				Container Name: <Text color="cyan">{containerInfo?.name}</Text>
+			</Text>
+			<Text>
+				The PDP is running on port 7676
+				{opa ? ` with OPA exposed on port ${opa}` : ''}
+			</Text>
+			<Text>
+				To stop the container, run:{' '}
+				<Text color="yellow">docker stop {containerInfo?.id}</Text>
+			</Text>
+		</Box>
+	);
 }
