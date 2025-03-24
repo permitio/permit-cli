@@ -224,7 +224,9 @@ describe('DeleteComponent', () => {
       null
     );
     
-    
+    // Rather than testing the exact state message (which is timing dependent),
+    // let's verify the component is in either the deleting or success state,
+    // both of which would indicate the confirmation was skipped
     const frame = lastFrame();
     expect(
       frame.includes('Deleting environment') || 

@@ -197,6 +197,8 @@ describe('CreateComponent', () => {
   });
 
   it('verifies key derivation from name', async () => {
+    // In the actual implementation, we need to see what's happening
+    // Let's output the complete API call parameters to debug
     
     const createEnvMock = vi.fn().mockResolvedValue({
       data: { id: 'new-env-id', name: 'Test Name', key: 'test_name' },
@@ -285,7 +287,8 @@ describe('CreateComponent', () => {
       }
     );
     
-
+    // Check if we're seeing the "Creating environment" message
+    // Sometimes this happens too quickly, so check for either state
     const frameAfterFetching = lastFrame();
     expect(
       frameAfterFetching.includes('Creating environment') || 
