@@ -1,4 +1,4 @@
-import { readFileSync ,writeFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
 import open from 'open';
 
@@ -34,11 +34,20 @@ interface GraphData {
 }
 
 export const saveHTMLGraph = (graphData: GraphData) => {
-	const templatePath = resolve(process.cwd(), 'source', 'components', 'graph-template', 'graph-template.html');
+	const templatePath = resolve(
+		process.cwd(),
+		'source',
+		'components',
+		'graph-template',
+		'graph-template.html',
+	);
 
 	let htmlTemplate = readFileSync(templatePath, 'utf8');
 
-	htmlTemplate = htmlTemplate.replace('<!-- GRAPH_DATA_PLACEHOLDER -->', JSON.stringify(graphData, null, 2));
+	htmlTemplate = htmlTemplate.replace(
+		'<!-- GRAPH_DATA_PLACEHOLDER -->',
+		JSON.stringify(graphData, null, 2),
+	);
 
 	const outputHTMLPath = resolve(process.cwd(), 'permit-graph.html');
 

@@ -200,98 +200,96 @@
 			 ***********************/
 			// Assume your dynamic graph data (flat, Cytoscape-style) is injected here.
 			// For example:
-            const graphData = <!-- GRAPH_DATA_PLACEHOLDER -->
+			const graphData = <!-- GRAPH_DATA_PLACEHOLDER -->
+				function flatToForestLayered(flatNodes, flatEdges) {
+					const nodeMap = new Map();
+					const relationshipCount = {};
 
+					// Initialize relationship count for each node.
+					flatNodes.forEach(n => {
+						relationshipCount[n.data.id] = 0;
+					});
+					flatEdges.forEach(e => {
+						const s = e.data.source,
+							t = e.data.target;
+						if (relationshipCount[s] !== undefined) relationshipCount[s]++;
+						if (relationshipCount[t] !== undefined) relationshipCount[t]++;
+					});
 
-			function flatToForestLayered(flatNodes, flatEdges) {
-				const nodeMap = new Map();
-				const relationshipCount = {};
-
-				// Initialize relationship count for each node.
-				flatNodes.forEach(n => {
-					relationshipCount[n.data.id] = 0;
-				});
-				flatEdges.forEach(e => {
-					const s = e.data.source,
-						t = e.data.target;
-					if (relationshipCount[s] !== undefined) relationshipCount[s]++;
-					if (relationshipCount[t] !== undefined) relationshipCount[t]++;
-				});
-
-				// Create a unique node object for each flat node and assign a layer.
-				flatNodes.forEach(n => {
-					if (!nodeMap.has(n.data.id)) {
-						let layer = 1; // default layer
-						const classesStr = n.classes || '';
-						// For user-nodes: if they have any relationships, assign layer 2.
-						if (classesStr.includes('user-node')) {
-							layer = relationshipCount[n.data.id] > 0 ? 2 : 1;
-						}
-						// For resource-instance-nodes: no relationships → layer 1; one → layer 3; more → layer 4.
-						else if (classesStr.includes('resource-instance-node')) {
-							if (relationshipCount[n.data.id] === 0) {
-								layer = 1;
-							} else if (relationshipCount[n.data.id] === 1) {
-								layer = 3;
-							} else {
-								layer = 4;
+					// Create a unique node object for each flat node and assign a layer.
+					flatNodes.forEach(n => {
+						if (!nodeMap.has(n.data.id)) {
+							let layer = 1; // default layer
+							const classesStr = n.classes || '';
+							// For user-nodes: if they have any relationships, assign layer 2.
+							if (classesStr.includes('user-node')) {
+								layer = relationshipCount[n.data.id] > 0 ? 2 : 1;
 							}
-						}
-						// For object-nodes, assign layer 5.
-						else if (classesStr.includes('object-node')) {
-							layer = 5;
-						}
-
-						nodeMap.set(n.data.id, {
-							id: n.data.id,
-							id2: n.data.id2 || '',
-							name: n.data.label.trim(),
-							classes: n.classes,
-							children: [],
-							incomingEdges: [],
-							layer: layer,
-						});
-					}
-				});
-
-				// Keep track of which nodes have been attached as children.
-				const attached = new Set();
-
-				// Process each edge.
-				flatEdges.forEach(edge => {
-					const sourceId = edge.data.source;
-					const targetId = edge.data.target;
-					if (nodeMap.has(sourceId) && nodeMap.has(targetId)) {
-						const sourceNode = nodeMap.get(sourceId);
-						const targetNode = nodeMap.get(targetId);
-						if (!attached.has(targetId)) {
-							sourceNode.children.push(targetNode);
-							attached.add(targetId);
-							targetNode.edgeLabel = edge.data.label;
-						} else {
-							if (!targetNode.extraRelationships) {
-								targetNode.extraRelationships = [];
+							// For resource-instance-nodes: no relationships → layer 1; one → layer 3; more → layer 4.
+							else if (classesStr.includes('resource-instance-node')) {
+								if (relationshipCount[n.data.id] === 0) {
+									layer = 1;
+								} else if (relationshipCount[n.data.id] === 1) {
+									layer = 3;
+								} else {
+									layer = 4;
+								}
 							}
-							targetNode.extraRelationships.push({
-								source: sourceId,
-								label: edge.data.label,
+							// For object-nodes, assign layer 5.
+							else if (classesStr.includes('object-node')) {
+								layer = 5;
+							}
+
+							nodeMap.set(n.data.id, {
+								id: n.data.id,
+								id2: n.data.id2 || '',
+								name: n.data.label.trim(),
+								classes: n.classes,
+								children: [],
+								incomingEdges: [],
+								layer: layer,
 							});
 						}
-					}
-				});
+					});
 
-				// Build the forest by iterating over the unique nodes.
-				const forest = [];
-				nodeMap.forEach((node, id) => {
-					if (!attached.has(id)) {
-						forest.push(node);
+					// Keep track of which nodes have been attached as children.
+					const attached = new Set();
+
+					// Process each edge.
+					flatEdges.forEach(edge => {
+						const sourceId = edge.data.source;
+						const targetId = edge.data.target;
+						if (nodeMap.has(sourceId) && nodeMap.has(targetId)) {
+							const sourceNode = nodeMap.get(sourceId);
+							const targetNode = nodeMap.get(targetId);
+							if (!attached.has(targetId)) {
+								sourceNode.children.push(targetNode);
+								attached.add(targetId);
+								targetNode.edgeLabel = edge.data.label;
+							} else {
+								if (!targetNode.extraRelationships) {
+									targetNode.extraRelationships = [];
+								}
+								targetNode.extraRelationships.push({
+									source: sourceId,
+									label: edge.data.label,
+								});
+							}
+						}
+					});
+
+					// Build the forest by iterating over the unique nodes.
+					const forest = [];
+					nodeMap.forEach((node, id) => {
+						if (!attached.has(id)) {
+							forest.push(node);
+						}
+					});
+					if (forest.length === 0) {
+						nodeMap.forEach(node => forest.push(node));
 					}
-				});
-				if (forest.length === 0) {
-					nodeMap.forEach(node => forest.push(node));
-				}
-				return forest;
-			}
+					return forest;
+				};
 
 			const forest = flatToForestLayered(graphData.nodes, graphData.edges);
 			// Wrap the forest in a dummy root.
@@ -705,7 +703,7 @@
 
 						nodeSel
 							.append('path')
-							.attr('d', personPlusStarPath.trim()   )
+							.attr('d', personPlusStarPath.trim())
 							.attr('fill', 'none')
 							.attr('stroke', 'rgb(67, 48, 43)')
 							.attr('stroke-width', 2.3)
@@ -930,11 +928,11 @@
 				d3
 					.drag()
 					.on('start', function (event, d) {
-					    if (nodesLocked) return;
+						if (nodesLocked) return;
 						d3.select(this).classed('dragging', true);
 					})
 					.on('drag', function (event, d) {
-					    if (nodesLocked) return;
+						if (nodesLocked) return;
 						d.x = event.x;
 						d.y = event.y;
 						d3.select(this).attr('transform', `translate(${d.x}, ${d.y})`);
@@ -943,7 +941,7 @@
 						updateEdgeLabels();
 					})
 					.on('end', function (event, d) {
-					    if (nodesLocked) return;
+						if (nodesLocked) return;
 						d3.select(this).classed('dragging', false);
 					}),
 			);
@@ -1038,7 +1036,7 @@
 						centerPoint = { x: layoutWidth / 2, y: layoutHeight / 2 };
 					} else {
 						centerPoint = {
-							x: bbox.x + (bbox.width / 2) -5000,
+							x: bbox.x + bbox.width / 2 - 5000,
 							y: bbox.y + bbox.height / 2,
 						};
 					}

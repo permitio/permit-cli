@@ -42,6 +42,14 @@ interface APIUser {
 	associated_tenants?: APITenant[];
 }
 
+interface ResourceResponseItem {
+	resource: string;
+	resource_id: string;
+	id: string;
+	key: string;
+	relationships?: APIRelationship[];
+}
+
 export const useGraphDataApi = () => {
 	const { authenticatedApiClient } = useClient();
 
@@ -75,7 +83,9 @@ export const useGraphDataApi = () => {
 						throw new Error(resourceResult.error);
 					}
 
-					const resourceArray: any[] = Array.isArray(resourceResult.data)
+					const resourceArray: ResourceResponseItem[] = Array.isArray(
+						resourceResult.data,
+					)
 						? resourceResult.data
 						: resourceResult.data?.data || [];
 
@@ -202,11 +212,7 @@ export const useGraphDataApi = () => {
 						}
 					});
 
-					// Determine if there are more pages to fetch (using the length of the returned array)
-					const userArray: any[] = Array.isArray(roleResult.data)
-						? roleResult.data
-						: roleResult.data?.data || [];
-					hasMoreData = userArray.length === perPage;
+					hasMoreData = users.length === perPage;
 					currentPage++;
 				}
 
@@ -218,7 +224,12 @@ export const useGraphDataApi = () => {
 				);
 				const updatedGraphData = {
 					...graphData,
-					edges: graphData.edges.map((edge: any) => ({
+					edges: (
+						graphData.edges as {
+							data: { source: string; target: string; label: string };
+							classes?: string;
+						}[]
+					).map(edge => ({
 						...edge,
 						classes: edge.classes || '',
 					})),

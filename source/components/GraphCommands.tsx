@@ -75,12 +75,10 @@ export default function Graph({ options }: Props) {
 					return;
 				}
 				const mappedProjects: ActiveState[] = projects
-					? projects.map(
-							(project: { name: string; id: string }) => ({
-								label: project.name,
-								value: project.id,
-							}),
-					  )
+					? projects.map((project: { name: string; id: string }) => ({
+							label: project.name,
+							value: project.id,
+						}))
 					: [];
 				setProjects(mappedProjects);
 				setLoading(false);
@@ -112,12 +110,10 @@ export default function Graph({ options }: Props) {
 					return;
 				}
 				const mappedEnvironments: ActiveState[] = environments
-					? environments.map(
-							(env: { name: string; id: string }) => ({
-								label: env.name,
-								value: env.id,
-							}),
-					  )
+					? environments.map((env: { name: string; id: string }) => ({
+							label: env.name,
+							value: env.id,
+						}))
 					: [];
 				setEnvironments(mappedEnvironments);
 				setLoading(false);
@@ -143,7 +139,6 @@ export default function Graph({ options }: Props) {
 				const { data: graphData, error } = await fetchGraphData(
 					selectedProject.value,
 					selectedEnvironment.value,
-					
 				);
 				if (error) {
 					setError('Failed to fetch data. Check network or auth token.');
