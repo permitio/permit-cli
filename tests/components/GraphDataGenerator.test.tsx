@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateGraphData } from '../../source/components/GraphDataGenerator'; 
+import { generateGraphData } from '../../source/components/GraphDataGenerator';
 
 type ResourceInstance = {
 	label: string;
@@ -31,7 +31,11 @@ describe('generateGraphData', () => {
 		const relationships = new Map<string, Relationship[]>();
 		const roleAssignments: RoleAssignment[] = [];
 
-		const { nodes, edges } = generateGraphData(resources, relationships, roleAssignments);
+		const { nodes, edges } = generateGraphData(
+			resources,
+			relationships,
+			roleAssignments,
+		);
 
 		// Check that the resource node exists with the right class
 		expect(nodes).toEqual(
@@ -61,7 +65,11 @@ describe('generateGraphData', () => {
 		relationships.set('r1', [relationship]);
 		const roleAssignments: RoleAssignment[] = [];
 
-		const { nodes, edges } = generateGraphData(resources, relationships, roleAssignments);
+		const { nodes, edges } = generateGraphData(
+			resources,
+			relationships,
+			roleAssignments,
+		);
 
 		// Verify resource node exists
 		expect(nodes).toEqual(
@@ -109,7 +117,11 @@ describe('generateGraphData', () => {
 			},
 		];
 
-		const { nodes, edges } = generateGraphData(resources, relationships, roleAssignments);
+		const { nodes, edges } = generateGraphData(
+			resources,
+			relationships,
+			roleAssignments,
+		);
 
 		// Check that a user node is created with class 'user-node'
 		expect(nodes).toEqual(
@@ -133,54 +145,58 @@ describe('generateGraphData', () => {
 	});
 
 	it('should not duplicate nodes or edges for duplicate relationships or role assignments', () => {
-        const resources: ResourceInstance[] = [
-            { label: 'Resource 1', value: 'val1', id: 'r1', id2: 'r1-2' },
-        ];
-        // Duplicate relationship entries for the same connection
-        const relationship: Relationship = {
-            label: 'ASSOCIATED',
-            objectId: 'obj1',
-            id: 'rel1',
-            subjectId: 'r1',
-            Object: 'obj1',
-        };
-        const relationships = new Map<string, Relationship[]>();
-        relationships.set('r1', [relationship, relationship]);
-        const roleAssignments: RoleAssignment[] = [
-            {
-                user: 'u1',
-                email: 'u1@example.com',
-                role: 'admin',
-                resourceInstance: 'r1',
-            },
-            {
-                user: 'u1',
-                email: 'u1@example.com',
-                role: 'admin',
-                resourceInstance: 'r1',
-            },
-        ];
-    
-        const { nodes, edges } = generateGraphData(resources, relationships, roleAssignments);
-    
-        expect(nodes.length).toBe(5);
-    
-        const relEdges = edges.filter(
-            (edge) =>
-                edge.classes === 'relationship-connection' &&
-                edge.data.source === 'r1' &&
-                edge.data.target === 'obj1' &&
-                edge.data.label === 'IS ASSOCIATED OF',
-        );
-        expect(relEdges.length).toBe(1);
-    
-        const userEdges = edges.filter(
-            (edge) =>
-                edge.classes === 'user-edge' &&
-                edge.data.source === 'u1' &&
-                edge.data.target === 'r1' &&
-                edge.data.label === 'admin',
-        );
-        expect(userEdges.length).toBe(2);
-    });    
+		const resources: ResourceInstance[] = [
+			{ label: 'Resource 1', value: 'val1', id: 'r1', id2: 'r1-2' },
+		];
+		// Duplicate relationship entries for the same connection
+		const relationship: Relationship = {
+			label: 'ASSOCIATED',
+			objectId: 'obj1',
+			id: 'rel1',
+			subjectId: 'r1',
+			Object: 'obj1',
+		};
+		const relationships = new Map<string, Relationship[]>();
+		relationships.set('r1', [relationship, relationship]);
+		const roleAssignments: RoleAssignment[] = [
+			{
+				user: 'u1',
+				email: 'u1@example.com',
+				role: 'admin',
+				resourceInstance: 'r1',
+			},
+			{
+				user: 'u1',
+				email: 'u1@example.com',
+				role: 'admin',
+				resourceInstance: 'r1',
+			},
+		];
+
+		const { nodes, edges } = generateGraphData(
+			resources,
+			relationships,
+			roleAssignments,
+		);
+
+		expect(nodes.length).toBe(5);
+
+		const relEdges = edges.filter(
+			edge =>
+				edge.classes === 'relationship-connection' &&
+				edge.data.source === 'r1' &&
+				edge.data.target === 'obj1' &&
+				edge.data.label === 'IS ASSOCIATED OF',
+		);
+		expect(relEdges.length).toBe(1);
+
+		const userEdges = edges.filter(
+			edge =>
+				edge.classes === 'user-edge' &&
+				edge.data.source === 'u1' &&
+				edge.data.target === 'r1' &&
+				edge.data.label === 'admin',
+		);
+		expect(userEdges.length).toBe(2);
+	});
 });

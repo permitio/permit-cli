@@ -593,6 +593,10 @@
 				return str.length > 7 ? str.substring(0, 7) + '...' : str;
 			}
 
+			function truncateTo21(str = '') {
+				return str.length > 21 ? str.substring(0, 21) + '...' : str;
+			}
+
 			nodeGroup.each(function (d) {
 				const nodeSel = d3.select(this);
 				nodeSel.selectAll('*').remove();
@@ -665,7 +669,7 @@
 						.attr('text-anchor', 'middle')
 						.attr('dominant-baseline', 'middle')
 						.attr('dy', '0.15em')
-						.text(d.data.name);
+						.text(truncateTo21(d.data.name));
 
 					requestAnimationFrame(() => {
 						const bbox = textSel.node().getBBox();
