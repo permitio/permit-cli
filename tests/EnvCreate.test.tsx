@@ -22,31 +22,29 @@ describe('env create command', () => {
   it('renders with default options', () => {
     const options = {
       key: undefined,
-      projectId: undefined,
       name: undefined,
       envKey: undefined,
       description: undefined,
     };
-
     render(<Create options={options} />);
 
     // Check AuthProvider was called with correct props
     expect(AuthProvider.AuthProvider).toHaveBeenCalledWith(
       expect.objectContaining({
-        permit_key: undefined, 
+        permit_key: undefined,
         scope: 'project',
       }),
       expect.anything()
     );
 
-    // Check CreateComponent was called with correct props
-    expect(CreateComponent.default).toHaveBeenCalledWith(
-      expect.objectContaining({
-        projectId: undefined,
+    // Check CreateComponent was called with the right first argument
+    expect(CreateComponent.default).toHaveBeenNthCalledWith(
+      1,
+      {
         name: undefined,
         envKey: undefined,
         description: undefined,
-      }),
+      },
       expect.anything()
     );
   });
@@ -54,31 +52,29 @@ describe('env create command', () => {
   it('passes options correctly to CreateComponent', () => {
     const options = {
       key: 'test-key',
-      projectId: 'project123',
       name: 'Test Environment',
       envKey: 'test_env',
       description: 'Test description',
     };
-
     render(<Create options={options} />);
 
     // Check AuthProvider was called with correct props
     expect(AuthProvider.AuthProvider).toHaveBeenCalledWith(
       expect.objectContaining({
-        permit_key: 'test-key', 
+        permit_key: 'test-key',
         scope: 'project',
       }),
       expect.anything()
     );
 
-    // Check CreateComponent was called with correct props
-    expect(CreateComponent.default).toHaveBeenCalledWith(
-      expect.objectContaining({
-        projectId: 'project123',
+    // Check CreateComponent was called with the right first argument
+    expect(CreateComponent.default).toHaveBeenNthCalledWith(
+      1,
+      {
         name: 'Test Environment',
         envKey: 'test_env',
         description: 'Test description',
-      }),
+      },
       expect.anything()
     );
   });

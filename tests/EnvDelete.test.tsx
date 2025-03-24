@@ -22,29 +22,27 @@ describe('env delete command', () => {
   it('renders with default options', () => {
     const options = {
       key: undefined,
-      projectId: undefined,
       environmentId: undefined,
       force: false,
     };
-
     render(<Delete options={options} />);
 
     // Check AuthProvider was called with correct props
     expect(AuthProvider.AuthProvider).toHaveBeenCalledWith(
       expect.objectContaining({
-        permit_key: undefined, 
+        permit_key: undefined,
         scope: 'project',
       }),
       expect.anything()
     );
 
     // Check DeleteComponent was called with correct props
-    expect(DeleteComponent.default).toHaveBeenCalledWith(
-      expect.objectContaining({
-        projectId: undefined,
+    expect(DeleteComponent.default).toHaveBeenNthCalledWith(
+      1,
+      {
         environmentId: undefined,
         force: false,
-      }),
+      },
       expect.anything()
     );
   });
@@ -52,29 +50,27 @@ describe('env delete command', () => {
   it('passes options correctly to DeleteComponent', () => {
     const options = {
       key: 'test-key',
-      projectId: 'project123',
       environmentId: 'env456',
       force: true,
     };
-
     render(<Delete options={options} />);
 
     // Check AuthProvider was called with correct props
     expect(AuthProvider.AuthProvider).toHaveBeenCalledWith(
       expect.objectContaining({
-        permit_key: 'test-key', 
+        permit_key: 'test-key',
         scope: 'project',
       }),
       expect.anything()
     );
 
     // Check DeleteComponent was called with correct props
-    expect(DeleteComponent.default).toHaveBeenCalledWith(
-      expect.objectContaining({
-        projectId: 'project123',
+    expect(DeleteComponent.default).toHaveBeenNthCalledWith(
+      1,
+      {
         environmentId: 'env456',
         force: true,
-      }),
+      },
       expect.anything()
     );
   });
