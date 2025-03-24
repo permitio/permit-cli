@@ -49,13 +49,12 @@ export default function CopyComponent({
 	);
 	const [envToName, setEnvToName] = useState<string | undefined>(name);
 	const [envFrom, setEnvFrom] = useState<string | undefined>(from);
+	// Initialize with provided description - crucial to differentiate between undefined and empty string
 	const [envToDescription, setEnvToDescription] = useState<string | undefined>(
 		description,
 	);
 
-	// const { validateApiKeyScope } = useApiKeyApi();
 	const { copyEnvironment } = useEnvironmentApi();
-
 	const auth = useAuth();
 
 	useEffect(() => {
@@ -112,16 +111,17 @@ export default function CopyComponent({
 		};
 
 		if (
-			((envToName && envToDescription && conflictStrategy) || envToId) &&
+			((envToName && conflictStrategy) || envToId) &&
 			envFrom &&
 			projectFrom &&
-			authToken
+			authToken &&
+			(envToDescription !== undefined || envToId)
 		) {
 			setState('copying');
 			handleEnvCopy({
 				newEnvKey: envToName,
 				newEnvName: envToName,
-				newEnvDescription: envToDescription,
+				newEnvDescription: envToDescription ?? '',
 				existingEnvId: envToId,
 				conflictStrategy: conflictStrategy,
 			});
@@ -153,8 +153,11 @@ export default function CopyComponent({
 			setState('selecting-env');
 		} else if (!envToName && !envToId) {
 			setState('selecting-name');
-		} else if (!envToDescription && !envToId) {
+		} else if (envToDescription === undefined && !envToId) {
 			setState('selecting-description');
+		} else if (envToName && envFrom) {
+			// If we have name and source env, and description is defined (even if empty), proceed
+			setState('copying');
 		}
 	}, [envFrom, envToDescription, envToId, envToName]);
 
@@ -184,12 +187,15 @@ export default function CopyComponent({
 			)}
 			{authToken && state === 'selecting-description' && (
 				<>
-					<Text>Input the new Environment Description.</Text>
+					<Text>
+						Input the new Environment Description (press Enter to skip).
+					</Text>
 					<TextInput
 						onSubmit={description => {
 							setEnvToDescription(description);
+							setState('copying');
 						}}
-						placeholder={'Enter description here...'}
+						placeholder={'Enter description here (optional)...'}
 					/>
 				</>
 			)}
