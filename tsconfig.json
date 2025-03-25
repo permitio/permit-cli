@@ -6,7 +6,7 @@
 		"module": "Node16",
 		"outDir": "dist",
 		"noUncheckedIndexedAccess": true,
-		"strict": true,
+		"strict": true
 	},
 	"include": ["source"],
 	"exclude": ["node_modules", "source/lib/api"]

@@ -26,7 +26,7 @@ describe('useApiKeyApi', () => {
 
 		(fetch as any).mockResolvedValueOnce({
 			...getMockFetchResponse(),
-			json: async () => ('mock-data' )
+			json: async () => 'mock-data',
 		});
 
 		const TestComponent = () => {
@@ -35,9 +35,7 @@ describe('useApiKeyApi', () => {
 
 			React.useEffect(() => {
 				const fetchData = async () => {
-					const { data } = await getProjectEnvironmentApiKey(
-						environmentId
-					);
+					const { data } = await getProjectEnvironmentApiKey(environmentId);
 					setResult(JSON.stringify(data));
 				};
 				fetchData();
@@ -53,15 +51,13 @@ describe('useApiKeyApi', () => {
 	});
 
 	it('Calls getApiKeyScope and fetches the API key scope', async () => {
-
 		(fetch as any).mockResolvedValueOnce({
 			...getMockFetchResponse(),
 			json: async () => ({
-					organization_id: 'org-id',
-					project_id: null,
-					environment_id: null,
-
-			})
+				organization_id: 'org-id',
+				project_id: null,
+				environment_id: null,
+			}),
 		});
 
 		const TestComponent = () => {
@@ -82,7 +78,7 @@ describe('useApiKeyApi', () => {
 		const { lastFrame } = render(<TestComponent />);
 		await vi.waitFor(() => {
 			expect(lastFrame()).toBe(
-				'{"organization_id":"org-id","project_id":null,"environment_id":null}'
+				'{"organization_id":"org-id","project_id":null,"environment_id":null}',
 			);
 		});
 	});
@@ -93,10 +89,10 @@ describe('useApiKeyApi', () => {
 		(fetch as any).mockResolvedValueOnce({
 			...getMockFetchResponse(),
 			json: async () => ({
-					organization_id: 'org-id',
-					project_id: 'project-id',
-					environment_id: null,
-			})
+				organization_id: 'org-id',
+				project_id: 'project-id',
+				environment_id: null,
+			}),
 		});
 
 		const TestComponent = () => {
@@ -105,7 +101,10 @@ describe('useApiKeyApi', () => {
 
 			React.useEffect(() => {
 				const validateScope = async () => {
-					const { scope: data }  = await validateApiKeyScope('valid-api-key', 'project');
+					const { scope: data } = await validateApiKeyScope(
+						'valid-api-key',
+						'project',
+					);
 					setResult(JSON.stringify(data));
 				};
 				validateScope();
@@ -117,7 +116,7 @@ describe('useApiKeyApi', () => {
 		const { lastFrame } = render(<TestComponent />);
 		await vi.waitFor(() => {
 			expect(lastFrame()).toBe(
-				'{"organization_id":"org-id","project_id":"project-id","environment_id":null}'
+				'{"organization_id":"org-id","project_id":"project-id","environment_id":null}',
 			);
 		});
 	});
@@ -139,7 +138,10 @@ describe('useApiKeyApi', () => {
 
 			React.useEffect(() => {
 				const validateScope = async () => {
-					const { scope: data, error } = await validateApiKeyScope('invalid-key', 'project');
+					const { scope: data, error } = await validateApiKeyScope(
+						'invalid-key',
+						'project',
+					);
 					setResult(JSON.stringify({ data, error }));
 				};
 				validateScope();
@@ -151,7 +153,7 @@ describe('useApiKeyApi', () => {
 		const { lastFrame } = render(<TestComponent />);
 		await vi.waitFor(() => {
 			expect(lastFrame()).toBe(
-				'{"data":null,"error":"Please provide a valid api key"}'
+				'{"data":null,"error":"Please provide a valid api key"}',
 			);
 		});
 	});
@@ -162,10 +164,10 @@ describe('useApiKeyApi', () => {
 		(fetch as any).mockResolvedValueOnce({
 			...getMockFetchResponse(),
 			json: async () => ({
-					organization_id: 'org-id',
-					project_id: null,
-					environment_id: null
-			})
+				organization_id: 'org-id',
+				project_id: null,
+				environment_id: null,
+			}),
 		});
 
 		vi.mocked(tokenType).mockReturnValue(TokenType.APIToken);
@@ -176,7 +178,10 @@ describe('useApiKeyApi', () => {
 
 			React.useEffect(() => {
 				const validate = async () => {
-					const { scope: data } = await validateApiKeyScope(apiKey, 'organization');
+					const { scope: data } = await validateApiKeyScope(
+						apiKey,
+						'organization',
+					);
 					setResult(JSON.stringify(data));
 				};
 				validate();
@@ -188,7 +193,7 @@ describe('useApiKeyApi', () => {
 		const { lastFrame } = render(<TestComponent />);
 		await vi.waitFor(() => {
 			expect(lastFrame()).toBe(
-				'{"organization_id":"org-id","project_id":null,"environment_id":null}'
+				'{"organization_id":"org-id","project_id":null,"environment_id":null}',
 			);
 		});
 	});
@@ -201,7 +206,7 @@ describe('useApiKeyApi', () => {
 			json: async () => ({
 				error: 'Invalid API key',
 				data: null,
-			})
+			}),
 		});
 		(tokenType as any).mockReturnValue(TokenType.Invalid);
 
@@ -211,8 +216,8 @@ describe('useApiKeyApi', () => {
 
 			React.useEffect(() => {
 				const validate = async () => {
-					const {  error } = await validateApiKeyScope(apiKey, 'organization');
-					setResult(JSON.stringify({  error }));
+					const { error } = await validateApiKeyScope(apiKey, 'organization');
+					setResult(JSON.stringify({ error }));
 				};
 				validate();
 			}, [validateApiKeyScope]);
@@ -222,9 +227,7 @@ describe('useApiKeyApi', () => {
 
 		const { lastFrame } = render(<TestComponent />);
 		await vi.waitFor(() => {
-			expect(lastFrame()).toBe(
-				'{"error":"Please provide a valid api key"}'
-			);
+			expect(lastFrame()).toBe('{"error":"Please provide a valid api key"}');
 		});
 	});
 });

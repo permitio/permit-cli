@@ -11,8 +11,7 @@ vi.mock('../../source/lib/auth', () => ({
 	loadAuthToken: vi.fn(),
 }));
 
-
-vi.mock('../../source/hooks/useApiKeyApi', async() => {
+vi.mock('../../source/hooks/useApiKeyApi', async () => {
 	const original = await vi.importActual('../../source/hooks/useApiKeyApi');
 
 	return {

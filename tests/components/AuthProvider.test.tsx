@@ -11,7 +11,6 @@ import { Text } from 'ink';
 import delay from 'delay';
 import { getMockFetchResponse } from '../utils.js';
 
-
 const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 
 global.fetch = vi.fn();
@@ -95,77 +94,75 @@ describe('AuthProvider', () => {
 		(loadAuthToken as any).mockRejectedValue(new Error('Failed to load token'));
 		vi.mocked(browserAuth).mockResolvedValue('verifier');
 		vi.mocked(authCallbackServer).mockResolvedValue('browser_token');
-		(fetch as any).mockResolvedValueOnce({
-			...getMockFetchResponse(),
-			ok: true,
-			status: 200,
-			headers: {
-				getSetCookie: () => ['cookie_value'],
-			},
-			json: async () => ({}),
-			error: null,
-		}).mockResolvedValueOnce({
-			...getMockFetchResponse(),
-			ok: true,
-			status: 200,
-			error: null,
-			json: async () => ([
+		(fetch as any)
+			.mockResolvedValueOnce({
+				...getMockFetchResponse(),
+				ok: true,
+				status: 200,
+				headers: {
+					getSetCookie: () => ['cookie_value'],
+				},
+				json: async () => ({}),
+				error: null,
+			})
+			.mockResolvedValueOnce({
+				...getMockFetchResponse(),
+				ok: true,
+				status: 200,
+				error: null,
+				json: async () => [
 					{ id: 'org1', name: 'OrganizationReadWithAPIKey 1' },
 					{ id: 'org2', name: 'OrganizationReadWithAPIKey 2' },
-				]
-			)
-		}).mockResolvedValueOnce({
-			...getMockFetchResponse(),
-			ok: true,
-			status: 200,
-			headers: {
-				getSetCookie: () => ['cookie_value'],
-			},
-			json: async () => ({}),
-			error: null,
-		}).mockResolvedValueOnce({
-			...getMockFetchResponse(),
-			ok: true,
-			status: 200,
-			error: null,
-			json: async () => ([
+				],
+			})
+			.mockResolvedValueOnce({
+				...getMockFetchResponse(),
+				ok: true,
+				status: 200,
+				headers: {
+					getSetCookie: () => ['cookie_value'],
+				},
+				json: async () => ({}),
+				error: null,
+			})
+			.mockResolvedValueOnce({
+				...getMockFetchResponse(),
+				ok: true,
+				status: 200,
+				error: null,
+				json: async () => [
 					{ id: 'proj1', name: 'Project 1' },
 					{ id: 'proj2', name: 'Project 2' },
-				]
-			)
-		}).mockResolvedValueOnce({
-			...getMockFetchResponse(),
-			ok: true,
-			status: 200,
-			error: null,
-			json: async () => ({
-					data: [
-						{id: 'mock-id'}
-					]
-				}
-			)
-		}).mockResolvedValueOnce({
-			...getMockFetchResponse(),
-			ok: true,
-			status: 200,
-			error: null,
-			json: async () => (
-				{id: 'mock-id'}
-
-			)
-		}).mockResolvedValueOnce({
-			...getMockFetchResponse(),
-			ok: true,
-			status: 200,
-			error: null,
-			json: async () => ({
-					secret: "secret",
-					project_id: "proj_id",
-					organization_id: "organization_id",
-				}
-			)
-		})
-		const {stdin, lastFrame } = render(
+				],
+			})
+			.mockResolvedValueOnce({
+				...getMockFetchResponse(),
+				ok: true,
+				status: 200,
+				error: null,
+				json: async () => ({
+					data: [{ id: 'mock-id' }],
+				}),
+			})
+			.mockResolvedValueOnce({
+				...getMockFetchResponse(),
+				ok: true,
+				status: 200,
+				error: null,
+				json: async () => ({ id: 'mock-id' }),
+			})
+			.mockResolvedValueOnce({
+				...getMockFetchResponse(),
+				ok: true,
+				status: 200,
+				error: null,
+				json: async () => ({
+					secret: 'secret',
+					project_id: 'proj_id',
+					organization_id: 'organization_id',
+				}),
+			});
+		const { stdin, lastFrame } = render(
 			<AuthProvider scope={'project'}>
 				<Text>Child Component</Text>
 			</AuthProvider>,
@@ -187,94 +184,87 @@ describe('AuthProvider', () => {
 		vi.mocked(browserAuth).mockResolvedValue('verifier');
 		vi.mocked(authCallbackServer).mockResolvedValue('browser_token');
 
-		(fetch as any).mockResolvedValueOnce({
-			...getMockFetchResponse(),
-			ok: true,
-			status: 200,
-			headers: {
-				getSetCookie: () => ['cookie_value'],
-			},
-			json: async () => ({}),
-			error: null,
-		})
+		(fetch as any)
 			.mockResolvedValueOnce({
 				...getMockFetchResponse(),
-			ok: true,
-			status: 200,
-			error: null,
-			json: async () => ([
+				ok: true,
+				status: 200,
+				headers: {
+					getSetCookie: () => ['cookie_value'],
+				},
+				json: async () => ({}),
+				error: null,
+			})
+			.mockResolvedValueOnce({
+				...getMockFetchResponse(),
+				ok: true,
+				status: 200,
+				error: null,
+				json: async () => [
 					{ id: 'org1', name: 'OrganizationReadWithAPIKey 1' },
 					{ id: 'org2', name: 'OrganizationReadWithAPIKey 2' },
-				]
-			)
-		})
+				],
+			})
 			.mockResolvedValueOnce({
 				...getMockFetchResponse(),
-			ok: true,
-			status: 200,
-			headers: {
-				getSetCookie: () => ['cookie_value'],
-			},
-			json: async () => ({}),
-			error: null,
-		})
+				ok: true,
+				status: 200,
+				headers: {
+					getSetCookie: () => ['cookie_value'],
+				},
+				json: async () => ({}),
+				error: null,
+			})
 			.mockResolvedValueOnce({
 				...getMockFetchResponse(),
-			ok: true,
-			status: 200,
-			error: null,
-			json: async () => ([
+				ok: true,
+				status: 200,
+				error: null,
+				json: async () => [
 					{ id: 'proj1', name: 'Project 1' },
 					{ id: 'proj2', name: 'Project 2' },
-				]),
+				],
 			})
 			.mockResolvedValueOnce({
 				...getMockFetchResponse(),
-			ok: true,
-			status: 200,
-			error: null,
-			json: async () => ([
-
+				ok: true,
+				status: 200,
+				error: null,
+				json: async () => [
 					{ id: 'env1', name: 'Env 1' },
 					{ id: 'env2', name: 'Env 2' },
-				]),
+				],
 			})
 			.mockResolvedValueOnce({
-
 				...getMockFetchResponse(),
-			ok: true,
-			status: 200,
-			error: null,
-			json: async () => ({
-					secret: 'super-secret'
-				}
-			)
-		})
+				ok: true,
+				status: 200,
+				error: null,
+				json: async () => ({
+					secret: 'super-secret',
+				}),
+			})
 			.mockResolvedValueOnce({
 				...getMockFetchResponse(),
-			ok: true,
-			status: 200,
-			error: null,
-			json: async () => ({
-					data: [
-						{id: 'mock-id'}
-					]
-				}
-			)
-		})
+				ok: true,
+				status: 200,
+				error: null,
+				json: async () => ({
+					data: [{ id: 'mock-id' }],
+				}),
+			})
 			.mockResolvedValueOnce({
 				...getMockFetchResponse(),
-			ok: true,
-			status: 200,
-			error: null,
-			json: async () => ({
-					secret: "secret",
-					project_id: "proj_id",
-					organization_id: "organization_id_",
-				}
-			)
-		})
-		const {stdin, lastFrame } = render(
+				ok: true,
+				status: 200,
+				error: null,
+				json: async () => ({
+					secret: 'secret',
+					project_id: 'proj_id',
+					organization_id: 'organization_id_',
+				}),
+			});
+		const { stdin, lastFrame } = render(
 			<AuthProvider scope={'environment'}>
 				<Text>Child Component</Text>
 			</AuthProvider>,

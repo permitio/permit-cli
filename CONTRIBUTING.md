@@ -14,47 +14,51 @@ As a contributor, here are the guidelines we would like you to follow:
 - [The AuthProvider and `useClient` Hook](#authprovider-and-useclient-hook)
 
 ## General Guidelines
+
 - We are encouraging the usage of AI in the development process, but we also require the human engineering touch on PRs. Every "blind" AI PR will be rejected.
 - Permit CLI is based on Pastel.js, and the file structure should adhere the Pastel.js file structure and best practices - to read more about Pastel.js, please visit [Pastel.js](https://github.com/vadimdemedes/pastel?tab=readme-ov-file#table-of-contents) repository.
 - The project is using typescript and we are using the strict mode, so please make sure to follow the typescript rules. No `any` types are allowed in general.
-- The project is using ESLint and Prettier for linting and formatting, and Vitest for testing. 
+- The project is using ESLint and Prettier for linting and formatting, and Vitest for testing.
 - All the PRs should pass the lint rules, and provide >90% test coverage of the new code.
 
-
 ### File Structure
+
 - Commands should be placed in the `src/commands` directory. For more guidelines, please refer to the [New Command Guidelines](#new-command-guidelines).
 - Components should be placed in the `src/components` directory. Components should be reusable by other commands and should be well documented.
 - API Calls should be placed only in hooks, which should be in the `src/hooks` directory. The hooks should be well documented and reusable by other components.
-   - All the API calls should be made using the `useClient` hook. The hook is working with the `AuthProvider` component, so you don't need to pass the `authToken` to the API calls.
-   - Read more about the `useClient` hook in the [The AuthProvider and useClient Hook](#authprovider-and-useclient-hook) section.
-   - The `useClient` has loaded with all the API spec and conventions, so you don't need to worry about constructing the API calls.
+  - All the API calls should be made using the `useClient` hook. The hook is working with the `AuthProvider` component, so you don't need to pass the `authToken` to the API calls.
+  - Read more about the `useClient` hook in the [The AuthProvider and useClient Hook](#authprovider-and-useclient-hook) section.
+  - The `useClient` has loaded with all the API spec and conventions, so you don't need to worry about constructing the API calls.
 - The `src/lib` folder is for utility functions used across the project. Functions there should be completely pure and not depend on any external state.
 - All the static configuration variables should be placed in the `config.tsx` file.
 
-
 ## New Command Guidelines
+
 For new commands, we have a few guidelines to ensure consistency and maintainability:
+
 - Command files (placed in `src/commands`), should contain only the argument configuration, and a root command component
 - The command component should be a single component, with a declarative name
 - Here are some common guidelines that should be followed when creating a new command:
-   - Should be wrapped with the `AuthProvider` component, to ensure the user is authenticated before running the command. Read more about the `AuthProvider` component in the [The AuthProvider and useClient Hook](#authprovider-and-useclient-hook) section.
-   - Should have an optional `apiKey` argument that allow the user to pass the API key to the command instead of using the login flow provided by the `AuthProvider` component.
-   - Should declare the API key scope required for the command (can be `organization`, `project`, or `environment`).
-   - Should have concise documentation in the Readme file, explaining the command, its arguments, and how to use it.
-   - Should have a `description` and `options` object that defines the command's description and arguments.
+  - Should be wrapped with the `AuthProvider` component, to ensure the user is authenticated before running the command. Read more about the `AuthProvider` component in the [The AuthProvider and useClient Hook](#authprovider-and-useclient-hook) section.
+  - Should have an optional `apiKey` argument that allow the user to pass the API key to the command instead of using the login flow provided by the `AuthProvider` component.
+  - Should declare the API key scope required for the command (can be `organization`, `project`, or `environment`).
+  - Should have concise documentation in the Readme file, explaining the command, its arguments, and how to use it.
+  - Should have a `description` and `options` object that defines the command's description and arguments.
 
 ### <a name="api-proxy-commands"></a> "API Proxy" Commands
+
 Some of the commands are just proxy the API endpoints without any extra logic. For these commands, we are asking to keep the command as simple as possible, and to use the `useClient` hook to make the API calls.
 
 The command behavior should be as follows:
+
 - All the spec and convention is available in the `useClient` hook, so you don't need to worry about constructing the API calls.
 - The project/environment that are part of the endpoint **shouldn't** be passed as an argument to the command. The `useClient` hook will automatically inject the project/environment ID to the endpoint.
 - Mandatory and optional fields are defined in the API spec, and should be reflected in the command arguments.
 - Permit API spec is available at [Permit API Spec](https://api.permit.io/v2/redoc) and the PDP API spec is available at [Permit PDP API Spec](https://pdp-api.permit.io/redoc)
 - All the endpoint components, query string parameters, and body should be accepted as arguments to the command and appear as being prompted in the command interactive wizard.
 - Command wizard flow should be as follows:
-   - If all mandatory fields appear in the arguments, do not open a wizard and run the command
-   - If some mandatory fields are missing in the argument, prompt the wizard with the possibility to skip when fields that are optional
+  - If all mandatory fields appear in the arguments, do not open a wizard and run the command
+  - If some mandatory fields are missing in the argument, prompt the wizard with the possibility to skip when fields that are optional
 
 ### Command TSX Structure
 
@@ -67,8 +71,7 @@ import { option } from 'pastel';
 import { AuthProvider } from '../../../components/AuthProvider';
 // Add the command component import here
 
-export const description =
-	'Short and concise description of the command';
+export const description = 'Short and concise description of the command';
 
 export const options = zod.object({
 	key: zod
@@ -76,12 +79,11 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:
-					'The API key for the permit',
+				description: 'The API key for the permit',
 				alias: 'k',
 			}),
 		),
-   // Add more options here
+	// Add more options here
 });
 
 type Props = {
@@ -90,28 +92,32 @@ type Props = {
 
 export default function GitHub({ options }: Props) {
 	return (
-		<AuthProvider permit_key={options.apiKey} scope={'the_scope_requires_for_this_command'}> // The scope can be organization, project, or environment
-         {/* Add the command component here. Should be single component, with declarative name */}
+		<AuthProvider
+			permit_key={options.apiKey}
+			scope={'the_scope_requires_for_this_command'}
+		>
+			{' '}
+			// The scope can be organization, project, or environment
+			{/* Add the command component here. Should be single component, with declarative name */}
 			<CommandComponent />
 		</AuthProvider>
 	);
 }
 ```
 
-
 ## Issue / Bounty Participation Guidelines
+
 - To get an issue assigned, you need to present a clear plan of action and a clear timeline for the issue.
 - If you are not sure about the issue, you can ask for clarifications in the issue comments.
 - Before starting to work on an issue, you need to get it approved and assigned by the maintainers.
 - If the issue has a bounty, you also need to add your relevant experience in the domain of the issue to your PR description.
 - Due to the exponential growth of blind AI PRs and issue participation, every PR that is considered an AI submission will be rejected without further notice.
 
-
 ### Admissions
+
 - We are using [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for our commit messages.
 - We are using [Semantic Versioning](https://semver.org/) for our releases.
 - We try to follow the BetterCLI guidelines, and we are using the [BetterCLI](https://bettercli.dev/) for our CLI development.
-
 
 ## <a name="question"></a> Got a Question or Problem?
 
@@ -180,7 +186,6 @@ Before submitting your contribution, ensure the following:
 - [ ] Code formatted and linted
 - [ ] Changes thoroughly explained in the PR description
 
-
 ## <a name="authprovider-and-useclient-hook"></a> The AuthProvider and useClient Hook
 
 ### Overview
@@ -193,11 +198,12 @@ The `AuthProvider` wraps your command component and manages authentication state
 
 ```tsx
 <AuthProvider permit_key={options.apiKey} scope="project">
-  <YourCommandComponent />
+	<YourCommandComponent />
 </AuthProvider>
 ```
 
 **Key properties:**
+
 - `permit_key`: Optional API key from command options
 - `scope`: Required access level (`"organization"`, `"project"`, or `"environment"`)
 - Automatically handles token validation, API key creation, and resource selection
@@ -214,6 +220,7 @@ const { authenticatedApiClient } = useClient();
 ```
 
 **Available clients:**
+
 1. `authenticatedApiClient`: Uses AuthProvider context for authentication
 2. `authenticatedPdpClient`: Same as above but for PDP endpoints
 3. `unAuthenticatedApiClient`: For commands and components that potentially do not wrapped with the `AuthProvider` (e.g. `login`)
@@ -225,29 +232,31 @@ When your component is wrapped with `AuthProvider`, the `useClient` hook automat
 ```tsx
 // Command file
 export default function MyCommand({ options }) {
-  return (
-    <AuthProvider permit_key={options.apiKey} scope="project">
-      <MyImplementation />
-    </AuthProvider>
-  );
+	return (
+		<AuthProvider permit_key={options.apiKey} scope="project">
+			<MyImplementation />
+		</AuthProvider>
+	);
 }
 
 // Component implementation
 function MyImplementation() {
-  const { authenticatedApiClient } = useClient();
-  
-  // API calls are automatically authenticated
-  const fetchData = async () => {
-    const response = await authenticatedApiClient().GET('/v2/endpoint/{proj_id}');
-    // {proj_id} is automatically injected from context
-    
-    if (response.error) {
-      // Handle error
-    }
-    return response.data;
-  };
-  
-  // Component logic
+	const { authenticatedApiClient } = useClient();
+
+	// API calls are automatically authenticated
+	const fetchData = async () => {
+		const response = await authenticatedApiClient().GET(
+			'/v2/endpoint/{proj_id}',
+		);
+		// {proj_id} is automatically injected from context
+
+		if (response.error) {
+			// Handle error
+		}
+		return response.data;
+	};
+
+	// Component logic
 }
 ```
 
@@ -268,21 +277,23 @@ await client().METHOD(
 
 ```tsx
 // GET request
-const response = await authenticatedApiClient().GET('/v2/resources/{proj_id}/{env_id}');
+const response = await authenticatedApiClient().GET(
+	'/v2/resources/{proj_id}/{env_id}',
+);
 
 // POST with body
 await authenticatedApiClient().POST(
-  '/v2/resources/{proj_id}/{env_id}',
-  {}, // Path params auto-injected
-  { name: 'resource-name', type: 'resource-type' }
+	'/v2/resources/{proj_id}/{env_id}',
+	{}, // Path params auto-injected
+	{ name: 'resource-name', type: 'resource-type' },
 );
 
 // With query parameters
 await authenticatedApiClient().GET(
-  '/v2/search/{proj_id}',
-  {}, // Path params auto-injected
-  undefined, // No body for GET
-  { query: 'search-term', page: 2 }
+	'/v2/search/{proj_id}',
+	{}, // Path params auto-injected
+	undefined, // No body for GET
+	{ query: 'search-term', page: 2 },
 );
 ```
 
