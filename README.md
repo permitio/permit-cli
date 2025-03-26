@@ -98,7 +98,6 @@ Use this command to run a Permit PDP Docker container configured with your Permi
 - `dry-run` (Optional) - print the Docker command without executing it
 - `apiKey <string>` (Optional) - use a specific API key instead of the stored one
 
-
 #### Example
 
 ```bash

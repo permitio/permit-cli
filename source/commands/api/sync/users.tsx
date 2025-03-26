@@ -2,6 +2,7 @@ import React from 'react';
 import { AuthProvider } from '../../../components/AuthProvider.js';
 import { type infer as zInfer, string, object, array } from 'zod';
 import { option } from 'pastel';
+import APISyncUserComponent from '../../../components/api/sync/APISyncUserComponent.js';
 
 export const options = object({
 	apiKey: string()
@@ -70,7 +71,7 @@ type Props = {
 export default function Users({ options }: Props) {
 	return (
 		<AuthProvider scope={'environment'} permit_key={options.apiKey}>
-			<></>
+			<APISyncUserComponent options={options} />
 		</AuthProvider>
 	);
 }
