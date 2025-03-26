@@ -1,13 +1,15 @@
 {
 	"name": "@permitio/cli",
 	"version": "0.1.2",
+	"description": "Permit.io CLI tool",
+	"main": "dist/index.js",
 	"license": "MIT",
 	"bin": {
 		"permit": "dist/cli.js"
 	},
 	"type": "module",
 	"engines": {
-		"node": ">=22"
+		"node": ">=21.1.0"
 	},
 	"scripts": {
 		"build": "tsc",
@@ -18,7 +20,8 @@
 		"lint:fix": "eslint \"source/**/*.{js,ts,tsx}\" --fix",
 		"test": "prettier --check ./source && vitest run --coverage",
 		"simple-check": "npx tsx ./source/cli.tsx pdp check -u filip@permit.io -a create -r task",
-		"build-artifacts": "npm run build && nexe dist/cli.js --target 'macos-x64-14.15.3' --target 'linux-x64-14.15.3' --target 'windows-x64-14.15.3' --output dist/permit"
+		"build-artifacts": "npm run build && nexe dist/cli.js --target 'macos-x64-14.15.3' --target 'linux-x64-14.15.3' --target 'windows-x64-14.15.3' --output dist/permit",
+		"test:ts": "tsc --noEmit"
 	},
 	"files": [
 		"dist"
