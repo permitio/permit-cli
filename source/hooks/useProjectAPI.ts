@@ -14,10 +14,20 @@ export const useProjectAPI = () => {
 		[authenticatedApiClient, unAuthenticatedApiClient],
 	);
 
+	const getProject = useCallback(
+		async (proj_id: string) => {
+			return await authenticatedApiClient().GET('/v2/projects/{proj_id}', {
+				proj_id: proj_id,
+			});
+		},
+		[authenticatedApiClient],
+	);
+
 	return useMemo(
 		() => ({
 			getProjects,
+			getProject,
 		}),
-		[getProjects],
+		[getProjects, getProject],
 	);
 };

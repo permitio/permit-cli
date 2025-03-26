@@ -90,16 +90,29 @@ This collection of commands aims to improve the experience of working with Polic
 
 ### `pdp run`
 
-Use this command to get a `docker run` command configured with your PDP details from the account you logged in with
+Use this command to run a Permit PDP Docker container configured with your Permit.io account details. The command will start the container in detached mode and display the container ID and name.
 
 #### Options
 
 - `opa <number>` (Optional) - expose the OPA instance running in the PDP
+- `dry-run` (Optional) - print the Docker command without executing it
+- `apiKey <string>` (Optional) - use a specific API key instead of the stored one
+
 
 #### Example
 
 ```bash
+# Run the PDP container
+$ permit pdp run
+
+# Run the PDP container with OPA exposed on port 8181
 $ permit pdp run --opa 8181
+
+# Print the Docker command without running the container
+$ permit pdp run --dry-run
+
+# Run with a specific API key
+$ permit pdp run --apiKey your_api_key
 ```
 
 ### `pdp check`
