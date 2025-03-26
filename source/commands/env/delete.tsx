@@ -48,7 +48,7 @@ export default function Delete({
 }: Props) {
 	return (
 		<AuthProvider permit_key={apiKey} scope={'project'}>
-			<DeleteComponent environmentId={environmentId} force={force} />
+			<DeleteComponent environmentId={envId} force={force} />
 		</AuthProvider>
 	);
 }
