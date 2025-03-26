@@ -3,15 +3,15 @@ import { render } from 'ink-testing-library';
 import { describe, vi, expect, it, beforeEach } from 'vitest';
 import Create from '../source/commands/env/create';
 import * as AuthProvider from '../source/components/AuthProvider';
-import * as CreateComponent from '../source/components/env/CreateComponent';
+import * as CreateEnvComponent from '../source/components/env/CreateEnvComponent';
 
 // Mock the components
 vi.mock('../source/components/AuthProvider', () => ({
   AuthProvider: vi.fn(({ children }) => children),
 }));
 
-vi.mock('../source/components/env/CreateComponent', () => ({
-  default: vi.fn(() => <div>Mocked CreateComponent</div>),
+vi.mock('../source/components/env/CreateEnvComponent', () => ({
+  default: vi.fn(() => <div>Mocked CreateEnvComponent</div>),
 }));
 
 describe('env create command', () => {
@@ -21,13 +21,14 @@ describe('env create command', () => {
 
   it('renders with default options', () => {
     const options = {
-      key: undefined,
+      apiKey: undefined,
       name: undefined,
       envKey: undefined,
       description: undefined,
     };
+    
     render(<Create options={options} />);
-
+    
     // Check AuthProvider was called with correct props
     expect(AuthProvider.AuthProvider).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -36,9 +37,9 @@ describe('env create command', () => {
       }),
       expect.anything()
     );
-
-    // Check CreateComponent was called with the right first argument
-    expect(CreateComponent.default).toHaveBeenNthCalledWith(
+    
+    // Check CreateEnvComponent was called with the right first argument
+    expect(CreateEnvComponent.default).toHaveBeenNthCalledWith(
       1,
       {
         name: undefined,
@@ -49,15 +50,16 @@ describe('env create command', () => {
     );
   });
 
-  it('passes options correctly to CreateComponent', () => {
+  it('passes options correctly to CreateEnvComponent', () => {
     const options = {
-      key: 'test-key',
+      apiKey: 'test-key',
       name: 'Test Environment',
       envKey: 'test_env',
       description: 'Test description',
     };
+    
     render(<Create options={options} />);
-
+    
     // Check AuthProvider was called with correct props
     expect(AuthProvider.AuthProvider).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -66,9 +68,9 @@ describe('env create command', () => {
       }),
       expect.anything()
     );
-
-    // Check CreateComponent was called with the right first argument
-    expect(CreateComponent.default).toHaveBeenNthCalledWith(
+    
+    // Check CreateEnvComponent was called with the right first argument
+    expect(CreateEnvComponent.default).toHaveBeenNthCalledWith(
       1,
       {
         name: 'Test Environment',

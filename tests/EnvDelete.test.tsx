@@ -21,12 +21,13 @@ describe('env delete command', () => {
 
   it('renders with default options', () => {
     const options = {
-      key: undefined,
+      apiKey: undefined,
       environmentId: undefined,
       force: false,
     };
+    
     render(<Delete options={options} />);
-
+    
     // Check AuthProvider was called with correct props
     expect(AuthProvider.AuthProvider).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -35,7 +36,7 @@ describe('env delete command', () => {
       }),
       expect.anything()
     );
-
+    
     // Check DeleteComponent was called with correct props
     expect(DeleteComponent.default).toHaveBeenNthCalledWith(
       1,
@@ -49,12 +50,13 @@ describe('env delete command', () => {
 
   it('passes options correctly to DeleteComponent', () => {
     const options = {
-      key: 'test-key',
+      apiKey: 'test-key',
       environmentId: 'env456',
       force: true,
     };
+    
     render(<Delete options={options} />);
-
+    
     // Check AuthProvider was called with correct props
     expect(AuthProvider.AuthProvider).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -63,7 +65,7 @@ describe('env delete command', () => {
       }),
       expect.anything()
     );
-
+    
     // Check DeleteComponent was called with correct props
     expect(DeleteComponent.default).toHaveBeenNthCalledWith(
       1,
