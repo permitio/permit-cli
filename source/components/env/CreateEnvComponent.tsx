@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Box, Text } from 'ink';
 import Spinner from 'ink-spinner';
 import TextInput from 'ink-text-input';
@@ -58,6 +58,9 @@ export default function CreateEnvComponent({
 	const { scope } = useAuth();
 	const { createEnvironment } = useEnvironmentApi();
 
+	// Add a ref to track initialization status
+	const hasInitialized = useRef(false);
+
 	// States
 	const [formState, setFormState] = useState<FormStateType>({
 		currentField: 0,
@@ -114,8 +117,8 @@ export default function CreateEnvComponent({
 		},
 	];
 
-	// Submit form function
-	const submitForm = async () => {
+	// Submit form function - stabilized with useCallback
+	const submitForm = useCallback(async () => {
 		setStatus('submitting');
 
 		try {
@@ -208,47 +211,61 @@ export default function CreateEnvComponent({
 			setError(`Error: ${err instanceof Error ? err.message : String(err)}`);
 			setStatus('error');
 		}
-	};
+	}, [formState, scope, createEnvironment, setStatus, setError, setCreatedEnvironmentId]);
 
-	// Skip to appropriate field or auto-submit based on initial values
 	useEffect(() => {
-		// Figure out which field to start at based on provided values
-		let startAtField = 0;
-
-		if (initialName) {
-			startAtField = 1; // Start at key field
-
-			if (initialKey) {
-				startAtField = 2; // Start at description field
-
-				if (initialDescription) {
-					startAtField = 3; // Start at customBranchName field
-
-					if (initialCustomBranchName) {
-						startAtField = 4; // Start at jwks field
-
-						if (initialJwks) {
-							startAtField = 5; // Start at settings field
-
-							if (initialSettings) {
-								// All fields filled, auto-submit
-								setTimeout(() => {
-									submitForm();
-								}, 0);
-								return;
-							}
-						}
-					}
-				}
-			}
+		// Skip if already initialized to prevent infinite update loops
+		if (hasInitialized.current) {
+			return;
 		}
 
-		// Start at the determined field
-		setFormState(prev => ({
+		// Create an ordered array of fields matching the form flow
+		const fieldOrder: FieldId[] = [
+			'name',
+			'key',
+			'description',
+			'customBranchName',
+			'jwks',
+			'settings',
+		];
+
+		// Map initial values to their fields
+		const initialValues: Record<FieldId, string | undefined> = {
+			name: initialName,
+			key: initialKey,
+			description: initialDescription,
+			customBranchName: initialCustomBranchName,
+			jwks: initialJwks,
+			settings: initialSettings,
+		};
+
+		// Find the first field that doesn't have an initial value
+		const firstEmptyFieldIndex = fieldOrder.findIndex(
+			(fieldId) => !initialValues[fieldId],
+		);
+
+		// If all fields have values and required fields are present, auto-submit
+		if (firstEmptyFieldIndex === -1 && initialName && initialKey) {
+			// Set the initialization flag
+			hasInitialized.current = true;
+			// Use setTimeout to avoid React state update during render
+			setTimeout(() => {
+				submitForm();
+			}, 0);
+			return;
+		}
+
+		// Otherwise, set the form to start at the first empty field
+		const startAtField = firstEmptyFieldIndex === -1 ? 0 : firstEmptyFieldIndex;
+
+		// Update form state
+		setFormState((prev) => ({
 			...prev,
 			currentField: startAtField,
 		}));
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+
+		// Mark as initialized to prevent future updates
+		hasInitialized.current = true;
 	}, [
 		initialName,
 		initialKey,
@@ -256,6 +273,7 @@ export default function CreateEnvComponent({
 		initialCustomBranchName,
 		initialJwks,
 		initialSettings,
+		submitForm,
 	]);
 
 	// Auto-derive key from name if needed
