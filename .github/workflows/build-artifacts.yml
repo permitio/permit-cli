@@ -1,0 +1,47 @@
+name: Build and Test Artifacts
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            artifact_name: permit-linux
+          - os: windows-latest
+            artifact_name: permit.exe
+          - os: macos-latest
+            artifact_name: permit-macos
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build artifacts
+        run: npm run build-artifacts
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: dist/permit-${{ matrix.artifact_name }}
+
+      - name: Test installation
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          chmod +x dist/permit-${{ matrix.artifact_name }}
+          ./dist/permit-${{ matrix.artifact_name }} --version 
