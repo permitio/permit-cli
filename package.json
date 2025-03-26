@@ -5,7 +5,7 @@
 	"main": "dist/index.js",
 	"license": "MIT",
 	"bin": {
-		"permit": "./dist/index.js"
+		"permit": "dist/cli.js"
 	},
 	"type": "module",
 	"engines": {
