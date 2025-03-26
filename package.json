@@ -2,7 +2,6 @@
 	"name": "@permitio/cli",
 	"version": "0.1.2",
 	"description": "Permit.io CLI tool",
-	"main": "dist/index.js",
 	"license": "MIT",
 	"bin": {
 		"permit": "dist/cli.js"
