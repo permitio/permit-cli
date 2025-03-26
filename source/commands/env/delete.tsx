@@ -18,7 +18,7 @@ export const options = zod.object({
 				alias: 'k',
 			}),
 		),
-	environmentId: zod
+	envId: zod
 		.string()
 		.optional()
 		.describe(
