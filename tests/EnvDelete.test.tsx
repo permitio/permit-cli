@@ -22,7 +22,7 @@ describe('env delete command', () => {
   it('renders with default options', () => {
     const options = {
       apiKey: undefined,
-      environmentId: undefined,
+      envId: undefined,
       force: false,
     };
     
@@ -51,7 +51,7 @@ describe('env delete command', () => {
   it('passes options correctly to DeleteComponent', () => {
     const options = {
       apiKey: 'test-key',
-      environmentId: 'env456',
+      envId: 'env456',
       force: true,
     };
     

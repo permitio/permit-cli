@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, {
+	useState,
+	useEffect,
+	useCallback,
+	useRef,
+	useMemo,
+} from 'react';
 import { Box, Text } from 'ink';
 import Spinner from 'ink-spinner';
 import TextInput from 'ink-text-input';
@@ -78,44 +84,47 @@ export default function CreateEnvComponent({
 	const [error, setError] = useState<string | null>(null);
 	const [createdEnvironmentId, setCreatedEnvironmentId] = useState('');
 
-	// Define form fields
-	const fields: FormField[] = [
-		{
-			id: 'name',
-			label: 'Enter environment name:',
-			required: true,
-		},
-		{
-			id: 'key',
-			label: 'Enter environment key (or press Enter to use the suggested key):',
-			required: true,
-			helpText:
-				'Keys should only contain lowercase letters, numbers, and underscores.',
-			defaultDerivedFrom: 'name',
-		},
-		{
-			id: 'description',
-			label: 'Enter environment description (optional):',
-			required: false,
-		},
-		{
-			id: 'customBranchName',
-			label: 'Enter custom branch name for GitOps (optional):',
-			required: false,
-		},
-		{
-			id: 'jwks',
-			label: 'Enter JWKS JSON for frontend login (optional):',
-			required: false,
-			helpText: 'Enter a valid JSON string or leave empty',
-		},
-		{
-			id: 'settings',
-			label: 'Enter environment settings JSON (optional):',
-			required: false,
-			helpText: 'Enter a valid JSON string or leave empty',
-		},
-	];
+	const fields = useMemo<FormField[]>(
+		() => [
+			{
+				id: 'name',
+				label: 'Enter environment name:',
+				required: true,
+			},
+			{
+				id: 'key',
+				label:
+					'Enter environment key (or press Enter to use the suggested key):',
+				required: true,
+				helpText:
+					'Keys should only contain lowercase letters, numbers, and underscores.',
+				defaultDerivedFrom: 'name',
+			},
+			{
+				id: 'description',
+				label: 'Enter environment description (optional):',
+				required: false,
+			},
+			{
+				id: 'customBranchName',
+				label: 'Enter custom branch name for GitOps (optional):',
+				required: false,
+			},
+			{
+				id: 'jwks',
+				label: 'Enter JWKS JSON for frontend login (optional):',
+				required: false,
+				helpText: 'Enter a valid JSON string or leave empty',
+			},
+			{
+				id: 'settings',
+				label: 'Enter environment settings JSON (optional):',
+				required: false,
+				helpText: 'Enter a valid JSON string or leave empty',
+			},
+		],
+		[],
+	);
 
 	// Submit form function - stabilized with useCallback
 	const submitForm = useCallback(async () => {
@@ -211,8 +220,16 @@ export default function CreateEnvComponent({
 			setError(`Error: ${err instanceof Error ? err.message : String(err)}`);
 			setStatus('error');
 		}
-	}, [formState, scope, createEnvironment, setStatus, setError, setCreatedEnvironmentId]);
+	}, [
+		formState,
+		scope,
+		createEnvironment,
+		setStatus,
+		setError,
+		setCreatedEnvironmentId,
+	]);
 
+	// Form initialization
 	useEffect(() => {
 		// Skip if already initialized to prevent infinite update loops
 		if (hasInitialized.current) {
@@ -241,7 +258,7 @@ export default function CreateEnvComponent({
 
 		// Find the first field that doesn't have an initial value
 		const firstEmptyFieldIndex = fieldOrder.findIndex(
-			(fieldId) => !initialValues[fieldId],
+			fieldId => !initialValues[fieldId],
 		);
 
 		// If all fields have values and required fields are present, auto-submit
@@ -259,7 +276,7 @@ export default function CreateEnvComponent({
 		const startAtField = firstEmptyFieldIndex === -1 ? 0 : firstEmptyFieldIndex;
 
 		// Update form state
-		setFormState((prev) => ({
+		setFormState(prev => ({
 			...prev,
 			currentField: startAtField,
 		}));
@@ -285,17 +302,16 @@ export default function CreateEnvComponent({
 			formState.currentField < fields.length &&
 			formState.currentField >= 0
 		) {
-			// Use non-null assertion since we've verified the index is valid
-			const currentField = fields[formState.currentField]!;
-			if (currentField.id === 'key') {
+			const currentField = fields[formState.currentField];
+			// Added null check before accessing id property
+			if (currentField && currentField.id === 'key') {
 				setFormState(prev => ({
 					...prev,
 					key: prev.name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
 				}));
 			}
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [formState.name, formState.currentField, fields]);
+	}, [formState.name, formState.currentField, fields, formState.key]);
 
 	// Handle input change
 	const handleInputChange = (value: string) => {
