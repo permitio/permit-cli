@@ -3,19 +3,26 @@ import { components } from '../lib/api/v1.js';
 import useClient from './useClient.js';
 
 export type EnvironmentCopy = components['schemas']['EnvironmentCopy'];
-export type Environment = components['schemas']['EnvironmentRead'];
 
-type CreateEnvironmentParams = {
-	name: string;
+// Define type for environment creation parameters to match API expectations
+export type CreateEnvironmentParams = {
 	key: string;
+	name: string;
 	description?: string;
-	settings?: Record<string, never>;
+	custom_branch_name?: string;
+	jwks?: {
+		ttl: number;
+		url?: string;
+		jwks?: {
+			keys: Record<string, unknown>[];
+		};
+	};
+	settings?: Record<string, unknown>;
 };
 
 export const useEnvironmentApi = () => {
 	const { authenticatedApiClient, unAuthenticatedApiClient } = useClient();
 
-	// Keep original method signatures to maintain compatibility
 	const getEnvironments = useCallback(
 		async (
 			project_id: string,
@@ -71,7 +78,7 @@ export const useEnvironmentApi = () => {
 		[authenticatedApiClient],
 	);
 
-	// New methods for create and delete operations
+	// Add back the createEnvironment function with proper type
 	const createEnvironment = useCallback(
 		async (
 			projectId: string,
@@ -79,16 +86,19 @@ export const useEnvironmentApi = () => {
 			cookie?: string | null,
 			params?: CreateEnvironmentParams,
 		) => {
+			// Using a safer type assertion approach
+			const apiParams =
+				params as unknown as components['schemas']['EnvironmentCreate'];
 			return accessToken || cookie
 				? await unAuthenticatedApiClient(accessToken, cookie).POST(
 						`/v2/projects/{proj_id}/envs`,
 						{ proj_id: projectId },
-						params,
+						apiParams,
 					)
 				: await authenticatedApiClient().POST(
 						`/v2/projects/{proj_id}/envs`,
 						{ proj_id: projectId },
-						params,
+						apiParams,
 					);
 		},
 		[authenticatedApiClient, unAuthenticatedApiClient],
@@ -101,19 +111,38 @@ export const useEnvironmentApi = () => {
 			accessToken?: string,
 			cookie?: string | null,
 		) => {
-			return accessToken || cookie
-				? await unAuthenticatedApiClient(accessToken, cookie).DELETE(
-						`/v2/projects/{proj_id}/envs/{env_id}`,
-						{ proj_id: projectId, env_id: environmentId },
-						undefined,
-						undefined,
-					)
-				: await authenticatedApiClient().DELETE(
-						`/v2/projects/{proj_id}/envs/{env_id}`,
-						{ proj_id: projectId, env_id: environmentId },
-						undefined,
-						undefined,
-					);
+			try {
+				const result =
+					accessToken || cookie
+						? await unAuthenticatedApiClient(accessToken, cookie).DELETE(
+								`/v2/projects/{proj_id}/envs/{env_id}`,
+								{ proj_id: projectId, env_id: environmentId },
+								undefined,
+								undefined,
+							)
+						: await authenticatedApiClient().DELETE(
+								`/v2/projects/{proj_id}/envs/{env_id}`,
+								{ proj_id: projectId, env_id: environmentId },
+								undefined,
+								undefined,
+							);
+				return result;
+			} catch (err) {
+				// a 204 No Content response after a successful deletion
+				if (
+					err instanceof Error &&
+					err.message.includes('Unexpected end of JSON input')
+				) {
+					// Return a successful response object that matches the expected structure
+					return {
+						data: null,
+						response: { status: 204 },
+						error: null,
+					};
+				}
+				// Re-throw any other errors to be handled by the component
+				throw err;
+			}
 		},
 		[authenticatedApiClient, unAuthenticatedApiClient],
 	);

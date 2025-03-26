@@ -176,20 +176,8 @@ export default function DeleteComponent({
 					setState('error');
 				}
 			} catch (err) {
-				// For delete operations, a "Unexpected end of JSON input" error usually means
-				// the server returned a 204 No Content response, which is actually a success
-				if (
-					err instanceof Error &&
-					err.message.includes('Unexpected end of JSON input')
-				) {
-					setState('done');
-					setTimeout(() => process.exit(0), 500);
-				} else {
-					setError(
-						`Error: ${err instanceof Error ? err.message : String(err)}`,
-					);
-					setState('error');
-				}
+				setError(`Error: ${err instanceof Error ? err.message : String(err)}`);
+				setState('error');
 			}
 		};
 

@@ -8,7 +8,7 @@ import CreateComponent from '../../components/env/CreateComponent.js';
 export const description = 'Create a new Permit environment';
 
 export const options = zod.object({
-	key: zod
+	apiKey: zod
 		.string()
 		.optional()
 		.describe(
@@ -32,7 +32,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description: 'Environment key identifier',
+				description: 'Environment key identifier (slug)',
 				alias: 'e',
 			}),
 		),
@@ -45,6 +45,34 @@ export const options = zod.object({
 				alias: 'd',
 			}),
 		),
+	customBranchName: zod
+		.string()
+		.optional()
+		.describe(
+			option({
+				description: 'Custom branch name for GitOps feature',
+				alias: 'b',
+			}),
+		),
+	jwks: zod
+		.string()
+		.optional()
+		.describe(
+			option({
+				description:
+					'JSON Web Key Set (JWKS) for frontend login, in JSON format',
+				alias: 'j',
+			}),
+		),
+	settings: zod
+		.string()
+		.optional()
+		.describe(
+			option({
+				description: 'Environment settings in JSON format',
+				alias: 's',
+			}),
+		),
 });
 
 type Props = {
@@ -52,11 +80,26 @@ type Props = {
 };
 
 export default function Create({
-	options: { key, name, envKey, description },
+	options: {
+		apiKey,
+		name,
+		envKey,
+		description,
+		customBranchName,
+		jwks,
+		settings,
+	},
 }: Props) {
 	return (
-		<AuthProvider permit_key={key} scope={'project'}>
-			<CreateComponent name={name} envKey={envKey} description={description} />
+		<AuthProvider permit_key={apiKey} scope={'project'}>
+			<CreateComponent
+				name={name}
+				envKey={envKey}
+				description={description}
+				customBranchName={customBranchName}
+				jwks={jwks}
+				settings={settings}
+			/>
 		</AuthProvider>
 	);
 }

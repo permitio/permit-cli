@@ -8,7 +8,7 @@ import DeleteComponent from '../../components/env/DeleteComponent.js';
 export const description = 'Delete a Permit environment';
 
 export const options = zod.object({
-	key: zod
+	apiKey: zod
 		.string()
 		.optional()
 		.describe(
@@ -44,10 +44,10 @@ type Props = {
 };
 
 export default function Delete({
-	options: { key, environmentId, force },
+	options: { apiKey, environmentId, force },
 }: Props) {
 	return (
-		<AuthProvider permit_key={key} scope={'project'}>
+		<AuthProvider permit_key={apiKey} scope={'project'}>
 			<DeleteComponent environmentId={environmentId} force={force} />
 		</AuthProvider>
 	);

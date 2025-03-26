@@ -155,15 +155,22 @@ This command creates a new environment in a specified project. This is useful fo
 
 #### Options
 
-- key <string> (Optional) - a Permit API key to authenticate the operation. If not provided, the command will use your stored credentials.
-- name <string> (Optional) - the name of the new environment (will prompt if not provided)
-- envKey <string> (Optional) - the key for the new environment (will be derived from name if not provided)
-- description <string> (Optional) - the description of the new environment
+- `apikey` <string> (Optional) - a Permit API key to authenticate the operation. If not provided, the command will use your stored credentials.
+- `name` <string> (Optional) - the name of the new environment (will prompt if not provided)
+- `envKey` <string> (Optional) - the key for the new environment (will be derived from name if not provided)
+- `description` <string> (Optional) - the description of the new environment
+- `jwks <string>` (Optional) - JSON Web Key Set (JWKS) for frontend login, in JSON format
+- `settings <string>` (Optional) - environment settings in JSON format
 
 #### Example 
 
 ```bash
 $ permit env create --key permit_key_.......... --name "Staging" --description "Staging environment for testing"
+```
+
+**You can also create a complex environment with all options:**
+```bash
+$ permit env create --apiKey permit_key_.......... --name "Development" --envKey "dev" --description "Dev environment" --customBranchName "dev-branch" --jwks '{"ttl": 3600}' --settings '{"debug": true}'
 ```
 
 ### `env delete`
