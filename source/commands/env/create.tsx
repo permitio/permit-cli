@@ -3,7 +3,7 @@ import { option } from 'pastel';
 import zod from 'zod';
 import { type infer as zInfer } from 'zod';
 import { AuthProvider } from '../../components/AuthProvider.js';
-import CreateComponent from '../../components/env/CreateComponent.js';
+import CreateComponent from '../../components/env/CreateEnvComponent.js';
 
 export const description = 'Create a new Permit environment';
 
