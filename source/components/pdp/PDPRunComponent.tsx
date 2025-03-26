@@ -56,7 +56,7 @@ export default function PDPRunComponent({ opa, dryRun = false }: Props) {
 				const config = await response.json();
 
 				// Generate the Docker command
-				const cmd = `docker run -d -p 7676:7676 ${
+				const cmd = `docker run -d -p 7766:7000 ${
 					opa ? `-p ${opa}:8181` : ''
 				} -e PDP_API_KEY=${token} -e PDP_CONTROL_PLANE=${config.controlPlane || 'https://api.permit.io'} permitio/pdp-v2:latest`;
 
