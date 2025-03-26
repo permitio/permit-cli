@@ -173,7 +173,7 @@ export default function PDPRunComponent({ opa, dryRun = false }: Props) {
 			</Text>
 			<Text>
 				To stop the container, run:{' '}
-				<Text color="yellow">docker stop {containerInfo?.id}</Text>
+				<Text color="yellow">docker kill {containerInfo?.id}</Text>
 			</Text>
 		</Box>
 	);
