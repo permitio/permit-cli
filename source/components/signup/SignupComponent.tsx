@@ -71,10 +71,7 @@ const SignupComponent: FC<SignupProp> = ({
 					<Text>
 						Use the default organization name:{' '}
 						<Text color="green">{organizationName}</Text>?{' '}
-						<ConfirmInput
-							onConfirm={handleConfirm}
-							onCancel={handleCancel}
-						/>{' '}
+						<ConfirmInput onConfirm={handleConfirm} onCancel={handleCancel} />{' '}
 					</Text>
 				</>
 			)}
