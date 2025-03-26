@@ -1,0 +1,16 @@
+{
+    "version": "0.1.2",
+    "description": "Permit.io CLI tool for managing authorization policies",
+    "homepage": "https://github.com/permitio/cli",
+    "license": "MIT",
+    "url": "https://github.com/permitio/cli/releases/download/v0.1.2/permit-win.exe",
+    "hash": "YOUR_HASH_HERE",
+    "bin": "permit-win.exe",
+    "checkver": {
+        "github": "https://github.com/permitio/cli",
+        "regex": "tag/v([\\d.]+)"
+    },
+    "autoupdate": {
+        "url": "https://github.com/permitio/cli/releases/download/v$version/permit-win.exe"
+    }
+} 

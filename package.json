@@ -17,7 +17,8 @@
 		"lint": "prettier --check ./source && eslint \"source/**/*.{js,ts,tsx}\"",
 		"lint:fix": "eslint \"source/**/*.{js,ts,tsx}\" --fix",
 		"test": "prettier --check ./source && vitest run --coverage",
-		"simple-check": "npx tsx ./source/cli.tsx pdp check -u filip@permit.io -a create -r task"
+		"simple-check": "npx tsx ./source/cli.tsx pdp check -u filip@permit.io -a create -r task",
+		"build-artifacts": "npm run build && nexe dist/cli.js --target 'macos-x64-14.15.3' --target 'linux-x64-14.15.3' --target 'windows-x64-14.15.3' --output dist/permit"
 	},
 	"files": [
 		"dist"
@@ -68,6 +69,7 @@
 		"eslint-plugin-sonarjs": "^2.0.4",
 		"globals": "^15.11.0",
 		"ink-testing-library": "^4.0.0",
+		"nexe": "^4.0.0-rc.2",
 		"parser": "^0.1.4",
 		"prettier": "^3.3.3",
 		"rimraf": "^6.0.1",
