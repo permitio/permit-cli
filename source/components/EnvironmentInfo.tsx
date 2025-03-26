@@ -66,7 +66,8 @@ export default function EnvironmentInfo() {
 			)}
 			{state === 'notLoggedIn' && (
 				<Text dimColor={true}>
-					You&apos;re not logged in. Run `permit login` to activate all CLI features.
+					You&apos;re not logged in. Run `permit login` to activate all CLI
+					features.
 				</Text>
 			)}
 			{orgName && projName && envName && (
