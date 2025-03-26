@@ -31,7 +31,7 @@ describe('index file', () => {
 			/Run this command with --help for more information/,
 		);
 		expect(finalFrame).toMatch(
-			/You are not logged in./,
+			/You're not logged in. Run `permit login` to activate all CLI features./,
 		);
 	});
 });
