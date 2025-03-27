@@ -18,7 +18,7 @@ export default function APISyncUserComponent({ options }: Props) {
 
 	const [status, setStatus] = useState<
 		'Input' | 'Processing' | 'Done' | 'Error'
-	>('Input');
+	>('Processing');
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const [userId, setUserId] = useState<string>(options.userid ?? '');
 	const [payload, setPayload] = useState<UserSyncOptions>({
@@ -86,6 +86,11 @@ export default function APISyncUserComponent({ options }: Props) {
 					setUserId(payload.key);
 					setStatus('Processing');
 					await syncUser();
+				}
+				else{
+					setErrorMessage('Validation Error: Invalid user ID');
+					setStatus('Error');
+					
 				}
 			} catch (error) {
 				setErrorMessage(error instanceof Error ? error.message : String(error));
