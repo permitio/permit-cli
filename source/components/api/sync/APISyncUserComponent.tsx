@@ -86,11 +86,9 @@ export default function APISyncUserComponent({ options }: Props) {
 					setUserId(payload.key);
 					setStatus('Processing');
 					await syncUser();
-				}
-				else{
+				} else {
 					setErrorMessage('Validation Error: Invalid user ID');
 					setStatus('Error');
-					
 				}
 			} catch (error) {
 				setErrorMessage(error instanceof Error ? error.message : String(error));
