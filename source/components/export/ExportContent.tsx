@@ -9,12 +9,15 @@ import fs from 'node:fs/promises';
 import { Text } from 'ink';
 
 export const ExportContent: FC<{ options: ExportOptions }> = ({
-	options: { key: apiKey, file },
+	options: { key: apiKey, file, includeDefaultRoles },
 }) => {
 	const { validateApiKeyScope } = useApiKeyApi();
 	const { authToken } = useAuth();
 	const key = apiKey || authToken;
-	const { state, setState, exportConfig } = useExport(key);
+	const { state, setState, exportConfig } = useExport({
+		apiKey: key,
+		includeDefaultRoles,
+	});
 	const [hclOutput, setHclOutput] = useState<string | null>(null);
 	const hasRunRef = useRef(false);
 
