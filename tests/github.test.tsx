@@ -106,8 +106,8 @@ describe('RepositoryKey  Component', () => {
 		vi.mocked(usePolicyGitReposApi).mockReturnValue({
 			getRepoList: vi.fn(() => Promise.resolve({
 				data: [
-					{ status: 'active', apiKey: 'repo1' },
-					{ status: 'active', apiKey: 'repo2' },
+					{ status: 'active', key: 'repo1' },
+					{ status: 'active', key: 'repo2' },
 				],
 				error: null,
 				status: 200
@@ -153,8 +153,8 @@ describe('RepositoryKey  Component', () => {
 		vi.mocked(usePolicyGitReposApi).mockReturnValue({
 			getRepoList: vi.fn(() => Promise.resolve({
 				data: [
-					{ status: 'active', apiKey: 'repo1' },
-					{ status: 'active', apiKey: 'repo2' },
+					{ status: 'active', key: 'repo1' },
+					{ status: 'active', key: 'repo2' },
 				],
 				error: null,
 				status: 200
@@ -197,8 +197,8 @@ describe('RepositoryKey  Component', () => {
 		vi.mocked(usePolicyGitReposApi).mockReturnValue({
 			getRepoList: vi.fn(() => Promise.resolve({
 				data: [
-					{ status: 'active', apiKey: 'repo1' },
-					{ status: 'active', apiKey: 'repo2' },
+					{ status: 'active', key: 'repo1' },
+					{ status: 'active', key: 'repo2' },
 				],
 				error: null,
 				status: 200
@@ -242,8 +242,8 @@ describe('RepositoryKey  Component', () => {
 		vi.mocked(usePolicyGitReposApi).mockReturnValue({
 			getRepoList: vi.fn(() => Promise.resolve({
 				data: [
-					{ status: 'active', apiKey: 'repo1' },
-					{ status: 'active', apiKey: 'repo2' },
+					{ status: 'active', key: 'repo1' },
+					{ status: 'active', key: 'repo2' },
 				],
 				error: null,
 				status: 200
@@ -437,8 +437,8 @@ describe('GitHub Complete Flow', () => {
 		vi.mocked(usePolicyGitReposApi).mockReturnValue({
 			getRepoList: vi.fn(() => Promise.resolve({
 				data: [
-					{ status: 'active', apiKey: 'repo1' },
-					{ status: 'active', apiKey: 'repo2' },
+					{ status: 'active', key: 'repo1' },
+					{ status: 'active', key: 'repo2' },
 				],
 				error: null,
 				status: 200
@@ -503,8 +503,8 @@ describe('GitHub Complete Flow', () => {
 		vi.mocked(usePolicyGitReposApi).mockReturnValue({
 			getRepoList: vi.fn(() => Promise.resolve({
 				data: [
-					{ status: 'active', apiKey: 'repo1' },
-					{ status: 'active', apiKey: 'repo2' },
+					{ status: 'active', key: 'repo1' },
+					{ status: 'active', key: 'repo2' },
 				],
 				error: null,
 				status: 200
@@ -531,7 +531,7 @@ describe('GitHub Complete Flow', () => {
 			getProjects: mockGetProjects,
 		});
 		const { stdin, lastFrame } = render(
-			<GitHub options={{ apiKey: undefined }} />,
+			<GitHub options={{ key: undefined }} />,
 		);
 		await delay(50);
 		const frameString = lastFrame()?.toString() ?? '';
@@ -541,8 +541,8 @@ describe('GitHub Complete Flow', () => {
 		vi.mocked(usePolicyGitReposApi).mockReturnValue({
 			getRepoList: vi.fn(() => Promise.resolve({
 				data: [
-					{ status: 'active', apiKey: 'repo1' },
-					{ status: 'active', apiKey: 'repo2' },
+					{ status: 'active', key: 'repo1' },
+					{ status: 'active', key: 'repo2' },
 				],
 				error: null,
 				status: 200
@@ -607,8 +607,8 @@ describe('GitHub Complete Flow', () => {
 		vi.mocked(usePolicyGitReposApi).mockReturnValue({
 			getRepoList: vi.fn(() => Promise.resolve({
 				data: [
-					{ status: 'active', apiKey: 'repo1' },
-					{ status: 'active', apiKey: 'repo2' },
+					{ status: 'active', key: 'repo1' },
+					{ status: 'active', key: 'repo2' },
 				],
 				error: null,
 				status: 200
