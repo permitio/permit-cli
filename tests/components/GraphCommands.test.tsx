@@ -54,12 +54,10 @@ describe('Graph component', () => {
 			error: null,
 		});
 		(useProjectAPI as any).mockReturnValue({
-			getProjects: vi
-				.fn()
-				.mockResolvedValue({
-					data: [{ name: 'Project 1', id: '1' }],
-					error: null,
-				}),
+			getProjects: vi.fn().mockResolvedValue({
+				data: [{ name: 'Project 1', id: '1' }],
+				error: null,
+			}),
 		});
 		(useEnvironmentApi as any).mockReturnValue({
 			getEnvironments: vi
@@ -94,12 +92,10 @@ describe('Graph component', () => {
 			error: null,
 		});
 		(useProjectAPI as any).mockReturnValue({
-			getProjects: vi
-				.fn()
-				.mockResolvedValue({
-					data: [{ name: 'Project 1', id: '1' }],
-					error: null,
-				}),
+			getProjects: vi.fn().mockResolvedValue({
+				data: [{ name: 'Project 1', id: '1' }],
+				error: null,
+			}),
 		});
 		(useEnvironmentApi as any).mockReturnValue({
 			getEnvironments: vi
@@ -107,12 +103,10 @@ describe('Graph component', () => {
 				.mockResolvedValue({ data: [{ name: 'Env 1', id: '1' }], error: null }),
 		});
 		(useGraphDataApi as any).mockReturnValue({
-			fetchGraphData: vi
-				.fn()
-				.mockResolvedValue({
-					data: { nodes: [{ id: 'node1' }], edges: [] },
-					error: null,
-				}),
+			fetchGraphData: vi.fn().mockResolvedValue({
+				data: { nodes: [{ id: 'node1' }], edges: [] },
+				error: null,
+			}),
 		});
 		const { lastFrame, stdin } = render(<Graph options={{}} />);
 		await waitForOutput({ lastFrame }, out => out.includes('Select a project'));

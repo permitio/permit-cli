@@ -20,8 +20,8 @@ type Props = {
 
 export default function graph({ options }: Props) {
 	return (
-		<AuthProvider permit_key={options.apiKey} scope="environment">
-			<Graph options={options} />
+		<AuthProvider permit_key={options.apiKey} scope={'environment'}>
+			<Graph />
 		</AuthProvider>
 	);
 }
