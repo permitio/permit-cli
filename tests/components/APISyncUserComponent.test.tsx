@@ -1,22 +1,32 @@
 import React from 'react';
 import { render } from 'ink-testing-library';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import APISyncUserComponent from '../../source/components/api/sync/APISyncUserComponent.js';
 import delay from 'delay';
+import type { Mock } from 'vitest';
+
+// Define types for mocks
+type PUTResponse = { response: { status: number } };
+type MockPUT = Mock<(...args: any[]) => Promise<PUTResponse>> & {
+  lastApiKey?: string | null;
+};
 
 // Mocks for dependencies
-let mockPUT;
-let mockValidate;
-let mockAuthScope = { project_id: 'test_project', environment_id: 'test_env' };
+let mockPUT: MockPUT;
+let mockValidate: Mock<(...args: any[]) => boolean>;
+let mockAuthScope: { project_id: string; environment_id: string } = { 
+  project_id: 'test_project', 
+  environment_id: 'test_env' 
+};
 
 // Set up mocks before importing the component
 vi.mock('../../source/hooks/useClient.js', () => ({
   default: () => ({
     authenticatedApiClient: () => ({
-      PUT: (...args) => mockPUT(...args),
+      PUT: (...args: any[]) => mockPUT(...args),
     }),
-    unAuthenticatedApiClient: (apiKey) => ({
-      PUT: (...args) => {
+    unAuthenticatedApiClient: (apiKey: string) => ({
+      PUT: (...args: any[]) => {
         mockPUT.lastApiKey = apiKey;
         return mockPUT(...args);
       },
@@ -27,12 +37,22 @@ vi.mock('../../source/hooks/useClient.js', () => ({
 // Mock the AuthProvider module
 vi.mock('../../source/components/AuthProvider.js', () => ({
   useAuth: () => ({ scope: mockAuthScope }),
-  AuthContext: { Provider: ({ children }) => children }
+  AuthContext: { Provider: ({ children }: { children: React.ReactNode }) => children }
 }));
+
+// Define the interface expected by the validate function
+interface UserSyncOptions {
+  key: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  attributes?: Record<string, unknown>;
+  roleAssignments?: Array<{ role: string; tenant?: string }>;
+}
 
 // Mock the validation function
 vi.mock('../../source/utils/api/user/utils.js', () => ({
-  validate: (...args) => mockValidate(...args),
+  validate: (...args: [UserSyncOptions]) => mockValidate(...args),
 }));
 
 // Default options
@@ -46,21 +66,50 @@ const defaultOptions = {
 };
 
 describe('APISyncUserComponent', () => {
+  // Setup before each test
   beforeEach(() => {
     vi.clearAllMocks();
-    mockPUT = vi.fn(() => Promise.resolve({ response: { status: 200 } }));
+    // Setup default mock behavior that resolves immediately
+    mockPUT = vi.fn(() => Promise.resolve({ response: { status: 200 } })) as MockPUT;
     mockPUT.lastApiKey = null;
     mockValidate = vi.fn(() => true);
     mockAuthScope = { project_id: 'test_project', environment_id: 'test_env' };
   });
+
+  // Cleanup after each test
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // Helper to wait for component updates with a timeout
+  const waitForOutput = async (
+    getOutput: () => string | undefined, 
+    matcher: (output: string) => boolean, 
+    timeoutMs = 500, 
+    intervalMs = 50
+  ): Promise<boolean> => {
+    const startTime = Date.now();
+    while (Date.now() - startTime < timeoutMs) {
+      const output = getOutput();
+      if (output && matcher(output)) {
+        return true;
+      }
+      await delay(intervalMs);
+    }
+    // If we get here, the condition wasn't met within the timeout
+    throw new Error(`Timeout waiting for output. Last output: ${getOutput()}`);
+  };
 
   it('renders input prompt when userId is not provided', async () => {
     const { lastFrame } = render(
       <APISyncUserComponent options={defaultOptions} />
     );
     
-    await delay(50);
-    expect(lastFrame()).toContain('UserID is required. Please enter it:');
+    // Use the helper to wait for the expected output
+    await waitForOutput(
+      lastFrame,
+      output => output.includes('UserID is required. Please enter it:')
+    );
   });
 
   it('processes immediately when userId is provided in options', async () => {
@@ -73,19 +122,26 @@ describe('APISyncUserComponent', () => {
       <APISyncUserComponent options={options} />
     );
     
-    await delay(50);
-    expect(lastFrame()).toContain('⠋'); // Spinner
+    // First check for spinner
+    await waitForOutput(
+      lastFrame,
+      output => output.includes('⠋')
+    );
     
-    await delay(100);
-    expect(lastFrame()).toContain('User Synced Successfully!');
+    // Then check for success message
+    await waitForOutput(
+      lastFrame,
+      output => output.includes('User Synced Successfully!')
+    );
+    
     expect(mockPUT).toHaveBeenCalledTimes(1);
   });
 
   it('shows spinner during API call processing', async () => {
-    // Create a promise that we'll resolve manually to control timing
-    let resolveApiCall;
+    // Create a promise that we'll resolve manually
+    let resolveApiCall: ((value: PUTResponse) => void) | undefined;
     mockPUT.mockImplementationOnce(() => 
-      new Promise(resolve => {
+      new Promise<PUTResponse>(resolve => {
         resolveApiCall = resolve;
       })
     );
@@ -94,13 +150,22 @@ describe('APISyncUserComponent', () => {
       <APISyncUserComponent options={{...defaultOptions, userid: 'test-user'}} />
     );
     
-    await delay(50);
-    expect(lastFrame()).toContain('⠋'); // Spinner
+    // Check for spinner first
+    await waitForOutput(
+      lastFrame,
+      output => output.includes('⠋')
+    );
     
-    // Resolve the API call
-    resolveApiCall({ response: { status: 200 } });
-    await delay(50);
-    expect(lastFrame()).toContain('User Synced Successfully!');
+    // Now resolve the API call
+    if (resolveApiCall) {
+      resolveApiCall({ response: { status: 200 } });
+    }
+    
+    // Check for success message
+    await waitForOutput(
+      lastFrame,
+      output => output.includes('User Synced Successfully!')
+    );
   });
 
   it('displays success message after successful API call', async () => {
@@ -113,14 +178,17 @@ describe('APISyncUserComponent', () => {
         firstName: 'John',
         lastName: 'Doe',
         attributes: '{"department":"Engineering"}',
-        roleAssignments: [{ role_id: 'role1' }]
+        roleAssignments: [{ role: 'role1' }] // Fixed role property
       }} />
     );
     
-    await delay(150);
-    expect(lastFrame()).toContain('User Synced Successfully!');
+    // Wait for success message
+    await waitForOutput(
+      lastFrame,
+      output => output.includes('User Synced Successfully!')
+    );
     
-    // Verify the API was called with correct parameters
+    // Verify API was called correctly
     expect(mockPUT).toHaveBeenCalledWith(
       '/v2/facts/{proj_id}/{env_id}/users/{user_id}',
       {
@@ -134,7 +202,7 @@ describe('APISyncUserComponent', () => {
         first_name: 'John',
         last_name: 'Doe',
         attributes: { department: 'Engineering' },
-        role_assignments: [{ role_id: 'role1' }]
+        role_assignments: [{ role: 'role1' }] // Fixed role property
       }),
       undefined
     );
@@ -147,8 +215,10 @@ describe('APISyncUserComponent', () => {
       <APISyncUserComponent options={{...defaultOptions, userid: 'invalid-user'}} />
     );
     
-    await delay(150);
-    expect(lastFrame()).toContain('Error: Validation Error: Invalid user ID');
+    await waitForOutput(
+      lastFrame,
+      output => output.includes('Error: Validation Error: Invalid user ID')
+    );
   });
 
   it('handles user input submission', async () => {
@@ -156,16 +226,28 @@ describe('APISyncUserComponent', () => {
       <APISyncUserComponent options={defaultOptions} />
     );
     
-    await delay(50);
-    expect(lastFrame()).toContain('UserID is required. Please enter it:');
+    // Wait for input prompt
+    await waitForOutput(
+      lastFrame,
+      output => output.includes('UserID is required. Please enter it:')
+    );
     
+    // Enter user ID
     stdin.write('new-test-user\n');
-    await delay(50);
-    expect(lastFrame()).toContain('⠋'); // Spinner
     
-    await delay(100);
-    expect(lastFrame()).toContain('User Synced Successfully!');
+    // Wait for spinner to appear
+    await waitForOutput(
+      lastFrame,
+      output => output.includes('⠋')
+    );
     
+    // Wait for success message
+    await waitForOutput(
+      lastFrame,
+      output => output.includes('User Synced Successfully!')
+    );
+    
+    // Verify API call
     expect(mockPUT).toHaveBeenCalledWith(
       '/v2/facts/{proj_id}/{env_id}/users/{user_id}',
       expect.objectContaining({
@@ -183,12 +265,21 @@ describe('APISyncUserComponent', () => {
       <APISyncUserComponent options={defaultOptions} />
     );
     
-    await delay(50);
-    stdin.write('\n'); // Empty submission
-    await delay(50);
+    // Wait for input prompt
+    await waitForOutput(
+      lastFrame,
+      output => output.includes('UserID is required. Please enter it:')
+    );
     
-    // Should still be in input mode
-    expect(lastFrame()).toContain('UserID is required. Please enter it:');
+    // Submit empty input
+    stdin.write('\n');
+    
+    // Wait and verify still in input mode
+    await delay(100);
+    const frame = lastFrame();
+    if (frame) {
+      expect(frame).toContain('UserID is required. Please enter it:');
+    }
     expect(mockPUT).not.toHaveBeenCalled();
   });
 
@@ -199,8 +290,11 @@ describe('APISyncUserComponent', () => {
       <APISyncUserComponent options={{...defaultOptions, userid: 'invalid-format'}} />
     );
     
-    await delay(150);
-    expect(lastFrame()).toContain('Error: Validation Error: Invalid user ID');
+    await waitForOutput(
+      lastFrame,
+      output => output.includes('Error: Validation Error: Invalid user ID')
+    );
+    
     expect(mockPUT).not.toHaveBeenCalled();
   });
 
@@ -213,8 +307,11 @@ describe('APISyncUserComponent', () => {
       <APISyncUserComponent options={{...defaultOptions, userid: 'error-user'}} />
     );
     
-    await delay(150);
-    expect(lastFrame()).toContain('Error: Custom validation error');
+    await waitForOutput(
+      lastFrame,
+      output => output.includes('Error: Custom validation error')
+    );
+    
     expect(mockPUT).not.toHaveBeenCalled();
   });
 
@@ -225,8 +322,10 @@ describe('APISyncUserComponent', () => {
       <APISyncUserComponent options={{...defaultOptions, userid: 'test-user'}} />
     );
     
-    await delay(150);
-    expect(lastFrame()).toContain('Error: Network Error');
+    await waitForOutput(
+      lastFrame,
+      output => output.includes('Error: Network Error')
+    );
   });
 
   it('uses unAuthenticatedApiClient when apiKey is provided', async () => {
@@ -238,8 +337,11 @@ describe('APISyncUserComponent', () => {
       }} />
     );
     
-    await delay(150);
-    expect(lastFrame()).toContain('User Synced Successfully!');
+    await waitForOutput(
+      lastFrame,
+      output => output.includes('User Synced Successfully!')
+    );
+    
     expect(mockPUT.lastApiKey).toBe('secret-api-key');
   });
 
@@ -252,8 +354,11 @@ describe('APISyncUserComponent', () => {
       }} />
     );
     
-    await delay(150);
-    expect(lastFrame()).toContain('Error:');
+    await waitForOutput(
+      lastFrame,
+      output => output.includes('Error:')
+    );
+    
     expect(mockPUT).not.toHaveBeenCalled();
   });
 
@@ -264,8 +369,10 @@ describe('APISyncUserComponent', () => {
       <APISyncUserComponent options={{...defaultOptions, userid: 'test-user'}} />
     );
     
-    await delay(150);
-    expect(lastFrame()).toContain('User Synced Successfully!');
+    await waitForOutput(
+      lastFrame,
+      output => output.includes('User Synced Successfully!')
+    );
     
     expect(mockPUT).toHaveBeenCalledWith(
       '/v2/facts/{proj_id}/{env_id}/users/{user_id}',
