@@ -28,7 +28,7 @@ vi.mock('../../source/hooks/useGraphDataApi.js', () => ({
 const waitForOutput = async (
 	instance: any,
 	condition: (output: string) => boolean,
-	timeout = 15000,
+	timeout = 5000,
 ) => {
 	const start = Date.now();
 	while (Date.now() - start < timeout) {
@@ -48,11 +48,14 @@ describe('Graph component', () => {
 	});
 
 	it('should show message if no graph data is present', async () => {
+		// Provide complete scope in the useAuth mock.
 		(useAuth as any).mockReturnValue({
 			authToken: 'token',
 			loading: false,
 			error: null,
+			scope: { project_id: '1', environment_id: '1' },
 		});
+		// These mocks are not used anymore by the Graph component now, but you can keep them
 		(useProjectAPI as any).mockReturnValue({
 			getProjects: vi.fn().mockResolvedValue({
 				data: [{ name: 'Project 1', id: '1' }],
@@ -60,25 +63,18 @@ describe('Graph component', () => {
 			}),
 		});
 		(useEnvironmentApi as any).mockReturnValue({
-			getEnvironments: vi
-				.fn()
-				.mockResolvedValue({ data: [{ name: 'Env 1', id: '1' }], error: null }),
+			getEnvironments: vi.fn().mockResolvedValue({
+				data: [{ name: 'Env 1', id: '1' }],
+				error: null,
+			}),
 		});
 		(useGraphDataApi as any).mockReturnValue({
-			fetchGraphData: vi
-				.fn()
-				.mockResolvedValue({ data: { nodes: [] }, error: null }),
+			fetchGraphData: vi.fn().mockResolvedValue({
+				data: { nodes: [] },
+				error: null,
+			}),
 		});
-		const { lastFrame, stdin } = render(<Graph options={{}} />);
-		await waitForOutput({ lastFrame }, out => out.includes('Select a project'));
-		// Simulate selections.
-		stdin.write('\u001B[B');
-		stdin.write('\r');
-		await waitForOutput({ lastFrame }, out =>
-			out.includes('Select an environment'),
-		);
-		stdin.write('\u001B[B');
-		stdin.write('\r');
+		const { lastFrame } = render(<Graph />);
 		await waitForOutput({ lastFrame }, out =>
 			out.includes('Environment does not contain any data'),
 		);
@@ -90,6 +86,7 @@ describe('Graph component', () => {
 			authToken: 'token',
 			loading: false,
 			error: null,
+			scope: { project_id: '1', environment_id: '1' },
 		});
 		(useProjectAPI as any).mockReturnValue({
 			getProjects: vi.fn().mockResolvedValue({
@@ -98,9 +95,10 @@ describe('Graph component', () => {
 			}),
 		});
 		(useEnvironmentApi as any).mockReturnValue({
-			getEnvironments: vi
-				.fn()
-				.mockResolvedValue({ data: [{ name: 'Env 1', id: '1' }], error: null }),
+			getEnvironments: vi.fn().mockResolvedValue({
+				data: [{ name: 'Env 1', id: '1' }],
+				error: null,
+			}),
 		});
 		(useGraphDataApi as any).mockReturnValue({
 			fetchGraphData: vi.fn().mockResolvedValue({
@@ -108,22 +106,12 @@ describe('Graph component', () => {
 				error: null,
 			}),
 		});
-		const { lastFrame, stdin } = render(<Graph options={{}} />);
-		await waitForOutput({ lastFrame }, out => out.includes('Select a project'));
-		// Simulate project selection.
-		stdin.write('\u001B[B');
-		stdin.write('\r');
-		await waitForOutput({ lastFrame }, out =>
-			out.includes('Select an environment'),
-		);
-		// Simulate environment selection.
-		stdin.write('\u001B[B');
-		stdin.write('\r');
+		const { lastFrame } = render(<Graph  />);
 		await waitForOutput({ lastFrame }, out =>
 			out.includes('Graph generated successfully and saved as HTML!'),
 		);
 		expect(lastFrame()).toContain(
-			'Graph generated successfully and saved as HTML!',
+			'Graph generated successfully and saved as HTML!'
 		);
 	});
 });
