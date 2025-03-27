@@ -143,6 +143,7 @@ const useClient = () => {
 			}
 			return { data, response, error: newError };
 		};
+
 		const PUT = async <
 			Path extends PathsWithMethod<paths, 'put'>,
 			Init extends MaybeOptionalInit<paths[Path], 'put'>,
@@ -246,8 +247,8 @@ const useClient = () => {
 		return {
 			GET,
 			POST,
-			DELETE,
 			PUT,
+			DELETE,
 		};
 	};
 
