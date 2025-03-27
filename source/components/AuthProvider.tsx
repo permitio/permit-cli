@@ -38,6 +38,17 @@ export type AuthContextType = {
 	scope: ApiKeyScope;
 };
 
+const emptyAuthContext: AuthContextType = {
+	authToken: '',
+	loading: false,
+	error: null,
+	scope: {
+		organization_id: '',
+		project_id: undefined,
+		environment_id: undefined,
+	},
+};
+
 // Create an AuthContext with the correct type
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -45,12 +56,14 @@ type AuthProviderProps = {
 	readonly children: ReactNode;
 	permit_key?: string | null;
 	scope?: 'organization' | 'project' | 'environment';
+	skipLogin?: boolean;
 };
 
 export function AuthProvider({
 	children,
 	permit_key: key,
 	scope,
+	skipLogin,
 }: AuthProviderProps) {
 	const { validateApiKeyScope, getApiKeyList, getApiKeyById, createApiKey } =
 		useApiKeyApi();
@@ -72,6 +85,7 @@ export function AuthProvider({
 		| 'project'
 		| 'login'
 		| 'done'
+		| 'skip-login'
 	>('loading');
 	const [organization, setOrganization] = useState<string | null>(null);
 	const [project, setProject] = useState<string | null>(null);
@@ -87,6 +101,16 @@ export function AuthProvider({
 			process.exit(1);
 		}
 	}, [error]);
+
+	useEffect(() => {
+		if (state === 'skip-login') {
+			setAuthToken(emptyAuthContext.authToken);
+			setLoading(emptyAuthContext.loading);
+			setCurrentScope(emptyAuthContext.scope);
+			setLoading(false);
+			setState('done');
+		}
+	}, [state]);
 
 	// Step 4 If we have collected all the data needed by auth provider we set the state to 'done'
 	useEffect(() => {
@@ -122,6 +146,10 @@ export function AuthProvider({
 				setAuthToken(token);
 				setCurrentScope(keyScope);
 			} catch {
+				if (skipLogin) {
+					setState('skip-login');
+					return;
+				}
 				setState(redirect_scope);
 			}
 		};
@@ -132,27 +160,29 @@ export function AuthProvider({
 		// If scope is not passed, it is defaulted to 'environment'
 		// and if key is provided we redirect to step 2
 		// otherwise we redirect to fetchAuthToken
-		if (scope) {
-			// If scope is given then
-			if (key) {
-				setState('validate');
-			} else {
-				if (scope === 'environment') {
-					fetchAuthToken('login');
-				} else if (scope === 'project' || scope === 'organization') {
-					fetchAuthToken(scope);
+		if (state === 'loading') {
+			if (scope) {
+				// If scope is given then
+				if (key) {
+					setState('validate');
+				} else {
+					if (scope === 'environment') {
+						fetchAuthToken('login');
+					} else if (scope === 'project' || scope === 'organization') {
+						fetchAuthToken(scope);
+					}
 				}
-			}
-		} else {
-			if (key) {
-				setState('validate');
 			} else {
-				fetchAuthToken('login');
+				if (key) {
+					setState('validate');
+				} else {
+					fetchAuthToken('login');
+				}
 			}
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [key, scope]);
+	}, [key, scope, state]);
 
 	// Step 2, Validates the api key and matches it with the scope
 	useEffect(() => {
@@ -328,35 +358,36 @@ export function AuthProvider({
 					<Text>CLI_API_Key not found, creating one for you.</Text>
 				</>
 			)}
-			{state === 'done' && authToken && currentScope && (
-				<>
-					{keyCreated && (
-						<>
-							<Text>
-								Created an{' '}
-								{currentScope.environment_id
-									? 'environment'
-									: currentScope.project_id
-										? 'project'
-										: 'organization'}{' '}
-								level key for you, named CLI_API_key (this key is protected,
-								please do not change it)
-							</Text>
-							<Newline />
-						</>
-					)}
-					<AuthContext.Provider
-						value={{
-							authToken: authToken,
-							loading: loading,
-							error: error,
-							scope: currentScope,
-						}}
-					>
-						{!loading && !error && children}
-					</AuthContext.Provider>
-				</>
-			)}
+			{state === 'done' &&
+				((authToken && currentScope) || (skipLogin && currentScope)) && (
+					<>
+						{keyCreated && (
+							<>
+								<Text>
+									Created an{' '}
+									{currentScope.environment_id
+										? 'environment'
+										: currentScope.project_id
+											? 'project'
+											: 'organization'}{' '}
+									level key for you, named CLI_API_key (this key is protected,
+									please do not change it)
+								</Text>
+								<Newline />
+							</>
+						)}
+						<AuthContext.Provider
+							value={{
+								authToken: authToken,
+								loading: loading,
+								error: error,
+								scope: currentScope,
+							}}
+						>
+							{!loading && !error && children}
+						</AuthContext.Provider>
+					</>
+				)}
 			{error && <Text>{error}</Text>}
 		</>
 	);
