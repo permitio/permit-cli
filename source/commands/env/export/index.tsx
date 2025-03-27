@@ -5,7 +5,7 @@ import { AuthProvider } from '../../../components/AuthProvider.js';
 import { ExportContent } from '../../../components/export/ExportContent.js';
 
 export const options = zod.object({
-	key: zod
+	apiKey: zod
 		.string()
 		.optional()
 		.describe(
@@ -29,10 +29,10 @@ type Props = {
 	readonly options: zod.infer<typeof options>;
 };
 
-export default function Export(props: Props) {
+export default function Export({ options: { apiKey, file } }: Props) {
 	return (
-		<AuthProvider>
-			<ExportContent {...props} />
+		<AuthProvider permit_key={apiKey} scope={'environment'}>
+			<ExportContent options={{ file }} />
 		</AuthProvider>
 	);
 }

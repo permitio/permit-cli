@@ -42,14 +42,23 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
 - `pdp` - a collection of commands to work with Permit's Policy Decision Point (PDP)
   - `run` - print a docker command to run your Permit PDP
   - `check` - perform an authorization check against the PDP
+  - `stats` - view statistics about your PDP's performance and usage
 - `env` - a collection of commands to manage Permit policy environments
   - `copy` - copy a Permit environment with its policies to another environment
   - `member` - add and assign roles to members in Permit
   - `select` - select a different active Permit.io environment
   - `export` - export environment configurations to different formats
+  - `template` - manage environment templates in Permit.io
+    - `list` - list all available environment templates in your Permit.io account
+    - `apply` - apply an environment template to your current environment
 - `opa` - a collection of commands for better OPA experience
   - `policy` - print the available policies of an active OPA instance
 - `gitops create github` - configure Permit environment to use [GitOps flow](https://docs.permit.io/integrations/gitops/overview/)
+- `api` - direct access to Permit.io's API functionality
+  - `users` - manage users in your Permit.io account
+    - `list` - list all users in your Permit.io account
+    - `assign` - assign a user to a specific role in your Permit.io account
+    - `unassign` - remove a role assignment from a user in your Permit.io account
 
 ---
 
@@ -61,8 +70,8 @@ The `login` command will take you to the browser to perform user authentication 
 
 #### Options
 
-- `key <string>` (Optional) - store a Permit API key in your workstation keychain instead of running browser authentication
-- `workspace <string>` (Optional) - predefined workspace key to skip the workspace selection step
+- `--key <string>` (Optional) - store a Permit API key in your workstation keychain instead of running browser authentication
+- `--workspace <string>` (Optional) - predefined workspace key to skip the workspace selection step
 
 #### Example
 
@@ -94,9 +103,9 @@ Use this command to run a Permit PDP Docker container configured with your Permi
 
 #### Options
 
-- `opa <number>` (Optional) - expose the OPA instance running in the PDP
-- `dry-run` (Optional) - print the Docker command without executing it
-- `apiKey <string>` (Optional) - use a specific API key instead of the stored one
+- `--opa <number>` (Optional) - expose the OPA instance running in the PDP
+- `--dry-run` (Optional) - print the Docker command without executing it
+- `--api-key <string>` (Optional) - use a specific API key instead of the stored one
 
 
 #### Example
@@ -112,7 +121,7 @@ $ permit pdp run --opa 8181
 $ permit pdp run --dry-run
 
 # Run with a specific API key
-$ permit pdp run --apiKey your_api_key
+$ permit pdp run --api-key your_api_key
 ```
 
 ### `pdp check`
@@ -121,18 +130,36 @@ Use this command to perform an authorization check against the PDP. The command 
 
 #### Options
 
-- `user <string>` - the user id to check the authorization for
-- `action <string>` - the action to check the authorization for
-- `resource <string>` - the resource to check the authorization for
-- `tenant <string>` (Optional) - the tenant to check the authorization for (default: `default`)
-- `pdpurl <string>` (Optional) - the PDP URL to check the authorization against (default: `http://localhost:7676`)
-- `userAttributes` (Optional) - additional user attributes to enrich the authorization check in the format `key1=value1,key2=value2`
-- `resourceAttributes` (Optional) - additional resource attributes to enrich the authorization check in the format `key1=value1,key2=value2`
+- `--user <string>` - the user id to check the authorization for
+- `--action <string>` - the action to check the authorization for
+- `--resource <string>` - the resource to check the authorization for
+- `--tenant <string>` (Optional) - the tenant to check the authorization for (default: `default`)
+- `--pdpurl <string>` (Optional) - the PDP URL to check the authorization against (default: `http://localhost:7676`)
+- `--user-attributes` (Optional) - additional user attributes to enrich the authorization check in the format `key1=value1,key2=value2`
+- `--resource-attributes` (Optional) - additional resource attributes to enrich the authorization check in the format `key1=value1,key2=value2`
 
 #### Example
 
 ```bash
 $ permit  pdp check --user eventHandler --action update --resource Widget:dashboard-1-widget
+```
+
+### `pdp stats`
+
+Use this command to view statistics about your PDP's performance and usage. This is useful for monitoring and debugging your PDP instance.
+
+#### Options
+
+- `--project-key <string>` (Optional) - the project key
+- `--environment-key <string>` (Optional) - the environment key
+- `--stats-url <string>` (Optional) - the URL of the PDP service. Default to the cloud PDP
+- `--api-key <string>` (Optional) - the API key for the Permit env, project or Workspace
+- `--top` (Optional) - run stats in top mode (default: false)
+
+#### Example
+
+```bash
+$ permit pdp stats
 ```
 
 ---
@@ -147,17 +174,17 @@ Developers and CI pipelines can use this command to enable secure blue-green dep
 
 #### Options
 
-- `key <string>` (Required) - a Permit API key in project level or higher to authenticate the operation
-- `from <string>` (Optional) - the source environment to copy the policies from (will prompt if not provided)
-- `to <string>` (Optional) - the destination environment to copy the policies to (will prompt if not provided)
-- `name <string>` (Optional) - the name of a new environment to copy the policies to (will prompt if not provided)
-- `description <string>` (Optional) - the description of a new environment to copy the policies to (will prompt if not provided)
-- `conflictStrategy <fail | overwrite>` (Optional) - the strategy to handle conflicts when copying policies (default: `fail`)
+- `--key <string>` (Required) - a Permit API key in project level or higher to authenticate the operation
+- `--from <string>` (Optional) - the source environment to copy the policies from (will prompt if not provided)
+- `--to <string>` (Optional) - the destination environment to copy the policies to (will prompt if not provided)
+- `--name <string>` (Optional) - the name of a new environment to copy the policies to (will prompt if not provided)
+- `--description <string>` (Optional) - the description of a new environment to copy the policies to (will prompt if not provided)
+- `--conflict-strategy <fail | overwrite>` (Optional) - the strategy to handle conflicts when copying policies (default: `fail`)
 
 #### Example
 
 ```bash
-$ permit env copy --key permit_key_.......... --from staging --to production --conflictStrategy overwrite
+$ permit env copy --key permit_key_.......... --from staging --to production --conflict-strategy overwrite
 ```
 
 ### `env member`
@@ -168,11 +195,11 @@ This command can run in the CI after creating a new environment for development 
 
 #### Options
 
-- `key <string>` (Required) - a Permit API key in project level or higher to authenticate the operation
-- `environment <string>` (Optional) - the environment to assign the roles to (will prompt if not provided)
-- `project <string>` (Optional) - the project to assign the roles to (will prompt if not provided)
-- `email <string>` (Optional) - the email of the member to assign the roles to (will prompt if not provided)
-- `role <Owner | Editor | Member>` (Optional) - the role to assign to the member (will prompt if not provided)
+- `--key <string>` (Required) - a Permit API key in project level or higher to authenticate the operation
+- `--environment <string>` (Optional) - the environment to assign the roles to (will prompt if not provided)
+- `--project <string>` (Optional) - the project to assign the roles to (will prompt if not provided)
+- `--email <string>` (Optional) - the email of the member to assign the roles to (will prompt if not provided)
+- `--role <Owner | Editor | Member>` (Optional) - the role to assign to the member (will prompt if not provided)
 
 #### Example
 
@@ -186,7 +213,7 @@ This command will let you select a different active Permit.io environment. This 
 
 #### Options
 
-- `key <string>` (Optional) - a Permit API key in project level or higher to authenticate the operation. If not provided, the command will reauthenticate you in the browser.
+- `--key <string>` (Optional) - a Permit API key in project level or higher to authenticate the operation. If not provided, the command will reauthenticate you in the browser.
 
 #### Example
 
@@ -200,9 +227,9 @@ This command exports your Permit environment configuration as a Terraform HCL fi
 
 Options
 
-- key <string> (Optional) - a Permit API key to authenticate the operation. If not provided, the command will use the AuthProvider to get the API key you logged in with.
+- `--key <string>` (Optional) - a Permit API key to authenticate the operation. If not provided, the command will use the AuthProvider to get the API key you logged in with.
 
-- file <string> (Optional) - a file path where the exported HCL should be saved. If not provided, the output will be printed to the console.
+- `--file <string>` (Optional) - a file path where the exported HCL should be saved. If not provided, the output will be printed to the console.
 
 ### Example
 
@@ -224,6 +251,40 @@ $ permit env export terraform --file permit-config.tf
 permit env export terraform
 ```
 
+### `env template`
+
+This collection of commands helps you manage environment templates in Permit.io.
+
+### `env template list`
+
+Use this command to list all available environment templates in your Permit.io account.
+
+#### Options
+
+- `--api-key <string>` (Optional) - API Key to be used for the environment to apply the terraform template
+
+#### Example
+
+```bash
+$ permit env template list
+```
+
+### `env template apply`
+
+Use this command to apply an environment template to your current environment. This is useful for quickly setting up new environments with predefined configurations.
+
+#### Options
+
+- `--api-key <string>` (Optional) - API Key to be used for the environment to apply the policy template
+- `--local` (Optional) - to run the Terraform command locally instead of the server (will fail if Terraform is not installed)
+- `--template <string>` (Optional) - skips the template choice and applies the given template. It will fail if the template does not exist
+
+#### Example
+
+```bash
+$ permit env template apply --template my-template
+```
+
 ---
 
 ### `opa`
@@ -236,13 +297,13 @@ This command will print the available policies of an active OPA instance. This i
 
 #### Options
 
-- `serverUrl <string>` (Optional) - the URL of the OPA server to fetch the policies from (default: `http://localhost:8181`)
-- `apiKey <string>` (Optional) - the API key to authenticate the operation
+- `--server-url <string>` (Optional) - the URL of the OPA server to fetch the policies from (default: `http://localhost:8181`)
+- `--api-key <string>` (Optional) - the API key to authenticate the operation
 
 #### Example
 
 ```bash
-$ permit opa policy --serverUrl http://localhost:8181 --apiKey permit_key_..........
+$ permit opa policy --server-url http://localhost:8181 --api-key permit_key_..........
 ```
 
 ---
@@ -253,8 +314,76 @@ This command will configure your Permit environment to use the GitOps flow with 
 
 #### Options
 
-- `key <string>` (Optional) - a Permit API key to authenticate the operation. If not provided, the command will take the one you logged in with.
-- `inactive <boolean>` (Optional) - set the environment to inactive after configuring GitOps (default: `false`)
+- `--key <string>` (Optional) - a Permit API key to authenticate the operation. If not provided, the command will take the one you logged in with.
+- `--inactive <boolean>` (Optional) - set the environment to inactive after configuring GitOps (default: `false`)
+
+### `api`
+
+This collection of commands provides direct access to Permit.io's API functionality.
+
+### `api users`
+
+This collection of commands helps you manage users in your Permit.io account.
+
+### `api users list`
+
+Use this command to list all users in your Permit.io account.
+
+#### Options
+
+- `--api-key <string>` (Optional) - your Permit.io API key
+- `--project-id <string>` (Optional) - Permit.io Project ID
+- `--env-id <string>` (Optional) - Permit.io Environment ID
+- `--expand-key` (Optional) - show full key values instead of truncated (default: false)
+- `--page <number>` (Optional) - page number for pagination (default: 1)
+- `--per-page <number>` (Optional) - number of items per page (default: 50)
+- `--role <string>` (Optional) - filter users by role
+- `--tenant <string>` (Optional) - filter users by tenant
+- `--all` (Optional) - fetch all pages of users (default: false)
+
+#### Example
+
+```bash
+$ permit api users list
+```
+
+### `api users assign`
+
+Use this command to assign a user to a specific role in your Permit.io account.
+
+#### Options
+
+- `--api-key <string>` (Optional) - your Permit.io API key
+- `--project-id <string>` (Optional) - Permit.io Project ID
+- `--env-id <string>` (Optional) - Permit.io Environment ID
+- `--user <string>` (Required) - user ID to assign role to
+- `--role <string>` (Required) - role key to assign
+- `--tenant <string>` (Required) - tenant key for the role assignment
+
+#### Example
+
+```bash
+$ permit api users assign --user user@example.com --role admin --tenant default
+```
+
+### `api users unassign`
+
+Use this command to remove a role assignment from a user in your Permit.io account.
+
+#### Options
+
+- `--api-key <string>` (Optional) - your Permit.io API key
+- `--project-id <string>` (Optional) - Permit.io Project ID
+- `--env-id <string>` (Optional) - Permit.io Environment ID
+- `--user <string>` (Required) - user ID to unassign role from
+- `--role <string>` (Required) - role key to unassign
+- `--tenant <string>` (Required) - tenant key for the role unassignment
+
+#### Example
+
+```bash
+$ permit api users unassign --user user@example.com --role admin --tenant default
+```
 
 ## Development
 
