@@ -48,8 +48,8 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
   - `member` - add and assign roles to members in Permit
   - `select` - select a different active Permit.io environment
   - `export` - export environment configurations to different formats
-  - `template` - manage environment templates in Permit.io
-    - `list` - list all available environment templates in your Permit.io account
+  - `template` - manage and apply policy and authorization templates in an environment
+    - `list` - list all the available policy templates
     - `apply` - apply an environment template to your current environment
 - `opa` - a collection of commands for better OPA experience
   - `policy` - print the available policies of an active OPA instance
@@ -253,11 +253,11 @@ permit env export terraform
 
 ### `env template`
 
-This collection of commands helps you manage environment templates in Permit.io.
+This collection of commands helps you manage and apply policy and authorization templates in an environment.
 
 ### `env template list`
 
-Use this command to list all available environment templates in your Permit.io account.
+Use this command to list all the available policy templates to apply to your environment.
 
 #### Options
 
@@ -271,7 +271,8 @@ $ permit env template list
 
 ### `env template apply`
 
-Use this command to apply an environment template to your current environment. This is useful for quickly setting up new environments with predefined configurations.
+Use this command to apply a policy template to your current environment. This is useful for quickly setting up new environments with predefined configurations.
+The command is using the Terraform provider to apply the template, but it's not required to have Terraform installed.
 
 #### Options
 
