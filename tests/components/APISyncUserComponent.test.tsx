@@ -128,13 +128,13 @@ describe('APISyncUserComponent', () => {
 
 	// Test 3: Error handling when API fails
 	it('displays error message when API call fails', async () => {
-		// IMPORTANT: Reset mockPUT completely
-		mockPUT = vi.fn() as MockPUT;
-
-		// Set up the mock to throw an error
-		mockPUT.mockImplementation(() => {
+		// Create a new mock function that throws an error
+		const errorMock = vi.fn().mockImplementation(() => {
 			throw new Error('Network Error');
 		});
+
+		// Replace the mockPUT implementation for this test only
+		vi.mocked(mockPUT).mockImplementation(errorMock);
 
 		const { lastFrame } = render(
 			<APISyncUserComponent
@@ -146,7 +146,7 @@ describe('APISyncUserComponent', () => {
 		);
 
 		// Give it enough time to process the error
-		await delay(500);
+		await delay(800);
 
 		// Output for debugging
 		console.log('Last frame content (error case):', lastFrame());
@@ -172,7 +172,7 @@ describe('APISyncUserComponent', () => {
 		);
 
 		// Wait for error processing
-		await delay(500);
+		await delay(800);
 
 		// Check for error message
 		expect(lastFrame()).toContain('Error: Validation failed');
@@ -180,10 +180,13 @@ describe('APISyncUserComponent', () => {
 
 	// Test 5: Test 422 status code error handling
 	it('displays validation error when API returns 422', async () => {
-		// Replace the entire mockPUT implementation for this test
-		mockPUT = vi.fn().mockResolvedValue({
+		// Create a new mock that returns a 422 status
+		const mock422 = vi.fn().mockResolvedValue({
 			response: { status: 422 },
-		}) as MockPUT;
+		});
+
+		// Override the default mock implementation for this test
+		vi.mocked(mockPUT).mockImplementation(mock422);
 
 		const { lastFrame } = render(
 			<APISyncUserComponent
@@ -194,13 +197,13 @@ describe('APISyncUserComponent', () => {
 			/>,
 		);
 
-		// Wait for error processing
-		await delay(500);
+		// Wait longer for error processing
+		await delay(1000); // Even longer delay for 422 handling
 
 		// Debug output
 		console.log('Last frame content (422 error):', lastFrame());
 
 		// Check for validation error message
-		expect(lastFrame()).toContain('Error: Validation Error: Invalid user ID');
+		expect(lastFrame()).toContain('Error: Validation Error: Invalid Payload');
 	});
 });

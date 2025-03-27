@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { AuthProvider } from '../../../components/AuthProvider.js';
-import { type infer as zInfer, string, object, array } from 'zod';
+import { type infer as zInfer, string, object } from 'zod';
 import { option } from 'pastel';
 import APISyncUserComponent from '../../../components/api/sync/APISyncUserComponent.js';
 
@@ -45,43 +45,56 @@ export const options = object({
 		.describe(
 			option({
 				description:
-					' Attributes of the user to sync. Will accept the JSON string of the attributes.',
+					'Attributes of the user to sync. Will accept the JSON string of the attributes.',
 			}),
 		)
 		.optional(),
-	roleAssignments: array(
-		object({
-			role: string().describe(
-				option({
-					description:
-						'Role key to assign, accepts either role id or role key.',
-				}),
-			),
-			tenant: string()
-				.optional()
-				.describe(
-					option({
-						description: 'Tenant key or tenant id  for the role assignment.',
-					}),
-				),
-		}),
-	)
-		.optional()
+	roleAssignments: string()
 		.describe(
 			option({
-				description: 'Role assignments to sync for the user.',
+				description:
+					'Role assignments to sync for the user. Accepts JSON array string.',
 			}),
-		),
+		)
+		.optional(),
 });
 
 type Props = {
 	options: zInfer<typeof options>;
 };
 
+// Helper function to parse role assignments from string to array of objects
+function parseRoleAssignments(roleAssignmentsStr: string) {
+	try {
+		const parsed = JSON.parse(roleAssignmentsStr);
+		if (!Array.isArray(parsed)) {
+			console.error('Role assignments must be a JSON array');
+			return [];
+		}
+		return parsed.map(item => ({
+			role: item.role || '',
+			tenant: item.tenant,
+		}));
+	} catch (error) {
+		console.error('Failed to parse role assignments JSON:', error);
+		return [];
+	}
+}
+
 export default function User({ options }: Props) {
+	// Parse the role assignments if it's a string
+	const parsedOptions = useMemo(() => {
+		return {
+			...options,
+			roleAssignments: options.roleAssignments
+				? parseRoleAssignments(options.roleAssignments)
+				: [],
+		};
+	}, [options]);
+
 	return (
 		<AuthProvider scope={'environment'} permit_key={options.apiKey}>
-			<APISyncUserComponent options={options} />
+			<APISyncUserComponent options={parsedOptions} />
 		</AuthProvider>
 	);
 }
