@@ -49,6 +49,8 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
   - `export` - export environment configurations to different formats
 - `opa` - a collection of commands for better OPA experience
   - `policy` - print the available policies of an active OPA instance
+- `api` - a collection of commands which is used for management of permit.io
+  - `sync users` - Syncs the user if already there and creates new user.
 - `gitops create github` - configure Permit environment to use [GitOps flow](https://docs.permit.io/integrations/gitops/overview/)
 
 ---
@@ -242,6 +244,41 @@ This command will print the available policies of an active OPA instance. This i
 
 ```bash
 $ permit opa policy --serverUrl http://localhost:8181 --apiKey permit_key_..........
+```
+
+---
+
+### `api sync user`
+
+This command will Replace User / Sync User in the system. If the user already exits, it will update the user with the new data. If the user does not exist, it will create a new user with the provided data.
+
+#### options:
+
+- `api_key <string>`(optional) : a Permit API key to authenticate the operation. If not provided, the command will take the one you logged in with.
+
+- `user_id <string>` : A unique id by which Permit will identify the user for permission checks. If not given in the argument the interactive CLI is open to retrive the `user_id`.
+
+- `email <string>`: The email of the user. If synced, will be unique inside the environment.
+
+- `first_name <string>` : First name of the user.
+- `last_name <string>` : Last name of the user.
+- `attributes <object>` : Arbitrary user attributes that will be used to enforce attribute-based access control policies. Default Value is `{}`
+- `role_assignment <array<objects>>` : List of roles to assign to the user in the environment.
+  Object has the value of:
+  - `role <string>` : the role that will be assigned (accepts either the role id or the role key)
+  - `tenant <string>` : the tenant the role is associated with (accepts either the tenant id or the tenant key)
+
+### Example
+
+```bash
+$ permit api sync user
+  --apiKey "YOUR_API_KEY" \
+  --userid "892179821739812389327" \
+  --email "jane@coolcompany.com" \
+  --firstName "Jane" \
+  --lastName "Doe" \
+  --attributes '{"department": "marketing", "age": 30, "subscription": {"tier": "pro", "expired": false}}' \
+  --roleAssignments '[{"role": "admin", "tenant": "stripe-inc"}, {"role": "viewer", "tenant": "othercompany.com"}]'
 ```
 
 ---
