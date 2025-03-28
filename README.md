@@ -45,6 +45,8 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
   - `stats` - view statistics about your PDP's performance and usage
 - `env` - a collection of commands to manage Permit policy environments
   - `copy` - copy a Permit environment with its policies to another environment
+  - `create` - create a new environment in a project
+  - `delete` - delete an existing environment
   - `member` - add and assign roles to members in Permit
   - `select` - select a different active Permit.io environment
   - `export` - export environment configurations to different formats
@@ -186,6 +188,52 @@ Developers and CI pipelines can use this command to enable secure blue-green dep
 ```bash
 $ permit env copy --key permit_key_.......... --from staging --to production --conflict-strategy overwrite
 ```
+
+### `env create`
+This command creates a new environment in a specified project. This is useful for setting up new environments for development, testing, or production.
+
+#### Options
+
+- `apikey` <string> (Optional) - a Permit API key to authenticate the operation. If not provided, the command will use your stored credentials.
+- `name` <string> (Optional) - the name of the new environment (will prompt if not provided)
+- `envKey` <string> (Optional) - the key for the new environment (will be derived from name if not provided)
+- `description` <string> (Optional) - the description of the new environment
+- `jwks <string>` (Optional) - JSON Web Key Set (JWKS) for frontend login, in JSON format
+- `settings <string>` (Optional) - environment settings in JSON format
+
+#### Example 
+
+```bash
+$ permit env create --key permit_key_.......... --name "Staging" --description "Staging environment for testing"
+```
+
+**You can also create a complex environment with all options:**
+```bash
+$ permit env create --apiKey permit_key_.......... --name "Development" --envKey "dev" --description "Dev environment" --customBranchName "dev-branch" --jwks '{"ttl": 3600}' --settings '{"debug": true}'
+```
+
+### `env delete`
+
+This command deletes an existing environment. Use with caution as this operation cannot be undone.
+
+#### Options
+
+- key <string> (Optional) - a Permit API key to authenticate the operation. If not provided, the command will use your stored credentials.
+- environmentId <string> (Optional) - the ID of the environment to delete (will prompt if not (provided)
+- force <boolean> (Optional) - skip confirmation prompts (default: false)
+
+#### Example 
+```bash
+$ permit env delete --key permit_key_.......... --environmentId env_456
+```
+
+**Or to force deletion without confirmation:**
+
+```bash
+$ permit env delete --key permit_key_.......... --environmentId env_456 --force
+```
+
+> **Note:** If you've authenticated via `permit login`, the commands will use your current project context automatically.
 
 ### `env member`
 
