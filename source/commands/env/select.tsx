@@ -8,7 +8,7 @@ import { AuthProvider } from '../../components/AuthProvider.js';
 import SelectComponent from '../../components/env/SelectComponent.js';
 
 export const options = zod.object({
-	key: zod
+	apiKey: zod
 		.string()
 		.optional()
 		.describe(
@@ -25,8 +25,8 @@ export type EnvSelectProps = {
 
 export default function Select({ options }: EnvSelectProps) {
 	return (
-		<AuthProvider permit_key={options.key} scope={'project'}>
-			<SelectComponent key={options.key} />
+		<AuthProvider permit_key={options.apiKey} scope={'project'}>
+			<SelectComponent key={options.apiKey} />
 		</AuthProvider>
 	);
 }

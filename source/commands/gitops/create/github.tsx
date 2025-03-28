@@ -8,7 +8,7 @@ export const description =
 	'Connect a GitHub repository to a permit Environment';
 
 export const options = zod.object({
-	key: zod
+	apiKey: zod
 		.string()
 		.optional()
 		.describe(
@@ -35,7 +35,7 @@ type Props = {
 
 export default function GitHub({ options }: Props) {
 	return (
-		<AuthProvider permit_key={options.key} scope={'project'}>
+		<AuthProvider permit_key={options.apiKey} scope={'project'}>
 			<GitHubComponent inactivateWhenValidated={options.inactive} />
 		</AuthProvider>
 	);

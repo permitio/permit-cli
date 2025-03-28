@@ -26,7 +26,7 @@ describe('ExportContent', () => {
 
 	it('handles successful export to console', async () => {
 		const { lastFrame } = render(
-			<ExportContent options={{ key: 'test-key' }} />,
+			<ExportContent options={{ apiKey: 'test-key' }} />,
 		);
 		await vi.waitFor(() => {
 			expect(lastFrame()).toContain('Export completed successfully!');
@@ -39,7 +39,7 @@ describe('ExportContent', () => {
 			error: 'Invalid API key',
 		});
 		const { lastFrame } = render(
-			<ExportContent options={{ key: 'invalid-key' }} />,
+			<ExportContent options={{ apiKey: 'invalid-key' }} />,
 		);
 		await vi.waitFor(() => {
 			expect(lastFrame()).toContain('Invalid API key');

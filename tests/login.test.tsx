@@ -17,7 +17,7 @@ vi.mock('keytar', () => {
 describe('Login Component', () => {
 	it('Should render the login component', async () => {
 		const { lastFrame } = render(
-			<Login options={{ key: 'permit_key_'.concat('a'.repeat(96)) }} />,
+			<Login options={{ apiKey: 'permit_key_'.concat('a'.repeat(96)) }} />,
 		);
 		expect(lastFrame()?.toString()).toMatch('Logging in');
 	});
