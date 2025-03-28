@@ -18,11 +18,6 @@ export interface AuditLog {
 	pdp_config_id?: string;
 }
 
-export interface DetailedAuditLog extends AuditLog {
-	user_id: string;
-	context?: AuditContext;
-}
-
 export interface AuditContext {
 	user: {
 		id: string;
@@ -38,6 +33,11 @@ export interface AuditContext {
 	action: string;
 }
 
+export interface DetailedAuditLog extends AuditLog {
+	user_id: string;
+	context?: AuditContext;
+}
+
 export interface FilterOptions {
 	timeFrame: number;
 	sourcePdp?: string;
@@ -48,10 +48,12 @@ export interface FilterOptions {
 	decision?: boolean;
 }
 
+type QueryParamValue = string | number | boolean | string[];
+
 /**
  * Builds a query string, correctly handling arrays
  */
-const buildQueryString = (params: Record<string, any>): string => {
+const buildQueryString = (params: Record<string, QueryParamValue>): string => {
 	return Object.entries(params)
 		.flatMap(([key, value]) => {
 			if (Array.isArray(value)) {
@@ -87,8 +89,8 @@ export const useAuditLogs = () => {
 				return { data: null, error: scopeError || 'Failed to get API scope' };
 			}
 
-			// Prepare query parameters - using the same format as the original code
-			const queryParams: Record<string, any> = {
+			// Prepare query parameters
+			const queryParams: Record<string, QueryParamValue> = {
 				timestamp_from: Math.floor(startDate.getTime() / 1000),
 				timestamp_to: Math.floor(endDate.getTime() / 1000),
 				page: 1,
@@ -96,7 +98,7 @@ export const useAuditLogs = () => {
 				sort_by: 'timestamp',
 			};
 
-			// Add optional filters - matching exactly the original code's format
+			// Add optional filters
 			if (filters.sourcePdp) queryParams['pdp_id'] = filters.sourcePdp;
 			if (filters.users && filters.users.length > 0)
 				queryParams['users'] = filters.users;

@@ -5,6 +5,7 @@ import useClient from '../../hooks/useClient.js';
 import useAuditLogs, {
 	AuditLog,
 	DetailedAuditLog,
+	AuditContext,
 } from '../../hooks/useAuditLogs.js';
 
 // ========================
@@ -43,6 +44,36 @@ interface CommandOptions {
 
 type ProcessPhase = 'fetching' | 'processing' | 'checking' | 'complete';
 
+// Define specific types for API responses and requests
+interface AuditLogResponseData {
+	id?: string;
+	timestamp?: string;
+	user_key?: string;
+	user_email?: string;
+	resource?: string;
+	resource_type?: string;
+	action?: string;
+	tenant?: string | null;
+	decision?: boolean;
+	pdp_config_id?: string;
+	context?: unknown;
+	[key: string]: unknown;
+}
+
+interface PdpRequestData {
+	tenant: string;
+	action: string;
+	user: { key: string };
+	resource: { type: string; key?: string };
+}
+
+interface PdpResponseData {
+	allow?: boolean;
+	allowed?: boolean;
+	result?: boolean;
+	[key: string]: unknown;
+}
+
 // ========================
 // Helper Functions
 // ========================
@@ -71,62 +102,82 @@ const getDefaultResourceType = (types: Set<string>): string => {
 };
 
 /**
+ * Check if a value is a valid AuditContext
+ */
+function isValidAuditContext(value: unknown): value is AuditContext {
+	if (!value || typeof value !== 'object') return false;
+
+	const ctx = value as Record<string, unknown>;
+	return (
+		'user' in ctx &&
+		'resource' in ctx &&
+		'tenant' in ctx &&
+		'action' in ctx &&
+		typeof ctx['user'] === 'object' &&
+		typeof ctx['resource'] === 'object'
+	);
+}
+
+/**
  * Normalizes and enriches a detailed log with consistent fields
  */
 const normalizeDetailedLog = (
-	response: Record<string, any>,
+	response: AuditLogResponseData,
 	originalLog: AuditLog,
 	resourceTypes: Set<string>,
 ): DetailedAuditLog | null => {
 	try {
 		// Get a suitable resource type
 		const resourceType =
-			response['resource_type'] ||
+			response.resource_type ||
 			originalLog.resource_type ||
 			getDefaultResourceType(resourceTypes);
 
 		// Get user identifier
 		const userId =
-			response['user_key'] ||
-			response['user_email'] ||
-			originalLog.user_key ||
-			'';
+			response.user_key || response.user_email || originalLog.user_key || '';
 
 		if (!userId) {
 			return null; // Skip logs without a user ID
 		}
 
+		// Create a default context
+		const defaultContext: AuditContext = {
+			user: {
+				id: userId,
+				key: userId,
+			},
+			resource: {
+				type: resourceType,
+				id: response.resource || originalLog.resource || '',
+			},
+			tenant: response.tenant || originalLog.tenant || 'default',
+			action: response.action || originalLog.action || '',
+		};
+
+		// Check if response.context is a valid AuditContext
+		const contextValue = isValidAuditContext(response.context)
+			? response.context
+			: defaultContext;
+
 		// Create a normalized detailed log
 		const detailedLog: DetailedAuditLog = {
 			...(response as AuditLog),
-			id: response['id'] || originalLog.id,
-			timestamp: response['timestamp'] || originalLog.timestamp,
+			id: response.id || originalLog.id,
+			timestamp: response.timestamp || originalLog.timestamp,
 			user_id: userId,
-			user_key: response['user_key'] || originalLog.user_key,
-			resource: response['resource'] || originalLog.resource || '',
+			user_key: response.user_key || originalLog.user_key,
+			resource: response.resource || originalLog.resource || '',
 			resource_type: resourceType,
-			tenant: response['tenant'] || originalLog.tenant || 'default',
-			action: response['action'] || originalLog.action || '',
-			decision: response['decision'] === true,
-
-			// Build or normalize context object
-			context: response['context'] || {
-				user: {
-					id: userId,
-					key: userId,
-				},
-				resource: {
-					type: resourceType,
-					id: response['resource'] || originalLog.resource || '',
-				},
-				tenant: response['tenant'] || originalLog.tenant || 'default',
-				action: response['action'] || originalLog.action || '',
-			},
+			tenant: response.tenant || originalLog.tenant || 'default',
+			action: response.action || originalLog.action || '',
+			decision: response.decision === true,
+			context: contextValue,
 		};
 
 		return detailedLog;
-	} catch (_error) {
-		
+	} catch {
+		// Just returning null on any error
 		return null;
 	}
 };
@@ -137,7 +188,7 @@ const normalizeDetailedLog = (
 const createPdpRequest = (
 	log: DetailedAuditLog,
 	resourceTypes: Set<string>,
-): Record<string, unknown> => {
+): PdpRequestData => {
 	return {
 		tenant: log.tenant || 'default',
 		action: log.action,
@@ -168,7 +219,8 @@ const ErrorView: React.FC<ErrorViewProps> = ({ error, pdpUrl }) => (
 		</Box>
 		<Box paddingLeft={2} flexDirection="column" marginTop={1}>
 			<Text>
-				1. Ensure you're logged in with valid credentials (run 'permit login')
+				1. Ensure you{'\u2019'}re logged in with valid credentials (run{' '}
+				{'\u2018'}permit login{'\u2019'})
 			</Text>
 			<Text>2. Check if you have permission to access audit logs</Text>
 			<Text>3. Verify your PDP URL is correct: {pdpUrl}</Text>
@@ -445,7 +497,11 @@ const TestRunAuditComponent: React.FC<{ options: CommandOptions }> = ({
 				}
 
 				// Process and normalize the log data
-				const detailedLog = normalizeDetailedLog(data, log, resourceTypes);
+				const detailedLog = normalizeDetailedLog(
+					data as AuditLogResponseData,
+					log,
+					resourceTypes,
+				);
 				if (detailedLog) {
 					detailed.push(detailedLog);
 				}
@@ -474,7 +530,7 @@ const TestRunAuditComponent: React.FC<{ options: CommandOptions }> = ({
 		): Promise<void> => {
 			try {
 				const request = createPdpRequest(log, resourceTypes);
-				await checkPdpPermission(request as any, options.pdpUrl);
+				await checkPdpPermission(request, options.pdpUrl);
 			} catch (err) {
 				throw new Error(
 					`PDP at ${options.pdpUrl} is not accessible: ${err instanceof Error ? err.message : String(err)}`,
@@ -513,7 +569,7 @@ const TestRunAuditComponent: React.FC<{ options: CommandOptions }> = ({
 				try {
 					const request = createPdpRequest(log, resourceTypes);
 					const { data, error } = await checkPdpPermission(
-						request as any,
+						request,
 						options.pdpUrl,
 					);
 
@@ -522,11 +578,11 @@ const TestRunAuditComponent: React.FC<{ options: CommandOptions }> = ({
 					}
 
 					// Data might have different structures depending on PDP version
-					const responseData = data as Record<string, any>;
+					const responseData = data as PdpResponseData;
 					const allowed =
-						responseData?.['allow'] ||
-						responseData?.['allowed'] ||
-						responseData?.['result'];
+						responseData?.allow ||
+						responseData?.allowed ||
+						responseData?.result;
 
 					comparisonResults.push({
 						auditLog: log,
