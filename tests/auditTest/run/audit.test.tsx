@@ -1,5 +1,24 @@
 import React from 'react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// Mock keytar module to avoid native dependency issues in CI
+vi.mock('keytar', () => ({
+  default: {
+    getPassword: vi.fn().mockResolvedValue('mock-token'),
+    setPassword: vi.fn().mockResolvedValue(undefined),
+    deletePassword: vi.fn().mockResolvedValue(undefined)
+  }
+}));
+
+// Mock the auth module that might use keytar
+vi.mock('../../../source/lib/auth.js', () => ({
+  loadAuthToken: vi.fn().mockResolvedValue('mock-token'),
+  saveAuthToken: vi.fn().mockResolvedValue(''),
+  cleanAuthToken: vi.fn().mockResolvedValue(undefined),
+  tokenType: vi.fn().mockReturnValue('AccessToken')
+}));
+
+// Import the command after mocking dependencies
 import * as auditCommand from '../../../source/commands/test/run/audit';
 
 describe('Audit Command', () => {
@@ -8,7 +27,7 @@ describe('Audit Command', () => {
       'Test PDP against audit logs to find differences in behavior'
     );
   });
-
+  
   it('should define appropriate options', () => {
     // Check option properties
     const options = auditCommand.options;
@@ -26,7 +45,7 @@ describe('Audit Command', () => {
     expect(shape).toHaveProperty('action');
     expect(shape).toHaveProperty('decision');
   });
-
+  
   it('should render component with the correct structure', () => {
     // Create component with test options
     const Audit = auditCommand.default;
@@ -49,7 +68,7 @@ describe('Audit Command', () => {
     expect(childElement.props).toHaveProperty('options');
     expect(childElement.props.options).toBe(testOptions);
   });
-
+  
   it('should pass all options to TestRunAuditComponent', () => {
     // Test with full set of options
     const Audit = auditCommand.default;
