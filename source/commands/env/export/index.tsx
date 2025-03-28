@@ -23,6 +23,17 @@ export const options = zod.object({
 				alias: 'f',
 			}),
 		),
+	includeDefaultRoles: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			option({
+				description:
+					'Include default roles (admin, editor, viewer) in the export',
+				alias: 'i',
+			}),
+		),
 });
 
 type Props = {
