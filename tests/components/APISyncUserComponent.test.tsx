@@ -3,6 +3,7 @@ import { render } from 'ink-testing-library';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import APISyncUserComponent from '../../source/components/api/sync/APISyncUserComponent.js';
 import delay from 'delay';
+import { Text } from 'ink';
 import type { Mock } from 'vitest';
 
 // Extend globalThis for TypeScript
@@ -47,7 +48,7 @@ vi.mock('ink-text-input', () => {
 				onSubmit(inputValue);
 			};
 
-			return <span>TextInput-{value}</span>;
+			return <Text>TextInput-{value}</Text>;
 		},
 	};
 });
@@ -129,7 +130,7 @@ beforeEach(() => {
 	}));
 
 	vi.mock('ink-spinner', () => ({
-		default: () => <span>Spinner</span>,
+		default: () => <Text>Spinner</Text>,
 	}));
 });
 
