@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { AuthProvider } from '../../../components/AuthProvider.js';
 import { type infer as zInfer, string, object } from 'zod';
 import { option } from 'pastel';
@@ -12,11 +12,12 @@ export const options = object({
 				description: 'Your Permit.io API key',
 			}),
 		),
-	userid: string()
+	key: string()
 		.describe(
 			option({
 				description:
 					'Unique id by which Permit.io identify the user for permission checks.',
+				alias: 'userId',
 			}),
 		)
 		.optional(),
@@ -49,7 +50,7 @@ export const options = object({
 			}),
 		)
 		.optional(),
-	roleAssignments: string()
+	roles: string()
 		.describe(
 			option({
 				description:
@@ -63,38 +64,10 @@ type Props = {
 	options: zInfer<typeof options>;
 };
 
-// Helper function to parse role assignments from string to array of objects
-function parseRoleAssignments(roleAssignmentsStr: string) {
-	try {
-		const parsed = JSON.parse(roleAssignmentsStr);
-		if (!Array.isArray(parsed)) {
-			console.error('Role assignments must be a JSON array');
-			return [];
-		}
-		return parsed.map(item => ({
-			role: item.role || '',
-			tenant: item.tenant,
-		}));
-	} catch (error) {
-		console.error('Failed to parse role assignments JSON:', error);
-		return [];
-	}
-}
-
 export default function User({ options }: Props) {
-	// Parse the role assignments if it's a string
-	const parsedOptions = useMemo(() => {
-		return {
-			...options,
-			roleAssignments: options.roleAssignments
-				? parseRoleAssignments(options.roleAssignments)
-				: [],
-		};
-	}, [options]);
-
 	return (
 		<AuthProvider scope={'environment'} permit_key={options.apiKey}>
-			<APISyncUserComponent options={parsedOptions} />
+			<APISyncUserComponent options={options} />
 		</AuthProvider>
 	);
 }

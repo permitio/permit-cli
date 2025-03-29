@@ -256,17 +256,14 @@ This command will Replace User / Sync User in the system. If the user already ex
 
 - `api_key <string>`(optional) : a Permit API key to authenticate the operation. If not provided, the command will take the one you logged in with.
 
-- `user_id <string>` : A unique id by which Permit will identify the user for permission checks. If not given in the argument the interactive CLI is open to retrive the `user_id`.
+- `key <string>` : A unique id by which Permit will identify the user for permission checks. If not given in the argument the interactive CLI is open to retrive the `key`. It has the alias as `user-id`.
 
 - `email <string>`: The email of the user. If synced, will be unique inside the environment.
 
 - `first_name <string>` : First name of the user.
 - `last_name <string>` : Last name of the user.
 - `attributes <object>` : Arbitrary user attributes that will be used to enforce attribute-based access control policies. Default Value is `{}`
-- `role_assignment <array<objects>>` : List of roles to assign to the user in the environment.
-  Object has the value of:
-  - `role <string>` : the role that will be assigned (accepts either the role id or the role key)
-  - `tenant <string>` : the tenant the role is associated with (accepts either the tenant id or the tenant key)
+- `role` : Comma seperated values for the role of the user. Given as `role1:tenant1,role2:tenant2`
 
 ### Example
 
@@ -278,7 +275,7 @@ $ permit api sync user
   --firstName "Jane" \
   --lastName "Doe" \
   --attributes '{"department": "marketing", "age": 30, "subscription": {"tier": "pro", "expired": false}}' \
-  --roleAssignments '[{"role": "admin", "tenant": "stripe-inc"}, {"role": "viewer", "tenant": "othercompany.com"}]'
+  --roles "admin:stripe-inc,viewer:othercompany.com"
 ```
 
 ---
