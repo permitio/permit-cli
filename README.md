@@ -49,7 +49,6 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
   - `member` - add and assign roles to members in Permit
   - `select` - select a different active Permit.io environment
   - `export` - export environment configurations to different formats
-  
 - `opa` - a collection of commands for better OPA experience
   - `policy` - print the available policies of an active OPA instance
 - `api` - a collection of commands which is used for management of permit.io
@@ -165,6 +164,7 @@ $ permit env copy --key permit_key_.......... --from staging --to production --c
 ```
 
 ### `env create`
+
 This command creates a new environment in a specified project. This is useful for setting up new environments for development, testing, or production.
 
 #### Options
@@ -176,13 +176,14 @@ This command creates a new environment in a specified project. This is useful fo
 - `jwks <string>` (Optional) - JSON Web Key Set (JWKS) for frontend login, in JSON format
 - `settings <string>` (Optional) - environment settings in JSON format
 
-#### Example 
+#### Example
 
 ```bash
 $ permit env create --key permit_key_.......... --name "Staging" --description "Staging environment for testing"
 ```
 
 **You can also create a complex environment with all options:**
+
 ```bash
 $ permit env create --apiKey permit_key_.......... --name "Development" --envKey "dev" --description "Dev environment" --customBranchName "dev-branch" --jwks '{"ttl": 3600}' --settings '{"debug": true}'
 ```
@@ -197,7 +198,8 @@ This command deletes an existing environment. Use with caution as this operation
 - environmentId <string> (Optional) - the ID of the environment to delete (will prompt if not (provided)
 - force <boolean> (Optional) - skip confirmation prompts (default: false)
 
-#### Example 
+#### Example
+
 ```bash
 $ permit env delete --key permit_key_.......... --environmentId env_456
 ```
