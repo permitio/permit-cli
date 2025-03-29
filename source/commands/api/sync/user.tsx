@@ -4,6 +4,8 @@ import { type infer as zInfer, string, object } from 'zod';
 import { option } from 'pastel';
 import APISyncUserComponent from '../../../components/api/sync/APISyncUserComponent.js';
 
+export const description =
+	'This is a simple command which syncs the user to the Permit.io';
 export const options = object({
 	apiKey: string()
 		.optional()
