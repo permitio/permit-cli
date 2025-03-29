@@ -98,14 +98,12 @@ beforeEach(() => {
 			if (apiKey) {
 				mockCapturedApiKey = apiKey;
 			}
-
 			return {
 				status: mockStatus,
 				errorMessage: mockErrorMessage,
 				syncUser: mockSyncUser,
 				formatErrorMessage: (msg: string) => {
 					formatErrorCalls.push(msg);
-
 					if (msg.includes("could not find 'Tenant'")) {
 						return `Tenant not found: '${msg.match(/id='([^']+)'/)?.[1]}'`;
 					}
