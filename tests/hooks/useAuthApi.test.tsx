@@ -28,7 +28,9 @@ describe('useAuthApi', () => {
 					'access-token',
 					'cookie',
 				);
-				return result.success ? 'OrganizationReadWithAPIKey switched' : 'Failed to switch';
+				return result.success
+					? 'OrganizationReadWithAPIKey switched'
+					: 'Failed to switch';
 			};
 			switchOrg().then(res => setResult(res));
 			return <Text>{result}</Text>;
@@ -74,7 +76,9 @@ describe('useAuthApi', () => {
 					'access-token',
 					'cookie',
 				);
-				return result.success ? 'OrganizationReadWithAPIKey switched' : 'Failed to switch';
+				return result.success
+					? 'OrganizationReadWithAPIKey switched'
+					: 'Failed to switch';
 			};
 			switchOrg().then(res => setResult(res));
 			return <Text>{result}</Text>;

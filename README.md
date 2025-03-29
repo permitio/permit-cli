@@ -49,9 +49,10 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
   - `member` - add and assign roles to members in Permit
   - `select` - select a different active Permit.io environment
   - `export` - export environment configurations to different formats
-  
 - `opa` - a collection of commands for better OPA experience
   - `policy` - print the available policies of an active OPA instance
+- `api` - a collection of commands which is used for management of permit.io
+  - `sync users` - Syncs the user if already there and creates new user.
 - `gitops create github` - configure Permit environment to use [GitOps flow](https://docs.permit.io/integrations/gitops/overview/)
 
 ---
@@ -100,7 +101,6 @@ Use this command to run a Permit PDP Docker container configured with your Permi
 - `opa <number>` (Optional) - expose the OPA instance running in the PDP
 - `dry-run` (Optional) - print the Docker command without executing it
 - `apiKey <string>` (Optional) - use a specific API key instead of the stored one
-
 
 #### Example
 
@@ -164,6 +164,7 @@ $ permit env copy --key permit_key_.......... --from staging --to production --c
 ```
 
 ### `env create`
+
 This command creates a new environment in a specified project. This is useful for setting up new environments for development, testing, or production.
 
 #### Options
@@ -175,13 +176,14 @@ This command creates a new environment in a specified project. This is useful fo
 - `jwks <string>` (Optional) - JSON Web Key Set (JWKS) for frontend login, in JSON format
 - `settings <string>` (Optional) - environment settings in JSON format
 
-#### Example 
+#### Example
 
 ```bash
 $ permit env create --key permit_key_.......... --name "Staging" --description "Staging environment for testing"
 ```
 
 **You can also create a complex environment with all options:**
+
 ```bash
 $ permit env create --apiKey permit_key_.......... --name "Development" --envKey "dev" --description "Dev environment" --customBranchName "dev-branch" --jwks '{"ttl": 3600}' --settings '{"debug": true}'
 ```
@@ -196,7 +198,8 @@ This command deletes an existing environment. Use with caution as this operation
 - environmentId <string> (Optional) - the ID of the environment to delete (will prompt if not (provided)
 - force <boolean> (Optional) - skip confirmation prompts (default: false)
 
-#### Example 
+#### Example
+
 ```bash
 $ permit env delete --key permit_key_.......... --environmentId env_456
 ```
@@ -292,6 +295,38 @@ This command will print the available policies of an active OPA instance. This i
 
 ```bash
 $ permit opa policy --serverUrl http://localhost:8181 --apiKey permit_key_..........
+```
+
+---
+
+### `api sync user`
+
+This command will Replace User / Sync User in the system. If the user already exits, it will update the user with the new data. If the user does not exist, it will create a new user with the provided data.
+
+#### options:
+
+- `api_key <string>`(optional) : a Permit API key to authenticate the operation. If not provided, the command will take the one you logged in with.
+
+- `key <string>` : A unique id by which Permit will identify the user for permission checks. If not given in the argument the interactive CLI is open to retrive the `key`. It has the alias as `user-id`.
+
+- `email <string>`: The email of the user. If synced, will be unique inside the environment.
+
+- `first_name <string>` : First name of the user.
+- `last_name <string>` : Last name of the user.
+- `attributes <object>` : Arbitrary user attributes that will be used to enforce attribute-based access control policies. Default Value is `{}`
+- `role` : Comma seperated values for the role of the user. Given as `role1:tenant1,role2:tenant2`
+
+### Example
+
+```bash
+$ permit api sync user
+  --apiKey "YOUR_API_KEY" \
+  --userid "892179821739812389327" \
+  --email "jane@coolcompany.com" \
+  --firstName "Jane" \
+  --lastName "Doe" \
+  --attributes '{"department": "marketing", "age": 30, "subscription": {"tier": "pro", "expired": false}}' \
+  --roles "admin:stripe-inc,viewer:othercompany.com"
 ```
 
 ---

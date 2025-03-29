@@ -47,8 +47,8 @@ describe('PDP Check Component', () => {
 		(fetch as any).mockResolvedValue({
 			ok: true,
 			status: 200,
-			statusText: "OK",
-			headers: new Headers({ "Content-Type": "application/json" }),
+			statusText: 'OK',
+			headers: new Headers({ 'Content-Type': 'application/json' }),
 			json: async () => ({ allow: true }),
 		});
 
@@ -91,8 +91,8 @@ describe('PDP Check Component', () => {
 		(fetch as any).mockResolvedValue({
 			ok: true,
 			status: 200,
-			statusText: "OK",
-			headers: new Headers({ "Content-Type": "application/json" }),
+			statusText: 'OK',
+			headers: new Headers({ 'Content-Type': 'application/json' }),
 			json: async () => ({ allow: false }),
 		});
 
@@ -135,10 +135,10 @@ describe('PDP Check Component', () => {
 		(fetch as any).mockResolvedValueOnce({
 			ok: false,
 			status: 200,
-			statusText: "OK",
-			headers: new Headers({ "Content-Type": "application/json" }),
+			statusText: 'OK',
+			headers: new Headers({ 'Content-Type': 'application/json' }),
 			json: async () => undefined,
-			text: async () => JSON.stringify("Error"), // Some clients might call `text()`
+			text: async () => JSON.stringify('Error'), // Some clients might call `text()`
 		});
 
 		vi.mocked(useApiKeyApi).mockReturnValue({
@@ -180,8 +180,8 @@ describe('PDP Check Component', () => {
 		(fetch as any).mockResolvedValue({
 			ok: true,
 			status: 200,
-			statusText: "OK",
-			headers: new Headers({ "Content-Type": "application/json" }),
+			statusText: 'OK',
+			headers: new Headers({ 'Content-Type': 'application/json' }),
 			json: async () => ({ allow: true }),
 		});
 

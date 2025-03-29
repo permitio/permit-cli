@@ -31,8 +31,7 @@ vi.mock('../source/components/AuthProvider.tsx', async () => {
 	};
 });
 
-
-vi.mock('../source/hooks/useApiKeyApi', async() => {
+vi.mock('../source/hooks/useApiKeyApi', async () => {
 	const original = await vi.importActual('../source/hooks/useApiKeyApi');
 
 	return {

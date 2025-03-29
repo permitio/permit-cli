@@ -20,7 +20,7 @@ vi.mock('keytar', () => {
 	return { ...keytar, default: keytar };
 });
 
-vi.mock('../source/hooks/useApiKeyApi', async() => {
+vi.mock('../source/hooks/useApiKeyApi', async () => {
 	const original = await vi.importActual('../source/hooks/useApiKeyApi');
 
 	return {
@@ -51,7 +51,6 @@ vi.mock('../source/hooks/useApiKeyApi', async() => {
 		}),
 	};
 });
-
 
 vi.mock('../source/lib/auth.js', async () => {
 	const original = await vi.importActual('../source/lib/auth.js');

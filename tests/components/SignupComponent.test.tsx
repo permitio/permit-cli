@@ -11,10 +11,10 @@ vi.mock('keytar', () => {
 
 	const keytar = {
 		setPassword: vi.fn().mockResolvedValue(() => {
-			return demoPermitKey
+			return demoPermitKey;
 		}),
 		getPassword: vi.fn().mockResolvedValue(() => {
-			return demoPermitKey
+			return demoPermitKey;
 		}),
 		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
 	};

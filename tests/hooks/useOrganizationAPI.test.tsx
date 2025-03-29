@@ -18,21 +18,25 @@ describe('useOrganisationApi', () => {
 
 			(fetch as any).mockResolvedValueOnce({
 				...getMockFetchResponse(),
-				json: async () => ([{
-					key: 'org-key',
-					id: 'org-id',
-					is_enterprise: false,
-					usage_limits: { mau: 100, tenants: 10, billing_tier: 'standard' },
-					created_at: '2024-01-01',
-					updated_at: '2024-01-02',
-					name: 'Organization Name',
-					settings: {},
-				}])
+				json: async () => [
+					{
+						key: 'org-key',
+						id: 'org-id',
+						is_enterprise: false,
+						usage_limits: { mau: 100, tenants: 10, billing_tier: 'standard' },
+						created_at: '2024-01-01',
+						updated_at: '2024-01-02',
+						name: 'Organization Name',
+						settings: {},
+					},
+				],
 			});
 
 			const fetchOrgs = async () => {
 				const { data: orgs } = await getOrgs();
-				return ((orgs?.length ?? 0) > 0 && orgs) ? orgs[0]?.name : 'No organizations';
+				return (orgs?.length ?? 0) > 0 && orgs
+					? orgs[0]?.name
+					: 'No organizations';
 			};
 			const [result, setResult] = React.useState<string | null>(null);
 			fetchOrgs().then(res => setResult(res ?? null));
@@ -62,7 +66,7 @@ describe('useOrganisationApi', () => {
 					updated_at: '2024-01-02',
 					name: 'Organization Name',
 					settings: {},
-				})
+				}),
 			});
 
 			const fetchOrg = async () => {
@@ -85,12 +89,16 @@ describe('useOrganisationApi', () => {
 		const TestComponent = () => {
 			const { getOrgs } = useOrganisationApi();
 
-			(fetch as any).mockRejectedValueOnce(new Error('Failed to fetch organizations'));
+			(fetch as any).mockRejectedValueOnce(
+				new Error('Failed to fetch organizations'),
+			);
 
 			const fetchOrgs = async () => {
 				try {
 					const { data: orgs } = await getOrgs();
-					return ((orgs?.length ?? 0) > 0 && orgs) ? orgs[0]?.name : 'No organizations';
+					return (orgs?.length ?? 0) > 0 && orgs
+						? orgs[0]?.name
+						: 'No organizations';
 				} catch (error) {
 					return error.message;
 				}
@@ -112,7 +120,9 @@ describe('useOrganisationApi', () => {
 			const { getOrg } = useOrganisationApi();
 			const organizationId = 'org-id';
 
-			(fetch as any).mockRejectedValueOnce(new Error('Failed to fetch organization'));
+			(fetch as any).mockRejectedValueOnce(
+				new Error('Failed to fetch organization'),
+			);
 
 			const fetchOrg = async () => {
 				try {

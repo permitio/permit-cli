@@ -1,4 +1,7 @@
-import { GitConfig, usePolicyGitReposApi } from '../../source/hooks/usePolicyGitReposApi.js';
+import {
+	GitConfig,
+	usePolicyGitReposApi,
+} from '../../source/hooks/usePolicyGitReposApi.js';
 import { vi, expect, it, describe, beforeEach } from 'vitest';
 import React from 'react';
 import { render } from 'ink-testing-library';
@@ -18,10 +21,10 @@ describe('usePolicyGitReposApi', () => {
 
 			(fetch as any).mockResolvedValueOnce({
 				...getMockFetchResponse(),
-				json: async () => ([
+				json: async () => [
 					{ status: 'active', key: 'repo1' },
-					{ status: 'active', key: 'repo2' }
-				])
+					{ status: 'active', key: 'repo2' },
+				],
 			});
 
 			const fetchRepoList = async () => {
@@ -29,7 +32,9 @@ describe('usePolicyGitReposApi', () => {
 				return repos;
 			};
 			const [result, setResult] = React.useState<string | null>(null);
-			fetchRepoList().then(res => setResult(res ? res[0]?.key ?? null : null));
+			fetchRepoList().then(res =>
+				setResult(res ? (res[0]?.key ?? null) : null),
+			);
 
 			return <Text>{result}</Text>;
 		};
@@ -47,21 +52,23 @@ describe('usePolicyGitReposApi', () => {
 			(fetch as any).mockResolvedValueOnce({
 				...getMockFetchResponse(),
 				json: async () => ({
-					status: 'valid'
-				})
+					status: 'valid',
+				}),
 			});
 
-			const doConfigurePermit = async() => {
-					const { data } = await configurePermit('', {	url: 'string',
-						mainBranchName: 'string',
-						credentials: {
-							authType: 'ssh',
-							username: 'string',
-							privateKey: 'string',
-						},
-						key: 'string',
-						activateWhenValidated: true} as GitConfig);
-					return data;
+			const doConfigurePermit = async () => {
+				const { data } = await configurePermit('', {
+					url: 'string',
+					mainBranchName: 'string',
+					credentials: {
+						authType: 'ssh',
+						username: 'string',
+						privateKey: 'string',
+					},
+					key: 'string',
+					activateWhenValidated: true,
+				} as GitConfig);
+				return data;
 			};
 			const [result, setResult] = React.useState<string | null>(null);
 			doConfigurePermit().then(res => setResult(res?.status ?? null));

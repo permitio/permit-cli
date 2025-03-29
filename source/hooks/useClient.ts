@@ -144,6 +144,56 @@ const useClient = () => {
 			return { data, response, error: newError };
 		};
 
+		const PUT = async <
+			Path extends PathsWithMethod<paths, 'put'>,
+			Init extends MaybeOptionalInit<paths[Path], 'put'>,
+		>(
+			path: Path,
+			path_values: Omit<
+				paths[Path]['put']['parameters']['path'],
+				'proj_id' | 'org_id' | 'env_id'
+			>,
+			body: paths[Path]['put']['requestBody'],
+			query: paths[Path]['put']['parameters']['query'],
+		): Promise<
+			Omit<
+				FetchResponse<paths[Path]['put'], Init, 'application/json'>,
+				'error'
+			> & { error: string | null }
+		> => {
+			const globalScope = globalScopeGetterSetter.scopeGetter();
+
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-expect-error
+			const { data, response, error } = await client.PUT(path, {
+				params: {
+					query: query ?? undefined,
+					path: path_values
+						? {
+								...{
+									org_id: globalScope?.organization_id,
+									proj_id: globalScope?.project_id,
+									env_id: globalScope?.environment_id,
+								},
+								...path_values,
+							}
+						: {
+								org_id: globalScope?.organization_id,
+								proj_id: globalScope?.project_id,
+								env_id: globalScope?.environment_id,
+							},
+				},
+				body: body ?? undefined, // Only include if body exists
+			});
+			let newError: string | null = null;
+			if (error) {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-expect-error
+				newError = error instanceof String ? error : JSON.stringify(error);
+			}
+			return { data, response, error: newError };
+		};
+
 		const DELETE = async <
 			Path extends PathsWithMethod<paths, 'delete'>,
 			Init extends MaybeOptionalInit<paths[Path], 'delete'>,
@@ -197,6 +247,7 @@ const useClient = () => {
 		return {
 			GET,
 			POST,
+			PUT,
 			DELETE,
 		};
 	};
@@ -482,6 +533,44 @@ const useClient = () => {
 			return { data, response, error: newError };
 		};
 
+		const PUT = async <
+			Path extends PathsWithMethod<paths, 'put'>,
+			Init extends MaybeOptionalInit<paths[Path], 'put'>,
+		>(
+			path: Path,
+
+			path_values?: paths[Path]['put']['parameters']['path'],
+
+			body?: paths[Path]['put'] extends {
+				requestBody: { content: { 'application/json': infer B } };
+			}
+				? B
+				: undefined,
+			query?: paths[Path]['put']['parameters']['query'],
+		): Promise<
+			Omit<
+				FetchResponse<paths[Path]['put'], Init, 'application/json'>,
+				'error'
+			> & { error: string | null }
+		> => {
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-expect-error
+			const { data, response, error } = await client.PUT(path, {
+				params: {
+					query: query ?? undefined,
+					path: path_values ?? undefined,
+				},
+				body: body ?? undefined, // Only include if body exists
+			});
+			let newError: string | null = null;
+			if (error) {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-expect-error
+				newError = error instanceof String ? error : JSON.stringify(error);
+			}
+			return { data, response, error: newError };
+		};
+
 		const DELETE = async <
 			Path extends PathsWithMethod<paths, 'delete'>,
 			Init extends MaybeOptionalInit<paths[Path], 'delete'>,
@@ -520,6 +609,7 @@ const useClient = () => {
 			GET,
 			POST,
 			DELETE,
+			PUT,
 		};
 	};
 

@@ -22,7 +22,7 @@ const eslintConfig = [
 export default [
 	...eslintConfig,
 	{
-		ignores: ["source/lib/api/"]
+		ignores: ['source/lib/api/'],
 	},
 	{
 		languageOptions: {
