@@ -6,7 +6,7 @@ import { AuthProvider } from '../../components/AuthProvider.js';
 import CopyComponent from '../../components/env/CopyComponent.js';
 
 export const options = zod.object({
-	key: zod
+	apiKey: zod
 		.string()
 		.optional()
 		.describe(
@@ -30,7 +30,7 @@ export const options = zod.object({
 		.describe(
 			option({
 				description:
-					'Optional: The environment name to copy to. In case not set, the CLI will ask you for one.',
+					'Optional: Set the name of the new environment. In case not set, the CLI will prompt you to enter one.',
 			}),
 		),
 	description: zod
@@ -68,11 +68,11 @@ type Props = {
 };
 
 export default function Copy({
-	options: { key, from, to, name, description, conflictStrategy },
+	options: { apiKey, from, to, name, description, conflictStrategy },
 }: Props) {
 	return (
 		<>
-			<AuthProvider permit_key={key} scope={'project'}>
+			<AuthProvider permit_key={apiKey} scope={'project'}>
 				<CopyComponent
 					from={from}
 					to={to}

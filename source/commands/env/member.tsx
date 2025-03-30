@@ -7,7 +7,7 @@ import { AuthProvider } from '../../components/AuthProvider.js';
 import MemberComponent from '../../components/env/MemberComponent.js';
 
 export const options = zod.object({
-	key: zod
+	apiKey: zod
 		.string()
 		.optional()
 		.describe(
@@ -30,7 +30,8 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description: 'Optional: Id of the project you want to add a member.',
+				description:
+					'Optional: Id of the project you want to add a member to. In case not set, the CLI will prompt you to select one.',
 			}),
 		),
 	email: zod
@@ -74,7 +75,7 @@ type Props = {
 
 export default function Member({
 	options: {
-		key,
+		apiKey,
 		environment,
 		project,
 		email,
@@ -85,7 +86,7 @@ export default function Member({
 }: Props) {
 	return (
 		<>
-			<AuthProvider permit_key={key} scope={'project'}>
+			<AuthProvider permit_key={apiKey} scope={'project'}>
 				<MemberComponent
 					project={project}
 					environment={environment}
