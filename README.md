@@ -63,6 +63,8 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
     - `list` - list all users in your Permit.io account
     - `assign` - assign a user to a specific role in your Permit.io account
     - `unassign` - remove a role assignment from a user in your Permit.io account
+  - `sync` - To sync the data from CLI to permit.io
+    - `user` - To update or create a user from the CLI.
 
 ---
 
@@ -387,8 +389,11 @@ $ permit api sync user
   --email "jane@coolcompany.com" \
   --firstName "Jane" \
   --lastName "Doe" \
-  --attributes '{"department": "marketing", "age": 30, "subscription": {"tier": "pro", "expired": false}}' \
-  --roles "admin:stripe-inc,viewer:othercompany.com"
+  --attributes  "age:30" \
+  --attributes "location:NY" \
+  --roles "admin:stripe-inc" \
+  --roles "developer" \
+  --roles "project:123#developer"
 ```
 
 ---
