@@ -77,7 +77,7 @@ export const options = object({
 		.describe(
 			option({
 				description:
-					'Role assignments to sync for the user. Accepts JSON array string.',
+					'Role assignments to sync for the user. Accepts comma-separated values of the following conventions: `{{role}}` / `{{tenant}}/{{role}}` / `{{tenant}}/{{resourceType}}:{{resourceInstance}}#{{role}}`.',
 			}),
 		)
 		.optional(),
