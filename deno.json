@@ -6,7 +6,10 @@
   },
   "imports": {
     "react": "https://esm.sh/react@18.2.0",
-    "react-dom": "https://esm.sh/react-dom@18.2.0"
+    "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime",
+    "react/jsx-dev-runtime": "https://esm.sh/react@18.2.0/jsx-dev-runtime",
+    "react-dom": "https://esm.sh/react-dom@18.2.0",
+    "ink": "https://esm.sh/ink@5.1.0"
   },
   "compilerOptions": {
     "jsx": "react-jsx",

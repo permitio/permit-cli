@@ -25,7 +25,7 @@ jobs:
       - name: Build for current platform
         run: |
           mkdir -p dist
-          deno compile --allow-all --output dist/permit-cli source/cli.tsx
+          deno compile --allow-all --allow-read --allow-write --allow-net --allow-env --allow-run --output dist/permit-cli source/cli.tsx
 
       - name: Test artifact
         run: |
