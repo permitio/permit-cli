@@ -7,6 +7,7 @@ export type UserSyncOptions = {
 	roleAssignments?: Array<{
 		role: string;
 		tenant?: string;
+		resourceInstance?: string;
 	}>;
 };
 

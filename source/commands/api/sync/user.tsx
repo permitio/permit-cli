@@ -1,6 +1,6 @@
 import React from 'react';
 import { AuthProvider } from '../../../components/AuthProvider.js';
-import { type infer as zInfer, string, object } from 'zod';
+import { type infer as zInfer, string, object, array, union } from 'zod';
 import { option } from 'pastel';
 import APISyncUserComponent from '../../../components/api/sync/APISyncUserComponent.js';
 
@@ -44,15 +44,33 @@ export const options = object({
 			}),
 		)
 		.optional(),
-	attributes: string()
+	attributes: array(
+		string().regex(
+			/^\w+:\w+$/,
+			'Invalid format. Use attributeKey:attributeValue',
+		),
+	)
 		.describe(
 			option({
 				description:
-					'Attributes of the user to sync. Will accept the JSON string of the attributes.',
+					'Attributes of the user to sync. Will accept the comma seperated key value pairs. Eg: key1:value1,key2:value2',
 			}),
 		)
 		.optional(),
-	roles: string()
+	roles: array(
+		union([
+			string().regex(/^\w+$/, 'Invalid format. Use {{role}}'),
+			string().regex(/^\w+\/\w+$/, 'Invalid format. Use {{tenant}}/{{role}}'),
+			string().regex(
+				/^\w+:\w+#\w+$/,
+				'Invalid format. Use {{resourceInstance}}#{{role}} (accepts either the resource instance id or key using this format resource_type:resource_instance)',
+			),
+			string().regex(
+				/^\w+\/\w+:\w+#\w+$/,
+				'Invalid format. Use {{tenant}}/{{resourceInstance}}#{{role}}',
+			),
+		]),
+	)
 		.describe(
 			option({
 				description:
