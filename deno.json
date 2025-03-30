@@ -4,16 +4,7 @@
     "build": "deno compile --allow-all --output dist/permit-cli source/cli.tsx",
     "dev": "deno run --watch --allow-all source/cli.tsx"
   },
-  "imports": {
-    "react": "https://esm.sh/react@18.2.0",
-    "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime",
-    "react/jsx-dev-runtime": "https://esm.sh/react@18.2.0/jsx-dev-runtime",
-    "react-dom": "https://esm.sh/react-dom@18.2.0",
-    "ink": "https://esm.sh/ink@4.1.0"
-  },
   "compilerOptions": {
-    "jsx": "react-jsx",
-    "jsxImportSource": "react",
     "lib": ["deno.window", "dom", "esnext"]
   }
 }
