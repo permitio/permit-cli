@@ -2,12 +2,17 @@
 	"extends": "@sindresorhus/tsconfig",
 	"compilerOptions": {
 		"jsx": "react",
-		"moduleResolution": "node16",
-		"module": "Node16",
+		"moduleResolution": "bundler",
+		"module": "ESNext",
 		"outDir": "dist",
 		"noUncheckedIndexedAccess": true,
 		"strict": true,
-		"types": ["@types/node", "deno-types"]
+		"types": ["deno-types"],
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		"allowJs": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true
 	},
 	"include": ["source"],
 	"exclude": ["node_modules", "source/lib/api"]

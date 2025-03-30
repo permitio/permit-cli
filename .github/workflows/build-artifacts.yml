@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -22,25 +22,27 @@ jobs:
         with:
           deno-version: ${{ matrix.deno-version }}
 
-      - name: Build artifacts
-        run: npm run build-artifacts
+      - name: Build for current platform
+        run: |
+          mkdir -p dist
+          deno compile --allow-all --output dist/permit-cli source/cli.tsx
 
       - name: Test artifact
         run: |
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             # Windows specific tests
-            ./permit-cli.exe --version
-            ./permit-cli.exe --help
-            ./permit-cli.exe pdp check --help
+            ./dist/permit-cli.exe --version
+            ./dist/permit-cli.exe --help
+            ./dist/permit-cli.exe pdp check --help
           else
             # Unix specific tests
-            ./permit-cli --version
-            ./permit-cli --help
-            ./permit-cli pdp check --help
+            ./dist/permit-cli --version
+            ./dist/permit-cli --help
+            ./dist/permit-cli pdp check --help
           fi
 
       - name: Run Deno tests
-        run: deno test tests/artifact-test.ts --allow-run
+        run: deno test --allow-all tests/
 
       - name: Test installation script
         if: matrix.os == 'ubuntu-latest'
@@ -53,6 +55,6 @@ jobs:
         with:
           name: permit-cli-${{ matrix.os }}
           path: |
-            permit-cli
-            permit-cli.exe
+            dist/permit-cli
+            dist/permit-cli.exe
           if-no-files-found: error 
