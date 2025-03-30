@@ -19,53 +19,70 @@ function parseAttributes(attributesArray: string[]): Record<string, never> {
 }
 
 // Function to parse role strings based on given patterns
-function parseRolesString(
-	rolesArray: string[],
-): Array<{ role: string; tenant?: string; resourceInstance?: string }> {
-	const parsedRoles: Array<{
-		role: string;
-		tenant?: string;
-		resourceInstance?: string;
-	}> = [];
+type RoleAssignment = {
+	role: string;
+	tenant?: string;
+	resourceInstance?: string;
+};
+
+const isSimpleRole = (role: string): boolean =>
+	role.split('/').length === 1 &&
+	role.split(':').length === 1 &&
+	role.split('#').length === 1;
+
+const isTenantRole = (role: string): boolean =>
+	role.includes('/') && !role.includes(':') && !role.includes('#');
+
+const isResourceInstanceRole = (role: string): boolean =>
+	role.includes(':') && role.includes('#') && !role.includes('/');
+
+const isTenantResourceRole = (role: string): boolean =>
+	role.includes('/') && role.includes(':') && role.includes('#');
+
+const parseSingleRoleString = (roleString: string): RoleAssignment | null => {
+	const trimmed = roleString.trim();
+	if (!trimmed) return null;
+
+	if (isSimpleRole(trimmed)) {
+		return { role: trimmed, tenant: 'default' };
+	}
+	if (isTenantRole(trimmed)) {
+		const [tenant, role] = trimmed.split('/').map(s => s.trim());
+		return role ? { tenant, role } : null;
+	}
+	if (isResourceInstanceRole(trimmed)) {
+		const [resourceInstancePart, role] = trimmed.split('#');
+		if (!resourceInstancePart || !role) return null;
+
+		const [resourceType, resourceInstance] = resourceInstancePart.split(':');
+		return { resourceInstance: `${resourceType}:${resourceInstance}`, role };
+	}
+	if (isTenantResourceRole(trimmed)) {
+		const [tenantResource, role] = trimmed.split('#');
+		if (!tenantResource || !role) return null;
+
+		const [tenant, resourceInstancePart] = tenantResource.split('/');
+		if (!tenant || !resourceInstancePart) return null;
+
+		const [resourceType, resourceInstance] = resourceInstancePart.split(':');
+		return {
+			tenant,
+			resourceInstance: `${resourceType}:${resourceInstance}`,
+			role,
+		};
+	}
+
+	console.warn(`Invalid role format: ${trimmed}`);
+	return null;
+};
+
+function parseRolesAssignmentStrings(rolesArray: string[]): RoleAssignment[] {
+	const parsedRoles: RoleAssignment[] = [];
 
 	for (const roleString of rolesArray) {
-		const trimmed = roleString.trim();
-		if (!trimmed) continue;
-
-		// Match the role string to one of the patterns
-		if (/^\w+$/.test(trimmed)) {
-			parsedRoles.push({ role: trimmed, tenant: 'default' });
-		} else if (/^\w+\/\w+$/.test(trimmed)) {
-			const [tenant, role] = trimmed.split('/').map(s => s.trim());
-			if (role) {
-				parsedRoles.push({ tenant, role });
-			}
-		} else if (/^\w+:\w+#\w+$/.test(trimmed)) {
-			const [resourceInstancePart, role] = trimmed.split('#');
-			if (resourceInstancePart && role) {
-				const [resourceType, resourceInstance] =
-					resourceInstancePart.split(':');
-				parsedRoles.push({
-					resourceInstance: `${resourceType}:${resourceInstance}`,
-					role,
-				});
-			}
-		} else if (/^\w+\/\w+:\w+#\w+$/.test(trimmed)) {
-			const [tenantResource, role] = trimmed.split('#');
-			if (role && tenantResource) {
-				const [tenant, resourceInstancePart] = tenantResource.split('/');
-				if (tenant && resourceInstancePart) {
-					const [resourceType, resourceInstance] =
-						resourceInstancePart.split(':');
-					parsedRoles.push({
-						tenant,
-						resourceInstance: `${resourceType}:${resourceInstance}`,
-						role,
-					});
-				}
-			}
-		} else {
-			console.warn(`Invalid role format: ${trimmed}`);
+		const parsedRole = parseSingleRoleString(roleString);
+		if (parsedRole) {
+			parsedRoles.push(parsedRole);
 		}
 	}
 
@@ -104,7 +121,7 @@ export function useParseUserData(
 		if (options.roles) {
 			try {
 				if (Array.isArray(options.roles)) {
-					roleAssignments = parseRolesString(options.roles);
+					roleAssignments = parseRolesAssignmentStrings(options.roles);
 				}
 			} catch (error) {
 				parseError = `Failed to parse roles: ${error instanceof Error ? error.message : String(error)}`;

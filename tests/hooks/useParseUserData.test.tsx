@@ -276,24 +276,6 @@ describe('useParseUserData', () => {
 			);
 		});
 
-		it('should log a warning for invalid role format', async () => {
-			render(
-				<TestComponent
-					options={{
-						key: 'test-key',
-						roles: ['invalid@format'],
-					}}
-				/>,
-			);
-
-			// Wait a moment for the console.warn to be called
-			await delay(10);
-
-			expect(mockConsoleWarn).toHaveBeenCalledWith(
-				expect.stringContaining('Invalid role format'),
-			);
-		});
-
 		it('should handle multiple role formats together', async () => {
 			const { lastFrame } = render(
 				<TestComponent

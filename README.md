@@ -55,8 +55,6 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
     - `apply` - apply an environment template to your current environment
 - `opa` - a collection of commands for better OPA experience
   - `policy` - print the available policies of an active OPA instance
-- `api` - a collection of commands which is used for management of permit.io
-  - `sync users` - Syncs the user if already there and creates new user.
 - `gitops create github` - configure Permit environment to use [GitOps flow](https://docs.permit.io/integrations/gitops/overview/)
 - `api` - direct access to Permit.io's API functionality
   - `users` - manage users in your Permit.io account
@@ -377,8 +375,11 @@ This command will Replace User / Sync User in the system. If the user already ex
 
 - `first_name <string>` : First name of the user.
 - `last_name <string>` : Last name of the user.
-- `attributes <object>` : Arbitrary user attributes that will be used to enforce attribute-based access control policies. Default Value is `{}`
-- `role` : Comma seperated values for the role of the user. Given as `role1:tenant1,role2:tenant2`
+- `attributes <object>` : Arbitrary user attributes that will be used to enforce attribute-based access control policies.
+- `roles` : roles of the user. Given in 3 different formats.
+  1. Only role the default tenant is assigned.
+  2. Both the role and the tenant
+  3. The resource Instance along with the role.
 
 ### Example
 
