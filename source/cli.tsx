@@ -16,19 +16,19 @@ Commands:
 
 function main() {
 	const args = Deno.args;
-	
-	if (args.includes("--version")) {
-		console.log("permit-cli v0.1.2");
+
+	if (args.includes('--version')) {
+		console.log('permit-cli v0.1.2');
 		return;
 	}
 
-	if (args.includes("--help")) {
+	if (args.includes('--help')) {
 		printHelp();
 		return;
 	}
 
-	if (args[0] === "pdp" && args[1] === "check") {
-		console.log("Checking PDP status...");
+	if (args[0] === 'pdp' && args[1] === 'check') {
+		console.log('Checking PDP status...');
 		return;
 	}
 

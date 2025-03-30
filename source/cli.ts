@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 function printHelp() {
-  console.log(`
+	console.log(`
 Permit.io CLI v0.1.2
 
 Usage:
@@ -15,26 +15,26 @@ Commands:
 }
 
 function main() {
-  const args = process.argv.slice(2);
-  
-  if (args.includes("--version")) {
-    console.log("permit-cli v0.1.2");
-    return;
-  }
+	const args = process.argv.slice(2);
 
-  if (args.includes("--help")) {
-    printHelp();
-    return;
-  }
+	if (args.includes('--version')) {
+		console.log('permit-cli v0.1.2');
+		return;
+	}
 
-  if (args[0] === "pdp" && args[1] === "check") {
-    console.log("Checking PDP status...");
-    return;
-  }
+	if (args.includes('--help')) {
+		printHelp();
+		return;
+	}
 
-  printHelp();
+	if (args[0] === 'pdp' && args[1] === 'check') {
+		console.log('Checking PDP status...');
+		return;
+	}
+
+	printHelp();
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main();
-} 
+	main();
+}

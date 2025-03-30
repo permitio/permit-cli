@@ -42,6 +42,7 @@ export default [
 				process: 'readonly',
 				module: 'readonly',
 				require: 'readonly',
+				Deno: 'readonly',
 			},
 		},
 	},

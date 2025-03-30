@@ -6,7 +6,8 @@
 		"module": "Node16",
 		"outDir": "dist",
 		"noUncheckedIndexedAccess": true,
-		"strict": true
+		"strict": true,
+		"types": ["@types/node", "deno-types"]
 	},
 	"include": ["source"],
 	"exclude": ["node_modules", "source/lib/api"]
