@@ -7,8 +7,8 @@
   "imports": {
     "react": "https://esm.sh/react@18.2.0",
     "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime",
-    "ink": "https://esm.sh/ink@3.1.0",
-    "ink-testing-library": "https://esm.sh/ink-testing-library@0.7.0",
+    "ink": "https://esm.sh/ink@2.7.1",
+    "ink-testing-library": "https://esm.sh/ink-testing-library@0.6.0",
     "vitest": "https://esm.sh/vitest@1.2.2",
     "zod": "https://esm.sh/zod@3.22.4",
     "pastel": "https://esm.sh/pastel@2.0.0",
