@@ -28,18 +28,19 @@ jobs:
           deno compile --allow-all --allow-read --allow-write --allow-net --allow-env --allow-run --output dist/permit-cli source/cli.tsx
 
       - name: Test artifact
+        shell: pwsh
         run: |
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          if (${{ matrix.os }} -eq "windows-latest") {
             # Windows specific tests
             ./dist/permit-cli.exe --version
             ./dist/permit-cli.exe --help
             ./dist/permit-cli.exe pdp check --help
-          else
+          } else {
             # Unix specific tests
             ./dist/permit-cli --version
             ./dist/permit-cli --help
             ./dist/permit-cli pdp check --help
-          fi
+          }
 
       - name: Run Deno tests
         run: deno test --allow-all tests/
