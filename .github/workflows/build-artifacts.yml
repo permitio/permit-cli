@@ -1,0 +1,58 @@
+name: Build and Test Artifacts
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        deno-version: ['1.41.3']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: ${{ matrix.deno-version }}
+
+      - name: Build artifacts
+        run: npm run build-artifacts
+
+      - name: Test artifact
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            # Windows specific tests
+            ./permit-cli.exe --version
+            ./permit-cli.exe --help
+            ./permit-cli.exe pdp check --help
+          else
+            # Unix specific tests
+            ./permit-cli --version
+            ./permit-cli --help
+            ./permit-cli pdp check --help
+          fi
+
+      - name: Run Deno tests
+        run: deno test tests/artifact-test.ts --allow-run
+
+      - name: Test installation script
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          chmod +x install.sh
+          ./install.sh --dry-run
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: permit-cli-${{ matrix.os }}
+          path: |
+            permit-cli
+            permit-cli.exe
+          if-no-files-found: error 

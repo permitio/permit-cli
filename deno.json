@@ -1,0 +1,15 @@
+{
+  "tasks": {
+    "build": "deno compile --target aarch64-apple-darwin --allow-read --allow-write --allow-net --allow-env --allow-run --output permit-cli source/cli.ts",
+    "build-all": "deno task build && deno task build:windows && deno task build:linux",
+    "build:windows": "deno compile --target x86_64-pc-windows-msvc --allow-read --allow-write --allow-net --allow-env --allow-run --output permit-cli.exe source/cli.ts",
+    "build:linux": "deno compile --target x86_64-unknown-linux-gnu --allow-read --allow-write --allow-net --allow-env --allow-run --output permit-cli source/cli.ts"
+  },
+  "imports": {
+    "std/": "https://deno.land/std@0.219.0/"
+  },
+  "compilerOptions": {
+    "lib": ["deno.window", "dom", "esnext"],
+    "strict": true
+  }
+} 
