@@ -40,6 +40,8 @@ export default [
 				RequestInit: 'readonly',
 				fetch: 'readonly',
 				process: 'readonly',
+				module: 'readonly',
+				require: 'readonly',
 			},
 		},
 	},

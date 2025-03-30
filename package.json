@@ -10,7 +10,7 @@
 		"node": ">=22"
 	},
 	"scripts": {
-		"build": "tsc",
+		"build": "rimraf dist && tsc && cpx 'source/commands/env/export/templates/*.hcl' 'dist/commands/env/export/templates'",
 		"postbuild": "rimraf dist/commands/env/export/templates && cpx 'source/commands/env/export/templates/*.hcl' 'dist/commands/env/export/templates'",
 		"predev": "cpx 'source/commands/env/export/templates/*.hcl' 'dist/commands/env/export/templates'",
 		"dev": " NODE_NO_WARNINGS=1 tsc --watch",

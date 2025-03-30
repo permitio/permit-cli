@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run --allow-all
+#!/usr/bin/env node
 
 function printHelp() {
   console.log(`
@@ -15,7 +15,7 @@ Commands:
 }
 
 function main() {
-  const args = Deno.args;
+  const args = process.argv.slice(2);
   
   if (args.includes("--version")) {
     console.log("permit-cli v0.1.2");
@@ -35,6 +35,6 @@ function main() {
   printHelp();
 }
 
-if (import.meta.main) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   main();
 } 
