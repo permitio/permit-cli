@@ -1,10 +1,10 @@
 import React from 'react';
 import { render } from 'ink-testing-library';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import Copy from '../source/commands/env/copy.js';
-import { useEnvironmentApi } from '../source/hooks/useEnvironmentApi.js';
-import EnvironmentSelection from '../source/components/EnvironmentSelection.js';
-import { TokenType, tokenType } from '../source/lib/auth.js';
+import Copy from '../source/commands/env/copy.tsx';
+import { useEnvironmentApi } from '../source/hooks/useEnvironmentApi.tsx';
+import EnvironmentSelection from '../source/components/EnvironmentSelection.tsx';
+import { TokenType, tokenType } from '../source/lib/auth.tsx';
 
 import delay from 'delay';
 import * as keytar from 'keytar';

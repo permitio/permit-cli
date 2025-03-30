@@ -4,7 +4,20 @@
     "build": "deno compile --allow-all --output dist/permit-cli source/cli.tsx",
     "dev": "deno run --watch --allow-all source/cli.tsx"
   },
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime",
+    "ink": "https://esm.sh/ink@3.1.0",
+    "ink-testing-library": "https://esm.sh/ink-testing-library@0.7.0",
+    "vitest": "https://esm.sh/vitest@1.2.2",
+    "zod": "https://esm.sh/zod@3.22.4",
+    "pastel": "https://esm.sh/pastel@2.0.0",
+    "delay": "https://esm.sh/delay@5.0.0"
+  },
   "compilerOptions": {
-    "lib": ["deno.window", "dom", "esnext"]
+    "lib": ["deno.window", "dom", "esnext"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "allowImportingTsExtensions": true
   }
 }
