@@ -27,7 +27,6 @@ vi.mock('../source/hooks/useEnvironmentApi.js', () => ({
 	useEnvironmentApi: vi.fn(),
 }));
 
-
 vi.mock('../source/hooks/useApiKeyApi', async () => {
 	const original = await vi.importActual('../source/hooks/useApiKeyApi');
 

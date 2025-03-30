@@ -6,16 +6,15 @@ import delay from 'delay';
 import * as keytar from 'keytar';
 import { getMockFetchResponse } from './utils';
 
-
 vi.mock('keytar', () => {
 	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
 
 	const keytar = {
 		setPassword: vi.fn().mockResolvedValue(() => {
-			return demoPermitKey
+			return demoPermitKey;
 		}),
 		getPassword: vi.fn().mockResolvedValue(() => {
-			return demoPermitKey
+			return demoPermitKey;
 		}),
 		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
 	};
@@ -23,7 +22,7 @@ vi.mock('keytar', () => {
 });
 
 describe('index file', () => {
-	it('the index file should render', async() => {
+	it('the index file should render', async () => {
 		const { lastFrame } = render(<Index />);
 		await delay(100);
 		const finalFrame = lastFrame()?.toString();

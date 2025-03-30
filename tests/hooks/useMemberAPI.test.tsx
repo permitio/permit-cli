@@ -22,12 +22,15 @@ describe('useMemberApi', () => {
 
 			(fetch as any).mockResolvedValueOnce({
 				...getMockFetchResponse(),
-				json: async () => ({ success: true })
+				json: async () => ({ success: true }),
 			});
 
 			const inviteMember = async () => {
-
-				const { data: result } = await inviteNewMember(body, 'dummy_name', 'dummy_email');
+				const { data: result } = await inviteNewMember(
+					body,
+					'dummy_name',
+					'dummy_email',
+				);
 				return result ? 'Member invited' : 'Failed to invite member';
 			};
 			const [result, setResult] = React.useState<string | null>(null);
@@ -52,13 +55,16 @@ describe('useMemberApi', () => {
 
 			(fetch as any).mockResolvedValueOnce({
 				...getMockFetchResponse(),
-				json: async () => undefined
+				json: async () => undefined,
 			});
 
 			const inviteMember = async () => {
-				const { data: result } = await inviteNewMember(body, 'dummy_name', 'dummy_email');
+				const { data: result } = await inviteNewMember(
+					body,
+					'dummy_name',
+					'dummy_email',
+				);
 				return result ? 'Member invited' : 'Failed to invite member';
-
 			};
 			const [result, setResult] = React.useState<string | null>(null);
 			inviteMember().then(res => setResult(res));
