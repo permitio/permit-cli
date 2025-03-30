@@ -12,7 +12,6 @@ vi.mock('micro-key-producer/utils.js', () => ({
 	randomBytes: vi.fn(),
 }));
 
-
 describe('generateSSHKey', () => {
 	it('should generate an SSH key', () => {
 		(randomBytes as any).mockReturnValueOnce(new Uint8Array(32));
