@@ -10,7 +10,7 @@ import EnvironmentSelection, {
 import SignupComponent from '../components/signup/SignupComponent.js';
 
 export const options = object({
-	key: string()
+	apiKey: string()
 		.optional()
 		.describe(
 			option({
@@ -38,7 +38,7 @@ type Props = {
 };
 
 export default function Login({
-	options: { key, workspace },
+	options: { apiKey, workspace },
 	loginSuccess,
 }: Props) {
 	const [state, setState] = useState<'login' | 'signup' | 'env' | 'done'>(
@@ -95,7 +95,11 @@ export default function Login({
 	return (
 		<>
 			{state == 'login' && (
-				<LoginFlow apiKey={key} onSuccess={onLoginSuccess} onError={setError} />
+				<LoginFlow
+					apiKey={apiKey}
+					onSuccess={onLoginSuccess}
+					onError={setError}
+				/>
 			)}
 			{state === 'env' && (
 				<EnvironmentSelection
