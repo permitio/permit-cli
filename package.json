@@ -14,7 +14,7 @@
 		"build": "tsc",
 		"postbuild": "rimraf dist/commands/env/export/templates && cpx 'source/commands/env/export/templates/*.hcl' 'dist/commands/env/export/templates'",
 		"predev": "cpx 'source/commands/env/export/templates/*.hcl' 'dist/commands/env/export/templates'",
-		"dev": " NODE_NO_WARNINGS=1 tsc --watch",
+		"dev": "NODE_NO_WARNINGS=1 tsc --watch",
 		"lint": "prettier --check ./source && eslint \"source/**/*.{js,ts,tsx}\"",
 		"lint:fix": "eslint \"source/**/*.{js,ts,tsx}\" --fix",
 		"test": "prettier --check ./source && vitest run --coverage",
