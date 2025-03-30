@@ -109,7 +109,9 @@ describe('Select Component', () => {
 			return null;
 		});
 
-		const { lastFrame } = render(<Select options={{ apiKey: 'valid_api_key' }} />);
+		const { lastFrame } = render(
+			<Select options={{ apiKey: 'valid_api_key' }} />,
+		);
 
 		await delay(100); // Allow async operations to complete
 

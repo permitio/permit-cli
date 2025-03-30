@@ -124,7 +124,9 @@ describe('Copy Component', () => {
 
 		vi.mocked(tokenType).mockReturnValue(TokenType.Invalid);
 
-		const { lastFrame } = render(<Copy options={{ apiKey: 'invalid_api_key' }} />);
+		const { lastFrame } = render(
+			<Copy options={{ apiKey: 'invalid_api_key' }} />,
+		);
 
 		await delay(50); // Allow async operations to complete
 
