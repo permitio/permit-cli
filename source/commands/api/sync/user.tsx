@@ -60,13 +60,13 @@ export const options = object({
 	roles: array(
 		union([
 			string().regex(/^\w+$/, 'Invalid format. Use {{role}}'),
-			string().regex(/^\w+\/\w+$/, 'Invalid format. Use {{tenant}}/{{role}}'),
+			string().regex(/^[-\w]+\/\w+$/, 'Invalid format. Use {{tenant}}/{{role}}'),
 			string().regex(
 				/^\w+:\w+#\w+$/,
 				'Invalid format. Use {{resourceInstance}}#{{role}} (accepts either the resource instance id or key using this format resource_type:resource_instance)',
 			),
 			string().regex(
-				/^\w+\/\w+:\w+#\w+$/,
+				/^[-\w]+\/\w+:\w+#\w+$/,
 				'Invalid format. Use {{tenant}}/{{resourceInstance}}#{{role}}',
 			),
 		]),
