@@ -105,7 +105,7 @@ describe('Copy Component', () => {
 		const { lastFrame } = render(
 			<Copy
 				options={{
-					key: 'valid_api_key',
+					apiKey: 'valid_api_key',
 					name: 'NewEnvName',
 					description: 'New Env Desc',
 					conflictStrategy: 'fail',
@@ -130,7 +130,7 @@ describe('Copy Component', () => {
 
 		vi.mocked(tokenType).mockReturnValue(TokenType.Invalid);
 
-		const { lastFrame } = render(<Copy options={{ key: 'invalid_api_key' }} />);
+		const { lastFrame } = render(<Copy options={{ apiKey: 'invalid_api_key' }} />);
 
 		await delay(50); // Allow async operations to complete
 
@@ -173,7 +173,7 @@ describe('Copy Component', () => {
 		});
 
 		const { lastFrame, stdin } = render(
-			<Copy options={{ key: 'valid_api_key', conflictStrategy: 'fail' }} />,
+			<Copy options={{ apiKey: 'valid_api_key', conflictStrategy: 'fail' }} />,
 		);
 
 		await delay(50); // Allow environment selection
