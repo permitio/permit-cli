@@ -18,6 +18,9 @@ jobs:
       with:
         deno-version: v1.x
 
+    - name: Regenerate lock file
+      run: deno cache --reload source/cli.tsx
+
     - name: Install dependencies
       run: deno cache source/cli.tsx
 

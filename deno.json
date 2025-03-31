@@ -1,0 +1,24 @@
+{
+  "tasks": {
+    "build": "deno compile --no-check --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys --output permit-cli source/cli.tsx",
+    "test": "deno test --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys",
+    "lint": "deno lint",
+    "fmt": "deno fmt"
+  },
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "ink": "https://esm.sh/ink@5.1.0",
+    "ink-ascii": "https://esm.sh/ink-ascii@0.0.4",
+    "ink-big-text": "https://esm.sh/ink-big-text@2.0.0",
+    "ink-gradient": "https://esm.sh/ink-gradient@3.0.0",
+    "ink-select-input": "https://esm.sh/ink-select-input@6.0.0",
+    "ink-spinner": "https://esm.sh/ink-spinner@5.0.0",
+    "ink-text-input": "https://esm.sh/ink-text-input@6.0.0",
+    "zod": "https://esm.sh/zod@3.21.3",
+    "pastel": "npm:pastel@3.0.0"
+  },
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "react"
+  }
+}
