@@ -106,12 +106,12 @@ describe('Graph component', () => {
 				error: null,
 			}),
 		});
-		const { lastFrame } = render(<Graph  />);
+		const { lastFrame } = render(<Graph />);
 		await waitForOutput({ lastFrame }, out =>
 			out.includes('Graph generated successfully and saved as HTML!'),
 		);
 		expect(lastFrame()).toContain(
-			'Graph generated successfully and saved as HTML!'
+			'Graph generated successfully and saved as HTML!',
 		);
 	});
 });

@@ -61,6 +61,8 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
     - `list` - list all users in your Permit.io account
     - `assign` - assign a user to a specific role in your Permit.io account
     - `unassign` - remove a role assignment from a user in your Permit.io account
+  - `sync` - To sync the data from CLI to permit.io
+    - `user` - To update or create a user from the CLI.
 
 ---
 
@@ -189,6 +191,7 @@ $ permit env copy --key permit_key_.......... --from staging --to production --c
 ```
 
 ### `env create`
+
 This command creates a new environment in a specified project. This is useful for setting up new environments for development, testing, or production.
 
 #### Options
@@ -200,13 +203,14 @@ This command creates a new environment in a specified project. This is useful fo
 - `jwks <string>` (Optional) - JSON Web Key Set (JWKS) for frontend login, in JSON format
 - `settings <string>` (Optional) - environment settings in JSON format
 
-#### Example 
+#### Example
 
 ```bash
 $ permit env create --key permit_key_.......... --name "Staging" --description "Staging environment for testing"
 ```
 
 **You can also create a complex environment with all options:**
+
 ```bash
 $ permit env create --apiKey permit_key_.......... --name "Development" --envKey "dev" --description "Dev environment" --customBranchName "dev-branch" --jwks '{"ttl": 3600}' --settings '{"debug": true}'
 ```
@@ -221,7 +225,8 @@ This command deletes an existing environment. Use with caution as this operation
 - environmentId <string> (Optional) - the ID of the environment to delete (will prompt if not (provided)
 - force <boolean> (Optional) - skip confirmation prompts (default: false)
 
-#### Example 
+#### Example
+
 ```bash
 $ permit env delete --key permit_key_.......... --environmentId env_456
 ```
@@ -352,6 +357,44 @@ This command will print the available policies of an active OPA instance. This i
 
 ```bash
 $ permit opa policy --server-url http://localhost:8181 --api-key permit_key_..........
+```
+
+---
+
+### `api sync user`
+
+This command will Replace User / Sync User in the system. If the user already exits, it will update the user with the new data. If the user does not exist, it will create a new user with the provided data.
+
+#### options:
+
+- `api_key <string>`(optional) : a Permit API key to authenticate the operation. If not provided, the command will take the one you logged in with.
+
+- `key <string>` : A unique id by which Permit will identify the user for permission checks. If not given in the argument the interactive CLI is open to retrive the `key`. It has the alias as `user-id`.
+
+- `email <string>`: The email of the user. If synced, will be unique inside the environment.
+
+- `first_name <string>` : First name of the user.
+- `last_name <string>` : Last name of the user.
+- `attributes <object>` : Arbitrary user attributes that will be used to enforce attribute-based access control policies.
+- `roles` : roles of the user. Given in 3 different formats.
+  1. Only role the default tenant is assigned.
+  2. Both the role and the tenant
+  3. The resource Instance along with the role.
+
+### Example
+
+```bash
+$ permit api sync user
+  --apiKey "YOUR_API_KEY" \
+  --userid "892179821739812389327" \
+  --email "jane@coolcompany.com" \
+  --firstName "Jane" \
+  --lastName "Doe" \
+  --attributes  "age:30" \
+  --attributes "location:NY" \
+  --roles "admin:stripe-inc" \
+  --roles "developer" \
+  --roles "project:123#developer"
 ```
 
 ---
