@@ -69,7 +69,6 @@ export default function PDPStatComponent({ options }: PDPStatsProps) {
 				<TableComponent
 					data={res?.data || []}
 					headers={['id', 'active', 'pdp_version', 'opa_version']} // Define which columns to display
-					headersHexColor={'#89CFF0'} // Light blue header color
 				/>
 			)}
 
