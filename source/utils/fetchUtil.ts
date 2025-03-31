@@ -59,8 +59,8 @@ export async function fetchUtil<T>(
 
 		// Try parsing JSON, handle errors if response isn't JSON
 		try {
-			const data: T = await response.json();
-			return { success: true, data, status: response.status };
+			const jsonData = await response.json();
+			return { success: true, data: jsonData as T, status: response.status };
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (jsonError: any) {
 			return {

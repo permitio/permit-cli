@@ -1,0 +1,61 @@
+name: Build and Test Artifacts
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        deno-version: ['1.41.3']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: ${{ matrix.deno-version }}
+
+      - name: Build for current platform
+        run: |
+          mkdir -p dist
+          deno compile --allow-all --allow-read --allow-write --allow-net --allow-env --allow-run --output dist/permit-cli source/cli.tsx
+
+      - name: Test Windows artifact
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          ./dist/permit-cli.exe --version
+          ./dist/permit-cli.exe --help
+          ./dist/permit-cli.exe pdp check --help
+
+      - name: Test Unix artifact
+        if: matrix.os != 'windows-latest'
+        run: |
+          ./dist/permit-cli --version
+          ./dist/permit-cli --help
+          ./dist/permit-cli pdp check --help
+
+      - name: Run Deno tests
+        run: deno test --allow-all tests/
+
+      - name: Test installation script
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          chmod +x install.sh
+          ./install.sh --dry-run
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: permit-cli-${{ matrix.os }}
+          path: |
+            dist/permit-cli
+            dist/permit-cli.exe
+          if-no-files-found: error 

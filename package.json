@@ -10,7 +10,7 @@
 		"node": ">=22"
 	},
 	"scripts": {
-		"build": "tsc",
+		"build": "rimraf dist && tsc && cpx 'source/commands/env/export/templates/*.hcl' 'dist/commands/env/export/templates'",
 		"postbuild": "rimraf dist/commands/env/export/templates && cpx 'source/commands/env/export/templates/*.hcl' 'dist/commands/env/export/templates'",
 		"predev": "cpx 'source/commands/env/export/templates/*.hcl' 'dist/commands/env/export/templates'",
 		"dev": " NODE_NO_WARNINGS=1 tsc --watch",
@@ -18,7 +18,8 @@
 		"lint:fix": "eslint \"source/**/*.{js,ts,tsx}\" --fix",
 		"test": "prettier --check ./source && vitest run --coverage",
 		"simple-check": "npx tsx ./source/cli.tsx pdp check -u filip@permit.io -a create -r task",
-		"test:ts": "tsc --noEmit"
+		"test:ts": "tsc --noEmit",
+		"build-artifacts": "deno task build-all"
 	},
 	"files": [
 		"dist"
@@ -60,6 +61,7 @@
 		"chalk": "^5.2.0",
 		"cpx": "^1.5.0",
 		"delay": "^6.0.0",
+		"deno-types": "^1.25.0",
 		"eslint": "^9.13.0",
 		"eslint-config-prettier": "^9.1.0",
 		"eslint-config-xo-react": "^0.27.0",
