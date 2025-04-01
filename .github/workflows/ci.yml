@@ -2,34 +2,34 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Deno
-      uses: denoland/setup-deno@v1
-      with:
-        deno-version: v2.2.6
+      - uses: actions/checkout@v4
 
-    - name: Regenerate lock file
-      run: deno cache --reload source/cli.tsx
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v2.2.6
 
-    - name: Install dependencies
-      run: deno cache source/cli.tsx
+      - name: Regenerate lock file
+        run: deno cache --reload source/cli.tsx
 
-    - name: Build
-      run: deno task build
+      - name: Install dependencies
+        run: deno cache source/cli.tsx
 
-    - name: Upload build artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: permit-cli
-        path: permit-cli
-        retention-days: 7 
+      - name: Build
+        run: deno task build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: permit-cli
+          path: permit-cli
+          retention-days: 7
