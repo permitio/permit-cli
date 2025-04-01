@@ -114,9 +114,7 @@ export default function CloneComponent({ apiKey, dryRun, project }: Props) {
 				try {
 					setState({ status: 'cloning' });
 					// Set a timeout of 300000 ms (5 minutes)
-					const { stdout, stderr } = await exec(state.command, {
-						timeout: 300000,
-					});
+					const { stdout, stderr } = await exec(state.command);
 					setState({
 						status: 'success',
 						output: `${stdout}\n${stderr}`,
@@ -135,6 +133,11 @@ export default function CloneComponent({ apiKey, dryRun, project }: Props) {
 			executeCommand();
 		}
 	}, [state, exec, dryRun, execError]);
+	useEffect(() => {
+		if (state.status === 'success' || state.status === 'error') {
+			process.exit(state.status === 'error' ? 1 : 0);
+		}
+	}, [state]);
 
 	return (
 		<>
