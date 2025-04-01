@@ -1,0 +1,92 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v2.2.6
+
+      - name: Build for macOS (arm64)
+        run: |
+          deno compile --target aarch64-apple-darwin \
+            --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys \
+            --output permit-cli-macos-arm64 source/cli.deno.tsx
+
+      - name: Build for macOS (x64)
+        run: |
+          deno compile --target x86_64-apple-darwin \
+            --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys \
+            --output permit-cli-macos-x64 source/cli.deno.tsx
+
+      - name: Build for Linux (x64)
+        run: |
+          deno compile --target x86_64-unknown-linux-gnu \
+            --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys \
+            --output permit-cli-linux-x64 source/cli.deno.tsx
+
+      - name: Build for Windows (x64)
+        run: |
+          deno compile --target x86_64-pc-windows-msvc \
+            --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys \
+            --output permit-cli-windows-x64.exe source/cli.deno.tsx
+
+      - name: Install create-dmg
+        run: |
+          brew install create-dmg
+
+      - name: Create DMG for macOS (arm64)
+        run: |
+          mkdir -p dmg/arm64
+          cp permit-cli-macos-arm64 dmg/arm64/permit
+          create-dmg \
+            --volname "Permit CLI" \
+            --window-pos 200 120 \
+            --window-size 800 400 \
+            --icon-size 100 \
+            --icon "permit" 200 190 \
+            --hide-extension "permit" \
+            --app-drop-link 600 185 \
+            "permit-cli-macos-arm64.dmg" \
+            "dmg/arm64/"
+
+      - name: Create DMG for macOS (x64)
+        run: |
+          mkdir -p dmg/x64
+          cp permit-cli-macos-x64 dmg/x64/permit
+          create-dmg \
+            --volname "Permit CLI" \
+            --window-pos 200 120 \
+            --window-size 800 400 \
+            --icon-size 100 \
+            --icon "permit" 200 190 \
+            --hide-extension "permit" \
+            --app-drop-link 600 185 \
+            "permit-cli-macos-x64.dmg" \
+            "dmg/x64/"
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            permit-cli-macos-arm64
+            permit-cli-macos-x64
+            permit-cli-linux-x64
+            permit-cli-windows-x64.exe
+            permit-cli-macos-arm64.dmg
+            permit-cli-macos-x64.dmg
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -15,7 +15,7 @@ The **Permit CLI** is an open-source command-line utility that empowers develope
 
 ## Installation
 
-Permit CLI can be installed in two ways:
+Permit CLI can be installed in multiple ways:
 
 ### Using Node.js
 
@@ -23,11 +23,28 @@ Permit CLI can be installed in two ways:
 npm install -g @permitio/cli
 ```
 
-### Using Deno
+### Using Pre-compiled Binary
+
+Download the latest binary for your platform from our [releases page](https://github.com/permitio/permit-cli/releases).
+
+For example, on macOS (arm64):
 
 ```bash
-deno install --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys https://raw.githubusercontent.com/permitio/permit-cli/main/source/cli.deno.tsx
+# Download the binary
+$ curl -L https://github.com/permitio/permit-cli/releases/latest/download/permit-cli-macos-arm64 -o permit-cli
+
+# Make it executable
+$ chmod +x permit-cli
+
+# Move it to your PATH
+$ sudo mv permit-cli /usr/local/bin/permit
 ```
+
+For other platforms, replace `permit-cli-macos-arm64` with:
+
+- macOS (x64): `permit-cli-macos-x64`
+- Linux (x64): `permit-cli-linux-x64`
+- Windows (x64): `permit-cli-windows-x64.exe`
 
 ## Usage
 
@@ -88,7 +105,7 @@ The `login` command will take you to the browser to perform user authentication 
 #### Example
 
 ```bash
-permit login
+$ permit login
 ```
 
 ---
@@ -100,7 +117,7 @@ This command will log you out from your Permit account and remove the stored key
 #### Example
 
 ```bash
-permit logout
+$ permit logout
 ```
 
 ---
@@ -123,16 +140,16 @@ Use this command to run a Permit PDP Docker container configured with your Permi
 
 ```bash
 # Run the PDP container
-permit pdp run
+$ permit pdp run
 
 # Run the PDP container with OPA exposed on port 8181
-permit pdp run --opa 8181
+$ permit pdp run --opa 8181
 
 # Print the Docker command without running the container
-permit pdp run --dry-run
+$ permit pdp run --dry-run
 
 # Run with a specific API key
-permit pdp run --api-key your_api_key
+$ permit pdp run --api-key your_api_key
 ```
 
 ### `pdp check`
