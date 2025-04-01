@@ -168,7 +168,7 @@ describe('APISyncUserComponent', () => {
 			);
 
 			await waitForEffects();
-			expect(lastFrame()).toContain('User Synced Successfully');
+			expect(lastFrame()).toMatch(/User Synced Successfully/);
 		});
 
 		it('should render error message when status is error', async () => {
