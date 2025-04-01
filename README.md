@@ -18,11 +18,13 @@ The **Permit CLI** is an open-source command-line utility that empowers develope
 Permit CLI can be installed in two ways:
 
 ### Using Node.js
+
 ```bash
 npm install -g @permitio/cli
 ```
 
 ### Using Deno
+
 ```bash
 deno install --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys https://raw.githubusercontent.com/permitio/permit-cli/main/source/cli.deno.tsx
 ```
