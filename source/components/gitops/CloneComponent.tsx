@@ -97,6 +97,7 @@ export default function CloneComponent({ apiKey, dryRun, project }: Props) {
 		scope.project_id,
 		apiKey,
 		project,
+		dryRun,
 	]);
 
 	const handleEnvironmentSelect = ({ value }: { value: string }) => {
@@ -134,8 +135,12 @@ export default function CloneComponent({ apiKey, dryRun, project }: Props) {
 		}
 	}, [state, exec, dryRun, execError]);
 	useEffect(() => {
-		if (state.status === 'success' || state.status === 'error') {
-			process.exit(state.status === 'error' ? 1 : 0);
+		if (
+			state.status === 'success' ||
+			state.status === 'error' ||
+			state.status === 'no_repo'
+		) {
+			process.exit(state.status === 'success' ? 0 : 1);
 		}
 	}, [state]);
 
