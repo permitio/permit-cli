@@ -7,100 +7,103 @@ import { PDPCheckUrlProps } from '../../commands/pdp/check-url.js';
 
 // Interface for the component's state
 interface CheckUrlState {
-  loading: boolean;
-  result: boolean | null;
-  error: string | null;
+	loading: boolean;
+	result: boolean | null;
+	error: string | null;
 }
 
 const PDPCheckUrlComponent: React.FC<PDPCheckUrlProps> = ({ options }) => {
-  const [state, setState] = useState<CheckUrlState>({
-    loading: true,
-    result: null,
-    error: null,
-  });
+	const [state, setState] = useState<CheckUrlState>({
+		loading: true,
+		result: null,
+		error: null,
+	});
 
-  const { getAllowedUrlCheck } = useCheckPdpApi();
+	const { getAllowedUrlCheck } = useCheckPdpApi();
 
-  useEffect(() => {
-    const checkUrl = async () => {
-      try {
-        // Parse user attributes if provided
-        const userAttributesObj: Record<string, string | number | boolean> = {};
-        
-        if (options.userAttributes && options.userAttributes.length > 0) {
-          for (const attrPair of options.userAttributes) {
-            const parsedAttrs = parseAttributes(attrPair);
-            Object.assign(userAttributesObj, parsedAttrs);
-          }
-        }
+	useEffect(() => {
+		const checkUrl = async () => {
+			try {
+				// Parse user attributes if provided
+				const userAttributesObj: Record<string, string | number | boolean> = {};
 
-        // Prepare the request payload
-        const payload = {
-          user: {
-            key: options.user,
-            // Always include attributes as a required field
-            attributes: userAttributesObj,
-          },
-          url: options.url,
-          http_method: options.method,
-          tenant: options.tenant,
-          context: {}, // Required empty object
-          sdk: 'permit-cli'
-        };
+				if (options.userAttributes && options.userAttributes.length > 0) {
+					for (const attrPair of options.userAttributes) {
+						const parsedAttrs = parseAttributes(attrPair);
+						Object.assign(userAttributesObj, parsedAttrs);
+					}
+				}
 
-        // Make the API call
-        const { data, error } = await getAllowedUrlCheck(payload, options.pdpurl);
+				// Prepare the request payload
+				const payload = {
+					user: {
+						key: options.user,
+						// Always include attributes as a required field
+						attributes: userAttributesObj,
+					},
+					url: options.url,
+					http_method: options.method,
+					tenant: options.tenant,
+					context: {}, // Required empty object
+					sdk: 'permit-cli',
+				};
 
-        if (error) {
-          setState({ loading: false, result: null, error });
-          return;
-        }
+				// Make the API call
+				const { data, error } = await getAllowedUrlCheck(
+					payload,
+					options.pdpurl,
+				);
 
-        setState({ loading: false, result: data?.allow ?? false, error: null });
-      } catch (e) {
-        setState({
-          loading: false,
-          result: null,
-          error: e instanceof Error ? e.message : String(e),
-        });
-      }
-    };
+				if (error) {
+					setState({ loading: false, result: null, error });
+					return;
+				}
 
-    checkUrl();
-  }, [options, getAllowedUrlCheck]);
+				setState({ loading: false, result: data?.allow ?? false, error: null });
+			} catch (e) {
+				setState({
+					loading: false,
+					result: null,
+					error: e instanceof Error ? e.message : String(e),
+				});
+			}
+		};
 
-  if (state.loading) {
-    return (
-      <Text>
-        <Spinner type="dots" /> Checking URL permission...
-      </Text>
-    );
-  }
+		checkUrl();
+	}, [options, getAllowedUrlCheck]);
 
-  if (state.error) {
-    return (
-      <Box flexDirection="column">
-        <Text color="red">Error checking URL permission:</Text>
-        <Text>{state.error}</Text>
-      </Box>
-    );
-  }
+	if (state.loading) {
+		return (
+			<Text>
+				<Spinner type="dots" /> Checking URL permission...
+			</Text>
+		);
+	}
 
-  return (
-    <Box flexDirection="column">
-      <Text>URL: {options.url}</Text>
-      <Text>Method: {options.method}</Text>
-      <Text>User: {options.user}</Text>
-      <Text>Tenant: {options.tenant}</Text>
-      <Text>
-        {state.result === true ? (
-          <Text color="green">✓ Allowed</Text>
-        ) : (
-          <Text color="red">✗ Denied</Text>
-        )}
-      </Text>
-    </Box>
-  );
+	if (state.error) {
+		return (
+			<Box flexDirection="column">
+				<Text color="red">Error checking URL permission:</Text>
+				<Text>{state.error}</Text>
+			</Box>
+		);
+	}
+
+	return (
+		<Box flexDirection="column">
+			<Text>URL: {options.url}</Text>
+			<Text>Method: {options.method}</Text>
+			<Text>User: {options.user}</Text>
+			<Text>Tenant: {options.tenant}</Text>
+			<Text>
+				{state.result === true ? (
+					<Text color="green">✓ Allowed</Text>
+				) : (
+					<Text color="red">✗ Denied</Text>
+				)}
+			</Text>
+		</Box>
+	);
 };
 
 export default PDPCheckUrlComponent;
