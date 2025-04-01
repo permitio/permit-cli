@@ -50,7 +50,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description: 'Comma-separated list of users to filter logs',
+				description: 'Comma-separated list of the users to filter logs by',
 				alias: 'u',
 			}),
 		),
