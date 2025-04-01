@@ -21,7 +21,7 @@ export const options = zod.object({
 		.default('http://localhost:7766')
 		.describe(
 			option({
-				description: 'URL of the PDP to test against',
+				description: 'URL of the (new) PDP where you want to check the decisions',
 				alias: 'p',
 			}),
 		),
