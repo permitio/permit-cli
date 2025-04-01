@@ -2,6 +2,7 @@ import React from 'react';
 import { AuthProvider } from '../../../components/AuthProvider.js';
 import zod from 'zod';
 import { option } from 'pastel';
+import CloneComponent from '../../../components/gitops/CloneComponent.js';
 
 export const description =
 	'Clone a single Environment or the entire repository from active GitOps Environment';
@@ -43,7 +44,11 @@ type Props = {
 export default function Clone({ options }: Props) {
 	return (
 		<AuthProvider scope={'project'} key={options.apiKey}>
-			<></>
+			<CloneComponent
+				apiKey={options.apiKey}
+				dryRun={options.dryRun}
+				project={options.project}
+			/>
 		</AuthProvider>
 	);
 }
