@@ -18,10 +18,23 @@ export const useCheckPdpApi = () => {
 		[authenticatedPdpClient],
 	);
 
+	// Method for URL permission check using type assertion for compatibility
+	const getAllowedUrlCheck = useCallback(
+		async (body: any, pdp_url?: string) => {
+			return await authenticatedPdpClient(pdp_url).POST(
+				'/allowed_url',
+				undefined,
+				body,
+			);
+		},
+		[authenticatedPdpClient],
+	);
+
 	return useMemo(
 		() => ({
 			getAllowedCheck,
+			getAllowedUrlCheck,
 		}),
-		[getAllowedCheck],
+		[getAllowedCheck, getAllowedUrlCheck],
 	);
 };
