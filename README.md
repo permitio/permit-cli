@@ -56,6 +56,7 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
 - `opa` - a collection of commands for better OPA experience
   - `policy` - print the available policies of an active OPA instance
 - `gitops create github` - configure Permit environment to use [GitOps flow](https://docs.permit.io/integrations/gitops/overview/)
+- `gitops env clone` - clone a environment of the gitops repository or a complete project.
 - `api` - direct access to Permit.io's API functionality
   - `users` - manage users in your Permit.io account
     - `list` - list all users in your Permit.io account
@@ -407,6 +408,20 @@ This command will configure your Permit environment to use the GitOps flow with 
 
 - `--key <string>` (Optional) - a Permit API key to authenticate the operation. If not provided, the command will take the one you logged in with.
 - `--inactive <boolean>` (Optional) - set the environment to inactive after configuring GitOps (default: `false`)
+
+---
+
+### `gitops env clone`
+
+This clones the environment or the complete project from the active gitops repository.
+
+#### options
+
+- `--api-key <string>` (Optional) - The API key to select the project. The API Key is of the scope `Project`.
+- `--dry-run` (Optional) - Instead of executing the code it just displays the command to be executed.
+- `--project` (Optional) - Instead of selecting an environment branch to clone it does the standard clone operation.
+
+---
 
 ### `api`
 
