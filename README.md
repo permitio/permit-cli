@@ -1,4 +1,4 @@
-# Permit CLI [![test](https://github.com/permitio/permit-cli/actions/workflows/node.js.yml/badge.svg)](https://github.com/vadimdemedes/pastel/actions/workflows/node.js.yml) [![Join our Slack!](https://img.shields.io/badge/Slack%20Community-4A154B?logo=slack&logoColor=white)](https://io.permit.io/cli-slack) ![Early Stage Development](https://img.shields.io/badge/⚠️_Early_Stage_Development-2B1400) ![Follow us on LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)
+# Permit CLI [![test](https://github.com/permitio/permit-cli/actions/workflows/node.js.yml/badge.svg)](https://github.com/permitio/permit-cli/actions/workflows/node.js.yml) [![Join our Slack!](https://img.shields.io/badge/Slack%20Community-4A154B?logo=slack&logoColor=white)](https://io.permit.io/cli-slack) ![Early Stage Development](https://img.shields.io/badge/⚠️_Early_Stage_Development-2B1400) ![Follow us on LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)
 
 <p align="center">
 <a href="https://www.permit.io/?utm_source=github&utm_medium=referral&utm_campaign=cli" align="center">
@@ -15,10 +15,16 @@ The **Permit CLI** is an open-source command-line utility that empowers develope
 
 ## Installation
 
-Permit CLI is now available only via the `npm` and requires a [Node.js installation](https://nodejs.org/en/download) to run
+Permit CLI can be installed in two ways:
 
-```console
+### Using Node.js
+```bash
 npm install -g @permitio/cli
+```
+
+### Using Deno
+```bash
+deno install --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys https://raw.githubusercontent.com/permitio/permit-cli/main/source/cli.deno.tsx
 ```
 
 ## Usage
@@ -80,7 +86,7 @@ The `login` command will take you to the browser to perform user authentication 
 #### Example
 
 ```bash
-$ permit login
+permit login
 ```
 
 ---
@@ -115,16 +121,16 @@ Use this command to run a Permit PDP Docker container configured with your Permi
 
 ```bash
 # Run the PDP container
-$ permit pdp run
+permit pdp run
 
 # Run the PDP container with OPA exposed on port 8181
-$ permit pdp run --opa 8181
+permit pdp run --opa 8181
 
 # Print the Docker command without running the container
-$ permit pdp run --dry-run
+permit pdp run --dry-run
 
 # Run with a specific API key
-$ permit pdp run --api-key your_api_key
+permit pdp run --api-key your_api_key
 ```
 
 ### `pdp check`
@@ -144,7 +150,7 @@ Use this command to perform an authorization check against the PDP. The command 
 #### Example
 
 ```bash
-$ permit  pdp check --user eventHandler --action update --resource Widget:dashboard-1-widget
+permit pdp check --user eventHandler --action update --resource Widget:dashboard-1-widget
 ```
 
 ### `pdp stats`
@@ -162,7 +168,7 @@ Use this command to view statistics about your PDP's performance and usage. This
 #### Example
 
 ```bash
-$ permit pdp stats
+permit pdp stats
 ```
 
 ---
@@ -187,7 +193,7 @@ Developers and CI pipelines can use this command to enable secure blue-green dep
 #### Example
 
 ```bash
-$ permit env copy --key permit_key_.......... --from staging --to production --conflict-strategy overwrite
+permit env copy --key permit_key_.......... --from staging --to production --conflict-strategy overwrite
 ```
 
 ### `env create`
@@ -206,13 +212,13 @@ This command creates a new environment in a specified project. This is useful fo
 #### Example
 
 ```bash
-$ permit env create --key permit_key_.......... --name "Staging" --description "Staging environment for testing"
+permit env create --key permit_key_.......... --name "Staging" --description "Staging environment for testing"
 ```
 
 **You can also create a complex environment with all options:**
 
 ```bash
-$ permit env create --apiKey permit_key_.......... --name "Development" --envKey "dev" --description "Dev environment" --customBranchName "dev-branch" --jwks '{"ttl": 3600}' --settings '{"debug": true}'
+permit env create --api-key permit_key_.......... --name "Development" --env-key "dev" --description "Dev environment" --custom-branch-name "dev-branch" --jwks '{"ttl": 3600}' --settings '{"debug": true}'
 ```
 
 ### `env delete`
@@ -228,13 +234,13 @@ This command deletes an existing environment. Use with caution as this operation
 #### Example
 
 ```bash
-$ permit env delete --key permit_key_.......... --environmentId env_456
+permit env delete --key permit_key_.......... --environment-id env_456
 ```
 
 **Or to force deletion without confirmation:**
 
 ```bash
-$ permit env delete --key permit_key_.......... --environmentId env_456 --force
+permit env delete --key permit_key_.......... --environment-id env_456 --force
 ```
 
 > **Note:** If you've authenticated via `permit login`, the commands will use your current project context automatically.
@@ -256,7 +262,7 @@ This command can run in the CI after creating a new environment for development 
 #### Example
 
 ```bash
-$ permit env member --key permit_key_.......... --environment staging --project my-project --email gabriel@permit.io --role Owner
+permit env member --key permit_key_.......... --environment staging --project my-project --email gabriel@permit.io --role Owner
 ```
 
 ### `env select`
@@ -270,31 +276,30 @@ This command will let you select a different active Permit.io environment. This 
 #### Example
 
 ```bash
-$ permit env select --key permit_key_.........
+permit env select --key permit_key_.........
 ```
 
 ### `env export terraform`
 
 This command exports your Permit environment configuration as a Terraform HCL file. This is useful for users who want to start working with Terraform after configuring their Permit settings through the UI or API. The command export all environment content (resources, roles, user sets, resource sets, condition sets) in the Permit Terraform provider format.
 
-Options
+#### Options
 
 - `--key <string>` (Optional) - a Permit API key to authenticate the operation. If not provided, the command will use the AuthProvider to get the API key you logged in with.
-
-- `--file <string>` (Optional) - a file path where the exported HCL should be saved. If not provided, the output will be printed to the console.
+- `--file <string>` (Optional) - the file to export the configuration to (will prompt if not provided)
 
 ### Example
 
 ### Using the permit key
 
 ```bash
-$ permit env export terraform --key permit_key_.......... --file permit-config.tf
+permit env export terraform --key permit_key_.......... --file permit-config.tf
 ```
 
 ### With login session
 
 ```bash
-$ permit env export terraform --file permit-config.tf
+permit env export terraform --file permit-config.tf
 ```
 
 ### output configuration to console
@@ -318,7 +323,7 @@ Use this command to list all the available policy templates to apply to your env
 #### Example
 
 ```bash
-$ permit env template list
+permit env template list
 ```
 
 ### `env template apply`
@@ -335,7 +340,7 @@ The command is using the Terraform provider to apply the template, but it's not 
 #### Example
 
 ```bash
-$ permit env template apply --template my-template
+permit env template apply --template my-template
 ```
 
 ---
@@ -356,7 +361,7 @@ This command will print the available policies of an active OPA instance. This i
 #### Example
 
 ```bash
-$ permit opa policy --server-url http://localhost:8181 --api-key permit_key_..........
+permit opa policy --server-url http://localhost:8181 --api-key permit_key_..........
 ```
 
 ---

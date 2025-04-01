@@ -21,23 +21,32 @@ jobs:
       - name: Install npm dependencies
         run: npm install
 
+      - name: Build Node.js version
+        run: |
+          npm run build
+          npm run postbuild
+
       - name: Setup Deno
         uses: denoland/setup-deno@v1
         with:
           deno-version: v2.2.6
 
-      - name: Regenerate lock file
-        run: deno cache --reload source/cli.tsx
+      - name: Install Deno dependencies
+        run: deno cache source/cli.deno.tsx
 
-      - name: Install dependencies
-        run: deno cache source/cli.tsx
-
-      - name: Build
+      - name: Build Deno version
         run: deno task build
 
-      - name: Upload build artifact
+      - name: Upload Node.js artifact
         uses: actions/upload-artifact@v4
         with:
-          name: permit-cli
+          name: permit-cli-node
+          path: dist/
+          retention-days: 7
+
+      - name: Upload Deno artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: permit-cli-deno
           path: permit-cli
           retention-days: 7

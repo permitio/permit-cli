@@ -1,13 +1,17 @@
 {
 	"extends": "@sindresorhus/tsconfig",
 	"compilerOptions": {
-		"jsx": "react",
-		"moduleResolution": "node16",
-		"module": "Node16",
+		"target": "ES2020",
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"esModuleInterop": true,
+		"jsx": "react-jsx",
+		"strict": true,
+		"skipLibCheck": true,
 		"outDir": "dist",
-		"noUncheckedIndexedAccess": true,
-		"strict": true
+		"rootDir": "source",
+		"noUnusedLocals": false
 	},
-	"include": ["source", "tests/components/APISyncUserComponent.test.tsx"],
-	"exclude": ["node_modules", "source/lib/api"]
+	"include": ["source/**/*"],
+	"exclude": ["node_modules", "dist"]
 }
