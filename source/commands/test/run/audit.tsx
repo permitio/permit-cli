@@ -32,7 +32,7 @@ export const options = zod.object({
 		.default(24)
 		.describe(
 			option({
-				description: 'Number of hours to fetch audit logs for (6-72)',
+				description: 'Number of hours to fetch audit logs for (6-72). Default value is 24',
 				alias: 't',
 			}),
 		),
