@@ -79,15 +79,15 @@ export default function APISyncUserComponent({ options }: Props) {
 				<Text color="red">Error: {formatErrorMessage(errorMessage)}</Text>
 			)}
 			{status === 'done' && (
-				<Box flexDirection='column'>
-					<Text color="green">  User Synced Successfully </Text>
+				<Box flexDirection="column">
+					<Text color="green"> User Synced Successfully </Text>
 					{payload.key && <Text>UserId: {payload.key}</Text>}
 					{payload.firstName && <Text>Name: {payload.firstName}</Text>}
 					{payload.lastName && <Text>Last Name: {payload.lastName}</Text>}
 					{payload.email && <Text>Email: {payload.email}</Text>}
 					{payload.attributes && (
 						<Text> Attribute: {JSON.stringify(payload.attributes)}</Text>
-				)}
+					)}
 
 					{payload.roleAssignments && (
 						<Text>Roles: {JSON.stringify(payload.roleAssignments)}</Text>
