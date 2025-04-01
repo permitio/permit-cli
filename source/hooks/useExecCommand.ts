@@ -4,23 +4,29 @@ import { promisify } from 'util';
 
 const execPromise = promisify(execCallback);
 
+type ExecOptions = {
+	timeout?: number;
+};
+
 export default function useExecCommand() {
 	const [error, setError] = useState<string | null>(null);
 
-	const exec = useCallback(async (command: string) => {
-		try {
-			setError(null);
-			const { stdout, stderr } = await execPromise(command);
-			if (stderr && !stdout) {
-				setError(stderr);
-				throw new Error(stderr);
-			}
+	const exec = useCallback(
+		async (command: string, options: ExecOptions = {}) => {
+			const { timeout } = options;
 
-			return stdout;
-		} catch (err) {
-			setError(err instanceof Error ? err.message : String(err));
-			throw err;
-		}
-	}, []);
+			try {
+				setError(null);
+				const { stdout, stderr } = await execPromise(command, { timeout });
+				// Return both stdout and stderr
+				return { stdout, stderr };
+			} catch (err) {
+				setError(err instanceof Error ? err.message : String(err));
+				throw err;
+			}
+		},
+		[],
+	);
+
 	return { error, exec };
 }

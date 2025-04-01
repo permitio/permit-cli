@@ -24,7 +24,7 @@ type CloneState =
 	  }
 	| { status: 'ready_to_clone'; command: string }
 	| { status: 'cloning' }
-	| { status: 'success'; output: string };
+	| { status: 'success'; output: string; command: string };
 
 type Props = {
 	apiKey?: string;
@@ -52,6 +52,10 @@ export default function CloneComponent({ apiKey, dryRun, project }: Props) {
 				}
 				if (project) {
 					const command = `git clone ${policyRepo}`;
+					if (dryRun) {
+						setState({ status: 'success', output: command, command });
+						return;
+					}
 					setState({ status: 'ready_to_clone', command });
 					return;
 				}
@@ -98,6 +102,10 @@ export default function CloneComponent({ apiKey, dryRun, project }: Props) {
 	const handleEnvironmentSelect = ({ value }: { value: string }) => {
 		if (state.status !== 'select_environment') return;
 		const command = `git clone --single-branch --branch permit/generated/${value} ${state.repourl}`;
+		if (dryRun) {
+			setState({ status: 'success', output: command, command });
+			return;
+		}
 		setState({ status: 'ready_to_clone', command });
 	};
 	useEffect(() => {
@@ -105,8 +113,15 @@ export default function CloneComponent({ apiKey, dryRun, project }: Props) {
 			const executeCommand = async () => {
 				try {
 					setState({ status: 'cloning' });
-					const output = await exec(state.command);
-					setState({ status: 'success', output });
+					// Set a timeout of 300000 ms (5 minutes)
+					const { stdout, stderr } = await exec(state.command, {
+						timeout: 300000,
+					});
+					setState({
+						status: 'success',
+						output: `${stdout}\n${stderr}`,
+						command: state.command,
+					});
 				} catch (err) {
 					setState({
 						status: 'error',
@@ -120,20 +135,20 @@ export default function CloneComponent({ apiKey, dryRun, project }: Props) {
 			executeCommand();
 		}
 	}, [state, exec, dryRun, execError]);
-	switch (state.status) {
-		case 'loading':
-			return (
+
+	return (
+		<>
+			{state.status === 'loading' && (
 				<Box>
 					<Spinner type="dots" />
 					<Text>Checking for active Gitops repository....</Text>
 				</Box>
-			);
-		case 'no_repo':
-			return <Text color="red">No active Gitops repository found</Text>;
-		case 'error':
-			return <Text color="red">{state.message}</Text>;
-		case 'select_environment':
-			return (
+			)}
+			{state.status === 'no_repo' && (
+				<Text color="red">No active Gitops repository found</Text>
+			)}
+			{state.status === 'error' && <Text color="red">{state.message}</Text>}
+			{state.status === 'select_environment' && (
 				<Box flexDirection="column">
 					<Text>Select the Environment to clone</Text>
 					<SelectInput
@@ -144,34 +159,29 @@ export default function CloneComponent({ apiKey, dryRun, project }: Props) {
 						onSelect={handleEnvironmentSelect}
 					/>
 				</Box>
-			);
-		case 'ready_to_clone':
-			if (dryRun) {
-				return (
-					<Box flexDirection="column">
-						<Text>The following command should be executed:</Text>
-						<Text color="green">{state.command}</Text>
-					</Box>
-				);
-			}
-			return (
+			)}
+			{state.status === 'ready_to_clone' && (
 				<Box flexDirection="column">
 					<Text>Executing....</Text>
 				</Box>
-			);
-		case 'cloning':
-			return (
+			)}
+			{state.status === 'cloning' && (
 				<Box>
 					<Spinner type="dots" />
 					<Text>Cloning the Environment...</Text>
 				</Box>
-			);
-		case 'success':
-			return (
-				<Box>
-					<Text>SucessFully cloned the repository</Text>
-					<Text>{state.output}</Text>
-				</Box>
-			);
-	}
+			)}
+			{state.status === 'success' &&
+				(dryRun ? (
+					<Box>
+						<Text>Command to execute:</Text>
+						<Text>{state.command}</Text>
+					</Box>
+				) : (
+					<Box>
+						<Text>SucessFully cloned the repository</Text>
+					</Box>
+				))}
+		</>
+	);
 }
