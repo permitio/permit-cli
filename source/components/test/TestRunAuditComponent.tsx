@@ -15,7 +15,7 @@ import {
 	collectResourceTypes,
 	createPdpRequest,
 	normalizeDetailedLog,
-} from './utils/auditUtils.js';
+} from './auditUtils.js';
 import ErrorView from './views/ErrorView.js';
 import LoadingView from './views/LoadingView.js';
 import ResultsView from './views/ResultsView.js';
