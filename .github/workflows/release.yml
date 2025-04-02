@@ -20,25 +20,25 @@ jobs:
         run: |
           deno compile --target aarch64-apple-darwin \
             --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys \
-            --output permit-cli-macos-arm64 source/cli.deno.tsx
+            --output permit-cli-macos-arm64 source/cli.tsx
 
       - name: Build for macOS (x64)
         run: |
           deno compile --target x86_64-apple-darwin \
             --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys \
-            --output permit-cli-macos-x64 source/cli.deno.tsx
+            --output permit-cli-macos-x64 source/cli.tsx
 
       - name: Build for Linux (x64)
         run: |
           deno compile --target x86_64-unknown-linux-gnu \
             --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys \
-            --output permit-cli-linux-x64 source/cli.deno.tsx
+            --output permit-cli-linux-x64 source/cli.tsx
 
       - name: Build for Windows (x64)
         run: |
           deno compile --target x86_64-pc-windows-msvc \
             --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys \
-            --output permit-cli-windows-x64.exe source/cli.deno.tsx
+            --output permit-cli-windows-x64.exe source/cli.tsx
 
       - name: Install create-dmg
         run: |

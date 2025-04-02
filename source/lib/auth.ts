@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
-import * as http from 'node:http';
+import { IncomingMessage, ServerResponse, createServer } from 'node:http';
 import open from 'open';
 import * as pkg from 'keytar';
 import {
@@ -17,6 +17,39 @@ import { setTimeout } from 'timers';
 import { Buffer } from 'buffer';
 
 const { setPassword, getPassword, deletePassword } = pkg.default;
+
+// Runtime detection
+const isNode = typeof process !== 'undefined' && process.versions?.node;
+
+// Import appropriate modules based on runtime
+let crypto: any;
+let http: any;
+
+if (isNode) {
+	crypto = await import('node:crypto');
+	http = await import('node:http');
+} else {
+	// Browser environment
+	crypto = {
+		createHash: (algorithm: string) => ({
+			update: (data: string | Uint8Array) => ({
+				digest: () => {
+					const encoder = new TextEncoder();
+					const dataArray = typeof data === 'string' ? encoder.encode(data) : data;
+					return crypto.subtle.digest(algorithm, dataArray);
+				}
+			})
+		})
+	};
+	http = {
+		createServer: (handler: any) => ({
+			listen: (port: number, host: string) => {
+				// Browser doesn't support server creation
+				throw new Error('Server creation not supported in browser environment');
+			}
+		})
+	};
+}
 
 export enum TokenType {
 	APIToken = 'APIToken',
@@ -79,7 +112,7 @@ export const cleanAuthToken = async () => {
 export const authCallbackServer = async (verifier: string): Promise<string> => {
 	return new Promise<string>(resolve => {
 		// Define the server logic
-		const server = http.createServer(async (request, res) => {
+		const server = createServer(async (request: IncomingMessage, res: ServerResponse) => {
 			// Get the authorization code from the query string
 			const url = new URL(request.url!, `http://${request.headers.host}`);
 			if (!url.searchParams.has('code')) {

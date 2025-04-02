@@ -7,46 +7,43 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
-      - name: Install npm dependencies
+      - name: Install dependencies
         run: npm install
 
-      - name: Build Node.js version
-        run: |
-          npm run build
-          npm run postbuild
+      - name: Run tests
+        run: npm test
+
+      - name: Run lint
+        run: npm run lint
+
+  deno:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Setup Deno
         uses: denoland/setup-deno@v1
         with:
           deno-version: v2.2.6
 
-      - name: Install Deno dependencies
-        run: deno cache source/cli.deno.tsx
+      - name: Cache dependencies
+        run: deno cache source/cli.tsx
 
-      - name: Build Deno version
-        run: deno task build
+      - name: Run tests
+        run: deno test --allow-read --allow-write --allow-net --allow-env --allow-run --allow-sys
 
-      - name: Upload Node.js artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: permit-cli-node
-          path: dist/
-          retention-days: 7
+      - name: Run lint
+        run: deno lint
 
-      - name: Upload Deno artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: permit-cli-deno
-          path: permit-cli
-          retention-days: 7
+      - name: Run format check
+        run: deno fmt --check
