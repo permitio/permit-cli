@@ -1,362 +1,24 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Box, Text } from 'ink';
-import Spinner from 'ink-spinner';
+import { Text } from 'ink';
 import useClient from '../../hooks/useClient.js';
-import useAuditLogs, {
+import useAuditLogs from '../../hooks/useAuditLogs.js';
+import {
+	ApiScope,
 	AuditLog,
+	CommandOptions,
+	ComparisonResult,
 	DetailedAuditLog,
-	AuditContext,
-} from '../../hooks/useAuditLogs.js';
-
-// ========================
-// Type Definitions
-// ========================
-
-interface ApiScope {
-	project_id: string;
-	environment_id: string;
-	organization_id: string;
-}
-
-interface ComparisonResult {
-	auditLog: DetailedAuditLog;
-	originalDecision: boolean;
-	newDecision: boolean;
-	matches: boolean;
-	error?: string;
-}
-
-interface ProgressState {
-	current: number;
-	total: number;
-}
-
-interface CommandOptions {
-	pdpUrl: string;
-	timeFrame: number;
-	sourcePdp?: string;
-	users?: string;
-	resources?: string;
-	tenant?: string;
-	action?: string;
-	decision?: 'allow' | 'deny';
-}
-
-type ProcessPhase = 'fetching' | 'processing' | 'checking' | 'complete';
-
-// Define specific types for API responses and requests
-interface AuditLogResponseData {
-	id?: string;
-	timestamp?: string;
-	user_key?: string;
-	user_email?: string;
-	resource?: string;
-	resource_type?: string;
-	action?: string;
-	tenant?: string | null;
-	decision?: boolean;
-	pdp_config_id?: string;
-	context?: unknown;
-	[key: string]: unknown;
-}
-
-interface PdpRequestData {
-	tenant: string;
-	action: string;
-	user: { key: string };
-	resource: { type: string; key?: string };
-}
-
-interface PdpResponseData {
-	allow?: boolean;
-	allowed?: boolean;
-	result?: boolean;
-	[key: string]: unknown;
-}
-
-// ========================
-// Helper Functions
-// ========================
-
-/**
- * Collects all resource types from audit logs
- */
-const collectResourceTypes = (logs: AuditLog[]): Set<string> => {
-	const types = new Set<string>();
-	logs.forEach(log => {
-		if (log.resource_type) {
-			types.add(log.resource_type);
-		}
-	});
-	return types;
-};
-
-/**
- * Gets a default resource type when none is provided
- */
-const getDefaultResourceType = (types: Set<string>): string => {
-	for (const type of types) {
-		return type; // Return the first type found
-	}
-	return 'resource'; // Return default if Set is empty
-};
-
-/**
- * Check if a value is a valid AuditContext
- */
-function isValidAuditContext(value: unknown): value is AuditContext {
-	if (!value || typeof value !== 'object') return false;
-
-	const ctx = value as Record<string, unknown>;
-	return (
-		'user' in ctx &&
-		'resource' in ctx &&
-		'tenant' in ctx &&
-		'action' in ctx &&
-		typeof ctx['user'] === 'object' &&
-		typeof ctx['resource'] === 'object'
-	);
-}
-
-/**
- * Normalizes and enriches a detailed log with consistent fields
- */
-const normalizeDetailedLog = (
-	response: AuditLogResponseData,
-	originalLog: AuditLog,
-	resourceTypes: Set<string>,
-): DetailedAuditLog | null => {
-	try {
-		// Get a suitable resource type
-		const resourceType =
-			response.resource_type ||
-			originalLog.resource_type ||
-			getDefaultResourceType(resourceTypes);
-
-		// Get user identifier
-		const userId =
-			response.user_key || response.user_email || originalLog.user_key || '';
-
-		if (!userId) {
-			return null; // Skip logs without a user ID
-		}
-
-		// Create a default context
-		const defaultContext: AuditContext = {
-			user: {
-				id: userId,
-				key: userId,
-			},
-			resource: {
-				type: resourceType,
-				id: response.resource || originalLog.resource || '',
-			},
-			tenant: response.tenant || originalLog.tenant || 'default',
-			action: response.action || originalLog.action || '',
-		};
-
-		// Check if response.context is a valid AuditContext
-		const contextValue = isValidAuditContext(response.context)
-			? response.context
-			: defaultContext;
-
-		// Create a normalized detailed log
-		const detailedLog: DetailedAuditLog = {
-			...(response as AuditLog),
-			id: response.id || originalLog.id,
-			timestamp: response.timestamp || originalLog.timestamp,
-			user_id: userId,
-			user_key: response.user_key || originalLog.user_key,
-			resource: response.resource || originalLog.resource || '',
-			resource_type: resourceType,
-			tenant: response.tenant || originalLog.tenant || 'default',
-			action: response.action || originalLog.action || '',
-			decision: response.decision === true,
-			context: contextValue,
-		};
-
-		return detailedLog;
-	} catch {
-		// Just returning null on any error
-		return null;
-	}
-};
-
-/**
- * Creates a properly formatted PDP request
- */
-const createPdpRequest = (
-	log: DetailedAuditLog,
-	resourceTypes: Set<string>,
-): PdpRequestData => {
-	return {
-		tenant: log.tenant || 'default',
-		action: log.action,
-		user: {
-			key: log.user_key || log.user_id,
-		},
-		resource: {
-			type: log.resource_type || getDefaultResourceType(resourceTypes),
-			...(log.resource ? { key: log.resource } : {}),
-		},
-	};
-};
-
-// ========================
-// UI Components
-// ========================
-
-interface ErrorViewProps {
-	error: string;
-	pdpUrl: string;
-}
-
-const ErrorView: React.FC<ErrorViewProps> = ({ error, pdpUrl }) => (
-	<Box flexDirection="column">
-		<Text color="red">Error: {error}</Text>
-		<Box marginTop={1}>
-			<Text>Troubleshooting tips:</Text>
-		</Box>
-		<Box paddingLeft={2} flexDirection="column" marginTop={1}>
-			<Text>
-				1. Ensure you{'\u2019'}re logged in with valid credentials (run{' '}
-				{'\u2018'}permit login{'\u2019'})
-			</Text>
-			<Text>2. Check if you have permission to access audit logs</Text>
-			<Text>3. Verify your PDP URL is correct: {pdpUrl}</Text>
-			<Text>4. Try with a smaller time frame: --timeFrame 6</Text>
-		</Box>
-	</Box>
-);
-
-interface LoadingViewProps {
-	phase: ProcessPhase;
-	progress: ProgressState;
-}
-
-const LoadingView: React.FC<LoadingViewProps> = ({ phase, progress }) => (
-	<Box flexDirection="column">
-		<Box>
-			<Text>
-				<Text color="green">
-					<Spinner type="dots" />
-				</Text>{' '}
-				{phase === 'fetching' && 'Fetching audit logs...'}
-				{phase === 'processing' &&
-					`Processing audit logs (${progress.current}/${progress.total})...`}
-				{phase === 'checking' &&
-					`Checking against PDP (${progress.current}/${progress.total})...`}
-			</Text>
-		</Box>
-	</Box>
-);
-
-// Result view components
-interface ResultViewProps {
-	result: ComparisonResult;
-}
-
-const ErrorResultView: React.FC<ResultViewProps> = ({ result }) => (
-	<>
-		<Text>User: {result.auditLog.user_id}</Text>
-		<Text>
-			Resource: {result.auditLog.resource} (type:{' '}
-			{result.auditLog.resource_type})
-		</Text>
-		<Text>Action: {result.auditLog.action}</Text>
-		<Text>Tenant: {result.auditLog.tenant}</Text>
-		<Text color="yellow">Error: {result.error}</Text>
-	</>
-);
-
-const DifferenceResultView: React.FC<ResultViewProps> = ({ result }) => (
-	<>
-		<Text>User: {result.auditLog.user_id}</Text>
-		<Text>
-			Resource: {result.auditLog.resource} (type:{' '}
-			{result.auditLog.resource_type})
-		</Text>
-		<Text>Action: {result.auditLog.action}</Text>
-		<Text>Tenant: {result.auditLog.tenant}</Text>
-		<Text>
-			Original:{' '}
-			<Text color={result.originalDecision ? 'green' : 'red'}>
-				{result.originalDecision ? 'ALLOW' : 'DENY'}
-			</Text>
-			, New:{' '}
-			<Text color={result.newDecision ? 'green' : 'red'}>
-				{result.newDecision ? 'ALLOW' : 'DENY'}
-			</Text>
-		</Text>
-	</>
-);
-
-interface DifferencesViewProps {
-	results: ComparisonResult[];
-}
-
-const DifferencesView: React.FC<DifferencesViewProps> = ({ results }) => (
-	<Box flexDirection="column" marginBottom={1}>
-		<Text bold underline>
-			Differences found:
-		</Text>
-		{results.map((result, i) => (
-			<Box key={i} flexDirection="column" marginTop={1} paddingLeft={2}>
-				{result.error ? (
-					<ErrorResultView result={result} />
-				) : (
-					<DifferenceResultView result={result} />
-				)}
-			</Box>
-		))}
-	</Box>
-);
-
-interface ResultsViewProps {
-	results: ComparisonResult[];
-	pdpUrl: string;
-}
-
-const ResultsView: React.FC<ResultsViewProps> = ({ results, pdpUrl }) => {
-	// Count matches and mismatches
-	const matches = results.filter(r => r.matches).length;
-	const mismatches = results.length - matches;
-	const errors = results.filter(r => r.error).length;
-
-	return (
-		<Box flexDirection="column">
-			<Box marginBottom={1}>
-				<Text>
-					Compared {results.length} audit logs against PDP at {pdpUrl}
-				</Text>
-			</Box>
-			<Box marginBottom={1}>
-				<Text>
-					Results: <Text color="green">{matches} matches</Text>,{' '}
-					<Text color={mismatches > 0 ? 'red' : 'green'}>
-						{mismatches} differences
-					</Text>
-					{errors > 0 && <Text color="yellow">, {errors} errors</Text>}
-				</Text>
-			</Box>
-
-			{mismatches > 0 && (
-				<DifferencesView results={results.filter(r => !r.matches)} />
-			)}
-
-			{mismatches === 0 && (
-				<Text color="green">
-					✓ All decisions match! The PDP behaves identically to the audit log
-					data.
-				</Text>
-			)}
-		</Box>
-	);
-};
-
-// ========================
-// Component Implementation
-// ========================
+	ProcessPhase,
+	ProgressState,
+} from './auditTypes.js';
+import {
+	collectResourceTypes,
+	createPdpRequest,
+	normalizeDetailedLog,
+} from './utils/auditUtils.js';
+import ErrorView from './views/ErrorView.js';
+import LoadingView from './views/LoadingView.js';
+import ResultsView from './views/ResultsView.js';
 
 const TestRunAuditComponent: React.FC<{ options: CommandOptions }> = ({
 	options,
@@ -424,12 +86,12 @@ const TestRunAuditComponent: React.FC<{ options: CommandOptions }> = ({
 		try {
 			setPhase('fetching');
 
-			// Parse and prepare filter options - match the original code
+			// Parse and prepare filter options
 			const filterOptions = {
 				timeFrame: options.timeFrame,
 				sourcePdp: options.sourcePdp,
-				users: options.users ? options.users.split(',') : undefined,
-				resources: options.resources ? options.resources.split(',') : undefined,
+				users: options.users,
+				resources: options.resources,
 				tenant: options.tenant,
 				action: options.action,
 				decision:
@@ -497,11 +159,7 @@ const TestRunAuditComponent: React.FC<{ options: CommandOptions }> = ({
 				}
 
 				// Process and normalize the log data
-				const detailedLog = normalizeDetailedLog(
-					data as AuditLogResponseData,
-					log,
-					resourceTypes,
-				);
+				const detailedLog = normalizeDetailedLog(data, log, resourceTypes);
 				if (detailedLog) {
 					detailed.push(detailedLog);
 				}
@@ -578,7 +236,13 @@ const TestRunAuditComponent: React.FC<{ options: CommandOptions }> = ({
 					}
 
 					// Data might have different structures depending on PDP version
-					const responseData = data as PdpResponseData;
+					// Use type assertion to handle potential API differences
+					const responseData = data as unknown as {
+						allow?: boolean;
+						allowed?: boolean;
+						result?: boolean;
+					};
+
 					const allowed =
 						responseData?.allow ||
 						responseData?.allowed ||

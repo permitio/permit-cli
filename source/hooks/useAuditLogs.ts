@@ -1,10 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import useClient from './useClient.js';
-import { fetchUtil, MethodE } from '../utils/fetchUtil.js';
-import { apiCall } from '../lib/api.js';
-import { loadAuthToken } from '../lib/auth.js';
 
-// Type definitions
 export interface AuditLog {
 	id: string;
 	timestamp: string;
@@ -48,95 +44,63 @@ export interface FilterOptions {
 	decision?: boolean;
 }
 
-type QueryParamValue = string | number | boolean | string[];
-
-/**
- * Builds a query string, correctly handling arrays
- */
-const buildQueryString = (params: Record<string, QueryParamValue>): string => {
-	return Object.entries(params)
-		.flatMap(([key, value]) => {
-			if (Array.isArray(value)) {
-				return value.map(v => `${key}=${encodeURIComponent(String(v))}`);
-			}
-			return `${key}=${encodeURIComponent(String(value))}`;
-		})
-		.join('&');
-};
-
 /**
  * Hook for interacting with audit logs and PDP checking functionality
  */
 export const useAuditLogs = () => {
-	const { authenticatedApiClient } = useClient();
+	const { authenticatedApiClient, authenticatedPdpClient } = useClient();
 
 	/**
 	 * Fetches audit logs based on filters
 	 */
 	const getAuditLogs = useCallback(
 		async (filters: FilterOptions) => {
-			// Calculate date range
-			const endDate = new Date();
-			const startDate = new Date(
-				endDate.getTime() - filters.timeFrame * 60 * 60 * 1000,
-			);
+			try {
+				// Calculate date range
+				const endDate = new Date();
+				const startDate = new Date(
+					endDate.getTime() - filters.timeFrame * 60 * 60 * 1000,
+				);
 
-			// Get current scope
-			const { data: scope, error: scopeError } =
-				await authenticatedApiClient().GET('/v2/api-key/scope');
+				// Prepare query parameters
+				type QueryParamValue = string | number | boolean | string[];
+				const queryParams: Record<string, QueryParamValue> = {
+					timestamp_from: Math.floor(startDate.getTime() / 1000),
+					timestamp_to: Math.floor(endDate.getTime() / 1000),
+					page: 1,
+					per_page: 100,
+					sort_by: 'timestamp',
+				};
 
-			if (scopeError || !scope) {
-				return { data: null, error: scopeError || 'Failed to get API scope' };
-			}
+				// Add optional filters
+				if (filters.sourcePdp) queryParams['pdp_id'] = filters.sourcePdp;
+				if (filters.users && filters.users.length > 0)
+					queryParams['users'] = filters.users;
+				if (filters.resources && filters.resources.length > 0)
+					queryParams['resources'] = filters.resources;
+				if (filters.tenant) queryParams['tenant'] = filters.tenant;
+				if (filters.action) queryParams['action'] = filters.action;
+				if (filters.decision !== undefined)
+					queryParams['decision'] = filters.decision;
 
-			// Prepare query parameters
-			const queryParams: Record<string, QueryParamValue> = {
-				timestamp_from: Math.floor(startDate.getTime() / 1000),
-				timestamp_to: Math.floor(endDate.getTime() / 1000),
-				page: 1,
-				per_page: 100,
-				sort_by: 'timestamp',
-			};
+				const { data, error } = await authenticatedApiClient().GET(
+					'/v2/pdps/{proj_id}/{env_id}/audit_logs',
+					undefined,
+					undefined,
+					queryParams,
+				);
 
-			// Add optional filters
-			if (filters.sourcePdp) queryParams['pdp_id'] = filters.sourcePdp;
-			if (filters.users && filters.users.length > 0)
-				queryParams['users'] = filters.users;
-			if (filters.resources && filters.resources.length > 0)
-				queryParams['resources'] = filters.resources;
-			if (filters.tenant) queryParams['tenant'] = filters.tenant;
-			if (filters.action) queryParams['action'] = filters.action;
-			if (filters.decision !== undefined)
-				queryParams['decision'] = filters.decision;
-
-			// Build query string
-			const queryString = buildQueryString(queryParams);
-
-			// Get auth token
-			const token = await loadAuthToken();
-
-			// Use direct apiCall to match the original implementation exactly
-			const { response, error, status } = await apiCall(
-				`v2/pdps/${scope.project_id}/${scope.environment_id}/audit_logs?${queryString}`,
-				token,
-			);
-
-			if (error) {
-				if (status === 404) {
-					return {
-						data: null,
-						error:
-							'Failed to fetch audit logs: The audit logs API endpoint was not found.',
-					};
-				} else {
-					return {
-						data: null,
-						error: `Failed to fetch audit logs: ${error}`,
-					};
+				if (error) {
+					return { data: null, error };
 				}
-			}
 
-			return { data: response, error: null };
+				return { data, error: null };
+			} catch (err) {
+				return {
+					data: null,
+					error: err instanceof Error ? err.message : String(err),
+				};
+			}
 		},
 		[authenticatedApiClient],
 	);
@@ -146,22 +110,50 @@ export const useAuditLogs = () => {
 	 */
 	const getAuditLogDetails = useCallback(
 		async (auditLogId: string) => {
-			// Get current scope
-			const { data: scope, error: scopeError } =
-				await authenticatedApiClient().GET('/v2/api-key/scope');
+			try {
+				const { data, error } = await authenticatedApiClient().GET(
+					'/v2/pdps/{proj_id}/{env_id}/audit_logs',
+					undefined,
+					undefined,
+					{
+						// Use standard filtering params
+						page: 1,
+						per_page: 100,
+					},
+				);
 
-			if (scopeError || !scope) {
-				return { data: null, error: scopeError || 'Failed to get API scope' };
+				if (error) {
+					return { data: null, error };
+				}
+
+				interface AuditLogData {
+					id: string;
+					[key: string]: unknown;
+				}
+
+				const auditLogs = Array.isArray(data)
+					? data
+					: data && typeof data === 'object' && 'data' in data
+						? (data.data as AuditLogData[]) || []
+						: [];
+
+				// Find the specific log by ID
+				const specificLog = auditLogs.find(log => log.id === auditLogId);
+
+				if (!specificLog) {
+					return {
+						data: null,
+						error: `Audit log with ID ${auditLogId} not found`,
+					};
+				}
+
+				return { data: specificLog, error: null };
+			} catch (err) {
+				return {
+					data: null,
+					error: err instanceof Error ? err.message : String(err),
+				};
 			}
-
-			// Make a direct API call to match original implementation
-			const token = await loadAuthToken();
-			const { response, error } = await apiCall(
-				`v2/pdps/${scope.project_id}/${scope.environment_id}/audit_logs/${auditLogId}`,
-				token,
-			);
-
-			return { data: response, error };
 		},
 		[authenticatedApiClient],
 	);
@@ -179,38 +171,50 @@ export const useAuditLogs = () => {
 			},
 			pdpUrl?: string,
 		) => {
-			// Direct API call to match original implementation
-			const token = await loadAuthToken();
-
-			const response = await fetchUtil(
-				`${pdpUrl}/allowed`,
-				MethodE.POST,
-				token,
-				{
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`,
-				},
-				{
+			try {
+				// Format the request according to PDP v2 API expectations
+				const pdpRequest = {
 					tenant: request.tenant,
 					action: request.action,
 					user: {
 						key: request.user.key,
+						firstName: undefined,
+						lastName: undefined,
+						email: undefined,
+						attributes: {} as Record<string, never>,
 					},
-					resource: request.resource,
-					context: {},
-				},
-			);
+					resource: {
+						type: request.resource.type,
+						key: request.resource.key || '',
+						tenant: request.tenant,
+						attributes: {} as Record<string, never>,
+						context: {} as Record<string, never>,
+					},
+					context: {} as Record<string, never>,
+				};
 
-			if (!response.success) {
+				const { data, error } = await authenticatedPdpClient(pdpUrl).POST(
+					'/allowed',
+					undefined,
+					pdpRequest,
+				);
+
+				if (error) {
+					return {
+						data: null,
+						error: `PDP check failed: ${error}`,
+					};
+				}
+
+				return { data, error: null };
+			} catch (err) {
 				return {
 					data: null,
-					error: response.error || 'Unknown error during PDP check',
+					error: err instanceof Error ? err.message : String(err),
 				};
 			}
-
-			return { data: response.data, error: null };
 		},
-		[],
+		[authenticatedPdpClient],
 	);
 
 	return useMemo(

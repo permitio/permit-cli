@@ -21,7 +21,8 @@ export const options = zod.object({
 		.default('http://localhost:7766')
 		.describe(
 			option({
-				description: 'URL of the (new) PDP where you want to check the decisions',
+				description:
+					'URL of the (new) PDP where you want to check the decisions',
 				alias: 'p',
 			}),
 		),
@@ -32,7 +33,8 @@ export const options = zod.object({
 		.default(24)
 		.describe(
 			option({
-				description: 'Number of hours to fetch audit logs for (6-72). Default value is 24',
+				description:
+					'Number of hours to fetch audit logs for (6-72). Default value is 24',
 				alias: 't',
 			}),
 		),
@@ -46,20 +48,22 @@ export const options = zod.object({
 			}),
 		),
 	users: zod
-		.string()
+		.array(zod.string())
 		.optional()
 		.describe(
 			option({
-				description: 'Comma-separated list of the users to filter logs by',
+				description:
+					'Users to filter logs by (can be specified multiple times)',
 				alias: 'u',
 			}),
 		),
 	resources: zod
-		.string()
+		.array(zod.string())
 		.optional()
 		.describe(
 			option({
-				description: 'Comma-separated list of resources to filter logs',
+				description:
+					'Resources to filter logs by (can be specified multiple times)',
 				alias: 'r',
 			}),
 		),
