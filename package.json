@@ -42,7 +42,6 @@
 		"ink-select-input": "^6.0.0",
 		"ink-spinner": "^5.0.0",
 		"ink-text-input": "^6.0.0",
-		"keytar": "^7.9.0",
 		"micro-key-producer": "^0.7.2",
 		"open": "^10.1.0",
 		"openapi-fetch": "^0.13.4",

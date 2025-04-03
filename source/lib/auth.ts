@@ -1,7 +1,8 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { IncomingMessage, ServerResponse, createServer } from 'node:http';
 import open from 'open';
-import * as pkg from 'keytar';
+import { join } from 'node:path';
+import { homedir } from 'node:os';
 import {
 	AUTH_API_URL,
 	AUTH_PERMIT_DOMAIN,
@@ -12,43 +13,46 @@ import {
 	KEYSTORE_PERMIT_SERVICE_NAME,
 	AUTH_PERMIT_URL,
 } from '../config.js';
-import { URL, URLSearchParams } from 'url';
-import { setTimeout } from 'timers';
-import { Buffer } from 'buffer';
+import { URL, URLSearchParams } from 'node:url';
+import { setTimeout } from 'node:timers';
+import { Buffer } from 'node:buffer';
+import process from 'node:process';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
-const { setPassword, getPassword, deletePassword } = pkg.default;
+const TOKEN_FILE = join(homedir(), '.permit', 'token');
+const KEY_FILE = join(homedir(), '.permit', 'key');
 
-// Runtime detection
-const isNode = typeof process !== 'undefined' && process.versions?.node;
+// Ensure .permit directory exists
+if (!existsSync(join(homedir(), '.permit'))) {
+	mkdirSync(join(homedir(), '.permit'), { recursive: true });
+}
 
-// Import appropriate modules based on runtime
-let crypto: any;
-let http: any;
+// Generate or load encryption key
+const encryptionKey: Uint8Array = existsSync(KEY_FILE) 
+	? new Uint8Array(readFileSync(KEY_FILE))
+	: (() => {
+		const key = new Uint8Array(randomBytes(32));
+		writeFileSync(KEY_FILE, key);
+		return key;
+	})();
 
-if (isNode) {
-	crypto = await import('node:crypto');
-	http = await import('node:http');
-} else {
-	// Browser environment
-	crypto = {
-		createHash: (algorithm: string) => ({
-			update: (data: string | Uint8Array) => ({
-				digest: () => {
-					const encoder = new TextEncoder();
-					const dataArray = typeof data === 'string' ? encoder.encode(data) : data;
-					return crypto.subtle.digest(algorithm, dataArray);
-				}
-			})
-		})
-	};
-	http = {
-		createServer: (handler: any) => ({
-			listen: (port: number, host: string) => {
-				// Browser doesn't support server creation
-				throw new Error('Server creation not supported in browser environment');
-			}
-		})
-	};
+// Simple XOR encryption (for demonstration, in production use proper encryption)
+function encrypt(text: string): string {
+	const textBytes = new TextEncoder().encode(text);
+	const encrypted = new Uint8Array(textBytes.length);
+	for (let i = 0; i < textBytes.length; i++) {
+		encrypted[i] = textBytes[i]! ^ encryptionKey[i % encryptionKey.length]!;
+	}
+	return Buffer.from(encrypted).toString('base64');
+}
+
+function decrypt(encrypted: string): string {
+	const encryptedBytes = new Uint8Array(Buffer.from(encrypted, 'base64'));
+	const decrypted = new Uint8Array(encryptedBytes.length);
+	for (let i = 0; i < encryptedBytes.length; i++) {
+		decrypted[i] = encryptedBytes[i]! ^ encryptionKey[i % encryptionKey.length]!;
+	}
+	return new TextDecoder().decode(decrypted);
 }
 
 export enum TokenType {
@@ -62,7 +66,6 @@ export const tokenType = (token: string): TokenType => {
 		return TokenType.APIToken;
 	}
 
-	// TBD add a better JWT validation/verification
 	if (token.split('.').length === 3) {
 		return TokenType.AccessToken;
 	}
@@ -77,11 +80,7 @@ export const saveAuthToken = async (token: string): Promise<string> => {
 			return 'Invalid auth token';
 		}
 
-		await setPassword(
-			KEYSTORE_PERMIT_SERVICE_NAME,
-			DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
-			token,
-		);
+		writeFileSync(TOKEN_FILE, encrypt(token));
 		return '';
 	} catch (error) {
 		return error instanceof Error ? error.message : String(error);
@@ -89,61 +88,59 @@ export const saveAuthToken = async (token: string): Promise<string> => {
 };
 
 export const loadAuthToken = async (): Promise<string> => {
-	const token = await getPassword(
-		KEYSTORE_PERMIT_SERVICE_NAME,
-		DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
-	);
-	if (!token) {
+	if (!existsSync(TOKEN_FILE)) {
 		throw new Error(
 			'No token found, use `permit login` command to get an auth token',
 		);
 	}
 
-	return token;
+	const encrypted = readFileSync(TOKEN_FILE, 'utf8');
+	return decrypt(encrypted);
 };
 
 export const cleanAuthToken = async () => {
-	await deletePassword(
-		KEYSTORE_PERMIT_SERVICE_NAME,
-		DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
-	);
+	if (existsSync(TOKEN_FILE)) {
+		writeFileSync(TOKEN_FILE, '');
+	}
 };
 
 export const authCallbackServer = async (verifier: string): Promise<string> => {
 	return new Promise<string>(resolve => {
 		// Define the server logic
-		const server = createServer(async (request: IncomingMessage, res: ServerResponse) => {
-			// Get the authorization code from the query string
-			const url = new URL(request.url!, `http://${request.headers.host}`);
-			if (!url.searchParams.has('code')) {
-				// TBD add better error handling for error callbacks
+		const server = createServer(
+			async (request: IncomingMessage, res: ServerResponse) => {
+				// Get the authorization code from the query string
+				const url = new URL(request.url!, `http://${request.headers.host}`);
+				if (!url.searchParams.has('code')) {
+					// TBD add better error handling for error callbacks
+					res.statusCode = 200; // Set the response status code
+					res.setHeader('Content-Type', 'text/plain'); // Set the content type
+					res.end('Authorization code not found in query string\n'); // Send the response
+					return;
+				}
+
+				const code = url.searchParams.get('code');
+				// Send the response
+				const data = await fetch(`${AUTH_PERMIT_URL}/oauth/token`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						grant_type: 'authorization_code',
+						client_id: 'Pt7rWJ4BYlpELNIdLg6Ciz7KQ2C068C1',
+						code_verifier: verifier,
+						code,
+						redirect_uri: AUTH_REDIRECT_URI,
+					}),
+				}).then(async response => response.json());
 				res.statusCode = 200; // Set the response status code
 				res.setHeader('Content-Type', 'text/plain'); // Set the content type
-				res.end('Authorization code not found in query string\n'); // Send the response
-				return;
-			}
-
-			const code = url.searchParams.get('code');
-			// Send the response
-			const data = await fetch(`${AUTH_PERMIT_URL}/oauth/token`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					grant_type: 'authorization_code',
-					client_id: 'Pt7rWJ4BYlpELNIdLg6Ciz7KQ2C068C1',
-					code_verifier: verifier,
-					code,
-					redirect_uri: AUTH_REDIRECT_URI,
-				}),
-			}).then(async response => response.json());
-			res.statusCode = 200; // Set the response status code
-			res.setHeader('Content-Type', 'text/plain'); // Set the content type
-			res.end('You can close this page now\n'); // Send the response
-			server.close(); // Close the server
-			resolve(data.access_token as string); // Resolve the promise
-		});
+				res.end('You can close this page now\n'); // Send the response
+				server.close(); // Close the server
+				resolve(data.access_token as string); // Resolve the promise
+			},
+		);
 
 		// Specify the port and host
 		// Start the server and listen on the specified port
