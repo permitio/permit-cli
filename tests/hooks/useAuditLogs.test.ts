@@ -1,43 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuditLogs } from '../../source/hooks/useAuditLogs.js';
-import { apiCall } from '../../source/lib/api.js';
-import { fetchUtil } from '../../source/utils/fetchUtil.js';
 
-// Mock dependencies
-vi.mock('../../source/lib/auth.js', () => ({
-  loadAuthToken: vi.fn().mockResolvedValue('mock-token')
-}));
+// Mock client functions
+const mockGetFn = vi.fn();
+const mockPostFn = vi.fn();
 
-vi.mock('../../source/lib/api.js', () => ({
-  apiCall: vi.fn()
-}));
-
-vi.mock('../../source/utils/fetchUtil.js', () => ({
-  fetchUtil: vi.fn(),
-  MethodE: {
-    POST: 'POST',
-    GET: 'GET'
-  }
-}));
-
-// Mock useClient
+// Mock the useClient hook
 vi.mock('../../source/hooks/useClient.js', () => ({
-  __esModule: true,
   default: () => ({
     authenticatedApiClient: () => ({
-      GET: vi.fn().mockResolvedValue({
-        data: {
-          organization_id: 'org-id',
-          project_id: 'proj-id',
-          environment_id: 'env-id'
-        },
-        error: null
-      })
-    })
-  })
+      GET: mockGetFn,
+    }),
+    authenticatedPdpClient: (url) => ({
+      POST: mockPostFn,
+    }),
+  }),
 }));
 
-// Mock React hooks to allow calling hooks outside of components
+// Mock React hooks
 vi.mock('react', () => {
   const originalReact = vi.importActual('react');
   return {
@@ -53,22 +33,18 @@ describe('useAuditLogs', () => {
   });
 
   it('fetches audit logs with correct parameters', async () => {
-    // Mock API response
-    const mockAuditLogs = {
-      data: [
-        { id: 'log1', timestamp: '2023-01-01', action: 'read', decision: true },
-        { id: 'log2', timestamp: '2023-01-02', action: 'write', decision: false }
-      ]
-    };
-    
-    // Setup mock for apiCall
-    vi.mocked(apiCall).mockResolvedValueOnce({
-      response: mockAuditLogs,
-      error: null,
-      status: 200
+    // Mock API success response
+    mockGetFn.mockResolvedValueOnce({
+      data: {
+        data: [
+          { id: 'log1', timestamp: '2023-01-01', action: 'read', decision: true },
+          { id: 'log2', timestamp: '2023-01-02', action: 'write', decision: false }
+        ]
+      },
+      error: null
     });
 
-    // Use the hook directly
+    // Use the hook
     const { getAuditLogs } = useAuditLogs();
     
     // Call the function with test parameters
@@ -82,27 +58,47 @@ describe('useAuditLogs', () => {
       decision: true
     });
 
-    // Verify apiCall was called with correct parameters
-    expect(apiCall).toHaveBeenCalled();
-    expect(apiCall.mock.calls[0][0]).toContain('v2/pdps/proj-id/env-id/audit_logs');
-    expect(apiCall.mock.calls[0][0]).toContain('timestamp_from=');
-    expect(apiCall.mock.calls[0][0]).toContain('pdp_id=test-pdp');
-    expect(apiCall.mock.calls[0][0]).toContain('users=user1');
-    expect(apiCall.mock.calls[0][0]).toContain('users=user2');
+    // Verify the API call
+    expect(mockGetFn).toHaveBeenCalledTimes(1);
+    expect(mockGetFn).toHaveBeenCalledWith(
+      '/v2/pdps/{proj_id}/{env_id}/audit_logs',
+      undefined,
+      undefined,
+      expect.objectContaining({
+        timestamp_from: expect.any(Number),
+        timestamp_to: expect.any(Number),
+        pdp_id: 'test-pdp',
+        users: ['user1', 'user2'],
+        resources: ['resource1'],
+        tenant: 'tenant1',
+        action: 'read',
+        decision: true,
+        page: 1,
+        per_page: 100,
+        sort_by: 'timestamp'
+      })
+    );
     
-    // Verify the response was correct
-    expect(result).toEqual({ data: mockAuditLogs, error: null });
+    // Verify the result matches the mock response
+    expect(result).toEqual({
+      data: {
+        data: [
+          { id: 'log1', timestamp: '2023-01-01', action: 'read', decision: true },
+          { id: 'log2', timestamp: '2023-01-02', action: 'write', decision: false }
+        ]
+      },
+      error: null
+    });
   });
 
   it('handles API errors properly', async () => {
     // Setup error response
-    vi.mocked(apiCall).mockResolvedValueOnce({
-      response: null,
-      error: 'Failed to fetch',
-      status: 500
+    mockGetFn.mockResolvedValueOnce({
+      data: null,
+      error: 'Failed to fetch'
     });
 
-    // Use the hook directly
+    // Use the hook
     const { getAuditLogs } = useAuditLogs();
     
     // Call the function
@@ -110,47 +106,75 @@ describe('useAuditLogs', () => {
     
     // Verify error handling
     expect(result.data).toBeNull();
-    expect(result.error).toContain('Failed to fetch audit logs: Failed to fetch');
+    expect(result.error).toBe('Failed to fetch');
   });
 
   it('fetches detailed audit log by ID', async () => {
-    // Mock API response
-    const mockDetailedLog = {
-      id: 'log1',
-      timestamp: '2023-01-01',
-      action: 'read',
-      decision: true,
-      user_key: 'user1',
-      resource: 'resource1',
-      context: { user: { id: 'user1' }, resource: { type: 'doc' } }
+    // Mock data with audit logs array
+    const mockLogs = {
+      data: [
+        { id: 'log1', timestamp: '2023-01-01', action: 'read', decision: true },
+        { id: 'log2', timestamp: '2023-01-02', action: 'write', decision: false }
+      ]
     };
     
-    vi.mocked(apiCall).mockResolvedValueOnce({
-      response: mockDetailedLog,
+    mockGetFn.mockResolvedValueOnce({
+      data: mockLogs,
       error: null
     });
 
-    // Use the hook directly
+    // Use the hook
     const { getAuditLogDetails } = useAuditLogs();
     
     // Call the function
     const result = await getAuditLogDetails('log1');
     
     // Verify API call
-    expect(apiCall).toHaveBeenCalledWith('v2/pdps/proj-id/env-id/audit_logs/log1', 'mock-token');
+    expect(mockGetFn).toHaveBeenCalledWith(
+      '/v2/pdps/{proj_id}/{env_id}/audit_logs',
+      undefined,
+      undefined,
+      expect.objectContaining({
+        page: 1,
+        per_page: 100
+      })
+    );
     
-    // Verify response
+    // Verify response - should find log1 in the array
     expect(result).toEqual({ 
-      data: mockDetailedLog, 
+      data: mockLogs.data[0], 
       error: null 
     });
   });
 
+  it('handles audit log not found', async () => {
+    // Mock data with audit logs array
+    mockGetFn.mockResolvedValueOnce({
+      data: {
+        data: [
+          { id: 'log2', timestamp: '2023-01-02', action: 'write', decision: false }
+        ]
+      },
+      error: null
+    });
+
+    // Use the hook
+    const { getAuditLogDetails } = useAuditLogs();
+    
+    // Call the function with a non-existent ID
+    const result = await getAuditLogDetails('log1');
+    
+    // Verify response indicates log not found
+    expect(result).toEqual({ 
+      data: null, 
+      error: 'Audit log with ID log1 not found' 
+    });
+  });
+
   it('calls PDP with correct request structure', async () => {
-    // Mock fetchUtil response
-    vi.mocked(fetchUtil).mockResolvedValueOnce({
-      success: true,
-      data: { allowed: true },
+    // Mock PDP success response
+    mockPostFn.mockResolvedValueOnce({
+      data: { allow: true },
       error: null
     });
 
@@ -162,48 +186,43 @@ describe('useAuditLogs', () => {
       resource: { type: 'document', key: 'doc1' }
     };
 
-    // Use the hook directly
+    // Use the hook
     const { checkPdpPermission } = useAuditLogs();
     
     // Call the function
     const result = await checkPdpPermission(testRequest, 'http://pdp.example.com');
     
     // Verify the PDP call
-    expect(fetchUtil).toHaveBeenCalledWith(
-      'http://pdp.example.com/allowed',
-      'POST',
-      'mock-token',
-      expect.objectContaining({
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer mock-token'
-      }),
+    expect(mockPostFn).toHaveBeenCalledWith(
+      '/allowed',
+      undefined,
       expect.objectContaining({
         tenant: 'tenant1',
         action: 'read',
-        user: { key: 'user1' },
+        user: expect.objectContaining({ key: 'user1' }),
         resource: expect.objectContaining({
           type: 'document',
-          key: 'doc1'
+          key: 'doc1',
+          tenant: 'tenant1'
         })
       })
     );
     
     // Verify response
     expect(result).toEqual({ 
-      data: { allowed: true }, 
+      data: { allow: true }, 
       error: null 
     });
   });
 
   it('handles PDP errors properly', async () => {
-    // Mock fetchUtil error response
-    vi.mocked(fetchUtil).mockResolvedValueOnce({
-      success: false,
+    // Mock PDP error response
+    mockPostFn.mockResolvedValueOnce({
       data: null,
-      error: 'PDP connection failed'
+      error: 'PDP check failed'
     });
 
-    // Use the hook directly
+    // Use the hook
     const { checkPdpPermission } = useAuditLogs();
     
     // Call the function
@@ -217,7 +236,27 @@ describe('useAuditLogs', () => {
     // Verify error handling
     expect(result).toEqual({
       data: null,
-      error: 'PDP connection failed'
+      error: 'PDP check failed: PDP check failed'
     });
+  });
+
+  it('handles PDP request exceptions', async () => {
+    // Mock exception during request
+    mockPostFn.mockRejectedValueOnce(new Error('Network error'));
+
+    // Use the hook
+    const { checkPdpPermission } = useAuditLogs();
+    
+    // Call the function
+    const result = await checkPdpPermission({
+      tenant: 'tenant1',
+      action: 'read',
+      user: { key: 'user1' },
+      resource: { type: 'document' }
+    }, 'http://pdp.example.com');
+    
+    // Verify error handling
+    expect(result.data).toBeNull();
+    expect(result.error).toBe('Network error');
   });
 });
