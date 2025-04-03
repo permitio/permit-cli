@@ -1,8 +1,8 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { TERRAFORM_PERMIT_URL } from '../../../config.js';
-import { exec } from 'child_process';
-import { fileURLToPath } from 'url';
+import { exec } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 // Manually define __dirname
 const __filename = fileURLToPath(import.meta.url);

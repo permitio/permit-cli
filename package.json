@@ -1,9 +1,11 @@
 {
 	"name": "@permitio/cli",
 	"version": "0.1.2",
+	"description": "Permit.io CLI",
+	"main": "dist/cli.js",
 	"license": "MIT",
 	"bin": {
-		"permit": "dist/cli.js"
+		"permit": "./dist/cli.js"
 	},
 	"type": "module",
 	"engines": {
@@ -11,14 +13,16 @@
 	},
 	"scripts": {
 		"build": "tsc",
+		"build:deno": "deno task build",
 		"postbuild": "rimraf dist/commands/env/export/templates && cpx 'source/commands/env/export/templates/*.hcl' 'dist/commands/env/export/templates'",
 		"predev": "cpx 'source/commands/env/export/templates/*.hcl' 'dist/commands/env/export/templates'",
-		"dev": " NODE_NO_WARNINGS=1 tsc --watch",
+		"dev": "NODE_NO_WARNINGS=1 tsc --watch",
 		"lint": "prettier --check . && eslint \"source/**/*.{js,ts,tsx}\"",
 		"lint:fix": "eslint \"source/**/*.{js,ts,tsx}\" --fix",
 		"test": "prettier --check ./source && vitest run --coverage",
 		"simple-check": "npx tsx ./source/cli.tsx pdp check -u filip@permit.io -a create -r task",
-		"test:ts": "tsc --noEmit"
+		"test:ts": "tsc --noEmit",
+		"start": "node dist/cli.js"
 	},
 	"files": [
 		"dist"
@@ -38,7 +42,6 @@
 		"ink-select-input": "^6.0.0",
 		"ink-spinner": "^5.0.0",
 		"ink-text-input": "^6.0.0",
-		"keytar": "^7.9.0",
 		"micro-key-producer": "^0.7.2",
 		"open": "^10.1.0",
 		"openapi-fetch": "^0.13.4",

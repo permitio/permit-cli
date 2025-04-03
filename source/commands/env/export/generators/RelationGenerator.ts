@@ -5,27 +5,30 @@ import Handlebars from 'handlebars';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { RelationRead, ResourceRead } from 'permitio/build/main/openapi/types';
-import he from 'he';
 
-const currentFilePath = fileURLToPath(import.meta.url);
-const currentDirPath = dirname(currentFilePath);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-// Helper function to unescape HTML entities using the he library
-function unescapeHtml(text: string | undefined): string {
-	if (!text) return '';
-	return he.decode(text);
-}
-
-interface RelationData {
-	relation_id: string;
-	name: string;
+interface RelationRead {
 	key: string;
+	name: string;
 	description?: string;
 	subject_resource: string;
 	object_resource: string;
-	subject_resource_ref: string;
-	object_resource_ref: string;
+}
+
+interface ResourceRead {
+	key: string;
+	name: string;
+	description?: string;
+}
+
+interface RelationData {
+	key: string;
+	name: string;
+	description?: string;
+	subject_resource: string;
+	object_resource: string;
 	dependencies: string[];
 }
 
@@ -38,7 +41,23 @@ export class RelationGenerator implements HCLGenerator {
 		private permit: Permit,
 		private warningCollector: WarningCollector,
 	) {
-		const templatePath = join(currentDirPath, '../templates/relation.hcl');
+		// Register a simple helper that creates extremely safe descriptions for HCL
+		Handlebars.registerHelper('formatDescription', function (text) {
+			if (!text) return '';
+
+			// First, normalize the string to remove any non-basic characters
+			const sanitized = text
+				// Replace non-alphanumeric, non-basic punctuation with spaces
+				.replace(/[^\w\s.,!?()-]/g, ' ')
+				// Collapse multiple spaces into one
+				.replace(/\s+/g, ' ')
+				// Trim spaces
+				.trim();
+
+			return sanitized;
+		});
+
+		const templatePath = join(__dirname, '../templates/relation.hcl');
 		const templateContent = readFileSync(templatePath, 'utf-8');
 		this.template = Handlebars.compile(templateContent);
 	}
@@ -122,15 +141,11 @@ export class RelationGenerator implements HCLGenerator {
 
 							// Store the relation with its Terraform resource name
 							relations.push({
-								relation_id: relationId,
-								name: unescapeHtml(relation.name) || relation.key,
 								key: relation.key,
-								description: unescapeHtml(relation.description),
+								name: relation.name,
+								description: relation.description,
 								subject_resource: safeSubjectResource,
 								object_resource: safeObjectResource,
-								// Reference to the resource's key property for Terraform
-								subject_resource_ref: `permitio_resource.${safeSubjectResource}.key`,
-								object_resource_ref: `permitio_resource.${safeObjectResource}.key`,
 								dependencies: [
 									`permitio_resource.${safeObjectResource}`,
 									`permitio_resource.${safeSubjectResource}`,

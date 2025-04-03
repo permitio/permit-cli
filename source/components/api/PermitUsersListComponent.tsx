@@ -139,7 +139,6 @@ export default function PermitUsersListComponent({ options }: Props) {
 							'tenant',
 							'roles',
 						]}
-						headersHexColor={'#89CFF0'}
 					/>
 				</>
 			)}
