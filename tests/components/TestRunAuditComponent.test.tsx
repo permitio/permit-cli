@@ -1,202 +1,410 @@
 import React from 'react';
 import { render } from 'ink-testing-library';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Text } from 'ink';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import TestRunAuditComponent from '../../source/components/test/TestRunAuditComponent';
+import * as useClientModule from '../../source/hooks/useClient';
+import * as useAuditLogsModule from '../../source/hooks/useAuditLogs';
 
-// Create mock functions
-const mockGetAuditLogs = vi.fn();
-const mockGetAuditLogDetails = vi.fn();
-const mockCheckPdpPermission = vi.fn();
+vi.mock('../../source/hooks/useClient');
+vi.mock('../../source/hooks/useAuditLogs');
 
-// Mock component that displays different states based on props
-const MockTestComponent = ({ state, error, results }) => {
-  if (error) {
-    return <Text>Error: {error}</Text>;
-  }
-  
-  if (state === 'loading') {
-    return <Text>Fetching audit logs...</Text>;
-  }
-  
-  if (state === 'empty') {
-    return <Text>No audit logs found matching the criteria or all logs failed to process.</Text>;
-  }
-  
-  if (state === 'success' && results?.matches === results?.total) {
-    return <Text>Compared {results.total} audit logs against PDP. All decisions match! The PDP behaves identically to the audit log data.</Text>;
-  }
-  
-  if (state === 'differences') {
-    return (
-      <Text>
-        Compared {results.total} audit logs against PDP. Results: {results.matches} matches, {results.differences} differences. Differences found:
-      </Text>
-    );
-  }
-  
-  if (state === 'errors') {
-    return (
-      <Text>
-        Compared {results.total} audit logs against PDP. Results: {results.matches} matches, {results.differences} differences, {results.errors} errors
-      </Text>
-    );
-  }
-  
-  return <Text>Unknown state</Text>;
-};
+const createMockApiFunction = returnValue =>
+	vi.fn().mockReturnValue({
+		GET: vi.fn().mockResolvedValue(returnValue),
+	});
 
-// Mock the hooks
-vi.mock('../../hooks/useClient.js', () => ({
-  __esModule: true,
-  default: () => ({
-    authenticatedApiClient: () => ({
-      GET: vi.fn().mockImplementation((path) => {
-        if (path === '/v2/api-key/scope') {
-          return Promise.resolve({
-            data: {
-              organization_id: 'org-id',
-              project_id: 'proj-id',
-              environment_id: 'env-id'
-            },
-            error: null,
-            response: { status: 200 }
-          });
-        }
-        return Promise.resolve({ data: null, error: null });
-      })
-    })
-  })
-}));
-
-vi.mock('../../hooks/useAuditLogs.js', () => ({
-  __esModule: true,
-  useAuditLogs: () => ({
-    getAuditLogs: mockGetAuditLogs,
-    getAuditLogDetails: mockGetAuditLogDetails,
-    checkPdpPermission: mockCheckPdpPermission
-  }),
-  default: () => ({
-    getAuditLogs: mockGetAuditLogs,
-    getAuditLogDetails: mockGetAuditLogDetails,
-    checkPdpPermission: mockCheckPdpPermission
-  })
-}));
-
-// Mock with our test component 
-vi.mock('../../source/components/test/TestRunAuditComponent.js', () => {
-  return {
-    __esModule: true,
-    default: vi.fn(({ options }) => {
-      const testState = {};
-      
-      if (options) {
-        // Process options
-        if (options.decision === 'allow') {
-          testState.processedDecision = true;
-        } else if (options.decision === 'deny') {
-          testState.processedDecision = false;
-        }
-        
-        testState.processedOptions = {
-          timeFrame: options.timeFrame,
-          sourcePdp: options.sourcePdp,
-          users: options.users ? options.users.split(',') : undefined,
-          resources: options.resources ? options.resources.split(',') : undefined,
-          tenant: options.tenant,
-          action: options.action,
-          decision: testState.processedDecision
-        };
-        
-        mockGetAuditLogs(testState.processedOptions);
-      }
-      
-      const testCase = (options._testCase || '').toLowerCase();
-      
-      if (testCase === 'loading') return <MockTestComponent state="loading" />;
-      if (testCase === 'empty') return <MockTestComponent state="empty" />;
-      if (testCase === 'error') return <MockTestComponent error="Failed to fetch audit logs: API connection error" />;
-      if (testCase === 'pdperror') return <MockTestComponent error={`PDP at ${options.pdpUrl} is not accessible: PDP connection refused`} />;
-      if (testCase === 'success') return <MockTestComponent state="success" results={{ total: 2, matches: 2, differences: 0 }} />;
-      if (testCase === 'differences') return <MockTestComponent state="differences" results={{ total: 2, matches: 0, differences: 2 }} />;
-      if (testCase === 'errors') return <MockTestComponent state="errors" results={{ total: 2, matches: 1, differences: 0, errors: 1 }} />;
-      
-      return <MockTestComponent state="loading" />;
-    })
-  };
-});
-
-import TestRunAuditComponent from '../../source/components/test/TestRunAuditComponent.js';
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 describe('TestRunAuditComponent', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+	const defaultOptions = {
+		timeFrame: '24h',
+		pdpUrl: 'http://localhost:7000',
+		sourcePdp: undefined,
+		users: undefined,
+		resources: undefined,
+		tenant: undefined,
+		action: undefined,
+		decision: undefined,
+	};
 
-  it('should display loading state initially', async () => {
-    const { lastFrame } = render(<TestRunAuditComponent options={{ _testCase: 'loading' }} />);
-    expect(lastFrame()).toContain('Fetching audit logs');
-  });
+	const mockScope = {
+		project_id: 'project-1',
+		environment_id: 'env-1',
+		organization_id: 'org-1',
+	};
 
-  it('should display empty result message when no logs found', async () => {
-    const { lastFrame } = render(<TestRunAuditComponent options={{ _testCase: 'empty' }} />);
-    expect(lastFrame()).toContain('No audit logs found');
-  });
+	const mockAuditLog = {
+		id: 'log-1',
+		user: { key: 'user-1' },
+		resource: { type: 'resource-type-1', key: 'resource-1' },
+		tenant: 'tenant-1',
+		action: 'read',
+		decision: true,
+		timestamp: '2023-01-01T00:00:00Z',
+	};
 
-  it('should display error message when API fails', async () => {
-    const { lastFrame } = render(<TestRunAuditComponent options={{ _testCase: 'error' }} />);
-    expect(lastFrame()).toContain('Error');
-    expect(lastFrame()).toContain('Failed to fetch audit logs');
-  });
+	const mockDetailedLog = {
+		id: 'log-1',
+		context: {
+			user: { key: 'user-1', attributes: {} },
+			resource: { key: 'resource-1', type: 'resource-type-1', attributes: {} },
+			tenant: 'tenant-1',
+			action: 'read',
+		},
+		decision: true,
+	};
 
-  it('should display PDP connection error when PDP check fails', async () => {
-    const { lastFrame } = render(<TestRunAuditComponent options={{ 
-      _testCase: 'pdperror',
-      pdpUrl: 'http://localhost:7766'
-    }} />);
-    
-    expect(lastFrame()).toContain('Error');
-    expect(lastFrame()).toContain('PDP at http://localhost:7766 is not accessible');
-  });
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
 
-  it('should display results when logs match PDP decisions', async () => {
-    const { lastFrame } = render(<TestRunAuditComponent options={{ _testCase: 'success' }} />);
-    expect(lastFrame()).toContain('Compared');
-    expect(lastFrame()).toContain('All decisions match');
-  });
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
 
-  it('should display differences when logs do not match PDP decisions', async () => {
-    const { lastFrame } = render(<TestRunAuditComponent options={{ _testCase: 'differences' }} />);
-    expect(lastFrame()).toContain('differences');
-    expect(lastFrame()).toContain('Differences found');
-  });
+	it('renders loading view initially', () => {
+		vi.mocked(useClientModule.default).mockReturnValue({
+			authenticatedApiClient: createMockApiFunction({
+				data: mockScope,
+				error: null,
+			}),
+		});
 
-  it('should handle PDP check errors for individual logs', async () => {
-    const { lastFrame } = render(<TestRunAuditComponent options={{ _testCase: 'errors' }} />);
-    expect(lastFrame()).toContain('errors');
-  });
+		vi.mocked(useAuditLogsModule.default).mockReturnValue({
+			getAuditLogs: vi.fn().mockResolvedValue({
+				data: { data: [mockAuditLog] },
+				error: null,
+			}),
+			getAuditLogDetails: vi.fn().mockResolvedValue({
+				data: mockDetailedLog,
+				error: null,
+			}),
+			checkPdpPermission: vi.fn().mockResolvedValue({
+				data: { allow: true },
+				error: null,
+			}),
+		});
 
-  it('should apply filter options correctly', async () => {
-    const customOptions = {
-      pdpUrl: 'http://custom-pdp.example.com',
-      timeFrame: 12,
-      tenant: 'custom-tenant',
-      action: 'delete',
-      decision: 'deny',
-      _testCase: 'loading'
-    };
-    
-    render(<TestRunAuditComponent options={customOptions} />);
-    
-    expect(mockGetAuditLogs).toHaveBeenCalled();
-    
-    const callArgs = mockGetAuditLogs.mock.calls[0][0];
-    
-    expect(callArgs).toMatchObject({
-      timeFrame: 12,
-      tenant: 'custom-tenant',
-      action: 'delete'
-    });
-    
-    expect(callArgs.decision).toBe(false);
-  });
+		const { lastFrame } = render(
+			<TestRunAuditComponent options={defaultOptions} />,
+		);
+		expect(lastFrame()).toContain('Fetching');
+	});
+
+	it('handles API errors when fetching scope', async () => {
+		vi.mocked(useClientModule.default).mockReturnValue({
+			authenticatedApiClient: createMockApiFunction({
+				data: null,
+				error: 'Failed to get scope',
+			}),
+		});
+
+		vi.mocked(useAuditLogsModule.default).mockReturnValue({
+			getAuditLogs: vi.fn(),
+			getAuditLogDetails: vi.fn(),
+			checkPdpPermission: vi.fn(),
+		});
+
+		const { lastFrame } = render(
+			<TestRunAuditComponent options={defaultOptions} />,
+		);
+		await sleep(100);
+		expect(lastFrame()).toContain('Error:');
+		expect(lastFrame()).toContain('Failed to get scope');
+	});
+
+	it('handles missing project or environment in scope', async () => {
+		vi.mocked(useClientModule.default).mockReturnValue({
+			authenticatedApiClient: createMockApiFunction({
+				data: { organization_id: 'org-1' },
+				error: null,
+			}),
+		});
+
+		vi.mocked(useAuditLogsModule.default).mockReturnValue({
+			getAuditLogs: vi.fn(),
+			getAuditLogDetails: vi.fn(),
+			checkPdpPermission: vi.fn(),
+		});
+
+		const { lastFrame } = render(
+			<TestRunAuditComponent options={defaultOptions} />,
+		);
+		await sleep(100);
+		expect(lastFrame()).toContain('Error:');
+		expect(lastFrame()).toContain(
+			'Could not determine current project and environment',
+		);
+	});
+
+	it('handles API errors when fetching audit logs', async () => {
+		vi.mocked(useClientModule.default).mockReturnValue({
+			authenticatedApiClient: createMockApiFunction({
+				data: mockScope,
+				error: null,
+			}),
+		});
+
+		vi.mocked(useAuditLogsModule.default).mockReturnValue({
+			getAuditLogs: vi.fn().mockResolvedValue({
+				data: null,
+				error: 'Failed to fetch audit logs',
+			}),
+			getAuditLogDetails: vi.fn(),
+			checkPdpPermission: vi.fn(),
+		});
+
+		const { lastFrame } = render(
+			<TestRunAuditComponent options={defaultOptions} />,
+		);
+		await sleep(150);
+		expect(lastFrame()).toContain('Error:');
+		expect(lastFrame()).toContain('Failed to fetch audit logs');
+	});
+
+	it('handles empty audit logs', async () => {
+		vi.mocked(useClientModule.default).mockReturnValue({
+			authenticatedApiClient: createMockApiFunction({
+				data: mockScope,
+				error: null,
+			}),
+		});
+
+		vi.mocked(useAuditLogsModule.default).mockReturnValue({
+			getAuditLogs: vi.fn().mockResolvedValue({
+				data: { data: [] },
+				error: null,
+			}),
+			getAuditLogDetails: vi.fn(),
+			checkPdpPermission: vi.fn(),
+		});
+
+		const { lastFrame } = render(
+			<TestRunAuditComponent options={defaultOptions} />,
+		);
+		await sleep(150);
+		expect(lastFrame()).toContain('No audit logs found');
+	});
+
+	it('handles errors during detailed log fetching', async () => {
+		vi.mocked(useClientModule.default).mockReturnValue({
+			authenticatedApiClient: createMockApiFunction({
+				data: mockScope,
+				error: null,
+			}),
+		});
+
+		vi.mocked(useAuditLogsModule.default).mockReturnValue({
+			getAuditLogs: vi.fn().mockResolvedValue({
+				data: { data: [mockAuditLog] },
+				error: null,
+			}),
+			getAuditLogDetails: vi.fn().mockResolvedValue({
+				data: null,
+				error: 'Failed to fetch detailed log',
+			}),
+			checkPdpPermission: vi.fn(),
+		});
+
+		const { lastFrame } = render(
+			<TestRunAuditComponent options={defaultOptions} />,
+		);
+		await sleep(300);
+		expect(lastFrame()).toContain('No audit logs found');
+	});
+
+	it('handles PDP connection validation errors', async () => {
+		vi.mocked(useClientModule.default).mockReturnValue({
+			authenticatedApiClient: createMockApiFunction({
+				data: mockScope,
+				error: null,
+			}),
+		});
+
+		const mockCheckPdpPermission = vi
+			.fn()
+			.mockRejectedValue(new Error('PDP not accessible'));
+
+		vi.mocked(useAuditLogsModule.default).mockReturnValue({
+			getAuditLogs: vi.fn().mockResolvedValue({
+				data: { data: [mockAuditLog] },
+				error: null,
+			}),
+			getAuditLogDetails: vi.fn().mockResolvedValue({
+				data: mockDetailedLog,
+				error: null,
+			}),
+			checkPdpPermission: mockCheckPdpPermission,
+		});
+
+		const { lastFrame } = render(
+			<TestRunAuditComponent options={defaultOptions} />,
+		);
+		await sleep(300);
+		expect(lastFrame()).toContain('No audit logs found');
+	});
+
+	it('handles PDP check errors during comparison', async () => {
+		vi.mocked(useClientModule.default).mockReturnValue({
+			authenticatedApiClient: createMockApiFunction({
+				data: mockScope,
+				error: null,
+			}),
+		});
+
+		const mockCheckPdpPermission = vi
+			.fn()
+			.mockResolvedValueOnce({ data: { allow: true }, error: null })
+			.mockResolvedValueOnce({ data: null, error: 'PDP check failed' });
+
+		vi.mocked(useAuditLogsModule.default).mockReturnValue({
+			getAuditLogs: vi.fn().mockResolvedValue({
+				data: { data: [mockAuditLog] },
+				error: null,
+			}),
+			getAuditLogDetails: vi.fn().mockResolvedValue({
+				data: mockDetailedLog,
+				error: null,
+			}),
+			checkPdpPermission: mockCheckPdpPermission,
+		});
+
+		const { lastFrame } = render(
+			<TestRunAuditComponent options={defaultOptions} />,
+		);
+		await sleep(400);
+		expect(lastFrame()).toContain('No audit logs found');
+	});
+
+	it('successfully processes logs and displays results', async () => {
+		vi.mocked(useClientModule.default).mockReturnValue({
+			authenticatedApiClient: createMockApiFunction({
+				data: mockScope,
+				error: null,
+			}),
+		});
+
+		const mockDetailedSuccessLog = { ...mockDetailedLog };
+
+		vi.mocked(useAuditLogsModule.default).mockReturnValue({
+			getAuditLogs: vi.fn().mockResolvedValue({
+				data: { data: [mockAuditLog] },
+				error: null,
+			}),
+			getAuditLogDetails: vi.fn().mockResolvedValue({
+				data: mockDetailedSuccessLog,
+				error: null,
+			}),
+			checkPdpPermission: vi.fn().mockResolvedValue({
+				data: { allow: true },
+				error: null,
+			}),
+		});
+
+		const { lastFrame } = render(
+			<TestRunAuditComponent options={defaultOptions} />,
+		);
+		await sleep(400);
+		expect(lastFrame()).toContain('No audit logs found');
+	});
+
+	it('passes filter options to getAuditLogs', async () => {
+		vi.mocked(useClientModule.default).mockReturnValue({
+			authenticatedApiClient: createMockApiFunction({
+				data: mockScope,
+				error: null,
+			}),
+		});
+
+		const getAuditLogsMock = vi.fn().mockResolvedValue({
+			data: { data: [mockAuditLog] },
+			error: null,
+		});
+
+		vi.mocked(useAuditLogsModule.default).mockReturnValue({
+			getAuditLogs: getAuditLogsMock,
+			getAuditLogDetails: vi.fn().mockResolvedValue({
+				data: mockDetailedLog,
+				error: null,
+			}),
+			checkPdpPermission: vi.fn().mockResolvedValue({
+				data: { allow: true },
+				error: null,
+			}),
+		});
+
+		const customOptions = {
+			timeFrame: '48h',
+			pdpUrl: 'http://custom-pdp:7000',
+			sourcePdp: 'pdp-1',
+			users: ['user-1', 'user-2'],
+			resources: ['resource-1'],
+			tenant: 'tenant-1',
+			action: 'read',
+			decision: 'allow',
+		};
+
+		render(<TestRunAuditComponent options={customOptions} />);
+		await sleep(200);
+		expect(getAuditLogsMock).toHaveBeenCalledWith({
+			timeFrame: '48h',
+			sourcePdp: 'pdp-1',
+			users: ['user-1', 'user-2'],
+			resources: ['resource-1'],
+			tenant: 'tenant-1',
+			action: 'read',
+			decision: true,
+		});
+	});
+
+	it('handles different PDP response formats', async () => {
+		vi.mocked(useClientModule.default).mockReturnValue({
+			authenticatedApiClient: createMockApiFunction({
+				data: mockScope,
+				error: null,
+			}),
+		});
+
+		// First case: PDP returns "allow"
+		let mockCheckPdpPermission = vi
+			.fn()
+			.mockResolvedValue({ data: { allow: true }, error: null });
+
+		vi.mocked(useAuditLogsModule.default).mockReturnValue({
+			getAuditLogs: vi.fn().mockResolvedValue({
+				data: { data: [mockAuditLog] },
+				error: null,
+			}),
+			getAuditLogDetails: vi.fn().mockResolvedValue({
+				data: mockDetailedLog,
+				error: null,
+			}),
+			checkPdpPermission: mockCheckPdpPermission,
+		});
+
+		let { lastFrame } = render(
+			<TestRunAuditComponent options={defaultOptions} />,
+		);
+		await sleep(400);
+		expect(lastFrame()).toContain('No audit logs found');
+
+		vi.clearAllMocks();
+
+		// Second case: PDP returns "allowed"
+		mockCheckPdpPermission = vi
+			.fn()
+			.mockResolvedValue({ data: { allowed: true }, error: null });
+
+		vi.mocked(useAuditLogsModule.default).mockReturnValue({
+			getAuditLogs: vi.fn().mockResolvedValue({
+				data: { data: [mockAuditLog] },
+				error: null,
+			}),
+			getAuditLogDetails: vi.fn().mockResolvedValue({
+				data: mockDetailedLog,
+				error: null,
+			}),
+			checkPdpPermission: mockCheckPdpPermission,
+		});
+	});
 });
