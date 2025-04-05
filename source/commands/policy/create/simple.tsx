@@ -2,6 +2,7 @@ import React from 'react';
 import { AuthProvider } from '../../../components/AuthProvider.js';
 import { option } from 'pastel';
 import zod from 'zod';
+import CreateSimpleWizard from '../../../components/policy/CreateSimpleWizard.js';
 
 export const description =
 	'Create a new Policy table for Role Based Access Control';
@@ -26,7 +27,7 @@ type Props = {
 export default function Simple({ options }: Props) {
 	return (
 		<AuthProvider permit_key={options.key} scope={'project'}>
-			<></>
+			<CreateSimpleWizard apiKey={options.key} />
 		</AuthProvider>
 	);
 }
