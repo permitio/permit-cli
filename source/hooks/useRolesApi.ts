@@ -47,7 +47,13 @@ export function useRolesApi(
 			setErrorMessage((error as Error).message);
 			return new Set();
 		}
-	}, [projectId, environmentId, apiKey]);
+	}, [
+		projectId,
+		environmentId,
+		apiKey,
+		authenticatedApiClient,
+		unAuthenticatedApiClient,
+	]);
 
 	const createBulkRoles = useCallback(
 		async (roles: RoleDefinition[]) => {
@@ -79,7 +85,13 @@ export function useRolesApi(
 				throw error;
 			}
 		},
-		[projectId, environmentId, apiKey],
+		[
+			projectId,
+			environmentId,
+			apiKey,
+			authenticatedApiClient,
+			unAuthenticatedApiClient,
+		],
 	);
 
 	return {

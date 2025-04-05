@@ -52,7 +52,13 @@ export function useResourceApi(
 			setErrorMessage((error as Error).message);
 			return new Set();
 		}
-	}, [projectId, environmentId, apiKey]);
+	}, [
+		projectId,
+		environmentId,
+		apiKey,
+		authenticatedApiClient,
+		unAuthenticatedApiClient,
+	]);
 
 	const createBulkResources = useCallback(
 		async (resources: ResourceDefinition[]) => {
@@ -84,7 +90,13 @@ export function useResourceApi(
 				throw error;
 			}
 		},
-		[projectId, environmentId, apiKey],
+		[
+			projectId,
+			environmentId,
+			apiKey,
+			authenticatedApiClient,
+			unAuthenticatedApiClient,
+		],
 	);
 
 	return {

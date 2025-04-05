@@ -128,7 +128,7 @@ export const ActionInput: React.FC<ActionInputProps> = ({
 							value={actionKeysInput}
 							onChange={setActionKeysInput}
 							onSubmit={handleKeysSubmit}
-							placeholder="create, read, update, delete"
+							placeholder={'create, read, update, delete'}
 						/>
 					</Box>
 				</>
@@ -138,7 +138,7 @@ export const ActionInput: React.FC<ActionInputProps> = ({
 				<Box flexDirection="column">
 					<Box>
 						<Text bold>
-							Configure action "{actionKeys[currentActionIndex]}"
+							Configure action : {actionKeys[currentActionIndex]}
 						</Text>
 					</Box>
 					<Box>
