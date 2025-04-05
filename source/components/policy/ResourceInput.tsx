@@ -7,55 +7,61 @@ import type { ResourceDefinition } from '../../lib/policy/utils.js';
 interface ResourceInputProps {
 	projectId: string;
 	environmentId: string;
+	apiKey?: string;
 	onComplete: (resources: ResourceDefinition[]) => void;
+	onError: (error: string) => void;
 }
 
 export const ResourceInput: React.FC<ResourceInputProps> = ({
 	projectId,
 	environmentId,
+	apiKey,
 	onComplete,
+	onError,
 }) => {
 	const [input, setInput] = useState('');
-	const { getExistingResources, status, errorMessage } = useResourceApi(
+	const { getExistingResources, status } = useResourceApi(
 		projectId,
 		environmentId,
+		apiKey,
 	);
 
+	const validateResourceKey = (key: string): boolean => {
+		return /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(key);
+	};
+
 	const handleSubmit = async (value: string) => {
-		const resourceKeys = value
-			.split(',')
-			.map(k => k.trim())
-			.filter(Boolean);
+		try {
+			// Trim the entire input first
+			const trimmedValue = value.trim();
 
-		// Check for existing resources
-		const existingResources = await getExistingResources();
-		const conflictingResources = resourceKeys.filter(key =>
-			existingResources.has(key),
-		);
+			// Split, trim each value, and filter out empty strings
+			const resourceKeys = trimmedValue
+				.split(',')
+				.map(k => k.trim())
+				.filter(k => k.length > 0);
 
-		if (conflictingResources.length > 0) {
-			console.log(
-				` Resources already exist: ${conflictingResources.join(', ')}`,
-			);
-			const validResources = resourceKeys.filter(
-				key => !existingResources.has(key),
-			);
-
-			if (validResources.length === 0) {
-				console.log(' No valid resources to create');
+			if (resourceKeys.length === 0) {
+				onError('Please enter at least one resource');
 				return;
 			}
 
-			console.log(`✓ Proceeding with: ${validResources.join(', ')}`);
+			const invalidKeys = resourceKeys.filter(key => !validateResourceKey(key));
+			if (invalidKeys.length > 0) {
+				onError(`Invalid resource keys: ${invalidKeys.join(', ')}`);
+				return;
+			}
 
-			const resources: ResourceDefinition[] = validResources.map(key => ({
-				key,
-				name: key,
-				actions: {},
-			}));
+			const existingResources = await getExistingResources();
+			const conflictingResources = resourceKeys.filter(key =>
+				existingResources.has(key),
+			);
 
-			onComplete(resources);
-		} else {
+			if (conflictingResources.length > 0) {
+				onError(`Resources already exist: ${conflictingResources.join(', ')}`);
+				return;
+			}
+
 			const resources: ResourceDefinition[] = resourceKeys.map(key => ({
 				key,
 				name: key,
@@ -63,18 +69,32 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({
 			}));
 
 			onComplete(resources);
+
+			// Clear input after successful submission
+			setInput('');
+		} catch (err) {
+			onError((err as Error).message);
 		}
 	};
 
 	return (
-		<Box flexDirection="column">
-			<Text> Enter resources (comma-separated):</Text>
+		<Box flexDirection="column" gap={1}>
 			<Box>
-				<Text>❯ </Text>
-				<TextInput value={input} onChange={setInput} onSubmit={handleSubmit} />
+				<Text bold>Resource Configuration</Text>
 			</Box>
-			{status === 'processing' && <Text>Processing...</Text>}
-			{errorMessage && <Text color="red"> {errorMessage}</Text>}
+			<Box>
+				<Text>Enter resource keys (comma-separated):</Text>
+			</Box>
+			<Box>
+				<Text>{'> '}</Text>
+				<TextInput
+					value={input}
+					onChange={setInput}
+					onSubmit={handleSubmit}
+					placeholder="users, posts, comments"
+				/>
+			</Box>
+			{status === 'processing' && <Text>Validating resources...</Text>}
 		</Box>
 	);
 };

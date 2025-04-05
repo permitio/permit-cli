@@ -26,7 +26,7 @@ type Props = {
 
 export default function Simple({ options }: Props) {
 	return (
-		<AuthProvider permit_key={options.key} scope={'project'}>
+		<AuthProvider permit_key={options.key} scope={'environment'}>
 			<CreateSimpleWizard apiKey={options.key} />
 		</AuthProvider>
 	);
