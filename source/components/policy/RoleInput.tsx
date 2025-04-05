@@ -147,7 +147,6 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 			<Box flexDirection="column">
 				<Text>Format: name:description@permission1|permission2</Text>
 				<Text>Permissions format: resource:action</Text>
-				<Text>Use * for wildcards (e.g., *:* or users:* or *:read)</Text>
 			</Box>
 			<Box flexDirection="column">
 				<Text>Available resources: {availableResources.join(', ')}</Text>
