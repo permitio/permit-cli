@@ -63,6 +63,7 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
     - `unassign` - remove a role assignment from a user in your Permit.io account
   - `sync` - To sync the data from CLI to permit.io
     - `user` - To update or create a user from the CLI.
+- `policy create simple` - Create a simple policy Table
 
 ---
 
@@ -475,6 +476,22 @@ Use this command to remove a role assignment from a user in your Permit.io accou
 ```bash
 $ permit api users unassign --user user@example.com --role admin --tenant default
 ```
+
+---
+
+### `policy create simple`
+
+A simple policy table creation wizard with the resources, actions and roles.
+
+#### Options
+
+- `api-key <string> ` Optional: The Permit API key of the environment.
+
+```bash
+$ permit policy create simple
+```
+
+---
 
 ## Development
 
