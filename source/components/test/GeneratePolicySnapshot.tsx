@@ -60,6 +60,14 @@ type ReBACConfig = {
 
 type AccessControlConfig = RBACConfig | ABACConfig | ReBACConfig;
 
+type DryUser = {
+	key: string;
+	email: string;
+	firstName: string;
+	lastName: string;
+	roles: string[];
+};
+
 export function GeneratePolicySnapshot({ dryRun, models, path }: Props) {
 	const { getRoles, assignRoles } = useRolesApi();
 	const { createTenant, createAndAddUsers } = useTenantApi();
@@ -74,6 +82,26 @@ export function GeneratePolicySnapshot({ dryRun, models, path }: Props) {
 	const [modelsGenerated, setModelsGenerated] = useState<number>(0);
 	const [finalConfig, setFinalConfig] = useState<AccessControlConfig[]>([]);
 	const [resources, setResources] = useState<ResourceRead[]>([]);
+	const [dryUsers, setDryUsers] = useState<DryUser[]>([]);
+
+	const createDryUsers = useCallback(
+		(usernames: string[], userRoleMappings: Record<string, RoleRead[]>) => {
+			const result: DryUser[] = [];
+			for (const user of usernames) {
+				const [firstName = '', lastName = ''] = user.split(' ');
+				const dryUser: DryUser = {
+					key: firstName + lastName,
+					firstName: firstName,
+					lastName: lastName,
+					email: firstName + lastName + '@gmail.com',
+					roles: userRoleMappings[user]?.map(role => role.key) ?? [],
+				};
+				result.push(dryUser);
+			}
+			setDryUsers(result);
+		},
+		[],
+	);
 
 	const createUserAndAttachRoles = useCallback(
 		async (
@@ -190,13 +218,17 @@ export function GeneratePolicySnapshot({ dryRun, models, path }: Props) {
 			await fs.mkdir(dir, { recursive: true });
 
 			// Write config as pretty JSON
-			const json = JSON.stringify(finalConfig, null, 2);
+			const json = JSON.stringify(
+				dryRun ? { users: dryUsers, config: finalConfig } : finalConfig,
+				null,
+				2,
+			);
 			await fs.writeFile(path ?? '', json, 'utf8');
 			setState('done');
 		} catch (err) {
 			setError(err instanceof Error ? err.message : '');
 		}
-	}, [finalConfig, path]);
+	}, [dryRun, dryUsers, finalConfig, path]);
 
 	// Check if we have generated all config.
 	useEffect(() => {
@@ -241,12 +273,15 @@ export function GeneratePolicySnapshot({ dryRun, models, path }: Props) {
 				userRoleMappingRBAC[userAllAccess] = [role];
 				userRoleMappingRBAC[userNoAccess] = [];
 			});
-			if (!dryRun) {
+			if (dryRun) {
+				createDryUsers(generatedUsers, userRoleMappingRBAC);
+			} else {
 				createUserAndAttachRoles(generatedUsers, userRoleMappingRBAC);
 			}
 			generateRBACConfig(generatedUsers, userRoleMappingRBAC);
 		}
 	}, [
+		createDryUsers,
 		createUserAndAttachRoles,
 		dryRun,
 		generateRBACConfig,
@@ -269,7 +304,12 @@ export function GeneratePolicySnapshot({ dryRun, models, path }: Props) {
 			{dryRun && <Text>Dry run mode!</Text>}
 			{state === 'done' && path && <Text>Config saved to {path}</Text>}
 			{state === 'done' && !path && (
-				<Text> {JSON.stringify(finalConfig)} </Text>
+				<Text>
+					{' '}
+					{JSON.stringify(
+						dryRun ? { users: dryUsers, config: finalConfig } : finalConfig,
+					)}{' '}
+				</Text>
 			)}
 			{error && <Text>{error}</Text>}
 		</>
