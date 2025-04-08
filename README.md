@@ -15,36 +15,34 @@ The **Permit CLI** is an open-source command-line utility that empowers develope
 
 ## Installation
 
-Permit CLI can be installed in multiple ways:
-
-### Using Node.js
+### Quick Install (All Platforms)
 
 ```bash
-npm install -g @permitio/cli
+# Using curl
+curl -fsSL https://raw.githubusercontent.com/permitio/permit-cli/main/install.sh | sh
 ```
 
-### Using Pre-compiled Binary
+### Windows
 
-Download the latest binary for your platform from our [releases page](https://github.com/permitio/permit-cli/releases).
+```powershell
+# Using PowerShell
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/permitio/permit-cli/main/install.ps1'))
+```
 
-For example, on macOS (arm64):
+### macOS
 
 ```bash
-# Download the binary
-$ curl -L https://github.com/permitio/permit-cli/releases/latest/download/permit-cli-macos-arm64 -o permit-cli
-
-# Make it executable
-$ chmod +x permit-cli
-
-# Move it to your PATH
-$ sudo mv permit-cli /usr/local/bin/permit
+# Using Homebrew
+brew tap permitio/permit
+brew install permit
 ```
 
-For other platforms, replace `permit-cli-macos-arm64` with:
+### Manual Installation
 
-- macOS (x64): `permit-cli-macos-x64`
-- Linux (x64): `permit-cli-linux-x64`
-- Windows (x64): `permit-cli-windows-x64.exe`
+1. Download the binary for your platform from our [releases page](https://github.com/permitio/permit-cli/releases)
+2. Rename it to `permit` (or `permit.exe` on Windows)
+3. Move it to a directory in your PATH
+4. Make it executable (Unix-like systems only): `chmod +x permit`
 
 ## Usage
 

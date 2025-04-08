@@ -1,32 +1,48 @@
 {
-	"name": "@permitio/cli",
+	"name": "permit-cli",
 	"version": "0.1.2",
-	"description": "Permit.io CLI",
+	"description": "Developer swiss army knife for fine-grained authorization",
 	"main": "dist/cli.js",
 	"license": "MIT",
 	"bin": {
-		"permit": "./dist/cli.js"
+		"permit": "./bin/cli.js"
 	},
 	"type": "module",
 	"engines": {
 		"node": ">=22"
 	},
 	"scripts": {
-		"build": "tsc",
-		"build:deno": "deno task build",
-		"postbuild": "rimraf dist/commands/env/export/templates && cpx 'source/commands/env/export/templates/*.hcl' 'dist/commands/env/export/templates'",
-		"predev": "cpx 'source/commands/env/export/templates/*.hcl' 'dist/commands/env/export/templates'",
-		"dev": "NODE_NO_WARNINGS=1 tsc --watch",
-		"lint": "prettier --check . && eslint \"source/**/*.{js,ts,tsx}\"",
-		"lint:fix": "eslint \"source/**/*.{js,ts,tsx}\" --fix",
-		"test": "prettier --check ./source && vitest run --coverage",
-		"simple-check": "npx tsx ./source/cli.tsx pdp check -u filip@permit.io -a create -r task",
-		"test:ts": "tsc --noEmit",
-		"start": "node dist/cli.js"
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"start": "node dist/cli.js",
+		"test": "vitest",
+		"test:watch": "vitest watch",
+		"test:coverage": "vitest run --coverage",
+		"lint": "eslint . --ext .ts,.tsx",
+		"format": "prettier --write .",
+		"prepare": "husky install",
+		"postinstall": "node scripts/postinstall.js",
+		"prepublishOnly": "npm run build",
+		"release": "npm run build && npm publish",
+		"create-release": "node scripts/create-release.js"
 	},
 	"files": [
-		"dist"
+		"bin/",
+		"dist/",
+		"install.sh",
+		"install.ps1"
 	],
+	"pkg": {
+		"targets": [
+			"node18-macos-x64",
+			"node18-linux-x64",
+			"node18-win-x64"
+		],
+		"outputPath": "bin",
+		"assets": [
+			"dist/commands/env/export/templates/**/*"
+		]
+	},
 	"dependencies": {
 		"@scaleway/random-name": "^5.1.1",
 		"cli-table": "^0.3.11",
@@ -75,6 +91,7 @@
 		"ink-testing-library": "^4.0.0",
 		"openapi-typescript": "^7.6.1",
 		"parser": "^0.1.4",
+		"pkg": "^5.8.1",
 		"prettier": "^3.3.3",
 		"rimraf": "^6.0.1",
 		"ts-node": "^10.9.1",
