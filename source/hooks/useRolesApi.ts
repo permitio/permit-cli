@@ -11,9 +11,6 @@ export const useRolesApi = () => {
 	const getRoles = useCallback(async () => {
 		return await authenticatedApiClient().GET(
 			'/v2/schema/{proj_id}/{env_id}/roles',
-			undefined,
-			undefined,
-			{ per_page: 100 },
 		);
 	}, [authenticatedApiClient]);
 
