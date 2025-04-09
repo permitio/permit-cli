@@ -7,6 +7,15 @@ import type { infer as zInfer } from 'zod';
 import { option } from 'pastel';
 
 export const options = zod.object({
+	apiKey: zod
+		.string()
+		.optional()
+		.describe(
+			option({
+				description:
+					'Optional: API Key to be used for test generation',
+			}),
+		),
 	dryRun: zod
 		.boolean()
 		.optional()
@@ -52,10 +61,10 @@ type Props = {
 };
 
 export default function E2e({
-	options: { dryRun, models, codeSample, path },
+	options: { dryRun, models, codeSample, path, apiKey },
 }: Props) {
 	return (
-		<AuthProvider scope={'environment'}>
+		<AuthProvider scope={'environment'} permit_key={apiKey}>
 			<GeneratePolicySnapshot
 				dryRun={dryRun}
 				models={models}
