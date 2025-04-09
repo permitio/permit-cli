@@ -12,8 +12,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:
-					'Optional: API Key to be used for test generation',
+				description: 'Optional: API Key to be used for test generation',
 			}),
 		),
 	dryRun: zod
