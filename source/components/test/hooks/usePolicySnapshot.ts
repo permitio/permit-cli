@@ -288,13 +288,13 @@ export const useGeneratePolicySnapshot = ({
 		} else if (state === 'rbac-users') {
 			let generatedUsers: string[] = [];
 			const userRoleMappingRBAC: Record<string, RoleRead[]> = {};
+			const userNoAccess = randomName('', ' ');
+			generatedUsers.push(userNoAccess);
+			userRoleMappingRBAC[userNoAccess] = [];
 			roles.forEach(role => {
 				const userAllAccess = randomName('', ' ');
-				const userNoAccess = randomName('', ' ');
 				generatedUsers.push(userAllAccess);
-				generatedUsers.push(userNoAccess);
 				userRoleMappingRBAC[userAllAccess] = [role];
-				userRoleMappingRBAC[userNoAccess] = [];
 			});
 			generatedUsersRBACRef.current = [
 				...generatedUsersRBACRef.current,
