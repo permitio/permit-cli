@@ -6,8 +6,7 @@ import { useApiKeyApi } from '../source/hooks/useApiKeyApi.js';
 import { useMemberApi } from '../source/hooks/useMemberApi.js';
 import EnvironmentSelection from '../source/components/EnvironmentSelection.js';
 import delay from 'delay';
-import * as keytar from "keytar"
-
+import * as keytar from 'keytar';
 
 vi.mock('../source/hooks/useApiKeyApi', () => ({
 	useApiKeyApi: vi.fn(() => ({
@@ -82,7 +81,7 @@ describe('Member Component', () => {
 		});
 
 		const { lastFrame, stdin } = render(
-			<Member options={{ key: 'valid_api_key' }} />,
+			<Member options={{ apiKey: 'valid_api_key' }} />,
 		);
 
 		await delay(100); // Allow environment selection
@@ -138,7 +137,7 @@ describe('Member Component', () => {
 		const { lastFrame, stdin } = render(
 			<Member
 				options={{
-					key: 'valid_api_key',
+					apiKey: 'valid_api_key',
 					project: 'proj1',
 					environment: 'env1',
 					email: 'email1',
@@ -165,7 +164,7 @@ describe('Member Component', () => {
 		});
 
 		const { lastFrame } = render(
-			<Member options={{ key: 'invalid_api_key' }} />,
+			<Member options={{ apiKey: 'invalid_api_key' }} />,
 		);
 
 		await delay(50); // Allow async operations to complete

@@ -19,7 +19,8 @@ describe('useEnvironmentApi', () => {
 
 			(fetch as any).mockResolvedValueOnce({
 				...getMockFetchResponse(),
-				json: async () => ( [{
+				json: async () => [
+					{
 						key: 'env-key-1',
 						id: 'env-id-1',
 						organization_id: 'org-id',
@@ -28,13 +29,13 @@ describe('useEnvironmentApi', () => {
 						updated_at: '2024-12-02',
 						email_configuration: 'email-config',
 						name: 'Env 1',
-					}]
-				)
+					},
+				],
 			});
 
 			const fetchEnvironments = async () => {
 				const { data: environments } = await getEnvironments(projectId);
-				return environments?.length ?? 0 > 0
+				return (environments?.length ?? 0 > 0)
 					? 'Environments fetched'
 					: 'No environments';
 			};
@@ -58,22 +59,21 @@ describe('useEnvironmentApi', () => {
 			(fetch as any).mockResolvedValueOnce({
 				...getMockFetchResponse(),
 				json: async () => ({
-						key: 'env-key-1',
-						id: 'env-id-1',
-						organization_id: 'org-id',
-						project_id: 'project-id',
-						created_at: '2024-12-01',
-						updated_at: '2024-12-02',
-						email_configuration: 'email-config',
-						name: 'Env 1',
-
-				})
+					key: 'env-key-1',
+					id: 'env-id-1',
+					organization_id: 'org-id',
+					project_id: 'project-id',
+					created_at: '2024-12-01',
+					updated_at: '2024-12-02',
+					email_configuration: 'email-config',
+					name: 'Env 1',
+				}),
 			});
 
 			const fetchEnvironment = async () => {
 				const { data: environment } = await getEnvironment(
 					projectId,
-					environmentId
+					environmentId,
 				);
 				return environment ? 'Environment fetched' : 'No environment found';
 			};
@@ -96,12 +96,14 @@ describe('useEnvironmentApi', () => {
 
 			(fetch as any).mockResolvedValueOnce({
 				...getMockFetchResponse(),
-				json: async () => ({ data: [] })
+				json: async () => ({ data: [] }),
 			});
 
 			const fetchEnvironments = async () => {
 				const { data: environments } = await getEnvironments(projectId);
-				return environments?.length ?? 0 > 0 ? 'Environments fetched' : 'No environments';
+				return (environments?.length ?? 0 > 0)
+					? 'Environments fetched'
+					: 'No environments';
 			};
 			const [result, setResult] = React.useState<string | null>(null);
 			fetchEnvironments().then(res => setResult(res));
@@ -124,7 +126,7 @@ describe('useEnvironmentApi', () => {
 
 			(fetch as any).mockResolvedValueOnce({
 				...getMockFetchResponse(),
-				json: async () => ( { success: true } )
+				json: async () => ({ success: true }),
 			});
 
 			const copyEnv = async () => {
@@ -158,7 +160,7 @@ describe('useEnvironmentApi', () => {
 
 			(fetch as any).mockResolvedValueOnce({
 				...getMockFetchResponse(),
-				json: async () => undefined
+				json: async () => undefined,
 			});
 
 			const copyEnv = async () => {

@@ -10,14 +10,13 @@ import delay from 'delay';
 import * as keytar from 'keytar';
 import { useApiKeyApi } from '../source/hooks/useApiKeyApi';
 
-
 vi.mock('../source/lib/auth.js', () => ({
 	browserAuth: vi.fn(),
 	authCallbackServer: vi.fn(),
 	tokenType: vi.fn(),
 	TokenType: {
 		APIToken: 'APIToken',
-		Invalid: 'Invalid'
+		Invalid: 'Invalid',
 	},
 }));
 
@@ -50,10 +49,10 @@ vi.mock('keytar', () => {
 
 	const keytar = {
 		setPassword: vi.fn().mockResolvedValue(() => {
-			return demoPermitKey
+			return demoPermitKey;
 		}),
 		getPassword: vi.fn().mockResolvedValue(() => {
-			return demoPermitKey
+			return demoPermitKey;
 		}),
 		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
 	};
@@ -64,11 +63,7 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
-
-
 describe('Copy Component', () => {
-
-
 	it('should handle successful environment copy flow using arguments', async () => {
 		vi.mocked(tokenType).mockReturnValue(TokenType.APIToken);
 
@@ -105,7 +100,7 @@ describe('Copy Component', () => {
 		const { lastFrame } = render(
 			<Copy
 				options={{
-					key: 'valid_api_key',
+					apiKey: 'valid_api_key',
 					name: 'NewEnvName',
 					description: 'New Env Desc',
 					conflictStrategy: 'fail',
@@ -118,7 +113,6 @@ describe('Copy Component', () => {
 	});
 
 	it('should handle invalid API key gracefully', async () => {
-
 		vi.mocked(useApiKeyApi).mockReturnValue({
 			validateApiKeyScope: vi.fn(() =>
 				Promise.resolve({
@@ -130,7 +124,9 @@ describe('Copy Component', () => {
 
 		vi.mocked(tokenType).mockReturnValue(TokenType.Invalid);
 
-		const { lastFrame } = render(<Copy options={{ key: 'invalid_api_key' }} />);
+		const { lastFrame } = render(
+			<Copy options={{ apiKey: 'invalid_api_key' }} />,
+		);
 
 		await delay(50); // Allow async operations to complete
 
@@ -139,7 +135,6 @@ describe('Copy Component', () => {
 	});
 
 	it('should handle successful environment copy flow using the wizard', async () => {
-
 		vi.mocked(useApiKeyApi).mockReturnValue({
 			validateApiKeyScope: vi.fn(() =>
 				Promise.resolve({
@@ -173,7 +168,7 @@ describe('Copy Component', () => {
 		});
 
 		const { lastFrame, stdin } = render(
-			<Copy options={{ key: 'valid_api_key', conflictStrategy: 'fail' }} />,
+			<Copy options={{ apiKey: 'valid_api_key', conflictStrategy: 'fail' }} />,
 		);
 
 		await delay(50); // Allow environment selection
