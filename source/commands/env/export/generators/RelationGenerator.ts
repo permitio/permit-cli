@@ -5,26 +5,11 @@ import Handlebars from 'handlebars';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { ResourceRead } from 'permitio';
+import {
+	ResourceRead,
+	RelationRead,
+} from 'permitio/build/module/openapi/types';
 import he from 'he';
-
-// Due to an issue with the permitio package, we need to define the RelationRead type manually
-// The issue is that the RelationRead type is not exported as module from the permitio package
-interface RelationRead {
-	description?: string;
-	subject_resource: string;
-	key: string;
-	name: string;
-	id: string;
-	organization_id: string;
-	project_id: string;
-	environment_id: string;
-	created_at: string;
-	updated_at: string;
-	object_resource_id: string;
-	object_resource: string;
-	subject_resource_id: string;
-}
 
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirPath = dirname(currentFilePath);
