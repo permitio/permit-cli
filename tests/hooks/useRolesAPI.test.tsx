@@ -2,7 +2,10 @@ import { vi, describe, beforeEach, it, expect } from 'vitest';
 import React from 'react';
 import { render } from 'ink-testing-library';
 import { Text } from 'ink';
-import { RoleAssignmentCreate, useRolesApi } from '../../source/hooks/useRolesApi.js';
+import {
+	RoleAssignmentCreate,
+	useRolesApi,
+} from '../../source/hooks/useRolesApi.js';
 import { getMockFetchResponse } from '../utils.js';
 
 global.fetch = vi.fn();
@@ -15,10 +18,10 @@ describe('useRolesApi', () => {
 	it('should get roles', async () => {
 		(fetch as any).mockResolvedValueOnce({
 			...getMockFetchResponse(),
-			json: async () => ([
-					{ id: 'role-1', name: 'Admin' },
-					{ id: 'role-2', name: 'Editor' },
-				]),
+			json: async () => [
+				{ id: 'role-1', name: 'Admin' },
+				{ id: 'role-2', name: 'Editor' },
+			],
 		});
 
 		const TestComponent = () => {

@@ -15,10 +15,10 @@ describe('useResourcesApi', () => {
 	it('should get resources', async () => {
 		(fetch as any).mockResolvedValueOnce({
 			...getMockFetchResponse(),
-			json: async () => ([
-					{ id: 'res-1', name: 'Database' },
-					{ id: 'res-2', name: 'Cache' },
-				]),
+			json: async () => [
+				{ id: 'res-1', name: 'Database' },
+				{ id: 'res-2', name: 'Cache' },
+			],
 		});
 
 		const TestComponent = () => {
