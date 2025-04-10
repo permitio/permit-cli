@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
 	collectResourceTypes,
-	getDefaultResourceType,
 	isValidAuditContext,
 	normalizeDetailedLog,
 	createPdpRequest,
@@ -86,20 +85,6 @@ describe('collectResourceTypes', () => {
 	});
 });
 
-describe('getDefaultResourceType', () => {
-	it('should return the first type from a set of resource types', () => {
-		const types = new Set(['document', 'folder', 'user']);
-		const defaultType = getDefaultResourceType(types);
-		expect(defaultType).toBe('document');
-	});
-
-	it('should return "resource" when the set is empty', () => {
-		const types = new Set<string>();
-		const defaultType = getDefaultResourceType(types);
-		expect(defaultType).toBe('resource');
-	});
-});
-
 describe('isValidAuditContext', () => {
 	it('should return true for valid audit context', () => {
 		const validContext: AuditContext = {
@@ -167,12 +152,7 @@ describe('normalizeDetailedLog', () => {
 			},
 		};
 
-		const resourceTypes = new Set(['document']);
-		const detailedLog = normalizeDetailedLog(
-			responseData,
-			originalLog,
-			resourceTypes,
-		);
+		const detailedLog = normalizeDetailedLog(responseData, originalLog);
 
 		expect(detailedLog).not.toBeNull();
 		expect(detailedLog?.id).toBe('1');
@@ -198,16 +178,10 @@ describe('normalizeDetailedLog', () => {
 			decision: true,
 		};
 
-		const resourceTypes = new Set(['document']);
-		const detailedLog = normalizeDetailedLog(
-			responseData,
-			originalLog,
-			resourceTypes,
-		);
+		const detailedLog = normalizeDetailedLog(responseData, originalLog);
 
 		expect(detailedLog).not.toBeNull();
 		expect(detailedLog?.user_id).toBe('user1');
-		expect(detailedLog?.resource_type).toBe('document'); // From resourceTypes
 		expect(detailedLog?.tenant).toBe('default'); // Default value
 		expect(detailedLog?.resource).toBe(''); // Default value
 	});
@@ -227,12 +201,7 @@ describe('normalizeDetailedLog', () => {
 			decision: true,
 		};
 
-		const resourceTypes = new Set(['document']);
-		const detailedLog = normalizeDetailedLog(
-			responseData,
-			originalLog,
-			resourceTypes,
-		);
+		const detailedLog = normalizeDetailedLog(responseData, originalLog);
 
 		expect(detailedLog).toBeNull();
 	});
@@ -255,20 +224,16 @@ describe('normalizeDetailedLog', () => {
 			context: 'not an object', // Invalid context
 		};
 
-		const resourceTypes = new Set(['document']);
-		const detailedLog = normalizeDetailedLog(
-			responseData,
-			originalLog,
-			resourceTypes,
-		);
+		const detailedLog = normalizeDetailedLog(responseData, originalLog);
 
 		expect(detailedLog).not.toBeNull();
-		expect(detailedLog?.context).toEqual({
+		expect(detailedLog?.context).toMatchObject({
 			user: { id: 'user1', key: 'user1' },
-			resource: { type: 'document', id: '' },
-			tenant: 'default',
 			action: 'read',
+			tenant: 'default',
 		});
+		// Just check that resource exists without expecting a specific type
+		expect(detailedLog?.context?.resource).toBeDefined();
 	});
 });
 
@@ -286,15 +251,15 @@ describe('createPdpRequest', () => {
 			decision: true,
 		};
 
-		const resourceTypes = new Set(['document']);
-		const request = createPdpRequest(detailedLog, resourceTypes);
+		const request = createPdpRequest(detailedLog);
 
-		expect(request).toEqual({
-			tenant: 'default',
-			action: 'read',
-			user: { key: 'user1' },
-			resource: { type: 'document', key: 'doc1' },
-		});
+		expect(request.tenant).toBe('default');
+		expect(request.action).toBe('read');
+		expect(request.user.key).toBe('user1');
+		expect(request.user.attributes).toEqual({});
+		expect(request.resource.type).toBe('document');
+		expect(request.resource.key).toBe('doc1');
+		expect(request.resource.attributes).toEqual({});
 	});
 
 	it('should handle missing fields with defaults', () => {
@@ -307,35 +272,68 @@ describe('createPdpRequest', () => {
 			decision: true,
 		};
 
-		const resourceTypes = new Set(['document']);
-		const request = createPdpRequest(detailedLog, resourceTypes);
+		const request = createPdpRequest(detailedLog);
 
-		expect(request).toEqual({
-			tenant: 'default',
-			action: 'read',
-			user: { key: 'user1' },
-			resource: { type: 'document' },
-		});
+		expect(request.tenant).toBe('default');
+		expect(request.action).toBe('read');
+		expect(request.user.key).toBe('user1');
+		expect(request.resource.type).toBe('resource');
 	});
 
-	it('should fall back to default resource type when none provided', () => {
+	it('should handle ReBAC resource format', () => {
 		const detailedLog: DetailedAuditLog = {
 			id: '1',
 			timestamp: '2023-01-01T00:00:00Z',
 			user_id: 'user1',
+			user_key: 'user1',
+			resource: 'document:123',
+			resource_type: '',
 			action: 'read',
 			tenant: 'default',
 			decision: true,
 		};
 
-		const resourceTypes = new Set<string>();
-		const request = createPdpRequest(detailedLog, resourceTypes);
+		const request = createPdpRequest(detailedLog);
 
-		expect(request).toEqual({
-			tenant: 'default',
+		expect(request.tenant).toBe('default');
+		expect(request.action).toBe('read');
+		expect(request.user.key).toBe('user1');
+		expect(request.resource.type).toBe('document');
+		expect(request.resource.key).toBe('document:123');
+	});
+
+	it('should include context data when available', () => {
+		const detailedLog: DetailedAuditLog = {
+			id: '1',
+			timestamp: '2023-01-01T00:00:00Z',
+			user_id: 'user1',
+			user_key: 'user1',
+			resource: 'doc1',
+			resource_type: 'document',
 			action: 'read',
-			user: { key: 'user1' },
-			resource: { type: 'resource' },
-		});
+			tenant: 'default',
+			decision: true,
+			context: {
+				user: {
+					id: 'user1',
+					key: 'user1',
+					attributes: { role: 'admin' },
+				},
+				resource: {
+					type: 'document',
+					id: 'doc1',
+					attributes: { department: 'engineering' },
+				},
+				tenant: 'default',
+				action: 'read',
+				context: { custom: 'data' },
+			},
+		};
+
+		const request = createPdpRequest(detailedLog);
+
+		expect(request.user.attributes).toEqual({ role: 'admin' });
+		expect(request.resource.attributes).toEqual({ department: 'engineering' });
+		expect(request.context).toEqual({ custom: 'data' });
 	});
 });

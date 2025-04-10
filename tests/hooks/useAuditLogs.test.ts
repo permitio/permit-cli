@@ -8,22 +8,18 @@ const mockPostFn = vi.fn();
 // Mock the useClient hook
 vi.mock('../../source/hooks/useClient.js', () => ({
 	default: () => ({
-		authenticatedApiClient: () => ({
-			GET: mockGetFn,
-		}),
-		authenticatedPdpClient: url => ({
-			POST: mockPostFn,
-		}),
+		authenticatedApiClient: () => ({ GET: mockGetFn }),
+		authenticatedPdpClient: () => ({ POST: mockPostFn }),
 	}),
 }));
 
 // Mock React hooks
-vi.mock('react', () => {
-	const originalReact = vi.importActual('react');
+vi.mock('react', async () => {
+	const React = await vi.importActual('react');
 	return {
-		...originalReact,
-		useCallback: callback => callback,
-		useMemo: callback => callback(),
+		...React,
+		useCallback: fn => fn,
+		useMemo: fn => fn(),
 	};
 });
 
@@ -33,7 +29,6 @@ describe('useAuditLogs', () => {
 	});
 
 	it('fetches audit logs with correct parameters', async () => {
-		// Mock API success response
 		mockGetFn.mockResolvedValueOnce({
 			data: {
 				data: [
@@ -54,10 +49,7 @@ describe('useAuditLogs', () => {
 			error: null,
 		});
 
-		// Use the hook
 		const { getAuditLogs } = useAuditLogs();
-
-		// Call the function with test parameters
 		const result = await getAuditLogs({
 			timeFrame: 24,
 			sourcePdp: 'test-pdp',
@@ -68,7 +60,6 @@ describe('useAuditLogs', () => {
 			decision: true,
 		});
 
-		// Verify the API call
 		expect(mockGetFn).toHaveBeenCalledTimes(1);
 		expect(mockGetFn).toHaveBeenCalledWith(
 			'/v2/pdps/{proj_id}/{env_id}/audit_logs',
@@ -88,8 +79,6 @@ describe('useAuditLogs', () => {
 				sort_by: 'timestamp',
 			}),
 		);
-
-		// Verify the result matches the mock response
 		expect(result).toEqual({
 			data: {
 				data: [
@@ -112,103 +101,50 @@ describe('useAuditLogs', () => {
 	});
 
 	it('handles API errors properly', async () => {
-		// Setup error response
-		mockGetFn.mockResolvedValueOnce({
-			data: null,
-			error: 'Failed to fetch',
-		});
-
-		// Use the hook
+		mockGetFn.mockResolvedValueOnce({ data: null, error: 'Failed to fetch' });
 		const { getAuditLogs } = useAuditLogs();
-
-		// Call the function
 		const result = await getAuditLogs({ timeFrame: 24 });
-
-		// Verify error handling
 		expect(result.data).toBeNull();
 		expect(result.error).toBe('Failed to fetch');
 	});
 
 	it('fetches detailed audit log by ID', async () => {
-		// Mock data with audit logs array
-		const mockLogs = {
-			data: [
-				{ id: 'log1', timestamp: '2023-01-01', action: 'read', decision: true },
-				{
-					id: 'log2',
-					timestamp: '2023-01-02',
-					action: 'write',
-					decision: false,
-				},
-			],
+		const mockLog = {
+			id: 'log1',
+			timestamp: '2023-01-01',
+			action: 'read',
+			decision: true,
 		};
+		mockGetFn.mockResolvedValueOnce({ data: mockLog, error: null });
 
-		mockGetFn.mockResolvedValueOnce({
-			data: mockLogs,
-			error: null,
-		});
-
-		// Use the hook
 		const { getAuditLogDetails } = useAuditLogs();
-
-		// Call the function
 		const result = await getAuditLogDetails('log1');
 
-		// Verify API call
 		expect(mockGetFn).toHaveBeenCalledWith(
-			'/v2/pdps/{proj_id}/{env_id}/audit_logs',
-			undefined,
-			undefined,
-			expect.objectContaining({
-				page: 1,
-				per_page: 100,
-			}),
+			'/v2/pdps/{proj_id}/{env_id}/audit_logs/{log_id}',
+			{ log_id: 'log1' },
 		);
-
-		// Verify response - should find log1 in the array
-		expect(result).toEqual({
-			data: mockLogs.data[0],
-			error: null,
-		});
+		expect(result).toEqual({ data: mockLog, error: null });
 	});
 
 	it('handles audit log not found', async () => {
-		// Mock data with audit logs array
 		mockGetFn.mockResolvedValueOnce({
-			data: {
-				data: [
-					{
-						id: 'log2',
-						timestamp: '2023-01-02',
-						action: 'write',
-						decision: false,
-					},
-				],
-			},
-			error: null,
+			data: null,
+			error: 'Audit log not found',
 		});
-
-		// Use the hook
 		const { getAuditLogDetails } = useAuditLogs();
-
-		// Call the function with a non-existent ID
 		const result = await getAuditLogDetails('log1');
 
-		// Verify response indicates log not found
-		expect(result).toEqual({
-			data: null,
-			error: 'Audit log with ID log1 not found',
-		});
+		expect(mockGetFn).toHaveBeenCalledWith(
+			'/v2/pdps/{proj_id}/{env_id}/audit_logs/{log_id}',
+			{ log_id: 'log1' },
+		);
+		expect(result).toEqual({ data: null, error: 'Audit log not found' });
 	});
 
 	it('calls PDP with correct request structure', async () => {
-		// Mock PDP success response
-		mockPostFn.mockResolvedValueOnce({
-			data: { allow: true },
-			error: null,
-		});
+		mockPostFn.mockResolvedValueOnce({ data: { allow: true }, error: null });
 
-		// Test request object
 		const testRequest = {
 			tenant: 'tenant1',
 			action: 'read',
@@ -216,49 +152,39 @@ describe('useAuditLogs', () => {
 			resource: { type: 'document', key: 'doc1' },
 		};
 
-		// Use the hook
 		const { checkPdpPermission } = useAuditLogs();
-
-		// Call the function
 		const result = await checkPdpPermission(
 			testRequest,
 			'http://pdp.example.com',
 		);
 
-		// Verify the PDP call
-		expect(mockPostFn).toHaveBeenCalledWith(
-			'/allowed',
-			undefined,
-			expect.objectContaining({
+		// Now asserting the full shape your hook builds:
+		expect(mockPostFn).toHaveBeenCalledWith('/allowed', undefined, {
+			tenant: 'tenant1',
+			action: 'read',
+			user: {
+				key: 'user1',
+				firstName: undefined,
+				lastName: undefined,
+				email: undefined,
+				attributes: {},
+			},
+			resource: {
+				type: 'document',
+				key: 'doc1',
 				tenant: 'tenant1',
-				action: 'read',
-				user: expect.objectContaining({ key: 'user1' }),
-				resource: expect.objectContaining({
-					type: 'document',
-					key: 'doc1',
-					tenant: 'tenant1',
-				}),
-			}),
-		);
-
-		// Verify response
-		expect(result).toEqual({
-			data: { allow: true },
-			error: null,
+				attributes: {},
+				context: {},
+			},
+			context: {},
 		});
+		expect(result).toEqual({ data: { allow: true }, error: null });
 	});
 
 	it('handles PDP errors properly', async () => {
-		// Mock PDP error response
-		mockPostFn.mockResolvedValueOnce({
-			data: null,
-			error: 'PDP check failed',
-		});
+		mockPostFn.mockResolvedValueOnce({ data: null, error: 'PDP check failed' });
 
-		// Use the hook
 		const { checkPdpPermission } = useAuditLogs();
-
-		// Call the function
 		const result = await checkPdpPermission(
 			{
 				tenant: 'tenant1',
@@ -269,7 +195,6 @@ describe('useAuditLogs', () => {
 			'http://pdp.example.com',
 		);
 
-		// Verify error handling
 		expect(result).toEqual({
 			data: null,
 			error: 'PDP check failed: PDP check failed',
@@ -277,13 +202,9 @@ describe('useAuditLogs', () => {
 	});
 
 	it('handles PDP request exceptions', async () => {
-		// Mock exception during request
 		mockPostFn.mockRejectedValueOnce(new Error('Network error'));
 
-		// Use the hook
 		const { checkPdpPermission } = useAuditLogs();
-
-		// Call the function
 		const result = await checkPdpPermission(
 			{
 				tenant: 'tenant1',
@@ -294,8 +215,32 @@ describe('useAuditLogs', () => {
 			'http://pdp.example.com',
 		);
 
-		// Verify error handling
 		expect(result.data).toBeNull();
 		expect(result.error).toBe('Network error');
+	});
+
+	it('paginates through all audit logs', async () => {
+		const page1 = Array.from({ length: 100 }, (_, i) => ({
+			id: `log${i}`,
+			timestamp: '2023-01-01',
+			action: 'read',
+			decision: true,
+		}));
+		const page2 = Array.from({ length: 50 }, (_, i) => ({
+			id: `log${i + 100}`,
+			timestamp: '2023-01-02',
+			action: 'write',
+			decision: false,
+		}));
+		mockGetFn.mockResolvedValueOnce({ data: { data: page1 }, error: null });
+		mockGetFn.mockResolvedValueOnce({ data: { data: page2 }, error: null });
+
+		const { getAuditLogs } = useAuditLogs();
+		const result = await getAuditLogs({ timeFrame: 24 });
+
+		expect(mockGetFn).toHaveBeenCalledTimes(2);
+		expect(result.data.data).toHaveLength(150);
+		expect(result.data.data[0].id).toBe('log0');
+		expect(result.data.data[149].id).toBe('log149');
 	});
 });
