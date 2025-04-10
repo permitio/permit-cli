@@ -28,6 +28,7 @@ describe('useResourcesApi', () => {
 			React.useEffect(() => {
 				const get = async () => {
 					const { data } = await getResources();
+					// @ts-ignore
 					setResult(data.map((r: any) => r.name).join(', '));
 				};
 				get();
