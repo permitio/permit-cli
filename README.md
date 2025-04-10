@@ -478,7 +478,6 @@ Use this command to remove a role assignment from a user in your Permit.io accou
 $ permit api users unassign --user user@example.com --role admin --tenant default
 ```
 
-
 ### `test`
 
 This collection of commands helps you test and validate your authorization policies.
@@ -512,7 +511,6 @@ $ permit test run audit --pdpUrl http://my-pdp.example.com:7766 --timeFrame 48 -
 # Test with multiple users and resources
 $ permit test run audit --users john@example.com alice@example.com --resources document:123 folder:456
 ```
-
 
 ## Development
 
