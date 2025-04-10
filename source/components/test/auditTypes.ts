@@ -33,6 +33,7 @@ export interface AuditContext {
 	};
 	tenant: string;
 	action: string;
+	context?: Record<string, unknown>;
 }
 
 export interface DetailedAuditLog extends AuditLog {
@@ -58,11 +59,23 @@ export interface AuditLogResponseData {
 	[key: string]: unknown;
 }
 
+/**
+ * PDP request data
+ */
 export interface PdpRequestData {
 	tenant: string;
 	action: string;
-	user: { key: string };
-	resource: { type: string; key?: string };
+	user: {
+		key: string;
+		attributes?: Record<string, string | number | boolean>;
+	};
+	resource: {
+		type: string;
+		key?: string;
+		id?: string;
+		attributes?: Record<string, string | number | boolean>;
+	};
+	context?: Record<string, unknown>;
 }
 
 export interface PdpResponseData {

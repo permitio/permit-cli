@@ -20,21 +20,10 @@ export const collectResourceTypes = (logs: AuditLog[]): Set<string> => {
 };
 
 /**
- * Gets a default resource type when none is provided
- */
-export const getDefaultResourceType = (types: Set<string>): string => {
-	for (const type of types) {
-		return type; // Return the first type found
-	}
-	return 'resource'; // Return default if Set is empty
-};
-
-/**
  * Check if a value is a valid AuditContext
  */
 export function isValidAuditContext(value: unknown): value is AuditContext {
 	if (!value || typeof value !== 'object') return false;
-
 	const ctx = value as Record<string, unknown>;
 	return (
 		'user' in ctx &&
@@ -52,14 +41,11 @@ export function isValidAuditContext(value: unknown): value is AuditContext {
 export const normalizeDetailedLog = (
 	response: AuditLogResponseData,
 	originalLog: AuditLog,
-	resourceTypes: Set<string>,
 ): DetailedAuditLog | null => {
 	try {
-		// Get a suitable resource type
+		// Get resource type, preferring explicit type from logs
 		const resourceType =
-			response.resource_type ||
-			originalLog.resource_type ||
-			getDefaultResourceType(resourceTypes);
+			response.resource_type || originalLog.resource_type || '';
 
 		// Get user identifier
 		const userId =
@@ -105,7 +91,6 @@ export const normalizeDetailedLog = (
 
 		return detailedLog;
 	} catch {
-		// Just returning null on any error
 		return null;
 	}
 };
@@ -113,19 +98,79 @@ export const normalizeDetailedLog = (
 /**
  * Creates a properly formatted PDP request
  */
-export const createPdpRequest = (
-	log: DetailedAuditLog,
-	resourceTypes: Set<string>,
-): PdpRequestData => {
-	return {
+export const createPdpRequest = (log: DetailedAuditLog): PdpRequestData => {
+	// Extract context for attributes if available
+	const context = log.context || ({} as AuditContext);
+
+	const userAttributes =
+		context.user && 'attributes' in context.user
+			? context.user.attributes || {}
+			: {};
+
+	// Safely extract resource attributes
+	const resourceAttributes =
+		context.resource && 'attributes' in context.resource
+			? context.resource.attributes || {}
+			: {};
+
+	const isResourceInstance =
+		typeof log.resource === 'string' && log.resource.includes(':');
+
+	// Determine resource key/id handling
+	let resourceKey = '';
+	let resourceId = '';
+
+	if (isResourceInstance) {
+		// For specific resource instances, use the entire string as key
+		resourceKey = log.resource || '';
+
+		// If it's in format "type:id", also extract the ID part
+		const parts = resourceKey.split(':');
+		if (parts.length >= 2 && parts[1]) {
+			resourceId = parts[1];
+		}
+	} else {
+		// For normal resources, use the resource value
+		resourceKey = log.resource || '';
+	}
+
+	// Determine the resource type with fallbacks to ensure it's never undefined
+	let resourceType = 'resource';
+
+	if (log.resource_type && log.resource_type.length > 0) {
+		// Use explicitly provided resource type if available
+		resourceType = log.resource_type;
+	} else if (resourceKey.includes(':')) {
+		// Extract type from "type:id" format
+		const typeFromKey = resourceKey.split(':')[0];
+		if (typeFromKey && typeFromKey.length > 0) {
+			resourceType = typeFromKey;
+		}
+	}
+
+	const pdpRequest: PdpRequestData = {
 		tenant: log.tenant || 'default',
 		action: log.action,
 		user: {
 			key: log.user_key || log.user_id,
+			attributes: userAttributes,
 		},
 		resource: {
-			type: log.resource_type || getDefaultResourceType(resourceTypes),
-			...(log.resource ? { key: log.resource } : {}),
+			type: resourceType,
+			key: resourceKey,
+			attributes: resourceAttributes,
 		},
 	};
+
+	// Only add resourceId if it exists
+	if (resourceId) {
+		pdpRequest.resource.id = resourceId;
+	}
+
+	// Add context if available
+	if ('context' in context && context.context) {
+		pdpRequest.context = context.context;
+	}
+
+	return pdpRequest;
 };

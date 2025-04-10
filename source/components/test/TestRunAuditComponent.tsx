@@ -1,9 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Text } from 'ink';
-import useClient from '../../hooks/useClient.js';
 import useAuditLogs from '../../hooks/useAuditLogs.js';
 import {
-	ApiScope,
 	AuditLog,
 	CommandOptions,
 	ComparisonResult,
@@ -11,11 +9,7 @@ import {
 	ProcessPhase,
 	ProgressState,
 } from './auditTypes.js';
-import {
-	collectResourceTypes,
-	createPdpRequest,
-	normalizeDetailedLog,
-} from './auditUtils.js';
+import { createPdpRequest, normalizeDetailedLog } from './auditUtils.js';
 import ErrorView from './views/ErrorView.js';
 import LoadingView from './views/LoadingView.js';
 import ResultsView from './views/ResultsView.js';
@@ -34,55 +28,40 @@ const TestRunAuditComponent: React.FC<{ options: CommandOptions }> = ({
 		current: 0,
 		total: 0,
 	});
-	const [scope, setScope] = useState<ApiScope | null>(null);
-	const [resourceTypes, setResourceTypes] = useState<Set<string>>(new Set());
 
 	// Hooks
-	const { authenticatedApiClient } = useClient();
 	const { getAuditLogs, getAuditLogDetails, checkPdpPermission } =
 		useAuditLogs();
 
-	// ========================
-	// API & Data Fetching
-	// ========================
-
 	/**
-	 * Fetches the current scope (project, environment) from the API
+	 * Format error message based on error content
 	 */
-	const fetchScope = useCallback(async () => {
-		try {
-			const { data, error } =
-				await authenticatedApiClient().GET('/v2/api-key/scope');
-
-			if (error || !data) {
-				throw new Error(
-					`Failed to get current scope: ${error || 'No scope returned'}`,
-				);
+	const formatErrorMessage = useCallback(
+		(errorMsg: unknown, defaultMsg: string) => {
+			if (typeof errorMsg === 'string') {
+				if (errorMsg.includes('401') || errorMsg.includes('unauthorized')) {
+					return `Authentication failed: ${errorMsg}. Please log in again.`;
+				}
+				if (errorMsg.includes('403') || errorMsg.includes('forbidden')) {
+					return `Permission denied: You don't have access to audit logs.`;
+				}
+				if (
+					errorMsg.includes('ECONNREFUSED') ||
+					errorMsg.includes('failed to fetch')
+				) {
+					return `Connection refused: Unable to connect to ${errorMsg.includes('PDP') ? options.pdpUrl : 'API server'}`;
+				}
 			}
 
-			if (!data.project_id || !data.environment_id) {
-				throw new Error(
-					"Could not determine current project and environment. Please ensure you're logged in.",
-				);
-			}
-
-			setScope({
-				project_id: data.project_id,
-				environment_id: data.environment_id,
-				organization_id: data.organization_id,
-			});
-		} catch (err) {
-			setError(err instanceof Error ? err.message : String(err));
-			setLoading(false);
-		}
-	}, [authenticatedApiClient]);
+			return defaultMsg;
+		},
+		[options.pdpUrl],
+	);
 
 	/**
 	 * Fetches audit logs based on filter options
 	 */
 	const fetchAuditLogs = useCallback(async () => {
-		if (!scope) return;
-
 		try {
 			setPhase('fetching');
 
@@ -105,23 +84,16 @@ const TestRunAuditComponent: React.FC<{ options: CommandOptions }> = ({
 			const { data, error } = await getAuditLogs(filterOptions);
 
 			if (error) {
-				throw new Error(`Failed to fetch audit logs: ${error}`);
+				throw new Error(
+					formatErrorMessage(error, 'Failed to fetch audit logs'),
+				);
 			}
 
 			if (!data || !Array.isArray(data.data)) {
-				console.log(
-					'Received data structure:',
-					JSON.stringify(data, null, 2).substring(0, 500) + '...',
-				);
 				throw new Error('Invalid response format for audit logs');
 			}
 
 			const auditLogsData = data.data as AuditLog[];
-
-			// Collect all resource types for later use
-			const types = collectResourceTypes(auditLogsData);
-			setResourceTypes(types);
-
 			setAuditLogs(auditLogsData);
 			setProgress({ current: 0, total: auditLogsData.length });
 
@@ -133,7 +105,7 @@ const TestRunAuditComponent: React.FC<{ options: CommandOptions }> = ({
 			setError(err instanceof Error ? err.message : String(err));
 			setLoading(false);
 		}
-	}, [options, scope, getAuditLogs]);
+	}, [options, getAuditLogs, formatErrorMessage]);
 
 	/**
 	 * Fetches detailed information for each audit log
@@ -159,7 +131,7 @@ const TestRunAuditComponent: React.FC<{ options: CommandOptions }> = ({
 				}
 
 				// Process and normalize the log data
-				const detailedLog = normalizeDetailedLog(data, log, resourceTypes);
+				const detailedLog = normalizeDetailedLog(data, log);
 				if (detailedLog) {
 					detailed.push(detailedLog);
 				}
@@ -176,26 +148,29 @@ const TestRunAuditComponent: React.FC<{ options: CommandOptions }> = ({
 			setError(err instanceof Error ? err.message : String(err));
 			setLoading(false);
 		}
-	}, [auditLogs, getAuditLogDetails, resourceTypes]);
+	}, [auditLogs, getAuditLogDetails]);
 
 	/**
 	 * Validates that the PDP is accessible
 	 */
 	const validatePdpConnection = useCallback(
-		async (
-			log: DetailedAuditLog,
-			resourceTypes: Set<string>,
-		): Promise<void> => {
+		async (log: DetailedAuditLog): Promise<void> => {
 			try {
-				const request = createPdpRequest(log, resourceTypes);
-				await checkPdpPermission(request, options.pdpUrl);
+				const request = createPdpRequest(log);
+				const { error } = await checkPdpPermission(request, options.pdpUrl);
+
+				if (error) {
+					throw new Error(
+						formatErrorMessage(error, `PDP check failed: ${error}`),
+					);
+				}
 			} catch (err) {
 				throw new Error(
 					`PDP at ${options.pdpUrl} is not accessible: ${err instanceof Error ? err.message : String(err)}`,
 				);
 			}
 		},
-		[options.pdpUrl, checkPdpPermission],
+		[options.pdpUrl, checkPdpPermission, formatErrorMessage],
 	);
 
 	/**
@@ -210,7 +185,7 @@ const TestRunAuditComponent: React.FC<{ options: CommandOptions }> = ({
 
 			// Ensure PDP is accessible with a test call
 			if (detailedLogs.length > 0 && detailedLogs[0]) {
-				await validatePdpConnection(detailedLogs[0], resourceTypes);
+				await validatePdpConnection(detailedLogs[0]);
 			} else {
 				throw new Error(
 					'No detailed logs available to validate PDP connection',
@@ -225,7 +200,7 @@ const TestRunAuditComponent: React.FC<{ options: CommandOptions }> = ({
 				setProgress({ current: i + 1, total: detailedLogs.length });
 
 				try {
-					const request = createPdpRequest(log, resourceTypes);
+					const request = createPdpRequest(log);
 					const { data, error } = await checkPdpPermission(
 						request,
 						options.pdpUrl,
@@ -272,29 +247,16 @@ const TestRunAuditComponent: React.FC<{ options: CommandOptions }> = ({
 			setError(err instanceof Error ? err.message : String(err));
 			setLoading(false);
 		}
-	}, [
-		detailedLogs,
-		validatePdpConnection,
-		checkPdpPermission,
-		options.pdpUrl,
-		resourceTypes,
-	]);
+	}, [detailedLogs, validatePdpConnection, checkPdpPermission, options.pdpUrl]);
 
 	// ========================
 	// Process Orchestration
 	// ========================
 
-	// Initialize by fetching scope
+	// Fetch audit logs immediately on component mount
 	useEffect(() => {
-		fetchScope();
-	}, [fetchScope]);
-
-	// Fetch audit logs once we have the scope
-	useEffect(() => {
-		if (scope) {
-			fetchAuditLogs();
-		}
-	}, [scope, fetchAuditLogs]);
+		fetchAuditLogs();
+	}, [fetchAuditLogs]);
 
 	// Fetch detailed logs once we have audit logs
 	useEffect(() => {
@@ -315,7 +277,7 @@ const TestRunAuditComponent: React.FC<{ options: CommandOptions }> = ({
 	// ========================
 
 	if (error) {
-		return <ErrorView error={error} pdpUrl={options.pdpUrl} />;
+		return <ErrorView error={error} />;
 	}
 
 	if (loading) {

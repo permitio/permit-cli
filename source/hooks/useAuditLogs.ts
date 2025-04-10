@@ -51,7 +51,7 @@ export const useAuditLogs = () => {
 	const { authenticatedApiClient, authenticatedPdpClient } = useClient();
 
 	/**
-	 * Fetches audit logs based on filters
+	 * Fetches audit logs based on filters with pagination support
 	 */
 	const getAuditLogs = useCallback(
 		async (filters: FilterOptions) => {
@@ -67,7 +67,6 @@ export const useAuditLogs = () => {
 				const queryParams: Record<string, QueryParamValue> = {
 					timestamp_from: Math.floor(startDate.getTime() / 1000),
 					timestamp_to: Math.floor(endDate.getTime() / 1000),
-					page: 1,
 					per_page: 100,
 					sort_by: 'timestamp',
 				};
@@ -83,18 +82,55 @@ export const useAuditLogs = () => {
 				if (filters.decision !== undefined)
 					queryParams['decision'] = filters.decision;
 
-				const { data, error } = await authenticatedApiClient().GET(
-					'/v2/pdps/{proj_id}/{env_id}/audit_logs',
-					undefined,
-					undefined,
-					queryParams,
-				);
+				// Start with page 1
+				let currentPage = 1;
+				let hasMorePages = true;
+				const allLogs: unknown[] = [];
+				const perPageValue = 100; // Store the per_page as a separate variable for comparison
 
-				if (error) {
-					return { data: null, error };
+				// Fetch all pages
+				while (hasMorePages) {
+					queryParams['page'] = currentPage;
+
+					const { data, error } = await authenticatedApiClient().GET(
+						'/v2/pdps/{proj_id}/{env_id}/audit_logs',
+						undefined,
+						undefined,
+						queryParams,
+					);
+
+					if (error) {
+						return { data: null, error };
+					}
+
+					// Check if we have valid data
+					if (!data || !Array.isArray(data.data)) {
+						return {
+							data: null,
+							error: 'Invalid response format for audit logs',
+						};
+					}
+
+					// Add logs from this page to our collection
+					allLogs.push(...data.data);
+
+					// Check if we've reached the last page
+					if (data.data.length < perPageValue) {
+						hasMorePages = false;
+					} else {
+						currentPage++;
+					}
+
+					// For safety, limit to a reasonable number of pages
+					if (currentPage > 10) {
+						break;
+					}
 				}
 
-				return { data, error: null };
+				return {
+					data: { data: allLogs },
+					error: null,
+				};
 			} catch (err) {
 				return {
 					data: null,
@@ -106,48 +142,22 @@ export const useAuditLogs = () => {
 	);
 
 	/**
-	 * Fetches detailed information for a specific audit log
+	 * Fetches detailed information for a specific audit log ID
 	 */
 	const getAuditLogDetails = useCallback(
 		async (auditLogId: string) => {
 			try {
+				// Directly fetch a specific audit log by ID
 				const { data, error } = await authenticatedApiClient().GET(
-					'/v2/pdps/{proj_id}/{env_id}/audit_logs',
-					undefined,
-					undefined,
-					{
-						// Use standard filtering params
-						page: 1,
-						per_page: 100,
-					},
+					'/v2/pdps/{proj_id}/{env_id}/audit_logs/{log_id}',
+					{ log_id: auditLogId },
 				);
 
 				if (error) {
 					return { data: null, error };
 				}
 
-				interface AuditLogData {
-					id: string;
-					[key: string]: unknown;
-				}
-
-				const auditLogs = Array.isArray(data)
-					? data
-					: data && typeof data === 'object' && 'data' in data
-						? (data.data as AuditLogData[]) || []
-						: [];
-
-				// Find the specific log by ID
-				const specificLog = auditLogs.find(log => log.id === auditLogId);
-
-				if (!specificLog) {
-					return {
-						data: null,
-						error: `Audit log with ID ${auditLogId} not found`,
-					};
-				}
-
-				return { data: specificLog, error: null };
+				return { data, error: null };
 			} catch (err) {
 				return {
 					data: null,
