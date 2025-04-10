@@ -490,14 +490,15 @@ The command is particularly useful for validating that policy changes don't brea
 
 #### Options
 
-- `pdpUrl <string>` (Optional) - URL of the PDP to verify against (default: `http://localhost:7766`)
-- `timeFrame <number>` (Optional) - Number of hours to fetch audit logs for (between 6 to 72, default: 24)
-- `sourcePdp <string>` (Optional) - ID of the PDP to filter audit logs from
-- `users <string[]>` (Optional) - Filter logs by specific users (can provide multiple)
-- `resources <string[]>` (Optional) - Filter logs by specific resources (can provide multiple)
-- `tenant <string>` (Optional) - Filter logs by specific tenant
-- `action <string>` (Optional) - Filter logs by specific action
-- `decision <allow | deny>` (Optional) - Filter logs by decision outcome
+- `--pdp-url <string>` (Optional) - URL of the PDP to verify against (default: `http://localhost:7766`)
+- `--time-frame <number>` (Optional) - Number of hours to fetch audit logs for (between 6 to 72, default: 24)
+- `--source-pdp <string>` (Optional) - ID of the PDP to filter audit logs from
+- `--users <string[]>` (Optional) - Filter logs by specific users (can provide multiple)
+- `--resources <string[]>` (Optional) - Filter logs by specific resources (can provide multiple)
+- `--tenant <string>` (Optional) - Filter logs by specific tenant
+- `--action <string>` (Optional) - Filter logs by specific action
+- `--decision <allow | deny>` (Optional) - Filter logs by decision outcome
+- `--max-logs <number>` (Optional) - Maximum number of logs to process (useful for limiting large audit operations)
 
 #### Example
 
@@ -510,6 +511,9 @@ $ permit test run audit --pdpUrl http://my-pdp.example.com:7766 --timeFrame 48 -
 
 # Test with multiple users and resources
 $ permit test run audit --users john@example.com alice@example.com --resources document:123 folder:456
+
+# Limit the number of logs processed
+$ permit test run audit --max-logs 500
 ```
 
 ## Development
