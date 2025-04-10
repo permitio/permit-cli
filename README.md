@@ -43,7 +43,7 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
   - `run` - print a docker command to run your Permit PDP
   - `check` - perform an authorization check against the PDP
   - `stats` - view statistics about your PDP's performance and usage
-  - `check-url` - check user permission access
+  - `check-url` - check if a user has permission to access a URL
 - `env` - a collection of commands to manage Permit policy environments
   - `copy` - copy a Permit environment with its policies to another environment
   - `create` - create a new environment in a project
