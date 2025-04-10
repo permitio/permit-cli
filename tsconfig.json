@@ -8,6 +8,6 @@
 		"noUncheckedIndexedAccess": true,
 		"strict": true
 	},
-	"include": ["source", "tests/components/APISyncUserComponent.test.tsx"],
+	"include": ["source"],
 	"exclude": ["node_modules", "source/lib/api"]
 }
