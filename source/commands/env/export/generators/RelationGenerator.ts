@@ -5,8 +5,9 @@ import Handlebars from 'handlebars';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { RelationRead, ResourceRead } from 'permitio/build/main/openapi/types';
+import { ResourceRead } from 'permitio';
 import he from 'he';
+import { RelationRead } from 'permitio/build/module/openapi/index.js';
 
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirPath = dirname(currentFilePath);
