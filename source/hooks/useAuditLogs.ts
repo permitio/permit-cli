@@ -42,6 +42,7 @@ export interface FilterOptions {
 	tenant?: string;
 	action?: string;
 	decision?: boolean;
+	maxLogs?: number;
 }
 
 /**
@@ -87,9 +88,10 @@ export const useAuditLogs = () => {
 				let hasMorePages = true;
 				const allLogs: unknown[] = [];
 				const perPageValue = 100; // Store the per_page as a separate variable for comparison
+				const maxLogsToFetch = filters.maxLogs || Number.MAX_SAFE_INTEGER; // Use maxLogs if provided
 
 				// Fetch all pages
-				while (hasMorePages) {
+				while (hasMorePages && allLogs.length < maxLogsToFetch) {
 					queryParams['page'] = currentPage;
 
 					const { data, error } = await authenticatedApiClient().GET(
@@ -111,19 +113,19 @@ export const useAuditLogs = () => {
 						};
 					}
 
-					// Add logs from this page to our collection
-					allLogs.push(...data.data);
+					// Add logs from this page to our collection (up to maxLogs limit)
+					const remainingCapacity = maxLogsToFetch - allLogs.length;
+					const logsToAdd = data.data.slice(0, remainingCapacity);
+					allLogs.push(...logsToAdd);
 
-					// Check if we've reached the last page
-					if (data.data.length < perPageValue) {
+					// Check if we've reached the last page or hit our limit
+					if (
+						data.data.length < perPageValue ||
+						allLogs.length >= maxLogsToFetch
+					) {
 						hasMorePages = false;
 					} else {
 						currentPage++;
-					}
-
-					// For safety, limit to a reasonable number of pages
-					if (currentPage > 10) {
-						break;
 					}
 				}
 

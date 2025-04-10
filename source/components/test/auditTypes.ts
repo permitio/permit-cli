@@ -97,6 +97,7 @@ export interface CommandOptions {
 	tenant?: string;
 	action?: string;
 	decision?: 'allow' | 'deny';
+	maxLogs?: number;
 }
 
 export interface ComparisonResult {

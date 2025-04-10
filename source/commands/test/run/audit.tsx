@@ -93,6 +93,17 @@ export const options = zod.object({
 				alias: 'd',
 			}),
 		),
+	maxLogs: zod
+		.number()
+		.positive()
+		.optional()
+		.default(1000)
+		.describe(
+			option({
+				description: 'Maximum number of audit logs to process',
+				alias: 'm',
+			}),
+		),
 });
 
 type Props = {

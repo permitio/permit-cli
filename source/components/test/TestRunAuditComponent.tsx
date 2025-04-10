@@ -79,6 +79,7 @@ const TestRunAuditComponent: React.FC<{ options: CommandOptions }> = ({
 						: options.decision === 'deny'
 							? false
 							: undefined,
+				maxLogs: options.maxLogs, // Pass the maxLogs parameter
 			};
 
 			const { data, error } = await getAuditLogs(filterOptions);
