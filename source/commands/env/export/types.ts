@@ -8,6 +8,7 @@ export interface ExportState {
 export interface ExportOptions {
 	key?: string;
 	file?: string;
+	includeDefaultRoles?: boolean;
 }
 
 export interface HCLGenerator {
