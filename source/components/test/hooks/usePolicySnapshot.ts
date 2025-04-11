@@ -55,7 +55,7 @@ type ReBACConfig = {
 	result: boolean;
 };
 
-// type AccessControlConfig = RBACConfig | ABACConfig | ReBACConfig;
+type AccessControlConfig = RBACConfig | ABACConfig | ReBACConfig;
 
 type DryUser = {
 	key: string;
@@ -65,11 +65,11 @@ type DryUser = {
 	roles: string[];
 };
 
-type FinalConfig = {
-	RBAC: RBACConfig[];
-	ABAC: ABACConfig[];
-	ReBAC: ReBACConfig[];
-};
+// type FinalConfig = {
+// 	RBAC: RBACConfig[];
+// 	ABAC: ABACConfig[];
+// 	ReBAC: ReBACConfig[];
+// };
 
 // type ValidModels = 'RBAC' | 'ABAC' | 'ReBAC';
 
@@ -95,11 +95,7 @@ export const useGeneratePolicySnapshot = ({
 	>('roles');
 	const [tenantId, setTenantId] = useState<string | undefined>(undefined);
 	const [modelsGenerated, setModelsGenerated] = useState<number>(0);
-	const [finalConfig, setFinalConfig] = useState<FinalConfig>({
-		RBAC: [],
-		ABAC: [],
-		ReBAC: [],
-	});
+	const [finalConfig, setFinalConfig] = useState<AccessControlConfig[]>([]);
 	const resourcesRef = useRef<ResourceRead[]>([]);
 	const [dryUsers, setDryUsers] = useState<DryUser[]>([]);
 	const generatedUsersRBACRef = useRef<string[]>([]);
@@ -232,7 +228,7 @@ export const useGeneratePolicySnapshot = ({
 			),
 		);
 
-		setFinalConfig(prev => ({ ...prev, RBAC: config }));
+		setFinalConfig(prev => [...prev, ...config]);
 		setModelsGenerated(prev => prev + 1);
 	}, [buildUserInfoFromUsername, tenantId]);
 
