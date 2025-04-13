@@ -18,6 +18,33 @@ export const options = zod.object({
 				alias: 'k',
 			}),
 		),
+	resources: zod
+		.array(zod.string())
+		.optional()
+		.describe(
+			option({
+				description:
+					'Array of resources in format "key:name@attribute1,attribute2"',
+			}),
+		),
+	actions: zod
+		.array(zod.string())
+		.optional()
+		.describe(
+			option({
+				description:
+					'Array of actions in format "key:description@attribute1,attribute2"',
+			}),
+		),
+	roles: zod
+		.array(zod.string())
+		.optional()
+		.describe(
+			option({
+				description:
+					'Array of roles in format "name:description@resource:action|resource:action"',
+			}),
+		),
 });
 
 type Props = {
@@ -27,7 +54,11 @@ type Props = {
 export default function Simple({ options }: Props) {
 	return (
 		<AuthProvider permit_key={options.apiKey} scope={'environment'}>
-			<CreateSimpleWizard />
+			<CreateSimpleWizard
+				presentRoles={options.roles}
+				presentResources={options.resources}
+				presentActions={options.actions}
+			/>
 		</AuthProvider>
 	);
 }

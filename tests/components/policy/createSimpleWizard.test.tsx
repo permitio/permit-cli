@@ -74,7 +74,7 @@ describe('CreateSimpleWizard', () => {
 	});
 
 	it('initially renders the ResourceInput component', () => {
-		render(<CreateSimpleWizard apiKey={apiKey} />);
+		render(<CreateSimpleWizard />);
 
 		expect(ResourceInput).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -86,14 +86,16 @@ describe('CreateSimpleWizard', () => {
 	});
 
 	it('transitions from resources to actions step when resources are completed', () => {
-		render(<CreateSimpleWizard apiKey={apiKey} />);
+		render(<CreateSimpleWizard />);
 
 		// Extract the onComplete handler from ResourceInput
 		const onCompleteResources =
 			vi.mocked(ResourceInput).mock.calls[0][0].onComplete;
 
 		// Call onComplete with sample resources
-		const sampleResources = [{ key: 'resource1', name: 'Resource 1' }];
+		const sampleResources = [
+			{ key: 'resource1', name: 'Resource 1', actions: {} },
+		];
 		onCompleteResources(sampleResources);
 
 		// Verify ActionInput is now rendered
@@ -107,7 +109,7 @@ describe('CreateSimpleWizard', () => {
 	});
 
 	it('transitions from actions to roles step when actions are completed', () => {
-		render(<CreateSimpleWizard apiKey={apiKey} />);
+		render(<CreateSimpleWizard />);
 
 		// First complete the resources step
 		const onCompleteResources =
@@ -136,7 +138,7 @@ describe('CreateSimpleWizard', () => {
 	});
 
 	it('handles errors from ResourceInput component', async () => {
-		const { lastFrame } = render(<CreateSimpleWizard apiKey={apiKey} />);
+		const { lastFrame } = render(<CreateSimpleWizard />);
 
 		// Extract the onError handler from ResourceInput
 		vi.mocked(ResourceInput).mock.calls[0][0].onError('Resource error test');
@@ -146,12 +148,12 @@ describe('CreateSimpleWizard', () => {
 	});
 
 	it('handles errors from ActionInput component', () => {
-		const { lastFrame } = render(<CreateSimpleWizard apiKey={apiKey} />);
+		const { lastFrame } = render(<CreateSimpleWizard />);
 
 		// Extract the onError handler from ActionInput
 		const onCompleteResources =
 			vi.mocked(ResourceInput).mock.calls[0][0].onComplete;
-		onCompleteResources([{ key: 'resource1' }]);
+		onCompleteResources([{ key: 'resource1', name: 'resource1', actions: {} }]);
 
 		const onError = vi.mocked(ActionInput).mock.calls[0][0].onError;
 
@@ -164,12 +166,14 @@ describe('CreateSimpleWizard', () => {
 	});
 
 	it('displays processing message when submitting role data', () => {
-		const { lastFrame } = render(<CreateSimpleWizard apiKey={apiKey} />);
+		const { lastFrame } = render(<CreateSimpleWizard />);
 
 		// Go through the workflow to roles
 		const onCompleteResources =
 			vi.mocked(ResourceInput).mock.calls[0][0].onComplete;
-		onCompleteResources([{ key: 'resource1' }]);
+		onCompleteResources([
+			{ key: 'resource1', name: 'Resource 1', actions: {} },
+		]);
 
 		const onCompleteActions =
 			vi.mocked(ActionInput).mock.calls[0][0].onComplete;
@@ -181,7 +185,7 @@ describe('CreateSimpleWizard', () => {
 
 		// Complete the role step
 		const onCompleteRoles = vi.mocked(RoleInput).mock.calls[0][0].onComplete;
-		onCompleteRoles([{ name: 'admin' }]);
+		onCompleteRoles([{ name: 'admin', key: 'admin' }]);
 
 		// Check for processing message
 		expect(lastFrame()).toContain('Processing your request...');
@@ -193,7 +197,9 @@ describe('CreateSimpleWizard', () => {
 		// Go through the workflow to roles
 		const onCompleteResources =
 			vi.mocked(ResourceInput).mock.calls[0][0].onComplete;
-		onCompleteResources([{ key: 'resource1' }]);
+		onCompleteResources([
+			{ key: 'resource1', actions: {}, name: 'Resource 1' },
+		]);
 
 		const onCompleteActions =
 			vi.mocked(ActionInput).mock.calls[0][0].onComplete;
@@ -205,7 +211,7 @@ describe('CreateSimpleWizard', () => {
 
 		// Complete the role step
 		const onCompleteRoles = vi.mocked(RoleInput).mock.calls[0][0].onComplete;
-		await onCompleteRoles([{ name: 'admin' }]);
+		await onCompleteRoles([{ name: 'admin', key: 'admin' }]);
 
 		// Check for error message
 		expect(lastFrame()).toContain(
@@ -215,12 +221,14 @@ describe('CreateSimpleWizard', () => {
 	});
 
 	it('shows success message when APIs complete successfully', async () => {
-		const { lastFrame } = render(<CreateSimpleWizard apiKey={apiKey} />);
+		const { lastFrame } = render(<CreateSimpleWizard />);
 
 		// Go through the workflow to roles
 		const onCompleteResources =
 			vi.mocked(ResourceInput).mock.calls[0][0].onComplete;
-		onCompleteResources([{ key: 'resource1' }]);
+		onCompleteResources([
+			{ key: 'resource1', name: 'Resource 1', actions: {} },
+		]);
 
 		const onCompleteActions =
 			vi.mocked(ActionInput).mock.calls[0][0].onComplete;
@@ -232,7 +240,7 @@ describe('CreateSimpleWizard', () => {
 
 		// Complete the role step
 		const onCompleteRoles = vi.mocked(RoleInput).mock.calls[0][0].onComplete;
-		await onCompleteRoles([{ name: 'admin' }]);
+		await onCompleteRoles([{ name: 'admin', key: 'admin' }]);
 
 		// Check for success message
 		expect(lastFrame()).toContain(
@@ -248,6 +256,8 @@ describe('CreateSimpleWizard', () => {
 			}),
 		]);
 
-		expect(mockCreateBulkRoles).toHaveBeenCalledWith([{ name: 'admin' }]);
+		expect(mockCreateBulkRoles).toHaveBeenCalledWith([
+			{ name: 'admin', key: 'admin' },
+		]);
 	});
 });
