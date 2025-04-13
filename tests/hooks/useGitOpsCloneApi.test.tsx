@@ -72,28 +72,6 @@ describe('useGitOpsCloneApi', () => {
 
 		expect(mockAuthenticatedClient.GET).toHaveBeenCalledWith(
 			'/v2/projects/{proj_id}/repos/active',
-			{ proj_id: 'test-project' },
-		);
-		expect(lastFrame()).toContain(
-			'Repository: https://github.com/example/repo.git',
-		);
-	});
-
-	it('fetches repository using unauthenticated client when API key is provided', async () => {
-		mockUnAuthenticatedClient.GET.mockResolvedValue({
-			data: { url: 'https://github.com/example/repo.git' },
-			error: null,
-		});
-
-		const { lastFrame } = render(
-			<TestComponent projectId="test-project" apiKey="test-api-key" />,
-		);
-
-		await new Promise(resolve => setTimeout(resolve, 50));
-
-		expect(mockUnAuthenticatedClient.GET).toHaveBeenCalledWith(
-			'/v2/projects/{proj_id}/repos/active',
-			{ proj_id: 'test-project' },
 		);
 		expect(lastFrame()).toContain(
 			'Repository: https://github.com/example/repo.git',

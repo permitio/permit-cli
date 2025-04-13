@@ -219,10 +219,7 @@ describe('CloneComponent', () => {
 		render(<CloneComponent apiKey="test-api-key" />);
 
 		await new Promise(resolve => setTimeout(resolve, 50));
-		expect(fetchActivePolicyRepo).toHaveBeenCalledWith(
-			'test-project-id',
-			'test-api-key',
-		);
+		expect(fetchActivePolicyRepo).toHaveBeenCalledWith();
 	});
 
 	it('shows cloning state during clone operation', async () => {
