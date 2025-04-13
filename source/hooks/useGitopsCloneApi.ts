@@ -35,30 +35,26 @@ function convertGitSshToHttps(sshUrl: string): string {
 }
 
 export default function useGitOpsCloneApi() {
-	const { authenticatedApiClient, unAuthenticatedApiClient } = useClient();
+	const { authenticatedApiClient } = useClient();
 
-	const fetchActivePolicyRepo = useCallback(
-		async (projectId: string, apiKey?: string): Promise<string | null> => {
-			const client = apiKey
-				? unAuthenticatedApiClient(apiKey)
-				: authenticatedApiClient();
-			const { data, error } = await client.GET(
-				`/v2/projects/{proj_id}/repos/active`,
-				{ proj_id: projectId },
-			);
-			if (error) {
-				throw new Error(`Failed to fetch Active policy Repository: ${error}`);
+	const fetchActivePolicyRepo = useCallback(async (): Promise<
+		string | null
+	> => {
+		const client = authenticatedApiClient();
+		const { data, error } = await client.GET(
+			`/v2/projects/{proj_id}/repos/active`,
+		);
+		if (error) {
+			throw new Error(`Failed to fetch Active policy Repository: ${error}`);
+		}
+		if (data) {
+			if (data.url.startsWith('git@')) {
+				return convertGitSshToHttps(data.url);
 			}
-			if (data) {
-				if (data.url.startsWith('git@')) {
-					return convertGitSshToHttps(data.url);
-				}
 
-				return data.url;
-			}
-			return null;
-		},
-		[authenticatedApiClient, unAuthenticatedApiClient],
-	);
+			return data.url;
+		}
+		return null;
+	}, [authenticatedApiClient]);
 	return { fetchActivePolicyRepo };
 }

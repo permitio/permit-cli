@@ -42,10 +42,7 @@ export default function CloneComponent({ apiKey, dryRun, project }: Props) {
 	useEffect(() => {
 		const checkGitOpsRepo = async () => {
 			try {
-				const policyRepo = await fetchActivePolicyRepo(
-					scope.project_id as string,
-					apiKey,
-				);
+				const policyRepo = await fetchActivePolicyRepo();
 				if (!policyRepo) {
 					setState({ status: 'no_repo' });
 					return;
