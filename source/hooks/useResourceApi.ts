@@ -1,13 +1,8 @@
 import { useCallback, useState } from 'react';
 import useClient from './useClient.js';
-import type { ResourceDefinition } from '../lib/policy/utils.js';
-
-export function useResourceApi(
-	projectId: string | undefined,
-	environmentId: string | undefined,
-	apiKey?: string,
-) {
-	const { authenticatedApiClient, unAuthenticatedApiClient } = useClient();
+import { components } from '../lib/api/v1.js';
+export function useResourceApi() {
+	const { authenticatedApiClient } = useClient();
 	const [status, setStatus] = useState<
 		'idle' | 'processing' | 'done' | 'error'
 	>('idle');
@@ -15,15 +10,9 @@ export function useResourceApi(
 
 	const getExistingResources = useCallback(async () => {
 		try {
-			const client = apiKey
-				? unAuthenticatedApiClient(apiKey)
-				: authenticatedApiClient();
+			const client = authenticatedApiClient();
 			const result = await client.GET(
 				`/v2/schema/{proj_id}/{env_id}/resources`,
-				{
-					proj_id: projectId as string,
-					env_id: environmentId as string,
-				},
 			);
 			const error = result.error;
 
@@ -52,31 +41,20 @@ export function useResourceApi(
 			setErrorMessage((error as Error).message);
 			return new Set();
 		}
-	}, [
-		projectId,
-		environmentId,
-		apiKey,
-		authenticatedApiClient,
-		unAuthenticatedApiClient,
-	]);
+	}, [authenticatedApiClient]);
 
 	const createBulkResources = useCallback(
-		async (resources: ResourceDefinition[]) => {
+		async (resources: components['schemas']['ResourceCreate'][]) => {
 			setStatus('processing');
 			setErrorMessage(null);
 
 			try {
-				const client = apiKey
-					? unAuthenticatedApiClient(apiKey)
-					: authenticatedApiClient();
+				const client = authenticatedApiClient();
 
 				for (const resource of resources) {
 					const { error } = await client.POST(
 						`/v2/schema/{proj_id}/{env_id}/resources`,
-						{
-							proj_id: projectId as string,
-							env_id: environmentId as string,
-						},
+
 						resource,
 					);
 
@@ -90,13 +68,7 @@ export function useResourceApi(
 				throw error;
 			}
 		},
-		[
-			projectId,
-			environmentId,
-			apiKey,
-			authenticatedApiClient,
-			unAuthenticatedApiClient,
-		],
+		[authenticatedApiClient],
 	);
 
 	return {

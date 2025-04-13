@@ -29,18 +29,12 @@ vi.mock('../../source/hooks/useClient.js', () => ({
 
 // Test component to call and display hook results
 const TestComponent = ({
-	projectId,
-	environmentId,
-	apiKey,
 	operation,
 }: {
-	projectId: string;
-	environmentId: string;
-	apiKey?: string;
 	operation: 'getExisting' | 'createBulk';
 }) => {
 	const { getExistingResources, createBulkResources, status, errorMessage } =
-		useResourceApi(projectId, environmentId, apiKey);
+		useResourceApi();
 
 	const handleOperation = async () => {
 		try {
@@ -90,13 +84,7 @@ describe('useResourceApi', () => {
 			error: null,
 		});
 
-		const { lastFrame } = render(
-			<TestComponent
-				projectId="proj123"
-				environmentId="env123"
-				operation="getExisting"
-			/>,
-		);
+		const { lastFrame } = render(<TestComponent operation="getExisting" />);
 
 		await delay(50);
 
@@ -105,7 +93,6 @@ describe('useResourceApi', () => {
 		expect(lastFrame()).toContain('Result: users,posts');
 		expect(mockGetFn).toHaveBeenCalledWith(
 			'/v2/schema/{proj_id}/{env_id}/resources',
-			{ proj_id: 'proj123', env_id: 'env123' },
 		);
 	});
 
@@ -116,13 +103,7 @@ describe('useResourceApi', () => {
 			error: 'API error',
 		});
 
-		const { lastFrame } = render(
-			<TestComponent
-				projectId="proj123"
-				environmentId="env123"
-				operation="getExisting"
-			/>,
-		);
+		const { lastFrame } = render(<TestComponent operation="getExisting" />);
 
 		await delay(50);
 
@@ -136,13 +117,7 @@ describe('useResourceApi', () => {
 			error: null,
 		});
 
-		const { lastFrame } = render(
-			<TestComponent
-				projectId="proj123"
-				environmentId="env123"
-				operation="createBulk"
-			/>,
-		);
+		const { lastFrame } = render(<TestComponent operation="createBulk" />);
 
 		await delay(50);
 
@@ -151,7 +126,6 @@ describe('useResourceApi', () => {
 		expect(lastFrame()).toContain('Result: created');
 		expect(mockPostFn).toHaveBeenCalledWith(
 			'/v2/schema/{proj_id}/{env_id}/resources',
-			{ proj_id: 'proj123', env_id: 'env123' },
 			{ key: 'test', name: 'Test', actions: {} },
 		);
 	});
@@ -163,44 +137,12 @@ describe('useResourceApi', () => {
 			error: 'POST error',
 		});
 
-		const { lastFrame } = render(
-			<TestComponent
-				projectId="proj123"
-				environmentId="env123"
-				operation="createBulk"
-			/>,
-		);
+		const { lastFrame } = render(<TestComponent operation="createBulk" />);
 
 		await delay(50);
 
 		expect(lastFrame()).toContain('Status: error');
 		expect(lastFrame()).toContain('Error: POST error');
-	});
-
-	it('should use unauthenticated client when apiKey is provided', async () => {
-		// Reset all mocks
-		vi.resetAllMocks();
-
-		// Setup unauthenticated client mock
-		mockUnauthGetFn.mockResolvedValue({
-			data: [{ key: 'users' }],
-			error: null,
-		});
-
-		const { lastFrame } = render(
-			<TestComponent
-				projectId="proj123"
-				environmentId="env123"
-				apiKey="test-api-key"
-				operation="getExisting"
-			/>,
-		);
-
-		await delay(50);
-
-		expect(lastFrame()).toContain('Result: users');
-		expect(mockUnauthGetFn).toHaveBeenCalled();
-		expect(mockGetFn).not.toHaveBeenCalled(); // Ensure authenticated client wasn't used
 	});
 
 	it('should handle invalid response formats', async () => {

@@ -2,33 +2,23 @@ import React, { useState } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import { useRolesApi } from '../../hooks/useRolesApi.js';
-import type { RoleDefinition } from '../../lib/policy/utils.js';
+import { components } from '../../lib/api/v1.js';
 
 interface RoleInputProps {
-	projectId: string;
-	environmentId: string;
-	apiKey?: string;
 	availableActions: string[];
 	availableResources: string[];
-	onComplete: (roles: RoleDefinition[]) => void;
+	onComplete: (roles: components['schemas']['RoleCreate'][]) => void;
 	onError: (error: string) => void;
 }
 
 export const RoleInput: React.FC<RoleInputProps> = ({
-	projectId,
-	environmentId,
-	apiKey,
 	availableActions,
 	availableResources,
 	onComplete,
 	onError,
 }) => {
 	const [input, setInput] = useState('');
-	const { getExistingRoles, status } = useRolesApi(
-		projectId,
-		environmentId,
-		apiKey,
-	);
+	const { getExistingRoles, status } = useRolesApi();
 
 	const validateRoleKey = (key: string): boolean => {
 		return /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(key);
@@ -75,49 +65,51 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 				return;
 			}
 
-			const roles: RoleDefinition[] = roleInputs.map(roleStr => {
-				// Split and trim main part and permissions part
-				const [mainPart, permissionPart] = roleStr
-					.split('@')
-					.map(s => s.trim());
+			const roles: components['schemas']['RoleCreate'][] = roleInputs.map(
+				roleStr => {
+					// Split and trim main part and permissions part
+					const [mainPart, permissionPart] = roleStr
+						.split('@')
+						.map(s => s.trim());
 
-				if (!mainPart) {
-					throw new Error('Invalid role format');
-				}
-
-				// Split and trim key and description
-				const [key, description] = mainPart.split(':').map(s => s.trim());
-
-				if (!key || !validateRoleKey(key)) {
-					throw new Error(`Invalid role key: ${key}`);
-				}
-
-				// Process and trim permissions
-				const permissions = permissionPart
-					?.split('|')
-					.map(p => p.trim())
-					.filter(Boolean);
-
-				if (permissions && permissions.length > 0) {
-					const invalidPerms = permissions.filter(
-						p => !validatePermission(p.trim()),
-					);
-					if (invalidPerms.length > 0) {
-						throw new Error(
-							`Invalid permissions for role ${key}: ${invalidPerms.join(', ')}\n` +
-								`Available resources: ${availableResources.join(', ')}\n` +
-								`Available actions: ${availableActions.join(', ')}`,
-						);
+					if (!mainPart) {
+						throw new Error('Invalid role format');
 					}
-				}
 
-				return {
-					key,
-					name: key,
-					description: description || undefined,
-					permissions: permissions?.length ? permissions : undefined,
-				};
-			});
+					// Split and trim key and description
+					const [key, description] = mainPart.split(':').map(s => s.trim());
+
+					if (!key || !validateRoleKey(key)) {
+						throw new Error(`Invalid role key: ${key}`);
+					}
+
+					// Process and trim permissions
+					const permissions = permissionPart
+						?.split('|')
+						.map(p => p.trim())
+						.filter(Boolean);
+
+					if (permissions && permissions.length > 0) {
+						const invalidPerms = permissions.filter(
+							p => !validatePermission(p.trim()),
+						);
+						if (invalidPerms.length > 0) {
+							throw new Error(
+								`Invalid permissions for role ${key}: ${invalidPerms.join(', ')}\n` +
+									`Available resources: ${availableResources.join(', ')}\n` +
+									`Available actions: ${availableActions.join(', ')}`,
+							);
+						}
+					}
+
+					return {
+						key,
+						name: key,
+						description: description || undefined,
+						permissions: permissions?.length ? permissions : undefined,
+					};
+				},
+			);
 
 			// Check for existing roles
 			const existingRoles = await getExistingRoles();

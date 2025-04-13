@@ -27,18 +27,12 @@ vi.mock('../../source/hooks/useClient.js', () => ({
 
 // Test component to call and display hook results
 const TestComponent = ({
-	projectId,
-	environmentId,
-	apiKey,
 	operation,
 }: {
-	projectId: string;
-	environmentId: string;
-	apiKey?: string;
 	operation: 'getExisting' | 'createBulk';
 }) => {
 	const { getExistingRoles, createBulkRoles, status, errorMessage } =
-		useRolesApi(projectId, environmentId, apiKey);
+		useRolesApi();
 
 	const handleOperation = async () => {
 		try {
@@ -90,13 +84,7 @@ describe('useRolesApi', () => {
 			error: null,
 		});
 
-		const { lastFrame } = render(
-			<TestComponent
-				projectId="proj123"
-				environmentId="env123"
-				operation="getExisting"
-			/>,
-		);
+		const { lastFrame } = render(<TestComponent operation="getExisting" />);
 
 		// Wait for the component to process the API response
 		await delay(50);
@@ -106,7 +94,6 @@ describe('useRolesApi', () => {
 		expect(lastFrame()).toContain('Result: admin,user');
 		expect(mockGetFn).toHaveBeenCalledWith(
 			'/v2/schema/{proj_id}/{env_id}/roles',
-			{ proj_id: 'proj123', env_id: 'env123' },
 		);
 	});
 
@@ -140,13 +127,7 @@ describe('useRolesApi', () => {
 			error: null,
 		});
 
-		const { lastFrame } = render(
-			<TestComponent
-				projectId="proj123"
-				environmentId="env123"
-				operation="getExisting"
-			/>,
-		);
+		const { lastFrame } = render(<TestComponent operation="getExisting" />);
 
 		// Wait for the component to process the API response
 		await delay(50);
@@ -161,13 +142,7 @@ describe('useRolesApi', () => {
 			error: null,
 		});
 
-		const { lastFrame } = render(
-			<TestComponent
-				projectId="proj123"
-				environmentId="env123"
-				operation="createBulk"
-			/>,
-		);
+		const { lastFrame } = render(<TestComponent operation="createBulk" />);
 
 		// Wait for the component to process the API response
 		await delay(50);
@@ -177,7 +152,6 @@ describe('useRolesApi', () => {
 		expect(lastFrame()).toContain('Result: created');
 		expect(mockPostFn).toHaveBeenCalledWith(
 			'/v2/schema/{proj_id}/{env_id}/roles',
-			{ proj_id: 'proj123', env_id: 'env123' },
 			{ key: 'admin', name: 'Admin', permissions: ['*:*'] },
 		);
 	});

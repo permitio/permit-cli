@@ -78,9 +78,6 @@ describe('CreateSimpleWizard', () => {
 
 		expect(ResourceInput).toHaveBeenCalledWith(
 			expect.objectContaining({
-				projectId,
-				environmentId,
-				apiKey,
 				onComplete: expect.any(Function),
 				onError: expect.any(Function),
 			}),
@@ -115,7 +112,9 @@ describe('CreateSimpleWizard', () => {
 		// First complete the resources step
 		const onCompleteResources =
 			vi.mocked(ResourceInput).mock.calls[0][0].onComplete;
-		const sampleResources = [{ key: 'resource1', name: 'Resource 1' }];
+		const sampleResources = [
+			{ key: 'resource1', name: 'Resource 1', actions: {} },
+		];
 		onCompleteResources(sampleResources);
 
 		// Now complete the actions step
@@ -127,9 +126,6 @@ describe('CreateSimpleWizard', () => {
 		// Verify RoleInput is now rendered
 		expect(RoleInput).toHaveBeenCalledWith(
 			expect.objectContaining({
-				projectId,
-				environmentId,
-				apiKey,
 				availableActions: ['read'],
 				availableResources: ['resource1'],
 				onComplete: expect.any(Function),

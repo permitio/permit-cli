@@ -3,42 +3,27 @@ import { Box, Text } from 'ink';
 import { ResourceInput } from './ResourceInput.js';
 import { ActionInput } from './ActionsInput.js';
 import { RoleInput } from './RoleInput.js';
-import { useAuth } from '../../components/AuthProvider.js';
 import { useResourceApi } from '../../hooks/useResourceApi.js';
 import { useRolesApi } from '../../hooks/useRolesApi.js';
-import type {
-	ResourceDefinition,
-	ActionDefinition,
-	RoleDefinition,
-} from '../../lib/policy/utils.js';
+import { components } from '../../lib/api/v1.js';
 
-interface CreateSimpleWizardProps {
-	apiKey: string | undefined;
-}
-
-export default function CreateSimpleWizard({
-	apiKey,
-}: CreateSimpleWizardProps) {
-	const { scope } = useAuth();
-	const projectId = scope.project_id as string;
-	const environmentId = scope.environment_id as string;
-
+export default function CreateSimpleWizard() {
 	const [step, setStep] = useState<
 		'resources' | 'actions' | 'roles' | 'complete'
 	>('resources');
-	const [resources, setResources] = useState<ResourceDefinition[]>([]);
-	const [actions, setActions] = useState<Record<string, ActionDefinition>>({});
+	const [resources, setResources] = useState<
+		components['schemas']['ResourceCreate'][]
+	>([]);
+	const [actions, setActions] = useState<
+		Record<string, components['schemas']['ActionBlockEditable']>
+	>({});
 	const [error, setError] = useState<string | null>(null);
 	const [status, setStatus] = useState<
 		'idle' | 'processing' | 'error' | 'success'
 	>('idle');
 
-	const { createBulkResources } = useResourceApi(
-		projectId,
-		environmentId,
-		apiKey,
-	);
-	const { createBulkRoles } = useRolesApi(projectId, environmentId, apiKey);
+	const { createBulkResources } = useResourceApi();
+	const { createBulkRoles } = useRolesApi();
 
 	// Handle completion or error states
 	useEffect(() => {
@@ -52,7 +37,9 @@ export default function CreateSimpleWizard({
 		setStatus('error');
 	};
 
-	const handleResourcesComplete = (resourceList: ResourceDefinition[]) => {
+	const handleResourcesComplete = (
+		resourceList: components['schemas']['ResourceCreate'][],
+	) => {
 		try {
 			setResources(resourceList);
 			setStep('actions');
@@ -62,7 +49,7 @@ export default function CreateSimpleWizard({
 	};
 
 	const handleActionsComplete = (
-		actionDefs: Record<string, ActionDefinition>,
+		actionDefs: Record<string, components['schemas']['ActionBlockEditable']>,
 	) => {
 		try {
 			setActions(actionDefs);
@@ -77,7 +64,9 @@ export default function CreateSimpleWizard({
 		}
 	};
 
-	const handleRolesComplete = async (roles: RoleDefinition[]) => {
+	const handleRolesComplete = async (
+		roles: components['schemas']['RoleCreate'][],
+	) => {
 		setStatus('processing');
 		try {
 			await createBulkResources(resources);
@@ -112,9 +101,6 @@ export default function CreateSimpleWizard({
 				<>
 					{step === 'resources' && (
 						<ResourceInput
-							projectId={projectId}
-							environmentId={environmentId}
-							apiKey={apiKey}
 							onComplete={handleResourcesComplete}
 							onError={handleError}
 						/>
@@ -129,9 +115,6 @@ export default function CreateSimpleWizard({
 
 					{step === 'roles' && (
 						<RoleInput
-							projectId={projectId}
-							environmentId={environmentId}
-							apiKey={apiKey}
 							availableActions={Object.keys(actions)}
 							onComplete={handleRolesComplete}
 							onError={handleError}

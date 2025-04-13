@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
-import type { ActionDefinition } from '../../lib/policy/utils.js';
+import { components } from '../../lib/api/v1.js';
 
 interface ActionInputProps {
-	onComplete: (actions: Record<string, ActionDefinition>) => void;
+	onComplete: (
+		actions: Record<string, components['schemas']['ActionBlockEditable']>,
+	) => void;
 	onError: (error: string) => void;
 }
 
@@ -14,7 +16,9 @@ export const ActionInput: React.FC<ActionInputProps> = ({
 }) => {
 	const [step, setStep] = useState<'keys' | 'details'>('keys');
 	const [actionKeys, setActionKeys] = useState<string[]>([]);
-	const [actions, setActions] = useState<Record<string, ActionDefinition>>({});
+	const [actions, setActions] = useState<
+		Record<string, components['schemas']['ActionBlockEditable']>
+	>({});
 	const [currentActionIndex, setCurrentActionIndex] = useState(0);
 
 	// Separate input states for different steps
@@ -81,7 +85,7 @@ export const ActionInput: React.FC<ActionInputProps> = ({
 					return;
 				}
 
-				const action: ActionDefinition = {
+				const action: components['schemas']['ActionBlockEditable'] = {
 					name: currentKey,
 					description: descPart || undefined,
 					attributes:

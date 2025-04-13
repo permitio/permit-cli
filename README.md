@@ -68,7 +68,6 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
 - `test` - commands for testing authorization policies
   - `run audit` - test PDP against past authorization decisions
 
-
 ---
 
 ### `login`
@@ -534,7 +533,6 @@ $ permit test run audit --users john@example.com alice@example.com --resources d
 # Limit the number of logs processed
 $ permit test run audit --max-logs 500
 ```
-
 
 ## Development
 

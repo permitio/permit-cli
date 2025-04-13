@@ -8,7 +8,7 @@ export const description =
 	'Create a new Policy table for Role Based Access Control';
 
 export const options = zod.object({
-	key: zod
+	apiKey: zod
 		.string()
 		.optional()
 		.describe(
@@ -26,8 +26,8 @@ type Props = {
 
 export default function Simple({ options }: Props) {
 	return (
-		<AuthProvider permit_key={options.key} scope={'environment'}>
-			<CreateSimpleWizard apiKey={options.key} />
+		<AuthProvider permit_key={options.apiKey} scope={'environment'}>
+			<CreateSimpleWizard />
 		</AuthProvider>
 	);
 }

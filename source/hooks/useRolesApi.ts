@@ -1,13 +1,9 @@
 import { useCallback, useState } from 'react';
 import useClient from './useClient.js';
-import type { RoleDefinition } from '../lib/policy/utils.js';
+import { components } from '../lib/api/v1.js';
 
-export function useRolesApi(
-	projectId: string | undefined,
-	environmentId: string | undefined,
-	apiKey?: string,
-) {
-	const { authenticatedApiClient, unAuthenticatedApiClient } = useClient();
+export function useRolesApi() {
+	const { authenticatedApiClient } = useClient();
 	const [status, setStatus] = useState<
 		'idle' | 'processing' | 'done' | 'error'
 	>('idle');
@@ -15,15 +11,9 @@ export function useRolesApi(
 
 	const getExistingRoles = useCallback(async () => {
 		try {
-			const client = apiKey
-				? unAuthenticatedApiClient(apiKey)
-				: authenticatedApiClient();
+			const client = authenticatedApiClient();
 			const { data, error } = await client.GET(
 				`/v2/schema/{proj_id}/{env_id}/roles`,
-				{
-					proj_id: projectId as string,
-					env_id: environmentId as string,
-				},
 			);
 
 			if (error) throw new Error(error);
@@ -47,31 +37,20 @@ export function useRolesApi(
 			setErrorMessage((error as Error).message);
 			return new Set();
 		}
-	}, [
-		projectId,
-		environmentId,
-		apiKey,
-		authenticatedApiClient,
-		unAuthenticatedApiClient,
-	]);
+	}, [authenticatedApiClient]);
 
 	const createBulkRoles = useCallback(
-		async (roles: RoleDefinition[]) => {
+		async (roles: components['schemas']['RoleCreate'][]) => {
 			setStatus('processing');
 			setErrorMessage(null);
 
 			try {
-				const client = apiKey
-					? unAuthenticatedApiClient(apiKey)
-					: authenticatedApiClient();
+				const client = authenticatedApiClient();
 
 				for (const role of roles) {
 					const { error } = await client.POST(
 						`/v2/schema/{proj_id}/{env_id}/roles`,
-						{
-							proj_id: projectId as string,
-							env_id: environmentId as string,
-						},
+
 						role,
 					);
 
@@ -85,13 +64,7 @@ export function useRolesApi(
 				throw error;
 			}
 		},
-		[
-			projectId,
-			environmentId,
-			apiKey,
-			authenticatedApiClient,
-			unAuthenticatedApiClient,
-		],
+		[authenticatedApiClient],
 	);
 
 	return {

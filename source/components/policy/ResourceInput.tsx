@@ -2,29 +2,19 @@ import React, { useState } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import { useResourceApi } from '../../hooks/useResourceApi.js';
-import type { ResourceDefinition } from '../../lib/policy/utils.js';
+import { components } from '../../lib/api/v1.js';
 
 interface ResourceInputProps {
-	projectId: string;
-	environmentId: string;
-	apiKey?: string;
-	onComplete: (resources: ResourceDefinition[]) => void;
+	onComplete: (resources: components['schemas']['ResourceCreate'][]) => void;
 	onError: (error: string) => void;
 }
 
 export const ResourceInput: React.FC<ResourceInputProps> = ({
-	projectId,
-	environmentId,
-	apiKey,
 	onComplete,
 	onError,
 }) => {
 	const [input, setInput] = useState('');
-	const { getExistingResources, status } = useResourceApi(
-		projectId,
-		environmentId,
-		apiKey,
-	);
+	const { getExistingResources, status } = useResourceApi();
 
 	const validateResourceKey = (key: string): boolean => {
 		return /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(key);
@@ -62,11 +52,12 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({
 				return;
 			}
 
-			const resources: ResourceDefinition[] = resourceKeys.map(key => ({
-				key,
-				name: key,
-				actions: {},
-			}));
+			const resources: components['schemas']['ResourceCreate'][] =
+				resourceKeys.map(key => ({
+					key,
+					name: key,
+					actions: {},
+				}));
 
 			onComplete(resources);
 
