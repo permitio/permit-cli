@@ -28,7 +28,7 @@ export const options = zod.object({
 	models: zod
 		.array(zod.string())
 		.optional()
-		.default(['RBAC', 'ABAC', 'ReBAC'])
+		.default(['RBAC'])
 		.describe(
 			option({
 				description:
