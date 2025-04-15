@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Text } from 'ink';
 import Spinner from 'ink-spinner';
 import { useGeneratePolicySnapshot } from './hooks/usePolicySnapshot.js';
@@ -17,6 +17,13 @@ export function GeneratePolicySnapshot({
 }: GeneratePolicySnapshotProps) {
 	const { state, error, roles, tenantId, finalConfig, dryUsers } =
 		useGeneratePolicySnapshot({ dryRun, models, path });
+
+	// Handle Error and lifecycle completion.
+	useEffect(() => {
+		if (error || state === 'done') {
+			process.exit(1);
+		}
+	}, [error, state]);
 
 	return (
 		<>
