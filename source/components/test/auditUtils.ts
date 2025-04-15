@@ -114,14 +114,11 @@ export const createPdpRequest = (log: DetailedAuditLog): PdpRequestData => {
 			? context.resource.attributes || {}
 			: {};
 
-
 	let resourceKey = '';
 	let resourceId = '';
 
-	
 	const rebacAllowingRoles = log.debug?.rebac?.allowing_roles;
 
-	
 	if (rebacAllowingRoles && rebacAllowingRoles.length > 0) {
 		const rebacResource = rebacAllowingRoles[0]?.resource;
 		if (typeof rebacResource === 'string' && rebacResource.includes(':')) {
@@ -131,9 +128,7 @@ export const createPdpRequest = (log: DetailedAuditLog): PdpRequestData => {
 				resourceId = parts[1];
 			}
 		}
-	}
-	
-	else {
+	} else {
 		const isResourceInstance =
 			typeof log.resource === 'string' && log.resource.includes(':');
 
