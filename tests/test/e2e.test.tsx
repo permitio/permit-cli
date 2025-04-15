@@ -84,8 +84,9 @@ describe('GeneratePolicySnapshot', () => {
 		expect(lastFrame()).toMatch(/Roles found: 1/);
 		expect(lastFrame()).toMatch(/Created a new test tenant/);
 		expect(lastFrame()).toMatch(/Dry run mode!/);
+		await delay(1100);
 		expect(process.exit).toHaveBeenCalledWith(1); // Done or error triggers exit
-	});
+	}, 2000);
 
 	it('should complete non-dry run and save to path', async () => {
 		vi.mocked(useRolesApi).mockReturnValue({

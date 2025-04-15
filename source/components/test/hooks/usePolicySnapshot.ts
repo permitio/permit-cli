@@ -276,7 +276,7 @@ export const useGeneratePolicySnapshot = ({
 			if (!path) {
 				setTimeout(() => {
 					setState('done');
-				}, 5000);
+				}, 1000);
 			} else {
 				saveConfigToPath();
 			}
