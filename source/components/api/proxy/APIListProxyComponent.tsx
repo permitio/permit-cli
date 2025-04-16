@@ -17,11 +17,12 @@ const MAX_KEY_LENGTH = 7;
 
 // Helper function to truncate keys for display.
 const truncateKey = (key: string, expand: boolean) => {
+	console.log('key', key, expand);
 	if (expand) return key;
 	return key.length > MAX_KEY_LENGTH ? key.slice(0, MAX_KEY_LENGTH) + '...' : key;
 };
 
-// Define a type for table row data based on the five properties from the utility.
+// Define a type for table row data.
 interface TableProxyData {
 	'#': number;
 	key: string;
@@ -34,11 +35,12 @@ interface TableProxyData {
 export default function APIListProxyTableComponent({ options }: Props) {
 	const { scope } = useAuth();
 
-	// Call useListProxy using the parameters from options and scope.
+	// Retrieve proxy data using your hook.
 	const {
 		status,
 		errorMessage,
-		proxies, // Proxies match the utility type (key, secret, name, mapping_rules, auth_mechanism)
+		proxies,
+		totalCount,
 		listProxies,
 	} = useListProxy(
 		scope.project_id || options.projectId,
@@ -48,10 +50,9 @@ export default function APIListProxyTableComponent({ options }: Props) {
 		options.perPage,
 	);
 
-	// Call listProxies once on mount or when key parameters change.
+	// Fetch proxies when key parameters change.
 	useEffect(() => {
 		listProxies();
-		// Depend on the parameters that affect data fetching.
 	}, [
 		options.page,
 		options.perPage,
@@ -82,7 +83,7 @@ export default function APIListProxyTableComponent({ options }: Props) {
 		});
 	}, [proxies, options.page, options.perPage, options.expandKey]);
 
-	// Handle rendering for different fetch states.
+	// Render loading state.
 	if (status === 'processing') {
 		return (
 			<Box>
@@ -93,15 +94,19 @@ export default function APIListProxyTableComponent({ options }: Props) {
 		);
 	}
 
+	// Render error state.
 	if (status === 'error' && errorMessage) {
 		return <Text color="red">Error: {errorMessage}</Text>;
 	}
 
-	// Render the table once data is ready.
+	// When data is ready, render the summary and table.
 	if (status === 'done') {
 		return (
 			<Box flexDirection="column">
 				<Text color="green">Proxy Configs:</Text>
+				<Text>
+					Showing {tableData.length} items | Page {options.page} | Total Pages: {totalCount}
+				</Text>
 				{tableData.length === 0 ? (
 					<Text>No proxy configs found.</Text>
 				) : (

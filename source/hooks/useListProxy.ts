@@ -1,7 +1,7 @@
 // File: hooks/useListProxy.ts
 import { useCallback, useState } from 'react';
 import useClient from './useClient.js';
-import { ProxyConfigOptions } from '../utils/api/proxy/createutils.js' ; // Adjust the import path accordingly
+import { ProxyConfigOptions } from '../utils/api/proxy/createutils.js';
 
 type ListStatus = 'processing' | 'done' | 'error';
 
@@ -16,6 +16,7 @@ export function useListProxy(
 	const [status, setStatus] = useState<ListStatus>('processing');
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const [proxies, setProxies] = useState<ProxyConfigOptions[]>([]);
+	const [totalCount, setTotalCount] = useState<number>(0);
 	const [page, setPage] = useState<number>(initialPage);
 
 	const listProxies = useCallback(async () => {
@@ -30,7 +31,7 @@ export function useListProxy(
 				? unAuthenticatedApiClient(apiKey)
 				: authenticatedApiClient();
 
-			// Pass path parameters in the second argument and query parameters in the fourth argument.
+			// Pass path parameters and query parameters.
 			const result = await apiClient.GET(
 				'/v2/facts/{proj_id}/{env_id}/proxy_configs',
 				{ proj_id: projectId, env_id: environmentId },
@@ -42,8 +43,8 @@ export function useListProxy(
 				console.error('API Error:', result.error);
 				setErrorMessage(
 					typeof result.error === 'object' &&
-						result.error !== null &&
-						'message' in result.error
+					result.error !== null &&
+					'message' in result.error
 						? (result.error as { message: string }).message
 						: result.error || 'Unknown error'
 				);
@@ -56,6 +57,7 @@ export function useListProxy(
 				const data = Array.isArray(result.data)
 					? result.data
 					: result.data || [];
+				// Set proxies using only the five fields we need.
 				setProxies(
 					data.map((item: any) => ({
 						key: item.key,
@@ -68,6 +70,8 @@ export function useListProxy(
 						auth_mechanism: item.auth_mechanism,
 					}))
 				);
+				// Set the total count from the API response if provided.
+				setTotalCount(result.data?.length || data.length);
 				setStatus('done');
 			} else {
 				setErrorMessage(`Unexpected API status code: ${result.response.status}`);
@@ -87,7 +91,7 @@ export function useListProxy(
 		unAuthenticatedApiClient,
 	]);
 
-	return { status, errorMessage, proxies, listProxies, setPage };
+	return { status, errorMessage, proxies, totalCount, listProxies, setPage };
 }
 
 export default useListProxy;
