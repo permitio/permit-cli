@@ -1,20 +1,7 @@
 // File: hooks/useListProxy.ts
 import { useCallback, useState } from 'react';
 import useClient from './useClient.js';
-
-export type ProxyConfig = {
-	key: string;
-	id: string;
-	organization_id: string;
-	project_id: string;
-	environment_id: string;
-	created_at: string;
-	updated_at: string;
-	secret: string;
-	name: string;
-	mapping_rules: any[]; // Enhance this type as needed.
-	auth_mechanism: 'Bearer' | 'Basic' | 'Headers';
-};
+import { ProxyConfigOptions } from '../utils/api/proxy/createutils.js' ; // Adjust the import path accordingly
 
 type ListStatus = 'processing' | 'done' | 'error';
 
@@ -28,7 +15,7 @@ export function useListProxy(
 	const { authenticatedApiClient, unAuthenticatedApiClient } = useClient();
 	const [status, setStatus] = useState<ListStatus>('processing');
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
-	const [proxies, setProxies] = useState<ProxyConfig[]>([]);
+	const [proxies, setProxies] = useState<ProxyConfigOptions[]>([]);
 	const [page, setPage] = useState<number>(initialPage);
 
 	const listProxies = useCallback(async () => {
@@ -64,17 +51,21 @@ export function useListProxy(
 				return;
 			}
 
-			// Use the parsed data as returned by the client.
 			if (result.response.status >= 200 && result.response.status < 300) {
-				// Here we mimic the pattern used in your Graph Data hook:
 				// The API response may be an array or included in a data property.
 				const data = Array.isArray(result.data)
 					? result.data
 					: result.data || [];
 				setProxies(
-					data.map((item) => ({
-						...item,
-						secret: typeof item.secret === 'string' ? item.secret : JSON.stringify(item.secret),
+					data.map((item: any) => ({
+						key: item.key,
+						secret:
+							typeof item.secret === 'string'
+								? item.secret
+								: JSON.stringify(item.secret),
+						name: item.name,
+						mapping_rules: item.mapping_rules || [],
+						auth_mechanism: item.auth_mechanism,
 					}))
 				);
 				setStatus('done');

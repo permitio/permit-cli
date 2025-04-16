@@ -1,6 +1,6 @@
 import React from 'react';
 import { AuthProvider } from '../../../components/AuthProvider.js';
-import { type infer as zInfer, string, object, array, union, literal, record, number } from 'zod';
+import { type infer as zInfer, string, object, array, union, literal } from 'zod';
 import { option } from 'pastel';
 import CreateProxyConfigComponent from '../../../components/api/proxy/APICreateProxyComponent.js';
 
@@ -66,66 +66,26 @@ export const options = object({
 			}),
 		)
         .optional(),
-		mapping_rules: array(
-			object({
-			  url: string().describe(
-				option({
-				  description:
-					'The target URL for the mapping rule (e.g., https://api.stripe.com/v1/customers).',
-				}),
-			  ),
-			  http_method: union([
-				literal('get'),
-				literal('put'),
-				literal('post'),
-				literal('delete'),
-				literal('options'),
-				literal('head'),
-				literal('patch'),
-			  ]).describe(
-				option({
-				  description:
-					'HTTP method for the mapping rule.',
-				}),
-			  ),
-			  resource: string().describe(
-				option({
-				  description:
-					'The resource that this mapping rule targets.',
-				}),
-			  ),
-			  headers: record(string()).describe(
-				option({
-				  description:
-					'Headers to be sent with the request, mapping header names to values.',
-				}),
-			  ),
-			  action: string()
-				.optional()
-				.describe(
-				  option({
-					description:
-					  'Optional action to be taken with the rule.',
-				  }),
-				),
-			  priority: number()
-				.optional()
-				.describe(
-				  option({
-					description:
-					  'Optional priority of the mapping rule (lower number indicates higher priority).',
-				  }),
-				),
-			}),
-		  )
-			.optional()
-			.describe(
-			  option({
+	// Each string is expected to follow the format:
+	// "url|http_method|[resource]|[headers]|[action]|[priority]"
+	mapping_rules: array(
+		string().regex(
+			/^https?:\/\/[^|]+\|(get|put|post|delete|options|head|patch)(\|[^|]+)?(\|[^|]+)?(\|[^|]+)?(\|\d+)?$/i,
+			{
+				message:
+					'Mapping rule must be in the format "url|http_method|[resource]|[headers]|[action]|[priority]".',
+			}
+		)
+	)
+		.optional()
+		.describe(
+			option({
 				description:
-				  'List of mapping rules to route requests.',
-			  }),
-			),
-		});
+					'Mapping rules to route requests. Accepts a comma-separated list of values in the format: "url|http_method|[resource]|[headers]|[action]|[priority]".',
+				alias: 'mapping_rules',
+			})
+		),
+});
 
 type Props = {
 	options: zInfer<typeof options>;

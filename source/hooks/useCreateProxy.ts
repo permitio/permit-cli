@@ -65,10 +65,17 @@ export function useCreateProxy(
 				const result = await apiClient.POST(
 					'/v2/facts/{proj_id}/{env_id}/proxy_configs',
 					{ proj_id: projectId, env_id: environmentId },
+					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+					// @ts-expect-error
 					{ ...payload, mapping_rules: payload.mapping_rules || [] },
 					undefined
 				);
-				
+
+				// Handle validation errors (422)
+				if (result.response.status === 422) {
+					handleApiError(result.error, 'Validation Error: Invalid Payload');
+					return;
+				}
 
 				if (result.response.status >= 200 && result.response.status < 300) {
 					setStatus('done');

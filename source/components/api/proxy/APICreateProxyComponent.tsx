@@ -6,6 +6,7 @@ import Spinner from 'ink-spinner';
 import { type infer as zType } from 'zod';
 import { useAuth } from '../../AuthProvider.js';
 import { useCreateProxy } from '../../../hooks/useCreateProxy.js';
+import { useParseProxyData } from '../../../hooks/useParseProxyData.js'; 
 import { options as originalOptions } from '../../../commands/api/create/proxy.js';
 
 type ExtendedOptions = zType<typeof originalOptions>;
@@ -14,20 +15,21 @@ type Props = {
 	options: ExtendedOptions;
 };
 
-type Field = 'key' | 'secret' | 'name' | 'done'| 'input';
+type Field = 'key' | 'secret' | 'name' | 'done' | 'input';
 
 export default function CreateProxyConfigComponent({ options }: Props) {
 	const { scope } = useAuth();
 
-	// Local states for required fields.
+	// Parse structured data (mapping_rules, auth_mechanism, etc.)
+	const { payload, parseError } = useParseProxyData(options);
+
+	// Local state for interactive fields
 	const [proxyKey, setProxyKey] = useState<string>(options.key || '');
 	const [proxySecret, setProxySecret] = useState<string>(options.secret || '');
 	const [proxyName, setProxyName] = useState<string>(options.name || '');
 
-	// Local state for interactive input; tracks which field is currently active.
 	const [currentField, setCurrentField] = useState<Field>('key');
 
-	// Use the hook's status and error state (do not duplicate these locally)
 	const {
 		status,
 		errorMessage,
@@ -41,84 +43,71 @@ export default function CreateProxyConfigComponent({ options }: Props) {
 		options.apiKey
 	);
 
-	// On mount: if all required values are provided via options then trigger the API call.
-	// Otherwise, set status to 'input' so the user is prompted.
+	useEffect(() => {
+		if (parseError) {
+			setErrorMessage(parseError);
+			setStatus('error');
+		}
+	}, [parseError, setErrorMessage, setStatus]);
+
+	// On mount: auto-trigger or go into interactive mode
 	useEffect(() => {
 		if (options.key && options.secret && options.name) {
 			setCurrentField('done');
 			triggerCreate();
 		} else {
 			setStatus('input');
-			// Decide which field to prompt first (order: key -> secret -> name).
-			if (!options.key) {
-				setCurrentField('key');
-			} else if (!options.secret) {
-				setCurrentField('secret');
-			} else if (!options.name) {
-				setCurrentField('name');
-			}
+			if (!options.key) setCurrentField('key');
+			else if (!options.secret) setCurrentField('secret');
+			else if (!options.name) setCurrentField('name');
 		}
-		// Run only once on mount.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	// Function to trigger the API call.
+	// Updated to use parsed values
 	const triggerCreate = useCallback(() => {
 		createProxy({
 			secret: proxySecret,
 			key: proxyKey,
 			name: proxyName,
-			auth_mechanism: options.authMechanism || 'Bearer',
-			mapping_rules: options.mapping_rules || [],
+			auth_mechanism: payload.auth_mechanism || 'Bearer',
+			mapping_rules: payload.mapping_rules || [],
 		}).catch((err: unknown) => {
 			setErrorMessage(err instanceof Error ? err.message : String(err));
 			setStatus('error');
 		});
 	}, [
 		createProxy,
-		options.authMechanism,
-		options.mapping_rules,
+		payload.auth_mechanism,
+		payload.mapping_rules,
 		proxyKey,
-		proxyName,
 		proxySecret,
+		proxyName,
 		setErrorMessage,
 		setStatus,
 	]);
 
-	// Interactive input handlers – each handler updates its field and moves to the next.
-	const handleKeySubmit = useCallback(
-		(value: string) => {
-			if (value.trim() === '') return; // Prevent empty submission
-			setProxyKey(value);
-			// Move to prompting for the secret.
-			setCurrentField('secret');
-		},
-		[]
-	);
+	// Handlers for collecting user input
+	const handleKeySubmit = useCallback((value: string) => {
+		if (value.trim() === '') return;
+		setProxyKey(value);
+		setCurrentField('secret');
+	}, []);
 
-	const handleSecretSubmit = useCallback(
-		(value: string) => {
-			if (value.trim() === '') return;
-			setProxySecret(value);
-			// Move to prompting for the name.
-			setCurrentField('name');
-		},
-		[]
-	);
+	const handleSecretSubmit = useCallback((value: string) => {
+		if (value.trim() === '') return;
+		setProxySecret(value);
+		setCurrentField('name');
+	}, []);
 
-	const handleNameSubmit = useCallback(
-		(value: string) => {
-			if (value.trim() === '') return;
-			setProxyName(value);
-			// All required fields collected.
-			setCurrentField('done');
-			setStatus('processing');
-			triggerCreate();
-		},
-		[triggerCreate, setStatus]
-	);
+	const handleNameSubmit = useCallback((value: string) => {
+		if (value.trim() === '') return;
+		setProxyName(value);
+		setCurrentField('done');
+		setStatus('processing');
+		triggerCreate();
+	}, [triggerCreate, setStatus]);
 
-	// Render interactive prompts based on the currentField.
 	if (status === 'input') {
 		if (currentField === 'key') {
 			return (
