@@ -27,7 +27,7 @@ export const options = object({
 				description: 'Permit.io Environment ID',
 			}),
 		),
-    expandKey: boolean()
+	expandKey: boolean()
 		.optional()
 		.default(false)
 		.describe(

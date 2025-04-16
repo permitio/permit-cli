@@ -1,6 +1,5 @@
-
 export type ProxyConfigOptions = {
-	secret: string; 
+	secret: string;
 	key: string;
 	name: string;
 	/**
@@ -9,7 +8,14 @@ export type ProxyConfigOptions = {
 	 */
 	mapping_rules?: Array<{
 		url: string;
-		http_method: 'get' | 'put' | 'post' | 'delete' | 'options' | 'head' | 'patch';
+		http_method:
+			| 'get'
+			| 'put'
+			| 'post'
+			| 'delete'
+			| 'options'
+			| 'head'
+			| 'patch';
 		resource?: string;
 		headers?: Record<string, string>;
 		action?: string;
@@ -48,7 +54,9 @@ export function validateProxyConfig(options: ProxyConfigOptions) {
 	// Validate auth_mechanism: must be one of 'Bearer', 'Basic', or 'Headers'
 	const allowedAuth = ['Bearer', 'Basic', 'Headers'];
 	if (!allowedAuth.includes(options.auth_mechanism)) {
-		throw new Error('Validation Error: auth_mechanism must be one of Bearer, Basic, or Headers');
+		throw new Error(
+			'Validation Error: auth_mechanism must be one of Bearer, Basic, or Headers',
+		);
 	}
 
 	if (options.mapping_rules) {
@@ -58,31 +66,43 @@ export function validateProxyConfig(options: ProxyConfigOptions) {
 
 		options.mapping_rules.forEach((rule, index) => {
 			if (!rule.url || rule.url.trim() === '') {
-				throw new Error(`Missing Error: mapping_rules[${index}].url is required`);
+				throw new Error(
+					`Missing Error: mapping_rules[${index}].url is required`,
+				);
 			}
 			try {
 				new URL(rule.url);
 			} catch (err) {
-				throw new Error(`Validation Error: mapping_rules[${index}].url is invalid`);
+				throw new Error(
+					`Validation Error: {${err}}mapping_rules[${index}].url is invalid`,
+				);
 			}
 
 			if (!rule.resource || rule.resource.trim() === '') {
-				throw new Error(`Missing Error: mapping_rules[${index}].resource is required`);
+				throw new Error(
+					`Missing Error: mapping_rules[${index}].resource is required`,
+				);
 			}
 
 			if (!rule.headers || typeof rule.headers !== 'object') {
-				throw new Error(`Validation Error: mapping_rules[${index}].headers must be an object`);
+				throw new Error(
+					`Validation Error: mapping_rules[${index}].headers must be an object`,
+				);
 			}
 
 			Object.entries(rule.headers).forEach(([headerKey, headerValue]) => {
 				if (typeof headerValue !== 'string') {
-					throw new Error(`Validation Error: mapping_rules[${index}].headers['${headerKey}'] must be a string`);
+					throw new Error(
+						`Validation Error: mapping_rules[${index}].headers['${headerKey}'] must be a string`,
+					);
 				}
 			});
 
 			// Validate http_method is provided (it should be since it's required by type).
 			if (!rule.http_method) {
-				throw new Error(`Missing Error: mapping_rules[${index}].http_method is required`);
+				throw new Error(
+					`Missing Error: mapping_rules[${index}].http_method is required`,
+				);
 			}
 		});
 	}

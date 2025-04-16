@@ -1,14 +1,17 @@
 // File: hooks/useCreateProxy.ts
 import { useCallback, useState } from 'react';
 import useClient from './useClient.js';
-import { ProxyConfigOptions, validateProxyConfig } from '../utils/api/proxy/createutils.js';
+import {
+	ProxyConfigOptions,
+	validateProxyConfig,
+} from '../utils/api/proxy/createutils.js';
 
 type CreateStatus = 'idle' | 'processing' | 'done' | 'error' | 'input';
 
 export function useCreateProxy(
 	projectId: string | undefined,
 	environmentId: string | undefined,
-	apiKey?: string
+	apiKey?: string,
 ) {
 	const { authenticatedApiClient, unAuthenticatedApiClient } = useClient();
 	const [status, setStatus] = useState<CreateStatus>('processing');
@@ -31,7 +34,7 @@ export function useCreateProxy(
 			}
 			setStatus('error');
 		},
-		[]
+		[],
 	);
 
 	const handleCatchError = useCallback((error: unknown) => {
@@ -51,7 +54,11 @@ export function useCreateProxy(
 			try {
 				validateProxyConfig(payload);
 			} catch (validationError) {
-				setErrorMessage(validationError instanceof Error ? validationError.message : String(validationError));
+				setErrorMessage(
+					validationError instanceof Error
+						? validationError.message
+						: String(validationError),
+				);
 				setStatus('error');
 				return;
 			}
@@ -68,7 +75,7 @@ export function useCreateProxy(
 					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 					// @ts-expect-error
 					{ ...payload, mapping_rules: payload.mapping_rules || [] },
-					undefined
+					undefined,
 				);
 
 				// Handle validation errors (422)
@@ -80,7 +87,10 @@ export function useCreateProxy(
 				if (result.response.status >= 200 && result.response.status < 300) {
 					setStatus('done');
 				} else {
-					handleApiError(result.error, `Unexpected API status code: ${result.response.status}`);
+					handleApiError(
+						result.error,
+						`Unexpected API status code: ${result.response.status}`,
+					);
 				}
 			} catch (error) {
 				handleCatchError(error);
@@ -94,7 +104,7 @@ export function useCreateProxy(
 			handleApiError,
 			handleCatchError,
 			unAuthenticatedApiClient,
-		]
+		],
 	);
 
 	const formatErrorMessage = useCallback((message: string) => {

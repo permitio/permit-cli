@@ -19,7 +19,9 @@ const MAX_KEY_LENGTH = 7;
 const truncateKey = (key: string, expand: boolean) => {
 	console.log('key', key, expand);
 	if (expand) return key;
-	return key.length > MAX_KEY_LENGTH ? key.slice(0, MAX_KEY_LENGTH) + '...' : key;
+	return key.length > MAX_KEY_LENGTH
+		? key.slice(0, MAX_KEY_LENGTH) + '...'
+		: key;
 };
 
 // Define a type for table row data.
@@ -36,24 +38,20 @@ export default function APIListProxyTableComponent({ options }: Props) {
 	const { scope } = useAuth();
 
 	// Retrieve proxy data using your hook.
-	const {
-		status,
-		errorMessage,
-		proxies,
-		totalCount,
-		listProxies,
-	} = useListProxy(
-		scope.project_id || options.projectId,
-		scope.environment_id || options.envId,
-		options.apiKey,
-		options.page,
-		options.perPage,
-	);
+	const { status, errorMessage, proxies, totalCount, listProxies } =
+		useListProxy(
+			scope.project_id || options.projectId,
+			scope.environment_id || options.envId,
+			options.apiKey,
+			options.page,
+			options.perPage,
+		);
 
 	// Fetch proxies when key parameters change.
 	useEffect(() => {
 		listProxies();
 	}, [
+		listProxies,
 		options.page,
 		options.perPage,
 		scope.project_id,
@@ -105,7 +103,8 @@ export default function APIListProxyTableComponent({ options }: Props) {
 			<Box flexDirection="column">
 				<Text color="green">Proxy Configs:</Text>
 				<Text>
-					Showing {tableData.length} items | Page {options.page} | Total Pages: {totalCount}
+					Showing {tableData.length} items | Page {options.page} | Total Pages:{' '}
+					{totalCount}
 				</Text>
 				{tableData.length === 0 ? (
 					<Text>No proxy configs found.</Text>

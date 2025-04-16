@@ -1,10 +1,18 @@
 import React from 'react';
 import { AuthProvider } from '../../../components/AuthProvider.js';
-import { type infer as zInfer, string, object, array, union, literal } from 'zod';
+import {
+	type infer as zInfer,
+	string,
+	object,
+	array,
+	union,
+	literal,
+} from 'zod';
 import { option } from 'pastel';
 import CreateProxyConfigComponent from '../../../components/api/proxy/APICreateProxyComponent.js';
 
-export const description = 'Creates a new proxy config inside the Permit.io system.';
+export const description =
+	'Creates a new proxy config inside the Permit.io system.';
 
 export const options = object({
 	apiKey: string()
@@ -15,14 +23,14 @@ export const options = object({
 			}),
 		),
 	projId: string()
-        .optional()
+		.optional()
 		.describe(
 			option({
 				description: 'ID or slug of the project',
 			}),
 		),
 	envId: string()
-        .optional()
+		.optional()
 		.describe(
 			option({
 				description: 'ID or slug of the environment',
@@ -35,7 +43,7 @@ export const options = object({
 					'Secret used by the Permit Proxy to authenticate with your backend.',
 			}),
 		)
-        .optional(),
+		.optional(),
 	key: string()
 		.regex(/^[A-Za-z0-9\-_]+$/, {
 			message: 'Invalid key format. Must match /^[A-Za-z0-9-_]+$/',
@@ -45,14 +53,15 @@ export const options = object({
 				description: 'Unique key identifying the proxy config.',
 			}),
 		)
-        .optional(),
+		.optional(),
 	name: string()
 		.describe(
 			option({
-				description: 'Human-readable name of the proxy config (e.g., Stripe API).',
+				description:
+					'Human-readable name of the proxy config (e.g., Stripe API).',
 			}),
 		)
-        .optional(),
+		.optional(),
 	authMechanism: union([
 		literal('Bearer'),
 		literal('Basic'),
@@ -65,7 +74,7 @@ export const options = object({
 					'Authentication mechanism used to inject the secret. One of: Bearer, Basic, Headers. Defaults to Bearer.',
 			}),
 		)
-        .optional(),
+		.optional(),
 	// Each string is expected to follow the format:
 	// "url|http_method|[resource]|[headers]|[action]|[priority]"
 	mapping_rules: array(
@@ -74,8 +83,8 @@ export const options = object({
 			{
 				message:
 					'Mapping rule must be in the format "url|http_method|[resource]|[headers]|[action]|[priority]".',
-			}
-		)
+			},
+		),
 	)
 		.optional()
 		.describe(
@@ -83,7 +92,7 @@ export const options = object({
 				description:
 					'Mapping rules to route requests. Accepts a comma-separated list of values in the format: "url|http_method|[resource]|[headers]|[action]|[priority]".',
 				alias: 'mapping_rules',
-			})
+			}),
 		),
 });
 

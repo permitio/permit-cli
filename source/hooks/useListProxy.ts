@@ -5,12 +5,29 @@ import { ProxyConfigOptions } from '../utils/api/proxy/createutils.js';
 
 type ListStatus = 'processing' | 'done' | 'error';
 
+interface RawMappingRule {
+	url: string;
+	http_method: 'get' | 'put' | 'post' | 'delete' | 'options' | 'head' | 'patch';
+	resource?: string;
+	headers?: Record<string, string>;
+	action?: string;
+	priority?: number;
+}
+
+interface RawProxyConfig {
+	key: string;
+	secret: unknown;
+	name: string;
+	mapping_rules?: RawMappingRule[];
+	auth_mechanism: 'Bearer' | 'Basic' | 'Headers';
+}
+
 export function useListProxy(
 	projectId: string | undefined,
 	environmentId: string | undefined,
 	apiKey?: string,
 	initialPage: number = 1,
-	perPage: number = 30
+	perPage: number = 30,
 ) {
 	const { authenticatedApiClient, unAuthenticatedApiClient } = useClient();
 	const [status, setStatus] = useState<ListStatus>('processing');
@@ -36,45 +53,54 @@ export function useListProxy(
 				'/v2/facts/{proj_id}/{env_id}/proxy_configs',
 				{ proj_id: projectId, env_id: environmentId },
 				undefined,
-				{ page, per_page: perPage }
+				{ page, per_page: perPage },
 			);
 
 			if (result.error) {
 				console.error('API Error:', result.error);
 				setErrorMessage(
 					typeof result.error === 'object' &&
-					result.error !== null &&
-					'message' in result.error
+						result.error !== null &&
+						'message' in result.error
 						? (result.error as { message: string }).message
-						: result.error || 'Unknown error'
+						: result.error || 'Unknown error',
 				);
 				setStatus('error');
 				return;
 			}
 
 			if (result.response.status >= 200 && result.response.status < 300) {
-				// The API response may be an array or included in a data property.
-				const data = Array.isArray(result.data)
+				const data: RawProxyConfig[] = Array.isArray(result.data)
 					? result.data
 					: result.data || [];
-				// Set proxies using only the five fields we need.
+
 				setProxies(
-					data.map((item: any) => ({
+					data.map((item: RawProxyConfig) => ({
 						key: item.key,
 						secret:
 							typeof item.secret === 'string'
 								? item.secret
 								: JSON.stringify(item.secret),
 						name: item.name,
-						mapping_rules: item.mapping_rules || [],
+						mapping_rules: Array.isArray(item.mapping_rules)
+							? item.mapping_rules.map(rule => ({
+									url: rule.url,
+									http_method: rule.http_method,
+									resource: rule.resource || '',
+									headers: rule.headers || {},
+									action: rule.action,
+									priority: rule.priority,
+								}))
+							: [],
 						auth_mechanism: item.auth_mechanism,
-					}))
+					})),
 				);
-				// Set the total count from the API response if provided.
 				setTotalCount(result.data?.length || data.length);
 				setStatus('done');
 			} else {
-				setErrorMessage(`Unexpected API status code: ${result.response.status}`);
+				setErrorMessage(
+					`Unexpected API status code: ${result.response.status}`,
+				);
 				setStatus('error');
 			}
 		} catch (error) {

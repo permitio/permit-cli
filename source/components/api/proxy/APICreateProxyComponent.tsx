@@ -6,7 +6,7 @@ import Spinner from 'ink-spinner';
 import { type infer as zType } from 'zod';
 import { useAuth } from '../../AuthProvider.js';
 import { useCreateProxy } from '../../../hooks/useCreateProxy.js';
-import { useParseProxyData } from '../../../hooks/useParseProxyData.js'; 
+import { useParseProxyData } from '../../../hooks/useParseProxyData.js';
 import { options as originalOptions } from '../../../commands/api/create/proxy.js';
 
 type ExtendedOptions = zType<typeof originalOptions>;
@@ -40,29 +40,8 @@ export default function CreateProxyConfigComponent({ options }: Props) {
 	} = useCreateProxy(
 		scope.project_id || options.projId,
 		scope.environment_id || options.envId,
-		options.apiKey
+		options.apiKey,
 	);
-
-	useEffect(() => {
-		if (parseError) {
-			setErrorMessage(parseError);
-			setStatus('error');
-		}
-	}, [parseError, setErrorMessage, setStatus]);
-
-	// On mount: auto-trigger or go into interactive mode
-	useEffect(() => {
-		if (options.key && options.secret && options.name) {
-			setCurrentField('done');
-			triggerCreate();
-		} else {
-			setStatus('input');
-			if (!options.key) setCurrentField('key');
-			else if (!options.secret) setCurrentField('secret');
-			else if (!options.name) setCurrentField('name');
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
 
 	// Updated to use parsed values
 	const triggerCreate = useCallback(() => {
@@ -87,6 +66,27 @@ export default function CreateProxyConfigComponent({ options }: Props) {
 		setStatus,
 	]);
 
+	useEffect(() => {
+		if (parseError) {
+			setErrorMessage(parseError);
+			setStatus('error');
+		}
+	}, [parseError, setErrorMessage, setStatus]);
+
+	// On mount: auto-trigger or go into interactive mode
+	useEffect(() => {
+		if (options.key && options.secret && options.name) {
+			setCurrentField('done');
+			triggerCreate();
+		} else {
+			setStatus('input');
+			if (!options.key) setCurrentField('key');
+			else if (!options.secret) setCurrentField('secret');
+			else if (!options.name) setCurrentField('name');
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	// Handlers for collecting user input
 	const handleKeySubmit = useCallback((value: string) => {
 		if (value.trim() === '') return;
@@ -100,20 +100,27 @@ export default function CreateProxyConfigComponent({ options }: Props) {
 		setCurrentField('name');
 	}, []);
 
-	const handleNameSubmit = useCallback((value: string) => {
-		if (value.trim() === '') return;
-		setProxyName(value);
-		setCurrentField('done');
-		setStatus('processing');
-		triggerCreate();
-	}, [triggerCreate, setStatus]);
+	const handleNameSubmit = useCallback(
+		(value: string) => {
+			if (value.trim() === '') return;
+			setProxyName(value);
+			setCurrentField('done');
+			setStatus('processing');
+			triggerCreate();
+		},
+		[triggerCreate, setStatus],
+	);
 
 	if (status === 'input') {
 		if (currentField === 'key') {
 			return (
 				<>
 					<Text color="yellow">Proxy Key is required. Please enter it:</Text>
-					<TextInput value={proxyKey} onChange={setProxyKey} onSubmit={handleKeySubmit} />
+					<TextInput
+						value={proxyKey}
+						onChange={setProxyKey}
+						onSubmit={handleKeySubmit}
+					/>
 				</>
 			);
 		}
@@ -121,7 +128,11 @@ export default function CreateProxyConfigComponent({ options }: Props) {
 			return (
 				<>
 					<Text color="yellow">Proxy Secret is required. Please enter it:</Text>
-					<TextInput value={proxySecret} onChange={setProxySecret} onSubmit={handleSecretSubmit} />
+					<TextInput
+						value={proxySecret}
+						onChange={setProxySecret}
+						onSubmit={handleSecretSubmit}
+					/>
 				</>
 			);
 		}
@@ -129,14 +140,22 @@ export default function CreateProxyConfigComponent({ options }: Props) {
 			return (
 				<>
 					<Text color="yellow">Proxy Name is required. Please enter it:</Text>
-					<TextInput value={proxyName} onChange={setProxyName} onSubmit={handleNameSubmit} />
+					<TextInput
+						value={proxyName}
+						onChange={setProxyName}
+						onSubmit={handleNameSubmit}
+					/>
 				</>
 			);
 		}
 	}
 
 	if (status === 'processing') {
-		return <Text><Spinner type="dots" /> Creating proxy config...</Text>;
+		return (
+			<Text>
+				<Spinner type="dots" /> Creating proxy config...
+			</Text>
+		);
 	}
 	if (status === 'error' && errorMessage) {
 		return <Text color="red">Error: {formatErrorMessage(errorMessage)}</Text>;
