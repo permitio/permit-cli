@@ -18,21 +18,10 @@ export const useTenantApi = () => {
 		[authenticatedApiClient],
 	);
 
-	const createAndAddUsers = useCallback(
-		async (tenant_id: string, body: CreateUserBody) => {
-			return await authenticatedApiClient().POST(
-				'/v2/facts/{proj_id}/{env_id}/tenants/{tenant_id}/users',
-				{ tenant_id },
-				body,
-			);
-		},
-		[authenticatedApiClient],
-	);
 	return useMemo(
 		() => ({
 			createTenant,
-			createAndAddUsers,
 		}),
-		[createTenant, createAndAddUsers],
+		[createTenant],
 	);
 };

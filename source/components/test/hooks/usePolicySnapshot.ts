@@ -65,12 +65,6 @@ type DryUser = {
 	roles: string[];
 };
 
-// type FinalConfig = {
-// 	RBAC: RBACConfig[];
-// 	ABAC: ABACConfig[];
-// 	ReBAC: ReBACConfig[];
-// };
-
 export const useGeneratePolicySnapshot = ({
 	dryRun,
 	models,
