@@ -38,7 +38,24 @@ Your task:
 - Extract or invent logical roles, resources, actions, and permissions based on what the system would realistically need.
 - Use common sense and real-world examples (e.g., fintech = users, admins, money transfers, approvals).
 - Avoid asking follow-up questions unless absolutely necessary.
+- Don't use the keys "admin", "viewer", "editor" for roles.
+- In the terraform file, add field of "attributes" with empty object {} for each resource.
 - Always output valid JSON and Terraform file using the permit.io terraform provider. Do not add explanations or text outside the JSON and the Terraform file.
+- For the Terraform file, use the following format for the provider block:
+	terraform {
+		required_providers {
+			permitio = {
+				source  = "registry.terraform.io/permitio/permit-io"
+				version = "~> 0.0.14"
+			}
+		}
+	}
+	provider "permitio" {
+		api_url = "https://api.permit.io"
+		api_key = "" // Set this to Permit.io API key
+	}
+
+
 
 Example input:
 "I'm building a platform for patients to view their health records. Doctors can edit them."
@@ -86,17 +103,14 @@ Key Permit.io resources available in the Terraform provider:
   key         = "document"
   name        = "document"
   description = "a new document"
+  attributes = {}
   actions = {
-    "read" = {
-      "name" = "read"
-    }
-    "write" = {
-      "name" = "write"
-    }
-    "delete" = {
-      "name"        = "delete"
-      "description" = "delete a document"
-    }
+    "get" : { "name" : "Get" },
+    "insert" : { "name" : "Insert" },
+    "update" : { "name" : "Update" },
+    "delete" : { "name" : "Delete" },
+    "create" : { "name" : "Create" },
+    "read" : { "name" : "Read"}
   }
   }
 
@@ -114,7 +128,7 @@ Key Permit.io resources available in the Terraform provider:
   description = "a new admin"
   permissions = ["document:read", "document:write", "document:delete"]
   depends_on = [
-    "permitio_resource.document"
+    permitio_resource.document
   ]
 }
 
@@ -136,11 +150,14 @@ async function main() {
 			messages,
 			tools: {
 				analyzePolicy: tool({
-					description: 'Analyze a policy description and extract required components',
+					description:
+						'Analyze a policy description and extract required components',
 					parameters: z.object({
-						description: z.string().describe('The policy description to analyze'),
+						description: z
+							.string()
+							.describe('The policy description to analyze'),
 					}),
-					execute: async ({  }) => {
+					execute: async ({}) => {
 						// This is a mock implementation - replace with actual analysis logic
 						return {
 							components: {
@@ -157,9 +174,13 @@ async function main() {
 					description: 'Create a policy based on extracted components',
 					parameters: z.object({
 						resource: z.string().describe('The resource being accessed'),
-						actions: z.array(z.string()).describe('Actions that can be performed'),
+						actions: z
+							.array(z.string())
+							.describe('Actions that can be performed'),
 						role: z.string().describe('The role that has access'),
-						permissions: z.array(z.string()).describe('Permissions granted to the role'),
+						permissions: z
+							.array(z.string())
+							.describe('Permissions granted to the role'),
 					}),
 					execute: async ({ resource, actions, role, permissions }) => ({
 						policy: {
@@ -180,7 +201,7 @@ async function main() {
 							permissions: z.array(z.string()),
 						}),
 					}),
-					execute: async ({  }) => ({
+					execute: async ({}) => ({
 						isValid: true,
 						suggestions: [],
 						warnings: [],
@@ -190,17 +211,23 @@ async function main() {
 					description: 'Generate Terraform configuration for a policy',
 					parameters: z.object({
 						policy: z.object({
-							resources: z.array(z.object({
-								name: z.string(),
-								actions: z.array(z.string()),
-							})),
-							roles: z.array(z.object({
-								name: z.string(),
-								permissions: z.array(z.object({
-									resource: z.string(),
+							resources: z.array(
+								z.object({
+									name: z.string(),
 									actions: z.array(z.string()),
-								})),
-							})),
+								}),
+							),
+							roles: z.array(
+								z.object({
+									name: z.string(),
+									permissions: z.array(
+										z.object({
+											resource: z.string(),
+											actions: z.array(z.string()),
+										}),
+									),
+								}),
+							),
 						}),
 					}),
 					execute: async ({ policy }) => {
@@ -230,24 +257,121 @@ provider "permitio" {
   api_key = "" // Set this to Permit.io API key
 }
 
-${resourceKeys.map(r => `resource "permitio_resource" "${r.key}" {
+${resourceKeys
+	.map(
+		r => `resource "permitio_resource" "${r.key}" {
   key         = "${r.key}"
   name        = "${r.name}"
   description = "${r.name} resource"
+  attributes  = {}
   actions     = {
-    ${r.actions.map(a => `"${a.toLowerCase()}" = { "name" = "${a}" }`).join(',\n    ')}
+    ${r.actions.map(a => `"${a.toLowerCase()}" : { "name" : "${a.charAt(0).toUpperCase() + a.slice(1)}" }`).join(',\n    ')}
   }
-}`).join('\n\n')}
+}`,
+	)
+	.join('\n\n')}
 
-${roleKeys.map(r => `resource "permitio_role" "${r.key}" {
+${roleKeys
+	.map(
+		r => `resource "permitio_role" "${r.key}" {
   key         = "${r.key}"
   name        = "${r.name}"
   description = "${r.name} role"
   permissions = [
     ${r.permissions.map(p => `"${p.resource.toLowerCase()}:${p.actions.join(',')}"`).join(',\n    ')}
   ]
-}`).join('\n\n')}
+}`,
+	)
+	.join('\n\n')}
 `;
+
+						// Validate the Terraform configuration
+						const validateTerraform = (
+							tf: string,
+						): { isValid: boolean; errors: string[] } => {
+							const errors: string[] = [];
+
+							// Check for required blocks
+							if (!tf.includes('terraform {')) {
+								errors.push('Missing terraform block');
+							}
+
+							if (!tf.includes('required_providers {')) {
+								errors.push('Missing required_providers block');
+							}
+
+							if (!tf.includes('provider "permitio" {')) {
+								errors.push('Missing permitio provider block');
+							}
+
+							// Check for resource blocks
+							if (!tf.includes('resource "permitio_resource"')) {
+								errors.push('Missing permitio_resource blocks');
+							}
+
+							if (!tf.includes('resource "permitio_role"')) {
+								errors.push('Missing permitio_role blocks');
+							}
+
+							// Check for syntax errors (basic checks)
+							const openBraces = (tf.match(/{/g) || []).length;
+							const closeBraces = (tf.match(/}/g) || []).length;
+
+							if (openBraces !== closeBraces) {
+								errors.push(
+									`Mismatched braces: ${openBraces} opening vs ${closeBraces} closing`,
+								);
+							}
+
+							// Check for resource references
+							const resourceRefs =
+								tf.match(/permitio_resource\.[a-zA-Z0-9_]+/g) || [];
+							const resourceDefs =
+								tf.match(/resource "permitio_resource" "([a-zA-Z0-9_]+)"/g) ||
+								[];
+
+							const resourceDefNames = resourceDefs
+								.map(def => {
+									const match = def.match(
+										/resource "permitio_resource" "([a-zA-Z0-9_]+)"/,
+									);
+									return match ? match[1] : null;
+								})
+								.filter(Boolean);
+
+							resourceRefs.forEach(ref => {
+								const refName = ref.split('.')[1];
+								if (!resourceDefNames.includes(refName)) {
+									errors.push(`Reference to undefined resource: ${ref}`);
+								}
+							});
+
+							// Check for action format
+							const actionBlocks = tf.match(/actions\s*=\s*{([^}]*)}/g) || [];
+							actionBlocks.forEach(block => {
+								if (!block.includes(':')) {
+									errors.push(
+										'Actions should use colons (:) instead of equals (=) for key-value pairs',
+									);
+								}
+							});
+
+							return {
+								isValid: errors.length === 0,
+								errors,
+							};
+						};
+
+						// Validate the Terraform configuration
+						const validation = validateTerraform(terraform);
+
+						if (!validation.isValid) {
+							return {
+								terraform,
+								validation,
+								message: `Terraform validation failed: ${validation.errors.join(', ')}`,
+							};
+						}
 
 						// Write the Terraform configuration to a file
 						const fs = require('fs');
@@ -266,7 +390,8 @@ ${roleKeys.map(r => `resource "permitio_role" "${r.key}" {
 						return {
 							terraform,
 							outputPath,
-							message: `Terraform configuration has been written to ${outputPath}`
+							validation,
+							message: `Terraform configuration has been written to ${outputPath}`,
 						};
 					},
 				}),
