@@ -8,7 +8,7 @@ interface ErrorResultViewProps {
 
 const ErrorResultView: React.FC<ErrorResultViewProps> = ({ result }) => (
 	<>
-		<Text>User: {result.auditLog.user_key}</Text>
+		<Text>User: {result.auditLog.user_key || result.auditLog.user_id}</Text>
 		<Text>
 			Resource: {result.auditLog.resource} (type:{' '}
 			{result.auditLog.resource_type})
