@@ -146,11 +146,11 @@ export default function CloneComponent({ apiKey, dryRun, project }: Props) {
 			{state.status === 'loading' && (
 				<Box>
 					<Spinner type="dots" />
-					<Text>Checking for active Gitops repository....</Text>
+					<Text>Checking for active Git repository....</Text>
 				</Box>
 			)}
 			{state.status === 'no_repo' && (
-				<Text color="red">No active Gitops repository found</Text>
+				<Text color="red">No active Git repository found for the project. Run `permit gitops create github` to setup GitOps on your project.</Text>
 			)}
 			{state.status === 'error' && <Text color="red">{state.message}</Text>}
 			{state.status === 'select_environment' && (
