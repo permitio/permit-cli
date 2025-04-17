@@ -82,7 +82,7 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({
 					value={input}
 					onChange={setInput}
 					onSubmit={handleSubmit}
-					placeholder="users, posts, comments"
+					placeholder=" posts, comments, authors."
 				/>
 			</Box>
 			{status === 'processing' && <Text>Validating resources...</Text>}
