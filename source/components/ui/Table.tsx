@@ -9,7 +9,11 @@ interface Props {
 	headersHexColor: string;
 }
 
-const TableComponent: React.FC<Props> = ({ data, headers, headersHexColor }) => {
+const TableComponent: React.FC<Props> = ({
+	data,
+	headers,
+	headersHexColor,
+}) => {
 	if (!data.length || !headers.length) return null;
 
 	// Build table string synchronously whenever data/headers/colors change

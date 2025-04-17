@@ -23,32 +23,52 @@ export default function APIListProxyTableComponent({ options }: Props) {
 	// Fetch proxies on mount & dependency changes
 	useEffect(() => {
 		listProxies();
-	}, [listProxies, options.page, options.perPage, scope.project_id, scope.environment_id, options.apiKey]);
+	}, [
+		listProxies,
+		options.page,
+		options.perPage,
+		scope.project_id,
+		scope.environment_id,
+		options.apiKey,
+	]);
 
 	// Prepare table data
 	const tableData = useMemo(
-		() => proxies.map((proxy, i) => ({
-			'#': (options.page - 1) * options.perPage + i + 1,
-			key: options.expandKey ? proxy.key : proxy.key.slice(0, 7) + '...',
-			secret: proxy.secret,
-			name: proxy.name,
-			auth_mechanism: proxy.auth_mechanism,
-			mapping_rules:
-				Array.isArray(proxy.mapping_rules) && proxy.mapping_rules.length
-					? proxy.mapping_rules.map(r => r.url || '').filter(Boolean).join(', ')
-					: '',
-		})),
+		() =>
+			proxies.map((proxy, i) => ({
+				'#': (options.page - 1) * options.perPage + i + 1,
+				key: options.expandKey ? proxy.key : proxy.key.slice(0, 7) + '...',
+				secret: proxy.secret,
+				name: proxy.name,
+				auth_mechanism: proxy.auth_mechanism,
+				mapping_rules:
+					Array.isArray(proxy.mapping_rules) && proxy.mapping_rules.length
+						? proxy.mapping_rules
+								.map(r => r.url || '')
+								.filter(Boolean)
+								.join(', ')
+						: '',
+			})),
 		[proxies, options.page, options.perPage, options.expandKey],
 	);
 
 	// Column headers
-	const headers = ['#', 'key', 'secret', 'name', 'auth_mechanism', 'mapping_rules'];
+	const headers = [
+		'#',
+		'key',
+		'secret',
+		'name',
+		'auth_mechanism',
+		'mapping_rules',
+	];
 
 	// Loading state
 	if (status === 'processing') {
 		return (
 			<Box>
-				<Text><Spinner type="dots" /> Loading proxy configs...</Text>
+				<Text>
+					<Spinner type="dots" /> Loading proxy configs...
+				</Text>
 			</Box>
 		);
 	}
@@ -65,11 +85,18 @@ export default function APIListProxyTableComponent({ options }: Props) {
 				{() => (
 					<Box key="proxy-configs" flexDirection="column">
 						<Text color="green">Proxy Configs:</Text>
-						<Text>Showing {tableData.length} items | Page {options.page} | Total Pages: {totalCount}</Text>
+						<Text>
+							Showing {tableData.length} items | Page {options.page} | Total
+							Pages: {totalCount}
+						</Text>
 						{tableData.length === 0 ? (
 							<Text>No proxy configs found.</Text>
 						) : (
-							<TableComponent data={tableData} headers={headers} headersHexColor="#89CFF0" />
+							<TableComponent
+								data={tableData}
+								headers={headers}
+								headersHexColor="#89CFF0"
+							/>
 						)}
 					</Box>
 				)}
