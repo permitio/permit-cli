@@ -29,11 +29,7 @@ function createTestComponent(
 	let hookValues: any = {};
 	const Test = () => {
 		hookValues = useListProxy(projectId, environmentId, apiKey);
-		return React.createElement(
-			Text,
-			null,
-			'',
-		);
+		return React.createElement(Text, null, '');
 	};
 	return {
 		TestComponent: Test,

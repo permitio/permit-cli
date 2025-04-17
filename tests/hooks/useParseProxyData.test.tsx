@@ -50,7 +50,7 @@ describe('useParseProxyData', () => {
 			);
 
 			const frame = lastFrame()!.replace(/\n/g, '');
-			expect(frame).toContain('key:'); 
+			expect(frame).toContain('key:');
 			expect(frame).toContain('secret:');
 			expect(frame).toContain('name:');
 			expect(frame).toContain('mapping_rules: []');
