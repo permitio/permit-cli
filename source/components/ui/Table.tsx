@@ -14,12 +14,14 @@ const TableComponent: React.FC<Props> = ({
 	headers,
 	headersHexColor,
 }) => {
-	if (!data.length || !headers.length) return null;
-
 	// Build table string synchronously whenever data/headers/colors change
 	const tableString = useMemo(() => {
+		if (!data.length || !headers.length) return null;
+
 		// Map rows to objects based on headers
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const updatedRows = data.map((item: any) => {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const row: Record<string, any> = {};
 			headers.forEach(header => {
 				row[header] = item[header];
@@ -50,6 +52,8 @@ const TableComponent: React.FC<Props> = ({
 
 		return cliTable.toString();
 	}, [data, headers, headersHexColor]);
+
+	if (!tableString) return null;
 
 	return <Text>{tableString}</Text>;
 };
