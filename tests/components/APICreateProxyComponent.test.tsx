@@ -6,7 +6,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import CreateProxyConfigComponent from '../../source/components/api/proxy/APICreateProxyComponent';
 import type { Mock } from 'vitest';
 
-// Extend globalThis for TypeScript
 declare global {
 	var submitValue: ((value: string) => void) | undefined;
 }
@@ -117,7 +116,6 @@ describe('CreateProxyConfigComponent', () => {
 
 		// After name, status should change to processing
 		expect(mockStatus).toBe('processing');
-		// createProxy should have been called with correct payload
 		expect(mockCreate).toHaveBeenCalledWith({
 			key: 'my-key',
 			secret: 'my-secret',

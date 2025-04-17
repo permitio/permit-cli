@@ -9,7 +9,6 @@ import useParseProxyData from '../../source/hooks/useParseProxyData.js';
 
 type UpdateKeyFn = (newKey: string) => void;
 
-// A helper TestComponent that exposes hook output via Text
 function TestComponent({
 	options,
 	onUpdateKey,
@@ -50,9 +49,8 @@ describe('useParseProxyData', () => {
 				React.createElement(TestComponent, { options: {} }),
 			);
 
-			// flatten newlines so we don't miss any substrings
 			const frame = lastFrame()!.replace(/\n/g, '');
-			expect(frame).toContain('key:'); // no trailing space
+			expect(frame).toContain('key:'); 
 			expect(frame).toContain('secret:');
 			expect(frame).toContain('name:');
 			expect(frame).toContain('mapping_rules: []');
@@ -75,7 +73,6 @@ describe('useParseProxyData', () => {
 			expect(frame).toContain('"http_method":"get"');
 			expect(frame).toContain('"resource":""');
 			expect(frame).toContain('"headers":{}');
-			// undefined fields are omitted in JSON.stringify
 			expect(frame).toContain('parseError: null');
 		});
 
@@ -87,7 +84,6 @@ describe('useParseProxyData', () => {
 			const { lastFrame } = render(
 				React.createElement(TestComponent, { options: opts }),
 			);
-			// flatten to avoid the "actionX" splitting across a line break
 			const frame = lastFrame()!.replace(/\n/g, '');
 			expect(frame).toContain('"url":"/a"');
 			expect(frame).toContain('"http_method":"post"');

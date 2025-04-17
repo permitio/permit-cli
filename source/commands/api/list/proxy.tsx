@@ -1,4 +1,3 @@
-// File: /source/commands/api/list/proxy.tsx
 import React from 'react';
 import { AuthProvider } from '../../../components/AuthProvider.js';
 import { type infer as zInfer, string, object, number, boolean } from 'zod';

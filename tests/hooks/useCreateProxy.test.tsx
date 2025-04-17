@@ -14,7 +14,6 @@ const mockApiClient = { POST: mockPost };
 const mockAuthClient = vi.fn(() => mockApiClient);
 const mockUnAuthClient = vi.fn((key: string) => mockApiClient);
 
-// Must match the hook’s own `import useClient from './useClient.js'`
 vi.mock('../../source/hooks/useClient.js', () => ({
 	default: () => ({
 		authenticatedApiClient: mockAuthClient,
@@ -22,7 +21,6 @@ vi.mock('../../source/hooks/useClient.js', () => ({
 	}),
 }));
 
-// Must match the hook’s own `import { validateProxyConfig } from '../utils/api/proxy/createutils.js'`
 vi.mock('../../source/utils/api/proxy/createutils.js', () => ({
 	validateProxyConfig: vi.fn(),
 }));

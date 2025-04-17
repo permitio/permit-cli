@@ -1,4 +1,3 @@
-// File: hooks/useListProxy.ts
 import { useCallback, useState } from 'react';
 import useClient from './useClient.js';
 import { ProxyConfigOptions } from '../utils/api/proxy/createutils.js';
@@ -48,7 +47,6 @@ export function useListProxy(
 				? unAuthenticatedApiClient(apiKey)
 				: authenticatedApiClient();
 
-			// Pass path parameters and query parameters.
 			const result = await apiClient.GET(
 				'/v2/facts/{proj_id}/{env_id}/proxy_configs',
 				{ proj_id: projectId, env_id: environmentId },

@@ -107,7 +107,6 @@ export function useCreateProxy(
 	);
 
 	const formatErrorMessage = useCallback((message: string) => {
-		// Customize error formatting if necessary.
 		return message;
 	}, []);
 

@@ -1,4 +1,3 @@
-// File: tests/hooks/useListProxy.test.ts
 import React from 'react';
 import { render } from 'ink-testing-library';
 import { Text } from 'ink';
@@ -13,7 +12,6 @@ const mockApiClient = { GET: mockGet };
 const mockAuthClient = vi.fn(() => mockApiClient);
 const mockUnAuthClient = vi.fn((key: string) => mockApiClient);
 
-// match the default import in useListProxy
 vi.mock('../../source/hooks/useClient.js', () => ({
 	__esModule: true,
 	default: () => ({
@@ -34,7 +32,6 @@ function createTestComponent(
 		return React.createElement(
 			Text,
 			null,
-			// render nothing useful — we inspect hookValues directly
 			'',
 		);
 	};

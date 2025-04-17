@@ -1,5 +1,3 @@
-// File: hooks/useParseProxyData.ts
-
 import { useMemo } from 'react';
 import { type infer as zType } from 'zod';
 import { options as originalOptions } from '../commands/api/create/proxy.js';
@@ -7,7 +5,7 @@ import { ProxyConfigOptions } from '../utils/api/proxy/createutils.js';
 
 type CreateProxyOptions = zType<typeof originalOptions>;
 
-// Use NonNullable to ensure we return an element of the array (not undefined).
+// NonNullable to ensure we return an element of the array (not undefined).
 type MappingRuleType = NonNullable<ProxyConfigOptions['mapping_rules']>[number];
 
 /**
@@ -15,7 +13,6 @@ type MappingRuleType = NonNullable<ProxyConfigOptions['mapping_rules']>[number];
  * Expected format: "url|http_method|[resource]|[headers]|[action]|[priority]"
  */
 function parseMappingRule(ruleStr: string, index: number): MappingRuleType {
-	// Split the string by pipe and trim each part.
 	const parts = ruleStr.split('|').map(s => s.trim());
 
 	// Ensure that both URL and HTTP method are provided.
@@ -25,7 +22,7 @@ function parseMappingRule(ruleStr: string, index: number): MappingRuleType {
 		);
 	}
 
-	// Use non-null assertion for the required fields.
+	// Using non-null assertion for the required fields.
 	const url: string = parts[0]!;
 	const httpMethod: string = parts[1]!; // We already checked it's truthy.
 
@@ -35,7 +32,7 @@ function parseMappingRule(ruleStr: string, index: number): MappingRuleType {
 	const action: string | undefined = parts[4] ? parts[4] : undefined;
 	const priorityStr: string | undefined = parts[5] ? parts[5] : undefined;
 
-	// Parse headers (if the string is valid JSON, otherwise default to an empty object).
+	// Parsing headers (if the string is valid JSON, otherwise default to an empty object).
 	let headers: Record<string, string> = {};
 	try {
 		headers = JSON.parse(headersStr);
@@ -79,7 +76,7 @@ export function useParseProxyData(options: CreateProxyOptions): {
 		let parseError: string | null = null;
 		let mapping_rules: ProxyConfigOptions['mapping_rules'] = [];
 
-		// Parse the mappingRules provided as an array of strings.
+		// Parsing the mappingRules provided as an array of strings.
 		if (options.mapping_rules) {
 			try {
 				mapping_rules = parseMappingRules(options.mapping_rules);
@@ -88,7 +85,7 @@ export function useParseProxyData(options: CreateProxyOptions): {
 			}
 		}
 
-		// Build the final payload object. Use default values for missing fields.
+		// Build the final payload object. Using default values for missing fields.
 		const payload: ProxyConfigOptions = {
 			key: options.key || '',
 			secret: options.secret || '',
