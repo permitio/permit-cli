@@ -43,7 +43,7 @@ type Props = {
 
 export default function Clone({ options }: Props) {
 	return (
-		<AuthProvider scope={'project'} key={options.apiKey}>
+		<AuthProvider scope={'project'} permit_key={options.apiKey}>
 			<CloneComponent
 				apiKey={options.apiKey}
 				dryRun={options.dryRun}
