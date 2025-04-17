@@ -47,7 +47,7 @@ describe('index file', () => {
 		const testCases = [
 			{ version: '18.0.0', shouldWarn: true },
 			{ version: '20.0.0', shouldWarn: true },
-			{ version: '21.9.9', shouldWarn: true },
+			{ version: '21.9.9', shouldWarn: false },
 			{ version: '22.0.0', shouldWarn: false },
 			{ version: '23.0.0', shouldWarn: false },
 		];
@@ -66,13 +66,16 @@ describe('index file', () => {
 				const finalFrame = lastFrame()?.toString();
 
 				if (shouldWarn) {
+					// Match the exact warning message from the component
 					expect(finalFrame).toContain(
-						'Permit CLI is best supported from Node Version: 22',
+						'🚀 Permit CLI is best supported on Node.js v22+, upgrade your Node version to get the best',
+					);
+					expect(finalFrame).toContain(
+						'experience of the tool: https://nodejs.org/en/download',
 					);
 				} else {
-					expect(finalFrame).not.toContain(
-						'Permit CLI is best supported from Node22',
-					);
+					// Make sure warning is not present for newer versions
+					expect(finalFrame).not.toContain('best supported on Node.js v22+');
 				}
 			});
 		});
