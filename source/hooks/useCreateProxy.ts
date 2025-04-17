@@ -1,4 +1,3 @@
-// File: hooks/useCreateProxy.ts
 import { useCallback, useState } from 'react';
 import useClient from './useClient.js';
 import {
