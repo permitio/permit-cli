@@ -12,6 +12,22 @@ import {
 	UrlMapping,
 } from '../../../utils/openapiUtils.js';
 
+// Define constants for repeated error messages
+const ERROR_CREATING_RESOURCE = 'Failed to create resource';
+const ERROR_CREATING_ROLE = 'Failed to create role';
+const ERROR_UPDATING_ROLE = 'Failed to update role';
+const ERROR_CREATING_RESOURCE_ROLE = 'Failed to create resource role';
+
+// Define all x-permit extensions as object properties
+const PERMIT_EXTENSIONS = {
+	RESOURCE: 'x-permit-resource',
+	ACTION: 'x-permit-action',
+	ROLE: 'x-permit-role',
+	RESOURCE_ROLE: 'x-permit-resource-role',
+	RELATION: 'x-permit-relation',
+	DERIVED_ROLE: 'x-permit-derived-role',
+};
+
 interface ProcessorProps {
 	inputPath: string;
 	setProgress: (message: string) => void;
@@ -98,7 +114,7 @@ export const useOpenapiProcessor = ({
 					// Type assertion to ensure proper typing
 					existingResources = resourcesData.data as Array<{ key: string }>;
 				}
-			} catch (_) {
+			} catch {
 				// Silently continue if we can't get existing resources
 			}
 
@@ -108,7 +124,7 @@ export const useOpenapiProcessor = ({
 					// Type assertion to ensure proper typing
 					existingRoles = rolesData.data as Array<{ key: string }>;
 				}
-			} catch (_) {
+			} catch {
 				// Silently continue if we can't get existing roles
 			}
 
@@ -121,7 +137,7 @@ export const useOpenapiProcessor = ({
 				// Cast to our PathItem type with extensions
 				const typedPathItem = pathItem as PathItem;
 
-				const rawResource = typedPathItem['x-permit-resource'];
+				const rawResource = typedPathItem[PERMIT_EXTENSIONS.RESOURCE];
 				if (!rawResource) continue;
 
 				// Sanitize resource key
@@ -143,7 +159,7 @@ export const useOpenapiProcessor = ({
 							if (result.error) {
 								if (!isDuplicateError(result.error)) {
 									errors.push(
-										`Failed to create resource ${resource}: ${JSON.stringify(result.error)}`,
+										`${ERROR_CREATING_RESOURCE} ${resource}: ${JSON.stringify(result.error)}`,
 									);
 								} else {
 									await updateResource(resource, rawResource as string);
@@ -174,7 +190,7 @@ export const useOpenapiProcessor = ({
 					if (!operation) continue;
 
 					// Get action from x-permit-action or default to HTTP method
-					const action = operation['x-permit-action'] || method;
+					const action = operation[PERMIT_EXTENSIONS.ACTION] || method;
 
 					// Create action if needed
 					const resourceActions = actions.get(resource);
@@ -215,16 +231,16 @@ export const useOpenapiProcessor = ({
 					if (!operation) continue;
 
 					// Create/update role if specified and not already processed
-					const role = operation['x-permit-role'];
+					const role = operation[PERMIT_EXTENSIONS.ROLE];
 					if (role && !roles.has(role as string)) {
 						// Check if role already exists
 						const roleExists = existingRoles.some(r => r.key === role);
 
 						// Get the operation's resource and action for permissions
 						const resource = sanitizeKey(
-							(typedPathItem['x-permit-resource'] as string) || '',
+							(typedPathItem[PERMIT_EXTENSIONS.RESOURCE] as string) || '',
 						);
-						const action = operation['x-permit-action'] || method;
+						const action = operation[PERMIT_EXTENSIONS.ACTION] || method;
 
 						// Create permission string if resource and action exist
 						const permissionStr =
@@ -236,7 +252,7 @@ export const useOpenapiProcessor = ({
 								if (result.error) {
 									if (!isDuplicateError(result.error)) {
 										errors.push(
-											`Failed to create role ${role}: ${JSON.stringify(result.error)}`,
+											`${ERROR_CREATING_ROLE} ${role}: ${JSON.stringify(result.error)}`,
 										);
 									} else {
 										// Role exists but wasn't in our list, try to update it
@@ -270,7 +286,7 @@ export const useOpenapiProcessor = ({
 											);
 											if (updateResult.error) {
 												warnings.push(
-													`Failed to update role ${role}: ${JSON.stringify(updateResult.error)}`,
+													`${ERROR_UPDATING_ROLE} ${role}: ${JSON.stringify(updateResult.error)}`,
 												);
 											}
 										} catch (getRoleError) {
@@ -319,7 +335,7 @@ export const useOpenapiProcessor = ({
 								);
 								if (updateResult.error) {
 									warnings.push(
-										`Failed to update role ${role}: ${JSON.stringify(updateResult.error)}`,
+										`${ERROR_UPDATING_ROLE} ${role}: ${JSON.stringify(updateResult.error)}`,
 									);
 								}
 							} catch (getRoleError) {
@@ -343,7 +359,7 @@ export const useOpenapiProcessor = ({
 				// Cast to our PathItem type with extensions
 				const typedPathItem = pathItem as PathItem;
 
-				const rawResource = typedPathItem['x-permit-resource'];
+				const rawResource = typedPathItem[PERMIT_EXTENSIONS.RESOURCE];
 				if (!rawResource) continue;
 
 				// Process HTTP methods
@@ -352,7 +368,7 @@ export const useOpenapiProcessor = ({
 					if (!operation) continue;
 
 					// Process relation
-					const relation = operation['x-permit-relation'];
+					const relation = operation[PERMIT_EXTENSIONS.RELATION];
 					if (relation && typeof relation === 'object') {
 						try {
 							type RelationData = {
@@ -435,7 +451,7 @@ export const useOpenapiProcessor = ({
 				// Cast to our PathItem type with extensions
 				const typedPathItem = pathItem as PathItem;
 
-				const rawResource = typedPathItem['x-permit-resource'];
+				const rawResource = typedPathItem[PERMIT_EXTENSIONS.RESOURCE];
 				if (!rawResource) continue;
 
 				const resource = sanitizeKey(rawResource as string);
@@ -446,13 +462,13 @@ export const useOpenapiProcessor = ({
 					if (!operation) continue;
 
 					// Process resource roles
-					const resourceRole = operation['x-permit-resource-role'];
+					const resourceRole = operation[PERMIT_EXTENSIONS.RESOURCE_ROLE];
 					if (resourceRole) {
 						const sanitizedResourceRole = `${resource}_${resourceRole}`;
 						if (!resourceRoles.has(sanitizedResourceRole)) {
 							try {
 								// Create individual permission for specific action instead of wildcard
-								const action = operation['x-permit-action'] || method;
+								const action = operation[PERMIT_EXTENSIONS.ACTION] || method;
 								const permissionString = `${resource}:${action}`;
 
 								const result = await createResourceRole(
@@ -465,7 +481,7 @@ export const useOpenapiProcessor = ({
 								if (result.error) {
 									if (!isDuplicateError(result.error)) {
 										errors.push(
-											`Failed to create resource role ${resourceRole}: ${JSON.stringify(result.error)}`,
+											`${ERROR_CREATING_RESOURCE_ROLE} ${resourceRole}: ${JSON.stringify(result.error)}`,
 										);
 									} else {
 										warnings.push(
@@ -483,7 +499,7 @@ export const useOpenapiProcessor = ({
 					}
 
 					// Process derived role
-					const derivedRole = operation['x-permit-derived-role'];
+					const derivedRole = operation[PERMIT_EXTENSIONS.DERIVED_ROLE];
 					if (derivedRole && typeof derivedRole === 'object') {
 						type DerivedRoleData = {
 							base_role: string;
@@ -498,7 +514,7 @@ export const useOpenapiProcessor = ({
 							// Use the resource from the path if not specified
 							const resourceKey = sanitizeKey(
 								derivedRoleData.resource ||
-									(typedPathItem['x-permit-resource'] as string) ||
+									(typedPathItem[PERMIT_EXTENSIONS.RESOURCE] as string) ||
 									'',
 							);
 
@@ -527,7 +543,7 @@ export const useOpenapiProcessor = ({
 					}
 
 					// Add URL mapping with absolute path
-					const action = operation['x-permit-action'] || method;
+					const action = operation[PERMIT_EXTENSIONS.ACTION] || method;
 					mappings.push({
 						url: baseUrl ? `${baseUrl}${pathKey}` : pathKey,
 						http_method: method as string,
@@ -544,7 +560,7 @@ export const useOpenapiProcessor = ({
 					// Try to delete existing mappings first
 					try {
 						await deleteUrlMappings('openapi');
-					} catch (_) {
+					} catch {
 						// No existing mappings to delete or error deleting
 					}
 

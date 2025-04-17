@@ -100,7 +100,6 @@ export const isDuplicateError = (error: unknown): boolean => {
 			error.includes('DUPLICATE_ENTITY') || error.includes('already exists')
 		);
 	}
-
 	try {
 		if (typeof error === 'object' && error !== null) {
 			const errorObj = error as ErrorObject;
@@ -108,7 +107,6 @@ export const isDuplicateError = (error: unknown): boolean => {
 				return true;
 			}
 		}
-
 		// Try to parse JSON string errors
 		if (typeof error === 'string') {
 			const parsedError = JSON.parse(error) as ErrorObject;
@@ -117,10 +115,9 @@ export const isDuplicateError = (error: unknown): boolean => {
 				parsedError.title === 'This role already exists'
 			);
 		}
-	} catch (_) {
+	} catch {
 		// Not a parseable JSON string, not a duplicate error
 	}
-
 	return false;
 };
 

@@ -114,7 +114,7 @@ export const usePermitRelationApi = () => {
 				if (existingRole && !error) {
 					return { success: true, data: existingRole };
 				}
-			} catch (_unused) {
+			} catch {
 				// Role doesn't exist, continue to create it
 			}
 
