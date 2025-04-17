@@ -233,7 +233,7 @@ export const useGeneratePolicySnapshot = ({
 
 			// Write config as pretty JSON
 			const json = JSON.stringify(
-				dryRun ? { ABACUsers: dryUsers, config: finalConfig } : finalConfig,
+				dryRun ? { users: dryUsers, config: finalConfig } : finalConfig,
 				null,
 				2,
 			);
