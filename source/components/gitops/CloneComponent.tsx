@@ -178,8 +178,8 @@ export default function CloneComponent({ apiKey, dryRun, project }: Props) {
 			)}
 			{state.status === 'success' &&
 				(dryRun ? (
-					<Box>
-						<Text>Command to execute:</Text>
+					<Box flexDirection={'column'}>
+						<Text>Command to execute: </Text>
 						<Text>{state.command}</Text>
 					</Box>
 				) : (
