@@ -13,78 +13,63 @@ import { usePermitUrlMappingApi } from './usePermitUrlMappingApi.js';
  * @returns Object with methods to create Permit policy elements
  */
 export const useOpenapiApi = () => {
-  const {
-    listResources,
-    createResource,
-    updateResource,
-    createAction,
-  } = usePermitResourceApi();
+	const { listResources, createResource, updateResource, createAction } =
+		usePermitResourceApi();
 
-  const {
-    listRoles,
-    getRole,
-    createRole,
-    updateRole,
-    createResourceRole,
-  } = usePermitRoleApi();
+	const { listRoles, getRole, createRole, updateRole, createResourceRole } =
+		usePermitRoleApi();
 
-  const {
-    getRelationByKey,
-    createRelation,
-    createDerivedRole,
-  } = usePermitRelationApi();
+	const { getRelationByKey, createRelation, createDerivedRole } =
+		usePermitRelationApi();
 
-  const {
-    deleteUrlMappings,
-    createUrlMappings,
-  } = usePermitUrlMappingApi();
+	const { deleteUrlMappings, createUrlMappings } = usePermitUrlMappingApi();
 
-  return useMemo(
-    () => ({
-      // Resource operations
-      listResources,
-      createResource,
-      updateResource,
-      createAction,
+	return useMemo(
+		() => ({
+			// Resource operations
+			listResources,
+			createResource,
+			updateResource,
+			createAction,
 
-      // Role operations
-      listRoles,
-      getRole,
-      createRole,
-      updateRole,
-      createResourceRole,
+			// Role operations
+			listRoles,
+			getRole,
+			createRole,
+			updateRole,
+			createResourceRole,
 
-      // Relation operations
-      getRelationByKey,
-      createRelation,
-      createDerivedRole,
+			// Relation operations
+			getRelationByKey,
+			createRelation,
+			createDerivedRole,
 
-      // URL mapping operations
-      deleteUrlMappings,
-      createUrlMappings,
-    }),
-    [
-      // Resource operations
-      listResources,
-      createResource,
-      updateResource,
-      createAction,
+			// URL mapping operations
+			deleteUrlMappings,
+			createUrlMappings,
+		}),
+		[
+			// Resource operations
+			listResources,
+			createResource,
+			updateResource,
+			createAction,
 
-      // Role operations
-      listRoles,
-      getRole,
-      createRole,
-      updateRole,
-      createResourceRole,
+			// Role operations
+			listRoles,
+			getRole,
+			createRole,
+			updateRole,
+			createResourceRole,
 
-      // Relation operations
-      getRelationByKey,
-      createRelation,
-      createDerivedRole,
+			// Relation operations
+			getRelationByKey,
+			createRelation,
+			createDerivedRole,
 
-      // URL mapping operations
-      deleteUrlMappings,
-      createUrlMappings,
-    ],
-  );
+			// URL mapping operations
+			deleteUrlMappings,
+			createUrlMappings,
+		],
+	);
 };
