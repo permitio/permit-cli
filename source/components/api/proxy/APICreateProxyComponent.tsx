@@ -1,4 +1,3 @@
-// File: components/api/proxy/CreateProxyConfigComponent.tsx
 import React, { useEffect, useState, useCallback } from 'react';
 import { Text } from 'ink';
 import TextInput from 'ink-text-input';
@@ -43,7 +42,7 @@ export default function CreateProxyConfigComponent({ options }: Props) {
 		options.apiKey,
 	);
 
-	// Updated to use parsed values
+	// Trigger creation with the latest field values
 	const triggerCreate = useCallback(() => {
 		createProxy({
 			secret: proxySecret,
@@ -66,6 +65,7 @@ export default function CreateProxyConfigComponent({ options }: Props) {
 		setStatus,
 	]);
 
+	// Handle parse errors
 	useEffect(() => {
 		if (parseError) {
 			setErrorMessage(parseError);
@@ -73,7 +73,7 @@ export default function CreateProxyConfigComponent({ options }: Props) {
 		}
 	}, [parseError, setErrorMessage, setStatus]);
 
-	// On mount: auto-trigger or go into interactive mode
+	// On mount: auto-trigger for prefilled or enter interactive mode
 	useEffect(() => {
 		if (options.key && options.secret && options.name) {
 			setCurrentField('done');
@@ -86,6 +86,13 @@ export default function CreateProxyConfigComponent({ options }: Props) {
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	// Once interactive flow completes, fire creation
+	useEffect(() => {
+		if (currentField === 'done') {
+			triggerCreate();
+		}
+	}, [currentField, triggerCreate]);
 
 	// Handlers for collecting user input
 	const handleKeySubmit = useCallback((value: string) => {
@@ -104,13 +111,13 @@ export default function CreateProxyConfigComponent({ options }: Props) {
 		(value: string) => {
 			if (value.trim() === '') return;
 			setProxyName(value);
-			setCurrentField('done');
 			setStatus('processing');
-			triggerCreate();
+			setCurrentField('done');
 		},
-		[triggerCreate, setStatus],
+		[setStatus],
 	);
 
+	// Render different states
 	if (status === 'input') {
 		if (currentField === 'key') {
 			return (
