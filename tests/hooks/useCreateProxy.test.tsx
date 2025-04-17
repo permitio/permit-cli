@@ -1,8 +1,10 @@
 import React from 'react';
 import { render } from 'ink-testing-library';
 import { Text } from 'ink';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, MockInstance } from 'vitest';
 import delay from 'delay';
+import { vi } from 'vitest';
+
 
 import { useCreateProxy } from '../../source/hooks/useCreateProxy.js';
 import { validateProxyConfig } from '../../source/utils/api/proxy/createutils.js';
@@ -51,7 +53,7 @@ describe('useCreateProxy', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockPost.mockReset();
-		(validateProxyConfig as vi.Mock).mockImplementation(() => undefined);
+    (validateProxyConfig as unknown as MockInstance).mockImplementation(() => undefined);
 	});
 
 	it('has initial state processing + no error', () => {
@@ -73,7 +75,7 @@ describe('useCreateProxy', () => {
 	});
 
 	it('handles validation util throwing', async () => {
-		(validateProxyConfig as vi.Mock).mockImplementation(() => {
+		(validateProxyConfig as unknown as MockInstance).mockImplementation(() => {
 			throw new Error('Bad payload');
 		});
 		const { TestComponent, getHook } = createTestComponent('p', 'e');
