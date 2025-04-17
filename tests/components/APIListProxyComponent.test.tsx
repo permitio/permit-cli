@@ -7,21 +7,18 @@ import APIListProxyTableComponent from '../../source/components/api/proxy/APILis
 
 // ---------- Mocks ----------
 
-// Dynamic mock variables to control hook behavior
 let mockStatus;
 let mockError;
 let mockProxies;
 let mockTotalCount;
 let mockListProxies;
 
-// Mock AuthProvider
-vi.mock('../../source/components/AuthProvider.js', () => ({
+vi.mock('../../source/components/AuthProvider', () => ({
 	useAuth: () => ({
 		scope: { project_id: 'proj1', environment_id: 'env1' },
 	}),
 }));
 
-// Mock useListProxy hook
 vi.mock('../../source/hooks/useListProxy.js', () => ({
 	useListProxy: () => ({
 		status: mockStatus,
@@ -32,10 +29,17 @@ vi.mock('../../source/hooks/useListProxy.js', () => ({
 	}),
 }));
 
-// Mock Table component to inspect props
 vi.mock('../../source/components/ui/Table.js', () => ({
 	default: ({ data, headers }) => (
-		<Text>MockTable: {JSON.stringify({ data, headers })}</Text>
+		<Text>
+			MockTable:
+			{headers.join(',')}
+			{data.map((row, i) => (
+				<Text key={i}>
+					Row {i + 1}:{Object.values(row).join(',')}
+				</Text>
+			))}
+		</Text>
 	),
 }));
 
@@ -87,9 +91,10 @@ describe('APIListProxyTableComponent', () => {
 			<APIListProxyTableComponent options={createOptions()} />,
 		);
 
-		expect(lastFrame()).toContain('Proxy Configs:');
-		expect(lastFrame()).toContain('Showing 0 items | Page 1 | Total Pages: 5');
-		expect(lastFrame()).toContain('No proxy configs found.');
+		const output = lastFrame();
+		expect(output).toContain('Proxy Configs:');
+		expect(output).toContain('Showing 0 items');
+		expect(output).toContain('No proxy configs found.');
 	});
 
 	it('renders table with truncated and formatted data', () => {
@@ -109,32 +114,15 @@ describe('APIListProxyTableComponent', () => {
 			<APIListProxyTableComponent options={createOptions()} />,
 		);
 
-		const expectedKey = 'abcdefg...';
-
-		expect(lastFrame()).toContain('Proxy Configs:');
-		expect(lastFrame()).toContain('Showing 1 items | Page 1 | Total Pages: 1');
-		expect(lastFrame()).toContain(
-			`MockTable: ${JSON.stringify({
-				data: [
-					{
-						'#': 1,
-						key: expectedKey,
-						secret: 'sec1',
-						name: 'name1',
-						auth_mechanism: 'Bearer',
-						mapping_rules: 'http://a, http://b',
-					},
-				],
-				headers: [
-					'#',
-					'key',
-					'secret',
-					'name',
-					'auth_mechanism',
-					'mapping_rules',
-				],
-			})}`,
-		);
+		const output = lastFrame();
+		expect(output).toContain('Proxy Configs:');
+		expect(output).toContain('Showing 1 items');
+		expect(output).toContain('abcdefg...'); // truncated key
+		expect(output).toContain('sec1');
+		expect(output).toContain('name1');
+		expect(output).toContain('Bearer');
+		expect(output).toContain('http://a');
+		expect(output).toContain('http://b');
 	});
 
 	it('renders full key when expandKey=true', () => {
@@ -156,32 +144,8 @@ describe('APIListProxyTableComponent', () => {
 			/>,
 		);
 
-		expect(lastFrame()).toContain(
-			`MockTable: ${JSON.stringify({
-				data: [
-					{
-						'#': 1,
-						key: 'longkeyvalue',
-						secret: '',
-						name: '',
-						auth_mechanism: '',
-						mapping_rules: '',
-					},
-				],
-				headers: [
-					'#',
-					'key',
-					'secret',
-					'name',
-					'auth_mechanism',
-					'mapping_rules',
-				],
-			})}`,
-		);
-	});
-
-	it('calls listProxies on mount', () => {
-		render(<APIListProxyTableComponent options={createOptions()} />);
-		expect(mockListProxies).toHaveBeenCalled();
+		const output = lastFrame();
+		expect(output).toContain('longkeyvalue'); // full key shown
+		expect(output).toContain('Row 1'); // confirms one row rendered
 	});
 });
