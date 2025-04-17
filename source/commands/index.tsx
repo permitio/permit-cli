@@ -9,6 +9,9 @@ export default function Index() {
 		<AuthProvider skipLogin={true}>
 			<Box borderStyle="single" margin={2} flexDirection="column">
 				<Text>
+					{process.versions.node < '22.0.0'
+						? 'Permit CLI is best supported from Node Version: 22'
+						: null}
 					<Gradient colors={['#FF923F', '#944EEF']}>Permit CLI</Gradient> is a
 					developer swiss army knife for fine-grained authorization
 				</Text>
