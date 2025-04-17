@@ -56,6 +56,7 @@ export default function APIListProxyTableComponent({ options }: Props) {
 	// Error state
 	if (status === 'error' && errorMessage) {
 		return <Text color="red">Error: {errorMessage}</Text>;
+	}
 
 	// Done: render table once
 	if (status === 'done') {
