@@ -150,7 +150,10 @@ export default function CloneComponent({ apiKey, dryRun, project }: Props) {
 				</Box>
 			)}
 			{state.status === 'no_repo' && (
-				<Text color="red">No active Git repository found for the project. Run `permit gitops create github` to setup GitOps on your project.</Text>
+				<Text color="red">
+					No active Git repository found for the project. Run `permit gitops
+					create github` to setup GitOps on your project.
+				</Text>
 			)}
 			{state.status === 'error' && <Text color="red">{state.message}</Text>}
 			{state.status === 'select_environment' && (
