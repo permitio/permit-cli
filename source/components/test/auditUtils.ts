@@ -148,6 +148,8 @@ export const createPdpRequest = (log: DetailedAuditLog): PdpRequestData => {
 			context.resource.key
 		) {
 			resourceKey = context.resource.key.toString();
+		} else {
+			resourceKey = log.resource;
 		}
 
 		// Determine resource type with proper fallbacks
