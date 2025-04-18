@@ -8,8 +8,8 @@ import { ResourceInput } from '../../../source/components/policy/ResourceInput.j
 const mockGetExistingResources = vi.fn().mockResolvedValue(new Set());
 
 // Mock the hooks
-vi.mock('../../../source/hooks/useResourceApi.js', () => ({
-	useResourceApi: () => ({
+vi.mock('../../../source/hooks/useResourcesApi.js', () => ({
+	useResourcesApi: () => ({
 		getExistingResources: mockGetExistingResources,
 		status: 'idle',
 	}),

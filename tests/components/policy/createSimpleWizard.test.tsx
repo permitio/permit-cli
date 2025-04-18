@@ -2,7 +2,7 @@ import React from 'react';
 import { render } from 'ink-testing-library';
 import CreateSimpleWizard from '../../../source/components/policy/CreateSimpleWizard';
 import { useAuth } from '../../../source/components/AuthProvider.js';
-import { useResourceApi } from '../../../source/hooks/useResourceApi.js';
+import { useResourcesApi } from '../../../source/hooks/useResourcesApi.js';
 import { useRolesApi } from '../../../source/hooks/useRolesApi.js';
 import { ResourceInput } from '../../../source/components/policy/ResourceInput.js';
 import { ActionInput } from '../../../source/components/policy/ActionsInput.js';
@@ -15,8 +15,8 @@ vi.mock('../../../source/components/AuthProvider.js', () => ({
 	useAuth: vi.fn(),
 }));
 
-vi.mock('../../../source/hooks/useResourceApi.js', () => ({
-	useResourceApi: vi.fn(),
+vi.mock('../../../source/hooks/useResourcesApi.js', () => ({
+	useResourcesApi: vi.fn(),
 }));
 
 vi.mock('../../../source/hooks/useRolesApi.js', () => ({
@@ -59,7 +59,7 @@ describe('CreateSimpleWizard', () => {
 			},
 		});
 
-		vi.mocked(useResourceApi).mockReturnValue({
+		vi.mocked(useResourcesApi).mockReturnValue({
 			createBulkResources: mockCreateBulkResources,
 		});
 

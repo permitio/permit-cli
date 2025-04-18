@@ -2,7 +2,7 @@ import React from 'react';
 import { render, cleanup } from 'ink-testing-library';
 import { Text } from 'ink';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useResourceApi } from '../../source/hooks/useResourceApi.js';
+import { useResourcesApi } from '../../source/hooks/useResourcesApi.js';
 
 // Simple delay function
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -34,7 +34,7 @@ const TestComponent = ({
 	operation: 'getExisting' | 'createBulk';
 }) => {
 	const { getExistingResources, createBulkResources, status, errorMessage } =
-		useResourceApi();
+		useResourcesApi();
 
 	const handleOperation = async () => {
 		try {
@@ -152,13 +152,7 @@ describe('useResourceApi', () => {
 			error: null,
 		});
 
-		const { lastFrame } = render(
-			<TestComponent
-				projectId="proj123"
-				environmentId="env123"
-				operation="getExisting"
-			/>,
-		);
+		const { lastFrame } = render(<TestComponent operation="getExisting" />);
 
 		await delay(50);
 

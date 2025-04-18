@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
-import { useResourceApi } from '../../hooks/useResourceApi.js';
+import { useResourcesApi } from '../../hooks/useResourcesApi.js';
 import { components } from '../../lib/api/v1.js';
 
 interface ResourceInputProps {
@@ -14,7 +14,7 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({
 	onError,
 }) => {
 	const [input, setInput] = useState('');
-	const { getExistingResources, status } = useResourceApi();
+	const { getExistingResources, status } = useResourcesApi();
 
 	const validateResourceKey = (key: string): boolean => {
 		return /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(key);

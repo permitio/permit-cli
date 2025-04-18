@@ -3,7 +3,7 @@ import { Box, Text } from 'ink';
 import { ResourceInput } from './ResourceInput.js';
 import { ActionInput } from './ActionsInput.js';
 import { RoleInput } from './RoleInput.js';
-import { useResourceApi } from '../../hooks/useResourceApi.js';
+import { useResourcesApi } from '../../hooks/useResourcesApi.js';
 import { useRolesApi } from '../../hooks/useRolesApi.js';
 import { useParseResources } from '../../hooks/useParseResources.js';
 import { useParseActions } from '../../hooks/useParseActions.js';
@@ -48,7 +48,7 @@ export default function CreateSimpleWizard({
 		'idle' | 'processing' | 'error' | 'success'
 	>(presentResources && presentActions && presentRoles ? 'processing' : 'idle');
 
-	const { createBulkResources } = useResourceApi();
+	const { createBulkResources } = useResourcesApi();
 	const { createBulkRoles } = useRolesApi();
 
 	// Handle preset data processing
