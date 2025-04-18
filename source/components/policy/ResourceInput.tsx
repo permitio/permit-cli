@@ -15,30 +15,20 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({
 }) => {
 	const [input, setInput] = useState('');
 	const { getExistingResources, status } = useResourcesApi();
-	const placeholder = ' posts, comments, authors';
+	const placeholder = 'posts, comments, authors';
 
 	const validateResourceKey = (key: string): boolean => {
 		return /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(key);
 	};
 
-	const getCurrentResourceKeys = () => {
-		const valueToProcess = input.trim() === '' ? placeholder.trim() : input;
-		return valueToProcess
-			.split(',')
-			.map(k => k.trim())
-			.filter(k => k.length > 0);
-	};
-
 	const handleSubmit = async (value: string) => {
+		if (value.trim() === '') {
+			setInput(placeholder);
+			return;
+		}
 		try {
-			// Use placeholder if input is empty
-			const valueToProcess = value.trim() === '' ? placeholder.trim() : value;
-
-			// Trim the entire input first
-			const trimmedValue = valueToProcess.trim();
-
-			// Split, trim each value, and filter out empty strings
-			const resourceKeys = trimmedValue
+			const valueToProcess = value.trim();
+			const resourceKeys = valueToProcess
 				.split(',')
 				.map(k => k.trim())
 				.filter(k => k.length > 0);
@@ -88,13 +78,12 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({
 			<Box>
 				<Text>Enter resource keys (comma-separated):</Text>
 			</Box>
-			{getCurrentResourceKeys().length > 0 && (
-				<Box>
-					<Text color="cyan">
-						Current: {getCurrentResourceKeys().join(', ')}
-					</Text>
-				</Box>
-			)}
+
+			<Box>
+				<Text dimColor>
+					Example: <Text color="yellow">{placeholder}</Text>
+				</Text>
+			</Box>
 			<Box>
 				<Text>{'> '}</Text>
 				<TextInput

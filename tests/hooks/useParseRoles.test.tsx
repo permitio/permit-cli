@@ -26,9 +26,9 @@ describe('useParseRoles', () => {
 		expect(lastFrame()).toBe('[]');
 	});
 
-	it('parses role with resource:action', () => {
+	it('parses role with resource:action using | separator', () => {
 		const { lastFrame } = render(
-			<TestComponent roles={['admin:users:create|posts:read']} />,
+			<TestComponent roles={['admin|users:create|posts:read']} />,
 		);
 		const parsed = JSON.parse(lastFrame()?.replace(/\n\s*/g, '') || '[]');
 		expect(parsed).toEqual([
@@ -43,7 +43,7 @@ describe('useParseRoles', () => {
 	it('expands resource-only permission to all actions', () => {
 		const { lastFrame } = render(
 			<TestComponent
-				roles={['editor:posts']}
+				roles={['editor|posts']}
 				actions={['create', 'read', 'update', 'delete']}
 			/>,
 		);
@@ -62,13 +62,13 @@ describe('useParseRoles', () => {
 		]);
 	});
 
-	it('parses multiple roles', () => {
+	it('parses multiple roles with | separator', () => {
 		const { lastFrame } = render(
 			<TestComponent
 				roles={[
-					'admin:users:create|posts:read',
-					'editor:posts',
-					'user:users:read',
+					'admin|users:create|posts:read',
+					'editor|posts',
+					'user|users:read',
 				]}
 				actions={['create', 'read', 'update', 'delete']}
 			/>,
@@ -99,7 +99,7 @@ describe('useParseRoles', () => {
 	});
 
 	it('throws error for invalid role key', () => {
-		const { lastFrame } = render(<TestComponent roles={[':users:create']} />);
+		const { lastFrame } = render(<TestComponent roles={['|users:create']} />);
 		expect(lastFrame()).toContain('Error: Invalid role format.');
 	});
 
@@ -110,7 +110,10 @@ describe('useParseRoles', () => {
 
 	it('trims whitespace from all parts', () => {
 		const { lastFrame } = render(
-			<TestComponent roles={['admin:posts']} actions={['create', 'read']} />,
+			<TestComponent
+				roles={[' admin | posts ']}
+				actions={['create', 'read']}
+			/>,
 		);
 		const parsed = JSON.parse(lastFrame()?.replace(/\n\s*/g, '') || '[]');
 		expect(parsed).toEqual([

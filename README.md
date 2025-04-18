@@ -514,7 +514,7 @@ You can provide resources, actions, and roles as arguments or enter them interac
   - `key` : Action Key
   - `description` : Action description
   - `@attribute1,attribute2`: Comma-sperated list of attributes.
-- `roles <string[]>` (Optional) : Array of roles in the format: "role:resource:actioin|resource:action"
+- `roles <string[]>` (Optional) : Array of roles in the format: "role|resource:action|resource:action" or "role|resource"
 
   - `role`: Role key
   - `resource:action`: The resource and the action to declare the permissions.

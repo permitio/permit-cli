@@ -23,17 +23,13 @@ export const ActionInput: React.FC<ActionInputProps> = ({
 		return /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(key);
 	};
 
-	const getCurrentActionKeys = () => {
-		const valueToProcess = input.trim() === '' ? placeholder : input;
-		return valueToProcess
-			.split(',')
-			.map(k => k.trim())
-			.filter(Boolean);
-	};
-
 	const handleSubmit = (value: string) => {
+		if (value.trim() === '') {
+			setInput(placeholder);
+			return;
+		}
 		try {
-			const valueToProcess = value.trim() === '' ? placeholder : value;
+			const valueToProcess = value.trim();
 			const keys = valueToProcess
 				.split(',')
 				.map(k => k.trim())
@@ -78,13 +74,14 @@ export const ActionInput: React.FC<ActionInputProps> = ({
 					<Text color="cyan">Resources: {availableResources.join(', ')}</Text>
 				</Box>
 			)}
-			{getCurrentActionKeys().length > 0 && (
-				<Box>
-					<Text color="cyan">Current: {getCurrentActionKeys().join(', ')}</Text>
-				</Box>
-			)}
+
 			<Box>
 				<Text>Enter action keys (comma-separated):</Text>
+			</Box>
+			<Box>
+				<Text dimColor>
+					Example: <Text color="yellow">{placeholder}</Text>
+				</Text>
 			</Box>
 			<Box>
 				<Text>{'> '}</Text>

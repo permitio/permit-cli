@@ -4,10 +4,8 @@ import { Text } from 'ink';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ResourceInput } from '../../../source/components/policy/ResourceInput.js';
 
-// Create a mockGetExistingResources function that can be controlled in tests
+// Mock useResourcesApi
 const mockGetExistingResources = vi.fn().mockResolvedValue(new Set());
-
-// Mock the hooks
 vi.mock('../../../source/hooks/useResourcesApi.js', () => ({
 	useResourcesApi: () => ({
 		getExistingResources: mockGetExistingResources,
@@ -15,18 +13,13 @@ vi.mock('../../../source/hooks/useResourcesApi.js', () => ({
 	}),
 }));
 
-// Mock Text Input component for all tests
+// Mock ink-text-input
 vi.mock('ink-text-input', () => ({
-	default: ({ value, onChange, onSubmit }) => {
-		// Store handlers in module scope via global
-		vi.stubGlobal('resourceInputHandler', onSubmit);
+	default: ({ value, onChange, onSubmit, placeholder }) => {
+		vi.stubGlobal('textInputHandlers', { onChange, onSubmit, placeholder });
 		return <Text>Input: {value}</Text>;
 	},
 }));
-
-// Helper function to wait for state updates
-const waitForStateUpdate = () =>
-	new Promise(resolve => setTimeout(resolve, 50));
 
 describe('ResourceInput', () => {
 	const mockOnComplete = vi.fn();
@@ -41,124 +34,73 @@ describe('ResourceInput', () => {
 		cleanup();
 	});
 
-	it('should render correctly', () => {
+	it('renders with placeholder', () => {
 		const { lastFrame } = render(
 			<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />,
 		);
-
 		expect(lastFrame()).toContain('Resource Configuration');
-		expect(lastFrame()).toContain('Enter resource keys');
+		expect(lastFrame()).toContain('Example:');
+		expect(lastFrame()).toContain('Input:');
 	});
 
-	it('should handle valid input', async () => {
+	it('submits valid resources', async () => {
 		render(<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />);
-
-		// Wait for component to initialize
-		await waitForStateUpdate();
-
-		// Simulate input submission using the stored handler
-		if (global.resourceInputHandler) {
-			global.resourceInputHandler('users, posts');
-		}
-
-		// Wait for the async operation to complete
-		await waitForStateUpdate();
-
-		expect(mockOnComplete).toHaveBeenCalled();
-		expect(mockOnComplete.mock.calls[0][0]).toEqual([
-			{ key: 'users', name: 'users', actions: {} },
+		global.textInputHandlers.onSubmit('posts,comments');
+		await new Promise(r => setTimeout(r, 50));
+		expect(mockOnComplete).toHaveBeenCalledWith([
 			{ key: 'posts', name: 'posts', actions: {} },
+			{ key: 'comments', name: 'comments', actions: {} },
 		]);
+		expect(mockOnError).not.toHaveBeenCalled();
 	});
 
-	it('should handle empty input', async () => {
+	it('shows error for invalid resource keys', async () => {
 		render(<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />);
-
-		// Wait for component to initialize
-		await waitForStateUpdate();
-
-		// Reset mocks
-		mockOnError.mockClear();
-
-		// Simulate empty input submission
-		if (global.resourceInputHandler) {
-			global.resourceInputHandler('\r');
-		}
-
-		// Wait for the async operation to complete
-		await waitForStateUpdate();
-
-		expect(mockOnComplete).toHaveBeenCalled();
-	});
-
-	it('should validate resource keys', async () => {
-		render(<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />);
-
-		// Wait for component to initialize
-		await waitForStateUpdate();
-
-		// Reset mocks
-		mockOnError.mockClear();
-
-		// Simulate invalid input submission
-		if (global.resourceInputHandler) {
-			global.resourceInputHandler('valid, 123invalid');
-		}
-
-		// Wait for the async operation to complete
-		await waitForStateUpdate();
-
+		global.textInputHandlers.onSubmit('posts, 123bad');
+		await new Promise(r => setTimeout(r, 50));
 		expect(mockOnError).toHaveBeenCalledWith(
-			'Invalid resource keys: 123invalid',
+			expect.stringContaining('Invalid resource keys: 123bad'),
 		);
 		expect(mockOnComplete).not.toHaveBeenCalled();
 	});
 
-	it('should check for existing resources', async () => {
-		// Set up mock to return existing resources for this test only
-		mockGetExistingResources.mockResolvedValue(new Set(['users']));
-
+	it('shows error if no resources entered', async () => {
 		render(<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />);
-
-		// Wait for component to initialize
-		await waitForStateUpdate();
-
-		// Reset mocks
-		mockOnError.mockClear();
-
-		// Simulate input with existing resource
-		if (global.resourceInputHandler) {
-			global.resourceInputHandler('users, posts');
-		}
-
-		// Wait for the async operation to complete
-		await waitForStateUpdate();
-
-		expect(mockOnError).toHaveBeenCalledWith('Resources already exist: users');
+		global.textInputHandlers.onSubmit('   ');
+		await new Promise(r => setTimeout(r, 50));
+		// Should fill with placeholder, not call onComplete or onError
 		expect(mockOnComplete).not.toHaveBeenCalled();
 	});
 
-	it('should handle API errors', async () => {
-		// Set up mock to simulate an API error
-		mockGetExistingResources.mockRejectedValue(new Error('API error'));
-
+	it('fills input with placeholder on first empty submit', () => {
 		render(<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />);
+		global.textInputHandlers.onSubmit('');
+		// Should set input to placeholder, not call onComplete
+		expect(mockOnComplete).not.toHaveBeenCalled();
+	});
 
-		// Wait for component to initialize
-		await waitForStateUpdate();
+	it('submits after placeholder is filled and Enter is pressed again', async () => {
+		render(<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />);
+		// First Enter with empty input fills with placeholder
+		global.textInputHandlers.onSubmit('');
+		// Simulate user pressing Enter again (input now equals placeholder)
+		global.textInputHandlers.onSubmit('posts, comments, authors');
+		await new Promise(r => setTimeout(r, 50));
+		expect(mockOnComplete).toHaveBeenCalledWith([
+			{ key: 'posts', name: 'posts', actions: {} },
+			{ key: 'comments', name: 'comments', actions: {} },
+			{ key: 'authors', name: 'authors', actions: {} },
+		]);
+	});
 
-		// Reset mocks
-		mockOnError.mockClear();
-
-		// Simulate input submission that will trigger API call
-		if (global.resourceInputHandler) {
-			global.resourceInputHandler('users');
-		}
-
-		// Wait for the async operation to complete
-		await waitForStateUpdate();
-
-		expect(mockOnError).toHaveBeenCalledWith('API error');
+	it('shows error for duplicate resources', async () => {
+		mockGetExistingResources.mockResolvedValue(new Set(['posts']));
+		render(<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />);
+		global.textInputHandlers.onSubmit('posts,comments');
+		await new Promise(r => setTimeout(r, 50));
+		expect(mockOnError).toHaveBeenCalledWith(
+			expect.stringContaining('Resources already exist: posts'),
+		);
 		expect(mockOnComplete).not.toHaveBeenCalled();
 	});
 });

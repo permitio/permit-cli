@@ -51,7 +51,7 @@ describe('RoleInput', () => {
 		expect(lastFrame()).toContain('Input:');
 	});
 
-	it('accepts a valid role:resource:action', async () => {
+	it('accepts a valid role|resource:action|resource:action', async () => {
 		render(
 			<RoleInput
 				availableActions={availableActions}
@@ -60,7 +60,7 @@ describe('RoleInput', () => {
 				onError={mockOnError}
 			/>,
 		);
-		global.textInputHandlers.onSubmit('admin:users:create|posts:read');
+		global.textInputHandlers.onSubmit('admin|users:create|posts:read');
 		await new Promise(r => setTimeout(r, 50));
 		expect(mockOnComplete).toHaveBeenCalledWith([
 			{
@@ -72,7 +72,7 @@ describe('RoleInput', () => {
 		expect(mockOnError).not.toHaveBeenCalled();
 	});
 
-	it('expands role:resource to all actions', async () => {
+	it('expands role|resource to all actions', async () => {
 		render(
 			<RoleInput
 				availableActions={availableActions}
@@ -81,7 +81,7 @@ describe('RoleInput', () => {
 				onError={mockOnError}
 			/>,
 		);
-		global.textInputHandlers.onSubmit('editor:posts');
+		global.textInputHandlers.onSubmit('editor|posts');
 		await new Promise(r => setTimeout(r, 50));
 		expect(mockOnComplete).toHaveBeenCalledWith([
 			{
@@ -106,7 +106,7 @@ describe('RoleInput', () => {
 				onError={mockOnError}
 			/>,
 		);
-		global.textInputHandlers.onSubmit('admin:users:create,editor:posts:read');
+		global.textInputHandlers.onSubmit('admin|users:create,editor|posts:read');
 		await new Promise(r => setTimeout(r, 50));
 		expect(mockOnComplete).toHaveBeenCalledWith([
 			{
@@ -131,7 +131,7 @@ describe('RoleInput', () => {
 				onError={mockOnError}
 			/>,
 		);
-		global.textInputHandlers.onSubmit('123bad:users:create');
+		global.textInputHandlers.onSubmit('123bad|users:create');
 		await new Promise(r => setTimeout(r, 50));
 		expect(mockOnError).toHaveBeenCalledWith(
 			expect.stringContaining('Invalid role key: 123bad'),
@@ -148,7 +148,7 @@ describe('RoleInput', () => {
 				onError={mockOnError}
 			/>,
 		);
-		global.textInputHandlers.onSubmit('admin:invalid:create');
+		global.textInputHandlers.onSubmit('admin|invalid:create');
 		await new Promise(r => setTimeout(r, 50));
 		expect(mockOnError).toHaveBeenCalledWith(
 			expect.stringContaining('Invalid resource in permission: invalid:create'),
@@ -165,7 +165,7 @@ describe('RoleInput', () => {
 				onError={mockOnError}
 			/>,
 		);
-		global.textInputHandlers.onSubmit('admin:users:fly');
+		global.textInputHandlers.onSubmit('admin|users:fly');
 		await new Promise(r => setTimeout(r, 50));
 		expect(mockOnError).toHaveBeenCalledWith(
 			expect.stringContaining('Invalid action in permission: users:fly'),
@@ -183,7 +183,7 @@ describe('RoleInput', () => {
 				onError={mockOnError}
 			/>,
 		);
-		global.textInputHandlers.onSubmit('admin:users:create');
+		global.textInputHandlers.onSubmit('admin|users:create');
 		await new Promise(r => setTimeout(r, 50));
 		expect(mockOnError).toHaveBeenCalledWith(
 			expect.stringContaining('Role "admin" already exists'),
@@ -208,19 +208,5 @@ describe('RoleInput', () => {
 			),
 		);
 		expect(mockOnComplete).not.toHaveBeenCalled();
-	});
-
-	it('uses placeholder if input is empty', async () => {
-		render(
-			<RoleInput
-				availableActions={availableActions}
-				availableResources={availableResources}
-				onComplete={mockOnComplete}
-				onError={mockOnError}
-			/>,
-		);
-		global.textInputHandlers.onSubmit('');
-		await new Promise(r => setTimeout(r, 50));
-		expect(mockOnComplete).toHaveBeenCalled();
 	});
 });

@@ -20,11 +20,11 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 	const [input, setInput] = useState('');
 	const { getExistingRoles, status } = useRolesApi();
 
-	// Generate a dynamic placeholder/example
+	// Improved placeholder: a real, clear example
 	const placeholder = useMemo(() => {
-		if (availableResources.length === 0) return 'admin:resource';
-		if (availableActions.length === 0) return `admin:${availableResources[0]}`;
-		return `admin:${availableResources[0]}:${availableActions[0]}|${availableResources[0]}`;
+		if (availableResources.length === 0) return 'admin|resource';
+		if (availableActions.length === 0) return `admin|${availableResources[0]}`;
+		return `admin|${availableResources[0]}:${availableActions[0]}|${availableResources[0]}`;
 	}, [availableResources, availableActions]);
 
 	const validateRoleKey = (key: string): boolean =>
@@ -36,43 +36,14 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 	const validateAction = (action: string): boolean =>
 		!!action && availableActions.includes(action);
 
-	// Live preview of parsed roles and permissions
-	const getCurrentRoles = () => {
-		const valueToProcess = input.trim() === '' ? placeholder : input;
-		const roleDefs = valueToProcess
-			.split(',')
-			.map(r => r.trim())
-			.filter(Boolean);
-
-		return roleDefs
-			.map(def => {
-				const [role, ...perms] = def.split(':');
-				if (!role || !validateRoleKey(role) || perms.length === 0) return null;
-				const permissionsRaw = perms
-					.join(':')
-					.split('|')
-					.map(p => p.trim())
-					.filter(Boolean);
-
-				const permissions: string[] = [];
-				for (const perm of permissionsRaw) {
-					const [resource, action] = perm.split(':');
-					if (!resource || !validateResource(resource)) continue;
-					if (!action) {
-						permissions.push(...availableActions.map(a => `${resource}:${a}`));
-					} else if (validateAction(action)) {
-						permissions.push(`${resource}:${action}`);
-					}
-				}
-				if (permissions.length === 0) return null;
-				return { role, permissions };
-			})
-			.filter(Boolean);
-	};
-
+	// Improved handleSubmit: first Enter fills input, second Enter submits
 	const handleSubmit = async (value: string) => {
+		if (value.trim() === '') {
+			setInput(placeholder);
+			return;
+		}
 		try {
-			const valueToProcess = value.trim() === '' ? placeholder : value;
+			const valueToProcess = value.trim();
 			const roleDefs = valueToProcess
 				.split(',')
 				.map(r => r.trim())
@@ -82,7 +53,7 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 			const roles: components['schemas']['RoleCreate'][] = [];
 
 			for (const def of roleDefs) {
-				const [role, ...perms] = def.split(':');
+				const [role, ...permParts] = def.split('|').map(s => s.trim());
 				if (!role || !validateRoleKey(role)) {
 					onError(`Invalid role key: ${role}`);
 					return;
@@ -91,20 +62,15 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 					onError(`Role "${role}" already exists`);
 					return;
 				}
-				if (perms.length === 0) {
+				if (permParts.length === 0) {
 					onError('Role must have at least one resource or resource:action');
 					return;
 				}
-				const permissionsRaw = perms
-					.join(':')
-					.split('|')
-					.map(p => p.trim())
-					.filter(Boolean);
 
 				const permissions: string[] = [];
-				for (const perm of permissionsRaw) {
-					const [resource, action] = perm.split(':');
-					if (resource && !validateResource(resource)) {
+				for (const perm of permParts) {
+					const [resource, action] = perm.split(':').map(s => s.trim());
+					if (!resource || !validateResource(resource)) {
 						onError(`Invalid resource in permission: ${perm}`);
 						return;
 					}
@@ -138,8 +104,6 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 		}
 	};
 
-	const currentRoles = getCurrentRoles();
-
 	return (
 		<Box flexDirection="column" gap={1}>
 			<Box>
@@ -155,23 +119,12 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 					<Text color="cyan">Actions: {availableActions.join(', ')}</Text>
 				</Box>
 			)}
-			{currentRoles.length > 0 && (
-				<Box flexDirection="column">
-					<Text color="cyan">Current:</Text>
-					{currentRoles
-						.filter(role => role !== null)
-						.map(({ role, permissions }) => (
-							<Text key={role}>
-								{role}: {permissions.join(', ')}
-							</Text>
-						))}
-				</Box>
-			)}
+
 			<Box>
 				<Text>
 					Enter roles in the format:{' '}
-					<Text color="cyan">role:resource:action|resource:action</Text> or{' '}
-					<Text color="cyan">role:resource</Text>
+					<Text color="cyan">role|resource:action|resource:action</Text> or{' '}
+					<Text color="cyan">role|resource</Text>
 				</Text>
 			</Box>
 			<Box>

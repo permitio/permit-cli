@@ -2,7 +2,7 @@ import { components } from '../lib/api/v1.js';
 
 /**
  * Parses role strings in the format:
- *   "role:resource:action|resource:action" or "role:resource"
+ *   "role|resource:action|resource:action" or "role|resource"
  * If availableActions is provided, expands resource-only permissions to all actions.
  */
 export function useParseRoles(
@@ -16,7 +16,7 @@ export function useParseRoles(
 			const trimmed = roleStr.trim();
 			if (!trimmed) throw new Error('Invalid role format');
 
-			const [roleKey, ...permParts] = trimmed.split(':');
+			const [roleKey, ...permParts] = trimmed.split('|').map(s => s.trim());
 			if (!roleKey || !/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(roleKey)) {
 				throw new Error(`Invalid role key in: ${roleStr}`);
 			}
@@ -26,16 +26,10 @@ export function useParseRoles(
 				);
 			}
 
-			// Join back in case there are multiple colons, then split by '|'
-			const permissionsRaw = permParts
-				.join(':')
-				.split('|')
-				.map(p => p.trim())
-				.filter(Boolean);
-
 			const permissions: string[] = [];
-			for (const perm of permissionsRaw) {
-				const [resource, action] = perm.split(':');
+			for (const perm of permParts) {
+				if (!perm) continue;
+				const [resource, action] = perm.split(':').map(s => s.trim());
 				if (!resource)
 					throw new Error(`Invalid resource in permission: ${perm}`);
 				if (!action) {
@@ -58,7 +52,9 @@ export function useParseRoles(
 		});
 	} catch (err) {
 		throw new Error(
-			`Invalid role format. Expected ["role:resource:action|resource:action"], got ${JSON.stringify(roleStrings)}. ${err instanceof Error ? err.message : err}`,
+			`Invalid role format. Expected ["role|resource:action|resource:action"], got ${JSON.stringify(
+				roleStrings,
+			)}. ${err instanceof Error ? err.message : err}`,
 		);
 	}
 }

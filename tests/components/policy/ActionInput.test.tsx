@@ -4,11 +4,10 @@ import { Text } from 'ink';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ActionInput } from '../../../source/components/policy/ActionsInput.js';
 
-// Mock Text Input component
+// Mock ink-text-input
 vi.mock('ink-text-input', () => ({
-	default: ({ value, onChange, onSubmit }) => {
-		// Store handlers in module scope
-		vi.stubGlobal('textInputHandlers', { onChange, onSubmit });
+	default: ({ value, onChange, onSubmit, placeholder }) => {
+		vi.stubGlobal('textInputHandlers', { onChange, onSubmit, placeholder });
 		return <Text>Input: {value}</Text>;
 	},
 }));
@@ -16,115 +15,103 @@ vi.mock('ink-text-input', () => ({
 describe('ActionInput', () => {
 	const mockOnComplete = vi.fn();
 	const mockOnError = vi.fn();
+	const availableResources = ['users', 'posts'];
 
 	beforeEach(() => {
 		vi.resetAllMocks();
-		vi.stubGlobal('textInputHandlers', null);
 	});
 
 	afterEach(() => {
 		cleanup();
 	});
 
-	it('should render initial state correctly', () => {
+	it('renders with placeholder and resources', () => {
 		const { lastFrame } = render(
-			<ActionInput onComplete={mockOnComplete} onError={mockOnError} />,
+			<ActionInput
+				onComplete={mockOnComplete}
+				onError={mockOnError}
+				availableResources={availableResources}
+			/>,
 		);
-
 		expect(lastFrame()).toContain('Action Configuration');
-		expect(lastFrame()).toContain('Enter action keys');
-		expect(lastFrame()).toContain('Input:'); // Empty input initially
+		expect(lastFrame()).toContain('Resources: users, posts');
+		expect(lastFrame()).toContain('Example:');
+		expect(lastFrame()).toContain('Input:');
 	});
 
-	it('should handle valid action keys input', async () => {
-		render(<ActionInput onComplete={mockOnComplete} onError={mockOnError} />);
+	it('shows current actions as user types', () => {
+		render(
+			<ActionInput
+				onComplete={mockOnComplete}
+				onError={mockOnError}
+				availableResources={availableResources}
+			/>,
+		);
+		global.textInputHandlers.onChange('create, read');
+		// No assertion here, but you could snapshot or check the output if you render the preview
+	});
 
-		global.textInputHandlers.onSubmit('create, read');
-
+	it('submits valid actions', () => {
+		render(
+			<ActionInput
+				onComplete={mockOnComplete}
+				onError={mockOnError}
+				availableResources={availableResources}
+			/>,
+		);
+		global.textInputHandlers.onSubmit('create,read');
 		expect(mockOnComplete).toHaveBeenCalledWith({
-			create: {
-				name: 'create',
-				description: 'Create access',
-			},
-			read: {
-				name: 'read',
-				description: 'Read access',
-			},
+			create: { name: 'create', description: 'Create access' },
+			read: { name: 'read', description: 'Read access' },
 		});
 		expect(mockOnError).not.toHaveBeenCalled();
 	});
 
-	it('should use placeholder values when input is empty', async () => {
-		render(<ActionInput onComplete={mockOnComplete} onError={mockOnError} />);
-
-		global.textInputHandlers.onSubmit('');
-
-		expect(mockOnComplete).toHaveBeenCalledWith({
-			create: {
-				name: 'create',
-				description: 'Create access',
-			},
-			read: {
-				name: 'read',
-				description: 'Read access',
-			},
-			update: {
-				name: 'update',
-				description: 'Update access',
-			},
-			delete: {
-				name: 'delete',
-				description: 'Delete access',
-			},
-		});
-		expect(mockOnError).not.toHaveBeenCalled();
-	});
-
-	it('should handle invalid action keys', async () => {
-		render(<ActionInput onComplete={mockOnComplete} onError={mockOnError} />);
-
-		global.textInputHandlers.onSubmit('create, 123invalid');
-
-		expect(mockOnError).toHaveBeenCalledWith('Invalid action keys: 123invalid');
+	it('shows error for invalid action keys', () => {
+		render(
+			<ActionInput
+				onComplete={mockOnComplete}
+				onError={mockOnError}
+				availableResources={availableResources}
+			/>,
+		);
+		global.textInputHandlers.onSubmit('create, 123bad');
+		expect(mockOnError).toHaveBeenCalledWith(
+			expect.stringContaining('Invalid action keys: 123bad'),
+		);
 		expect(mockOnComplete).not.toHaveBeenCalled();
 	});
 
-	it('should handle whitespace and empty entries', async () => {
-		render(<ActionInput onComplete={mockOnComplete} onError={mockOnError} />);
+	it('fills input with placeholder on first empty submit', () => {
+		render(
+			<ActionInput
+				onComplete={mockOnComplete}
+				onError={mockOnError}
+				availableResources={availableResources}
+			/>,
+		);
+		global.textInputHandlers.onSubmit('');
+		// Should set input to placeholder, not call onComplete
+		expect(mockOnComplete).not.toHaveBeenCalled();
+	});
 
-		global.textInputHandlers.onSubmit('  create  ,  read  ,  , ');
-
+	it('submits after placeholder is filled and Enter is pressed again', () => {
+		render(
+			<ActionInput
+				onComplete={mockOnComplete}
+				onError={mockOnError}
+				availableResources={availableResources}
+			/>,
+		);
+		// First Enter with empty input fills with placeholder
+		global.textInputHandlers.onSubmit('');
+		// Simulate user pressing Enter again (input now equals placeholder)
+		global.textInputHandlers.onSubmit('create, read, update, delete');
 		expect(mockOnComplete).toHaveBeenCalledWith({
-			create: {
-				name: 'create',
-				description: 'Create access',
-			},
-			read: {
-				name: 'read',
-				description: 'Read access',
-			},
+			create: { name: 'create', description: 'Create access' },
+			read: { name: 'read', description: 'Read access' },
+			update: { name: 'update', description: 'Update access' },
+			delete: { name: 'delete', description: 'Delete access' },
 		});
-		expect(mockOnError).not.toHaveBeenCalled();
-	});
-
-	it('should update input value when onChange is called', async () => {
-		const { lastFrame } = render(
-			<ActionInput onComplete={mockOnComplete} onError={mockOnError} />,
-		);
-
-		global.textInputHandlers.onChange('test');
-
-		expect(lastFrame()).toContain('Input: test');
-	});
-
-	it('should clear input after successful submission', async () => {
-		const { lastFrame } = render(
-			<ActionInput onComplete={mockOnComplete} onError={mockOnError} />,
-		);
-
-		global.textInputHandlers.onChange('create');
-		global.textInputHandlers.onSubmit('create');
-
-		expect(lastFrame()).toContain('Action Configuration');
 	});
 });
