@@ -67,13 +67,15 @@ export const generatePytestSample = (
 ) => {
 	return `import json
 import pytest
-from permit import PermitClient
+import asyncio
+import pytest_asyncio
+from permit import Permit
 
 JSON_PATH = ${config_path ? `"${config_path}"` : "'<YOUR_JSON_PATH_HERE>'"}
 PDP_URL = ${pdp_path ? `"${pdp_path}"` : "'<YOUR_PDP_URL_HERE>'"}  # If using Permit's PD : https://cloudpdp.api.permit.io
 PERMIT_ENV_TOKEN = ${api_key ? `"${api_key}"` : "'<YOUR_PERMIT_ENV_TOKEN_HERE>'"}
 
-permit = PermitClient(
+permit = Permit(
     pdp=PDP_URL,
     token=PERMIT_ENV_TOKEN,
 )
@@ -82,11 +84,12 @@ permit = PermitClient(
 with open(JSON_PATH, 'r') as f:
     test_cases = json.load(f)['config']
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("user, action, resource, expected", [
     (tc['user'], tc['action'], tc['resource'], tc['result']) for tc in test_cases
 ])
-def test_permit_access(user, action, resource, expected):
-    actual = permit.check(user, action, resource)
+async def test_permit_access(user, action, resource, expected):
+    actual = await permit.check(user, action, resource)
     assert actual == expected
 `;
 };
