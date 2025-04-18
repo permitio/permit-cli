@@ -6,7 +6,7 @@ import { AuthProvider } from '../../../components/AuthProvider.js';
 import OpenapiComponent from '../../../components/env/openapi/OpenapiComponent.js';
 
 export const description =
-	'Apply an OpenAPI spec to create a policy schema in Permit';
+	'Apply permissions policy from an OpenAPI spec using the `-x-permit` extensions.';
 
 export const options = zod.object({
 	key: zod
