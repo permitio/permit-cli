@@ -82,7 +82,9 @@ describe('CloneComponent', () => {
 
 	it('shows loading state initially', () => {
 		const { lastFrame } = render(<CloneComponent />);
-		expect(lastFrame()).toContain('Checking for active Gitops repository');
+		expect(lastFrame()).toContain(
+			'SpinnerChecking for active Git repository....',
+		);
 	});
 
 	it('shows no repository message when no repo found', async () => {
@@ -93,7 +95,10 @@ describe('CloneComponent', () => {
 		const { lastFrame } = render(<CloneComponent />);
 
 		await new Promise(resolve => setTimeout(resolve, 50));
-		expect(lastFrame()).toContain('No active Gitops repository found');
+		expect(lastFrame()).toContain(
+			'No active Git repository found for the project. Run `permit gitops create github` to setup GitOps on',
+		);
+		expect(lastFrame()).toContain(' your project.');
 		expect(exitMock).toHaveBeenCalledWith(1);
 	});
 
