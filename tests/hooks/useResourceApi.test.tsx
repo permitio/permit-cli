@@ -126,6 +126,7 @@ describe('useResourceApi', () => {
 		expect(lastFrame()).toContain('Result: created');
 		expect(mockPostFn).toHaveBeenCalledWith(
 			'/v2/schema/{proj_id}/{env_id}/resources',
+			undefined,
 			{ key: 'test', name: 'Test', actions: {} },
 		);
 	});

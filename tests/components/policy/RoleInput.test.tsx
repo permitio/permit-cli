@@ -1,13 +1,11 @@
 import React from 'react';
 import { render, cleanup } from 'ink-testing-library';
-import { Box, Text } from 'ink';
+import { Text } from 'ink';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RoleInput } from '../../../source/components/policy/RoleInput.js';
 
-// Create reusable mock functions
+// Mock useRolesApi
 const mockGetExistingRoles = vi.fn().mockResolvedValue(new Set());
-
-// Mock the hooks ONCE at the top level
 vi.mock('../../../source/hooks/useRolesApi.js', () => ({
 	useRolesApi: () => ({
 		getExistingRoles: mockGetExistingRoles,
@@ -15,10 +13,9 @@ vi.mock('../../../source/hooks/useRolesApi.js', () => ({
 	}),
 }));
 
-// Mock Text Input component
+// Mock ink-text-input
 vi.mock('ink-text-input', () => ({
 	default: ({ value, onChange, onSubmit }) => {
-		// Store handlers in module scope instead of global
 		vi.stubGlobal('textInputHandlers', { onChange, onSubmit });
 		return <Text>Input: {value}</Text>;
 	},
@@ -39,218 +36,191 @@ describe('RoleInput', () => {
 		cleanup();
 	});
 
-	it('should render correctly', () => {
+	it('renders with dynamic placeholder', () => {
 		const { lastFrame } = render(
 			<RoleInput
-				projectId="proj123"
-				environmentId="env123"
 				availableActions={availableActions}
 				availableResources={availableResources}
 				onComplete={mockOnComplete}
 				onError={mockOnError}
 			/>,
 		);
-
 		expect(lastFrame()).toContain('Role Configuration');
-		expect(lastFrame()).toContain('Available resources');
-		expect(lastFrame()).toContain('Available actions');
+		expect(lastFrame()).toContain('Enter roles in the format');
+		expect(lastFrame()).toContain('Example:');
+		expect(lastFrame()).toContain('Input:');
 	});
 
-	it('should handle valid input', async () => {
+	it('accepts a valid role:resource:action', async () => {
 		render(
 			<RoleInput
-				projectId="proj123"
-				environmentId="env123"
 				availableActions={availableActions}
 				availableResources={availableResources}
 				onComplete={mockOnComplete}
 				onError={mockOnError}
 			/>,
 		);
-
-		// Simulate submitting valid input using global handlers
-		global.textInputHandlers.onSubmit('admin:Administrator@*:*');
-
-		// Wait for the async operation to complete - use longer timeout
-		await new Promise(resolve => setTimeout(resolve, 100));
-
-		expect(mockOnComplete).toHaveBeenCalled();
-		expect(mockOnComplete.mock.calls[0][0]).toEqual([
+		global.textInputHandlers.onSubmit('admin:users:create|posts:read');
+		await new Promise(r => setTimeout(r, 50));
+		expect(mockOnComplete).toHaveBeenCalledWith([
 			{
 				key: 'admin',
 				name: 'admin',
-				description: 'Administrator',
-				permissions: ['*:*'],
+				permissions: ['users:create', 'posts:read'],
+			},
+		]);
+		expect(mockOnError).not.toHaveBeenCalled();
+	});
+
+	it('expands role:resource to all actions', async () => {
+		render(
+			<RoleInput
+				availableActions={availableActions}
+				availableResources={availableResources}
+				onComplete={mockOnComplete}
+				onError={mockOnError}
+			/>,
+		);
+		global.textInputHandlers.onSubmit('editor:posts');
+		await new Promise(r => setTimeout(r, 50));
+		expect(mockOnComplete).toHaveBeenCalledWith([
+			{
+				key: 'editor',
+				name: 'editor',
+				permissions: [
+					'posts:create',
+					'posts:read',
+					'posts:update',
+					'posts:delete',
+				],
 			},
 		]);
 	});
 
-	it('should handle multiple roles', async () => {
+	it('accepts multiple roles', async () => {
 		render(
 			<RoleInput
-				projectId="proj123"
-				environmentId="env123"
 				availableActions={availableActions}
 				availableResources={availableResources}
 				onComplete={mockOnComplete}
 				onError={mockOnError}
 			/>,
 		);
-
-		// Clear any leftover handlers state
-		mockOnComplete.mockClear();
-
-		// Simulate submitting valid input with multiple roles
-		global.textInputHandlers.onSubmit(
-			'admin:Administrator@*:*, user:Basic User@users:read|posts:read',
-		);
-
-		// Wait for the async operation to complete - use longer timeout
-		await new Promise(resolve => setTimeout(resolve, 100));
-
-		expect(mockOnComplete).toHaveBeenCalled();
-		expect(mockOnComplete.mock.calls[0][0].length).toBe(2);
-		expect(mockOnComplete.mock.calls[0][0][1].permissions).toEqual([
-			'users:read',
-			'posts:read',
+		global.textInputHandlers.onSubmit('admin:users:create,editor:posts:read');
+		await new Promise(r => setTimeout(r, 50));
+		expect(mockOnComplete).toHaveBeenCalledWith([
+			{
+				key: 'admin',
+				name: 'admin',
+				permissions: ['users:create'],
+			},
+			{
+				key: 'editor',
+				name: 'editor',
+				permissions: ['posts:read'],
+			},
 		]);
 	});
 
-	it('should handle empty input', async () => {
+	it('rejects invalid role key', async () => {
 		render(
 			<RoleInput
-				projectId="proj123"
-				environmentId="env123"
 				availableActions={availableActions}
 				availableResources={availableResources}
 				onComplete={mockOnComplete}
 				onError={mockOnError}
 			/>,
 		);
-
-		// Clear any leftover handlers state
-		mockOnError.mockClear();
-		mockOnComplete.mockClear();
-
-		// Simulate submitting empty input
-		global.textInputHandlers.onSubmit('   ');
-
-		// Wait for the async operation to complete
-		await new Promise(resolve => setTimeout(resolve, 100));
-
-		expect(mockOnError).toHaveBeenCalledWith('Please enter at least one role');
-		expect(mockOnComplete).not.toHaveBeenCalled();
-	});
-
-	it('should validate role keys', async () => {
-		render(
-			<RoleInput
-				projectId="proj123"
-				environmentId="env123"
-				availableActions={availableActions}
-				availableResources={availableResources}
-				onComplete={mockOnComplete}
-				onError={mockOnError}
-			/>,
-		);
-
-		// Clear any leftover handlers state
-		mockOnError.mockClear();
-		mockOnComplete.mockClear();
-
-		// Simulate submitting input with invalid role key
-		global.textInputHandlers.onSubmit('valid, 123invalid:Description@*:*');
-
-		// Wait for the async operation to complete
-		await new Promise(resolve => setTimeout(resolve, 100));
-
+		global.textInputHandlers.onSubmit('123bad:users:create');
+		await new Promise(r => setTimeout(r, 50));
 		expect(mockOnError).toHaveBeenCalledWith(
-			expect.stringContaining('Invalid role key: 123invalid'),
+			expect.stringContaining('Invalid role key: 123bad'),
 		);
 		expect(mockOnComplete).not.toHaveBeenCalled();
 	});
 
-	it('should validate permissions', async () => {
+	it('rejects invalid resource', async () => {
 		render(
 			<RoleInput
-				projectId="proj123"
-				environmentId="env123"
 				availableActions={availableActions}
 				availableResources={availableResources}
 				onComplete={mockOnComplete}
 				onError={mockOnError}
 			/>,
 		);
-
-		// Clear any leftover handlers state
-		mockOnError.mockClear();
-		mockOnComplete.mockClear();
-
-		// Simulate submitting input with invalid permission
-		global.textInputHandlers.onSubmit('admin:Administrator@invalid:perm');
-
-		// Wait for the async operation to complete
-		await new Promise(resolve => setTimeout(resolve, 100));
-
+		global.textInputHandlers.onSubmit('admin:invalid:create');
+		await new Promise(r => setTimeout(r, 50));
 		expect(mockOnError).toHaveBeenCalledWith(
-			expect.stringContaining('Invalid permissions for role admin'),
+			expect.stringContaining('Invalid resource in permission: invalid:create'),
 		);
 		expect(mockOnComplete).not.toHaveBeenCalled();
 	});
 
-	it('should handle wildcard permissions correctly', async () => {
+	it('rejects invalid action', async () => {
 		render(
 			<RoleInput
-				projectId="proj123"
-				environmentId="env123"
 				availableActions={availableActions}
 				availableResources={availableResources}
 				onComplete={mockOnComplete}
 				onError={mockOnError}
 			/>,
 		);
-
-		// Clear any leftover handlers state
-		mockOnError.mockClear();
-		mockOnComplete.mockClear();
-
-		// Simulate submitting input with wildcard permissions
-		global.textInputHandlers.onSubmit('admin:Administrator@*:*|users:*|*:read');
-
-		// Wait for the async operation to complete
-		await new Promise(resolve => setTimeout(resolve, 100));
-
-		expect(mockOnComplete).toHaveBeenCalled();
+		global.textInputHandlers.onSubmit('admin:users:fly');
+		await new Promise(r => setTimeout(r, 50));
+		expect(mockOnError).toHaveBeenCalledWith(
+			expect.stringContaining('Invalid action in permission: users:fly'),
+		);
+		expect(mockOnComplete).not.toHaveBeenCalled();
 	});
 
-	it('should check for existing roles', async () => {
-		// Update mock to return existing roles for this test only
+	it('rejects duplicate role', async () => {
 		mockGetExistingRoles.mockResolvedValue(new Set(['admin']));
-
 		render(
 			<RoleInput
-				projectId="proj123"
-				environmentId="env123"
 				availableActions={availableActions}
 				availableResources={availableResources}
 				onComplete={mockOnComplete}
 				onError={mockOnError}
 			/>,
 		);
-
-		// Clear any leftover handlers state
-		mockOnError.mockClear();
-		mockOnComplete.mockClear();
-
-		// Simulate submitting input with existing role
-		global.textInputHandlers.onSubmit('admin:Administrator@*:*');
-
-		// Wait for the async operation to complete
-		await new Promise(resolve => setTimeout(resolve, 100));
-
+		global.textInputHandlers.onSubmit('admin:users:create');
+		await new Promise(r => setTimeout(r, 50));
 		expect(mockOnError).toHaveBeenCalledWith(
-			expect.stringContaining('Roles already exist: admin'),
+			expect.stringContaining('Role "admin" already exists'),
 		);
 		expect(mockOnComplete).not.toHaveBeenCalled();
+	});
+
+	it('shows error if no permissions', async () => {
+		render(
+			<RoleInput
+				availableActions={availableActions}
+				availableResources={availableResources}
+				onComplete={mockOnComplete}
+				onError={mockOnError}
+			/>,
+		);
+		global.textInputHandlers.onSubmit('admin');
+		await new Promise(r => setTimeout(r, 50));
+		expect(mockOnError).toHaveBeenCalledWith(
+			expect.stringContaining(
+				'Role must have at least one resource or resource:action',
+			),
+		);
+		expect(mockOnComplete).not.toHaveBeenCalled();
+	});
+
+	it('uses placeholder if input is empty', async () => {
+		render(
+			<RoleInput
+				availableActions={availableActions}
+				availableResources={availableResources}
+				onComplete={mockOnComplete}
+				onError={mockOnError}
+			/>,
+		);
+		global.textInputHandlers.onSubmit('');
+		await new Promise(r => setTimeout(r, 50));
+		expect(mockOnComplete).toHaveBeenCalled();
 	});
 });

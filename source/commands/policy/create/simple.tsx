@@ -42,7 +42,7 @@ export const options = zod.object({
 		.describe(
 			option({
 				description:
-					'Array of roles in format "name:description@resource:action|resource:action"',
+					'Array of roles in format "role:resource:action|resource:action"',
 			}),
 		),
 });

@@ -63,6 +63,7 @@ export const useResourcesApi = () => {
 				for (const resource of resources) {
 					const { error } = await client.POST(
 						`/v2/schema/{proj_id}/{env_id}/resources`,
+						undefined,
 
 						resource,
 					);

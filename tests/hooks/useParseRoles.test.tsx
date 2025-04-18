@@ -5,9 +5,15 @@ import { useParseRoles } from '../../source/hooks/useParseRoles';
 import { describe, it, expect } from 'vitest';
 
 // Test component that uses the hook
-const TestComponent = ({ roles }: { roles?: string[] }) => {
+const TestComponent = ({
+	roles,
+	actions,
+}: {
+	roles?: string[];
+	actions?: string[];
+}) => {
 	try {
-		const parsedRoles = useParseRoles(roles);
+		const parsedRoles = useParseRoles(roles, actions);
 		return <Text>{JSON.stringify(parsedRoles, null, 2)}</Text>;
 	} catch (err) {
 		return <Text>Error: {(err as Error).message}</Text>;
@@ -20,62 +26,38 @@ describe('useParseRoles', () => {
 		expect(lastFrame()).toBe('[]');
 	});
 
-	it('parses simple role with only key', () => {
-		const { lastFrame } = render(<TestComponent roles={['admin']} />);
-		const parsed = JSON.parse(lastFrame()?.replace(/\n\s*/g, '') || '[]');
-		expect(parsed).toEqual([
-			{
-				key: 'admin',
-				name: 'admin',
-				description: undefined,
-				permissions: undefined,
-			},
-		]);
-	});
-
-	it('parses role with description', () => {
+	it('parses role with resource:action', () => {
 		const { lastFrame } = render(
-			<TestComponent roles={['admin:System Administrator']} />,
+			<TestComponent roles={['admin:users:create|posts:read']} />,
 		);
 		const parsed = JSON.parse(lastFrame()?.replace(/\n\s*/g, '') || '[]');
 		expect(parsed).toEqual([
 			{
 				key: 'admin',
 				name: 'admin',
-				description: 'System Administrator',
-				permissions: undefined,
+				permissions: ['users:create', 'posts:read'],
 			},
 		]);
 	});
 
-	it('parses role with permissions', () => {
-		const { lastFrame } = render(
-			<TestComponent roles={['admin@users:read|posts:write']} />,
-		);
-		const parsed = JSON.parse(lastFrame()?.replace(/\n\s*/g, '') || '[]');
-		expect(parsed).toEqual([
-			{
-				key: 'admin',
-				name: 'admin',
-				description: undefined,
-				permissions: ['users:read', 'posts:write'],
-			},
-		]);
-	});
-
-	it('parses complete role with description and permissions', () => {
+	it('expands resource-only permission to all actions', () => {
 		const { lastFrame } = render(
 			<TestComponent
-				roles={['admin:System Administrator@users:read|posts:write']}
+				roles={['editor:posts']}
+				actions={['create', 'read', 'update', 'delete']}
 			/>,
 		);
 		const parsed = JSON.parse(lastFrame()?.replace(/\n\s*/g, '') || '[]');
 		expect(parsed).toEqual([
 			{
-				key: 'admin',
-				name: 'admin',
-				description: 'System Administrator',
-				permissions: ['users:read', 'posts:write'],
+				key: 'editor',
+				name: 'editor',
+				permissions: [
+					'posts:create',
+					'posts:read',
+					'posts:update',
+					'posts:delete',
+				],
 			},
 		]);
 	});
@@ -84,10 +66,11 @@ describe('useParseRoles', () => {
 		const { lastFrame } = render(
 			<TestComponent
 				roles={[
-					'admin:Administrator@*:*',
-					'editor:Content Editor@posts:write|posts:read',
-					'viewer@posts:read',
+					'admin:users:create|posts:read',
+					'editor:posts',
+					'user:users:read',
 				]}
+				actions={['create', 'read', 'update', 'delete']}
 			/>,
 		);
 		const parsed = JSON.parse(lastFrame()?.replace(/\n\s*/g, '') || '[]');
@@ -95,47 +78,46 @@ describe('useParseRoles', () => {
 			{
 				key: 'admin',
 				name: 'admin',
-				description: 'Administrator',
-				permissions: ['*:*'],
+				permissions: ['users:create', 'posts:read'],
 			},
 			{
 				key: 'editor',
 				name: 'editor',
-				description: 'Content Editor',
-				permissions: ['posts:write', 'posts:read'],
+				permissions: [
+					'posts:create',
+					'posts:read',
+					'posts:update',
+					'posts:delete',
+				],
 			},
 			{
-				key: 'viewer',
-				name: 'viewer',
-				description: undefined,
-				permissions: ['posts:read'],
+				key: 'user',
+				name: 'user',
+				permissions: ['users:read'],
 			},
 		]);
 	});
 
-	it('throws error for invalid role format', () => {
-		const { lastFrame } = render(<TestComponent roles={[':']} />);
-		expect(lastFrame()).toContain('Error: Invalid role key');
+	it('throws error for invalid role key', () => {
+		const { lastFrame } = render(<TestComponent roles={[':users:create']} />);
+		expect(lastFrame()).toContain('Error: Invalid role format.');
 	});
 
-	it('handles empty strings in role array', () => {
+	it('throws error for empty string', () => {
 		const { lastFrame } = render(<TestComponent roles={['']} />);
 		expect(lastFrame()).toContain('Error: Invalid role format');
 	});
 
 	it('trims whitespace from all parts', () => {
 		const { lastFrame } = render(
-			<TestComponent
-				roles={[' admin : Administrator  @ users:read | posts:write ']}
-			/>,
+			<TestComponent roles={['admin:posts']} actions={['create', 'read']} />,
 		);
 		const parsed = JSON.parse(lastFrame()?.replace(/\n\s*/g, '') || '[]');
 		expect(parsed).toEqual([
 			{
 				key: 'admin',
 				name: 'admin',
-				description: 'Administrator',
-				permissions: ['users:read', 'posts:write'],
+				permissions: ['posts:create', 'posts:read'],
 			},
 		]);
 	});

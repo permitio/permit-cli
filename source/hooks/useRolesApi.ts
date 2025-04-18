@@ -70,6 +70,7 @@ export const useRolesApi = () => {
 				for (const role of roles) {
 					const { error } = await client.POST(
 						`/v2/schema/{proj_id}/{env_id}/roles`,
+						undefined,
 
 						role,
 					);

@@ -152,6 +152,7 @@ describe('useRolesApi', () => {
 		expect(lastFrame()).toContain('Result: created');
 		expect(mockPostFn).toHaveBeenCalledWith(
 			'/v2/schema/{proj_id}/{env_id}/roles',
+			undefined,
 			{ key: 'admin', name: 'Admin', permissions: ['*:*'] },
 		);
 	});
