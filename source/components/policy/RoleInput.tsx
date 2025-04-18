@@ -130,11 +130,7 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 			</Box>
 			<Box>
 				<Text>{'> '}</Text>
-				<TextInput
-					value={input}
-					onChange={setInput}
-					onSubmit={handleSubmit}
-				/>
+				<TextInput value={input} onChange={setInput} onSubmit={handleSubmit} />
 			</Box>
 			{status === 'processing' && <Text>Validating roles...</Text>}
 		</Box>
