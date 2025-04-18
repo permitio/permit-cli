@@ -23,7 +23,7 @@ describe('CheckUrl Command', () => {
 		method: 'GET',
 		tenant: 'default',
 		userAttributes: [],
-		pdpurl: undefined,
+		'pdp-url': undefined,
 		apiKey: undefined,
 	};
 
@@ -64,7 +64,7 @@ describe('CheckUrl Command', () => {
 			method: 'POST',
 			tenant: 'custom-tenant',
 			userAttributes: ['role:admin', 'department:engineering'],
-			pdpurl: 'http://localhost:7766',
+			'pdp-url': 'http://localhost:7766',
 			apiKey: 'permit_key_12345',
 		});
 
@@ -76,7 +76,7 @@ describe('CheckUrl Command', () => {
 				'role:admin',
 				'department:engineering',
 			]);
-			expect(result.data.pdpurl).toBe('http://localhost:7766');
+			expect(result.data['pdp-url']).toBe('http://localhost:7766');
 			expect(result.data.apiKey).toBe('permit_key_12345');
 		}
 	});
@@ -86,10 +86,12 @@ describe('CheckUrl Command', () => {
 			user: 'john@example.com',
 			url: 'https://example.com/endpoint',
 		});
+
 		expect(result.success).toBe(true);
 		if (result.success) {
 			expect(result.data.method).toBe('GET');
 			expect(result.data.tenant).toBe('default');
+			expect(result.data['pdp-url']).toBe('http://localhost:7766');
 		}
 	});
 });

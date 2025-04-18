@@ -181,7 +181,7 @@ describe('PDPCheckUrlComponent', () => {
 					url: 'https://example.com/api',
 					method: 'GET',
 					tenant: 'default',
-					pdpurl: customPdpUrl,
+					'pdp-url': customPdpUrl,
 				}}
 			/>,
 		);
