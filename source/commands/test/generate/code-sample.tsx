@@ -10,7 +10,7 @@ export const options = zod.object({
 	codeSample: zod.enum(['jest', 'pytest', 'vitest']).describe(
 		option({
 			description:
-				'Optional: Test code sample that iterates the config file and asserts the results.',
+				'Test code sample that iterates the config file and asserts the results.',
 		}),
 	),
 	configPath: zod
@@ -18,8 +18,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:
-					'Optional: Path to the json file to store the generated config (We recommend doing this)',
+				description: 'Optional: Path to the generated config json file',
 			}),
 		),
 	path: zod
@@ -27,8 +26,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description:
-					'Optional: Path to the json file to store the generated config (We recommend doing this)',
+				description: 'Optional: Path to the json file to save the code sample',
 			}),
 		),
 	apiKey: zod
@@ -36,7 +34,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description: 'Optional: API Key to be used for test generation',
+				description: 'Optional: API Key to be used for running tests',
 			}),
 		),
 	pdpPath: zod
@@ -44,7 +42,7 @@ export const options = zod.object({
 		.optional()
 		.describe(
 			option({
-				description: 'Optional: API Key to be used for test generation',
+				description: 'Optional: PDP to be used in tests.',
 			}),
 		),
 });
