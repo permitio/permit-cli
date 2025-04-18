@@ -42,7 +42,9 @@ export function GeneratePolicySnapshot({
 				<Text>
 					{' '}
 					{JSON.stringify(
-						dryRun ? { users: dryUsers, config: finalConfig } : finalConfig,
+						dryRun
+							? { users: dryUsers, config: finalConfig }
+							: { config: finalConfig },
 					)}{' '}
 				</Text>
 			)}
