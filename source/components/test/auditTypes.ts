@@ -36,9 +36,39 @@ export interface AuditContext {
 	context?: Record<string, unknown>;
 }
 
+export interface DebugInformation {
+	rebac?: {
+		allow?: boolean;
+		allowing_roles?: Array<{
+			resource: string;
+			role: string;
+			reason: string;
+			sources: Array<{
+				type: string;
+				[key: string]: unknown;
+			}>;
+			[key: string]: unknown;
+		}>;
+		code?: string;
+		reason?: string;
+		[key: string]: unknown;
+	};
+	rbac?: Record<string, unknown>;
+	abac?: Record<string, unknown>;
+	request?: {
+		action?: string;
+		resource?: Record<string, unknown>;
+		tenant?: string;
+		user?: Record<string, unknown>;
+		[key: string]: unknown;
+	};
+	[key: string]: unknown;
+}
+
 export interface DetailedAuditLog extends AuditLog {
 	user_id: string;
 	context?: AuditContext;
+	debug?: DebugInformation;
 }
 
 /**
@@ -56,6 +86,7 @@ export interface AuditLogResponseData {
 	decision?: boolean;
 	pdp_config_id?: string;
 	context?: unknown;
+	debug?: unknown;
 	[key: string]: unknown;
 }
 

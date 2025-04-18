@@ -87,6 +87,7 @@ export const normalizeDetailedLog = (
 			action: response.action || originalLog.action || '',
 			decision: response.decision === true,
 			context: contextValue,
+			debug: response.debug as DetailedAuditLog['debug'],
 		};
 
 		return detailedLog;
@@ -113,38 +114,53 @@ export const createPdpRequest = (log: DetailedAuditLog): PdpRequestData => {
 			? context.resource.attributes || {}
 			: {};
 
-	const isResourceInstance =
-		typeof log.resource === 'string' && log.resource.includes(':');
-
-	// Determine resource key/id handling
 	let resourceKey = '';
 	let resourceId = '';
-
-	if (isResourceInstance) {
-		// For specific resource instances, use the entire string as key
-		resourceKey = log.resource || '';
-
-		// If it's in format "type:id", also extract the ID part
-		const parts = resourceKey.split(':');
-		if (parts.length >= 2 && parts[1]) {
-			resourceId = parts[1];
-		}
-	} else {
-		// For normal resources, use the resource value
-		resourceKey = log.resource || '';
-	}
-
-	// Determine the resource type with fallbacks to ensure it's never undefined
 	let resourceType = 'resource';
 
-	if (log.resource_type && log.resource_type.length > 0) {
-		// Use explicitly provided resource type if available
-		resourceType = log.resource_type;
-	} else if (resourceKey.includes(':')) {
-		// Extract type from "type:id" format
-		const typeFromKey = resourceKey.split(':')[0];
-		if (typeFromKey && typeFromKey.length > 0) {
-			resourceType = typeFromKey;
+	const rebacAllowingRoles = log.debug?.rebac?.allowing_roles;
+
+	if (rebacAllowingRoles && rebacAllowingRoles.length > 0) {
+		const rebacResource = rebacAllowingRoles[0]?.resource;
+		if (typeof rebacResource === 'string' && rebacResource.includes(':')) {
+			resourceKey = rebacResource;
+
+			// Extract type and id from format "type:id"
+			const parts = rebacResource.split(':');
+			resourceType = parts[0] || resourceType;
+			resourceId = parts[1] || '';
+		}
+	} else {
+		const isResourceInstance =
+			typeof log.resource === 'string' && log.resource.includes(':');
+
+		if (isResourceInstance) {
+			// Use the full resource string as the key
+			resourceKey = log.resource || '';
+
+			// Extract type and id from format "type:id"
+			const parts = resourceKey.split(':');
+			resourceType = parts[0] || resourceType;
+			resourceId = parts[1] || '';
+		} else if (
+			context.resource &&
+			'key' in context.resource &&
+			context.resource.key
+		) {
+			resourceKey = context.resource.key.toString();
+		} else {
+			resourceKey = log.resource || '';
+		}
+
+		// Determine resource type with proper fallbacks
+		if (log.resource_type && log.resource_type.length > 0) {
+			resourceType = log.resource_type;
+		} else if (
+			context.resource &&
+			'type' in context.resource &&
+			context.resource.type
+		) {
+			resourceType = context.resource.type.toString();
 		}
 	}
 
