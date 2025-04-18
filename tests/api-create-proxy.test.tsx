@@ -13,8 +13,6 @@ vi.mock('../source/components/api/proxy/APICreateProxyComponent', () => ({
 		<Box flexDirection="column">
 			<Text>Mocked APICreateProxyComponent</Text>
 			<Text>apiKey: {options.apiKey || 'undefined'}</Text>
-			<Text>projId: {options.projId || 'undefined'}</Text>
-			<Text>envId: {options.envId || 'undefined'}</Text>
 			<Text>secret: {options.secret || 'undefined'}</Text>
 			<Text>key: {options.key || 'undefined'}</Text>
 			<Text>name: {options.name || 'undefined'}</Text>
@@ -99,8 +97,6 @@ describe('Proxy Command', () => {
 	it('should pass all options to APICreateProxyComponent', () => {
 		const fullOptions: Options = {
 			apiKey: 'test-api-key',
-			projId: 'project123',
-			envId: 'env456',
 			secret: 'supersecret',
 			key: 'proxy-key',
 			name: 'My Proxy',
@@ -111,8 +107,6 @@ describe('Proxy Command', () => {
 		const { lastFrame } = render(<Proxy options={options} />);
 
 		expect(lastFrame()).toContain('apiKey: test-api-key');
-		expect(lastFrame()).toContain('projId: project123');
-		expect(lastFrame()).toContain('envId: env456');
 		expect(lastFrame()).toContain('secret: supersecret');
 		expect(lastFrame()).toContain('key: proxy-key');
 		expect(lastFrame()).toContain('name: My Proxy');
@@ -163,8 +157,6 @@ describe('Proxy Command', () => {
 		it('should accept multiple valid options together', () => {
 			const payload = {
 				apiKey: 'api-1',
-				projId: 'proj-1',
-				envId: 'env-1',
 				secret: 'sec',
 				key: 'k1',
 				name: 'Name',

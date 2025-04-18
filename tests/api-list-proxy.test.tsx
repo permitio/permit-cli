@@ -13,8 +13,6 @@ vi.mock('../source/components/api/proxy/APIListProxyComponent.js', () => ({
 		<Box flexDirection="column">
 			<Text>Mocked APIListProxyComponent</Text>
 			<Text>apiKey: {options.apiKey ?? 'undefined'}</Text>
-			<Text>projectId: {options.projectId ?? 'undefined'}</Text>
-			<Text>envId: {options.envId ?? 'undefined'}</Text>
 			<Text>expandKey: {options.expandKey.toString()}</Text>
 			<Text>page: {options.page}</Text>
 			<Text>perPage: {options.perPage}</Text>
@@ -47,8 +45,6 @@ type Options = zInfer<typeof listOptions>;
 const createOptions = (partial: Partial<Options> = {}): Options =>
 	({
 		apiKey: undefined,
-		projectId: undefined,
-		envId: undefined,
 		expandKey: false,
 		page: 1,
 		perPage: 30,
@@ -69,8 +65,6 @@ describe('List Proxy Command', () => {
 
 		expect(lastFrame()).toContain('Mocked APIListProxyComponent');
 		expect(lastFrame()).toContain('apiKey: undefined');
-		expect(lastFrame()).toContain('projectId: undefined');
-		expect(lastFrame()).toContain('envId: undefined');
 		expect(lastFrame()).toContain('expandKey: false');
 		expect(lastFrame()).toContain('page: 1');
 		expect(lastFrame()).toContain('perPage: 30');
@@ -87,8 +81,6 @@ describe('List Proxy Command', () => {
 	it('should pass all options to APIListProxyComponent', () => {
 		const custom: Options = {
 			apiKey: 'test-key',
-			projectId: 'proj1',
-			envId: 'env1',
 			expandKey: true,
 			page: 5,
 			perPage: 50,
@@ -97,8 +89,6 @@ describe('List Proxy Command', () => {
 		const { lastFrame } = render(<ListProxy options={options} />);
 
 		expect(lastFrame()).toContain('apiKey: test-key');
-		expect(lastFrame()).toContain('projectId: proj1');
-		expect(lastFrame()).toContain('envId: env1');
 		expect(lastFrame()).toContain('expandKey: true');
 		expect(lastFrame()).toContain('page: 5');
 		expect(lastFrame()).toContain('perPage: 50');
@@ -134,8 +124,6 @@ describe('List Proxy Command', () => {
 		it('should accept multiple valid options together', () => {
 			const payload = {
 				apiKey: 'a',
-				projectId: 'p',
-				envId: 'e',
 				expandKey: true,
 				page: 3,
 				perPage: 15,
