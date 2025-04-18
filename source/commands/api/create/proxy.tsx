@@ -12,7 +12,7 @@ import { option } from 'pastel';
 import CreateProxyConfigComponent from '../../../components/api/proxy/APICreateProxyComponent.js';
 
 export const description =
-	'Creates a new proxy config inside the Permit.io system.';
+	'Creates a new URL mapping configuration in Permit';
 
 export const options = object({
 	apiKey: string()
