@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { type infer as zType } from 'zod';
 import { options as originalOptions } from '../../../commands/api/sync/user.js';
 import TextInput from 'ink-text-input';
-import { Text } from 'ink';
+import { Box, Text } from 'ink';
 import Spinner from 'ink-spinner';
 import { useAuth } from '../../AuthProvider.js';
 import { useParseUserData } from '../../../hooks/useParseUserData.js';
@@ -79,7 +79,19 @@ export default function APISyncUserComponent({ options }: Props) {
 				<Text color="red">Error: {formatErrorMessage(errorMessage)}</Text>
 			)}
 			{status === 'done' && (
-				<Text color="green"> User Synced Successfully!</Text>
+				<Box flexDirection="column">
+					<Text color="green">User Synced Successfully</Text>
+					{payload.key && <Text>User Key: {payload.key}</Text>}
+					{payload.firstName && <Text>Name: {payload.firstName}</Text>}
+					{payload.lastName && <Text>Last Name: {payload.lastName}</Text>}
+					{payload.email && <Text>Email: {payload.email}</Text>}
+					{Object.keys(payload?.attributes || {}).length > 0 && (
+						<Text>Attributes: {JSON.stringify(payload.attributes)}</Text>
+					)}
+					{!!payload?.roleAssignments?.length && (
+						<Text>Roles: {JSON.stringify(payload.roleAssignments)}</Text>
+					)}
+				</Box>
 			)}
 
 			{status === 'input' && (
