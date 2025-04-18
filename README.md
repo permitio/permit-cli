@@ -179,7 +179,7 @@ Use this command to check if a user has permission to access a specific URL. The
 - `--method <string>` (Optional) - the HTTP method to check permissions for (default: `GET`)
 - `--tenant <string>` (Optional) - the tenant to check permissions for (default: `default`)
 - `--user-attributes <string>` (Optional) - additional user attributes to enrich the authorization check in the format `key1:value1,key2:value2`. Can be specified multiple times.
-- `--pdpurl <string>` (Optional) - the PDP URL to check authorization against (default: Cloud PDP)
+- `--pdp-url <string>` (Optional) - the PDP URL to check authorization against (default: Cloud PDP)
 - `--api-key <string>` (Optional) - the API key for the Permit env, project or Workspace
 
 #### Example
@@ -195,7 +195,7 @@ $ permit pdp check-url --user john@example.com --url https://api.example.com/ord
 $ permit pdp check-url --user john@example.com --url https://api.example.com/orders --user-attributes role:admin --user-attributes department:sales
 
 # Check against local PDP
-$ permit pdp check-url --user john@example.com --url https://api.example.com/orders --pdpurl http://localhost:7766
+$ permit pdp check-url --user john@example.com --url https://api.example.com/orders --pdp-url http://localhost:7766
 
 ```
 

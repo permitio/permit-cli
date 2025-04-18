@@ -55,13 +55,14 @@ export const options = zod.object({
 				alias: 'ua',
 			}),
 		),
-	pdpurl: zod
+	'pdp-url': zod
 		.string()
 		.optional()
+		.default('http://localhost:7766')
 		.describe(
 			option({
 				description:
-					'The URL of the PDP service. Default to the cloud PDP. (Optional)',
+					'The URL of the PDP service. Defaults to http://localhost:7766. (Optional)',
 			}),
 		),
 	apiKey: zod

@@ -26,7 +26,6 @@ const PDPCheckUrlComponent: React.FC<PDPCheckUrlProps> = ({ options }) => {
 			try {
 				// Parse user attributes if provided
 				const userAttributesObj: Record<string, string | number | boolean> = {};
-
 				if (options.userAttributes && options.userAttributes.length > 0) {
 					for (const attrPair of options.userAttributes) {
 						const parsedAttrs = parseAttributes(attrPair);
@@ -51,7 +50,7 @@ const PDPCheckUrlComponent: React.FC<PDPCheckUrlProps> = ({ options }) => {
 				// Make the API call
 				const { data, error } = await getAllowedUrlCheck(
 					payload,
-					options.pdpurl,
+					options['pdp-url'],
 				);
 
 				if (error) {
