@@ -15,6 +15,7 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({
 }) => {
 	const [input, setInput] = useState('');
 	const { getExistingResources, status } = useResourcesApi();
+	const placeholder = ' posts, comments, authors';
 
 	const validateResourceKey = (key: string): boolean => {
 		return /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(key);
@@ -22,8 +23,11 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({
 
 	const handleSubmit = async (value: string) => {
 		try {
+			// Use placeholder if input is empty
+			const valueToProcess = value.trim() === '' ? placeholder.trim() : value;
+
 			// Trim the entire input first
-			const trimmedValue = value.trim();
+			const trimmedValue = valueToProcess.trim();
 
 			// Split, trim each value, and filter out empty strings
 			const resourceKeys = trimmedValue
@@ -31,6 +35,7 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({
 				.map(k => k.trim())
 				.filter(k => k.length > 0);
 
+			// ...rest of your existing validation logic...
 			if (resourceKeys.length === 0) {
 				onError('Please enter at least one resource');
 				return;
@@ -82,7 +87,7 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({
 					value={input}
 					onChange={setInput}
 					onSubmit={handleSubmit}
-					placeholder=" posts, comments, authors."
+					placeholder={placeholder}
 				/>
 			</Box>
 			{status === 'processing' && <Text>Validating resources...</Text>}

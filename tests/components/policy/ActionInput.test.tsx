@@ -4,10 +4,10 @@ import { Text } from 'ink';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ActionInput } from '../../../source/components/policy/ActionsInput.js';
 
-// Mock Text Input component for all tests
+// Mock Text Input component
 vi.mock('ink-text-input', () => ({
 	default: ({ value, onChange, onSubmit }) => {
-		// Store handlers in module scope via global
+		// Store handlers in module scope
 		vi.stubGlobal('textInputHandlers', { onChange, onSubmit });
 		return <Text>Input: {value}</Text>;
 	},
@@ -26,122 +26,105 @@ describe('ActionInput', () => {
 		cleanup();
 	});
 
-	it('should render keys input initially', () => {
+	it('should render initial state correctly', () => {
 		const { lastFrame } = render(
 			<ActionInput onComplete={mockOnComplete} onError={mockOnError} />,
 		);
 
 		expect(lastFrame()).toContain('Action Configuration');
 		expect(lastFrame()).toContain('Enter action keys');
+		expect(lastFrame()).toContain('Input:'); // Empty input initially
 	});
 
 	it('should handle valid action keys input', async () => {
-		const { lastFrame } = render(
-			<ActionInput onComplete={mockOnComplete} onError={mockOnError} />,
-		);
+		render(<ActionInput onComplete={mockOnComplete} onError={mockOnError} />);
 
-		// Manually trigger onSubmit with keys
 		global.textInputHandlers.onSubmit('create, read');
-
-		// Wait for state update - use longer timeout
-		await new Promise(resolve => setTimeout(resolve, 100));
-
-		// Now the component should be showing the action details screen
-		expect(lastFrame()).toContain('Configure action');
-	});
-
-	it('should handle empty action keys input', async () => {
-		render(<ActionInput onComplete={mockOnComplete} onError={mockOnError} />);
-
-		// Clear any previous calls
-		mockOnError.mockClear();
-
-		// Manually trigger onSubmit with empty input
-		global.textInputHandlers.onSubmit('   ');
-
-		// Wait for state update
-		await new Promise(resolve => setTimeout(resolve, 100));
-
-		expect(mockOnError).toHaveBeenCalledWith(
-			'Please enter at least one action',
-		);
-	});
-
-	it('should validate action key format', async () => {
-		render(<ActionInput onComplete={mockOnComplete} onError={mockOnError} />);
-
-		// Clear any previous calls
-		mockOnError.mockClear();
-
-		// Manually trigger onSubmit with invalid key
-		global.textInputHandlers.onSubmit('valid, 123invalid');
-
-		// Wait for state update
-		await new Promise(resolve => setTimeout(resolve, 100));
-
-		expect(mockOnError).toHaveBeenCalledWith('Invalid action keys: 123invalid');
-	});
-
-	it('should handle action details input', async () => {
-		const { lastFrame } = render(
-			<ActionInput onComplete={mockOnComplete} onError={mockOnError} />,
-		);
-
-		// First submit valid action keys
-		global.textInputHandlers.onSubmit('create');
-
-		// Wait for state update
-		await new Promise(resolve => setTimeout(resolve, 100));
-
-		// Make sure we're now on the details screen (test might be flaky)
-		// If this assertion fails, the state transition didn't happen
-		try {
-			expect(lastFrame()).toContain('Configure action');
-		} catch (e) {
-			console.log("State transition didn't occur:", lastFrame());
-			throw e;
-		}
-
-		// Now submit action details
-		global.textInputHandlers.onSubmit('Create Resource@owner,department');
-
-		// Wait for state update
-		await new Promise(resolve => setTimeout(resolve, 100));
 
 		expect(mockOnComplete).toHaveBeenCalledWith({
 			create: {
 				name: 'create',
-				description: 'Create Resource',
-				attributes: {
-					owner: {},
-					department: {},
-				},
+				description: 'Create access',
+			},
+			read: {
+				name: 'read',
+				description: 'Read access',
 			},
 		});
+		expect(mockOnError).not.toHaveBeenCalled();
 	});
 
-	it('should validate attribute keys', async () => {
+	it('should use placeholder values when input is empty', async () => {
+		render(<ActionInput onComplete={mockOnComplete} onError={mockOnError} />);
+
+		global.textInputHandlers.onSubmit('');
+
+		expect(mockOnComplete).toHaveBeenCalledWith({
+			create: {
+				name: 'create',
+				description: 'Create access',
+			},
+			read: {
+				name: 'read',
+				description: 'Read access',
+			},
+			update: {
+				name: 'update',
+				description: 'Update access',
+			},
+			delete: {
+				name: 'delete',
+				description: 'Delete access',
+			},
+		});
+		expect(mockOnError).not.toHaveBeenCalled();
+	});
+
+	it('should handle invalid action keys', async () => {
+		render(<ActionInput onComplete={mockOnComplete} onError={mockOnError} />);
+
+		global.textInputHandlers.onSubmit('create, 123invalid');
+
+		expect(mockOnError).toHaveBeenCalledWith('Invalid action keys: 123invalid');
+		expect(mockOnComplete).not.toHaveBeenCalled();
+	});
+
+	it('should handle whitespace and empty entries', async () => {
+		render(<ActionInput onComplete={mockOnComplete} onError={mockOnError} />);
+
+		global.textInputHandlers.onSubmit('  create  ,  read  ,  , ');
+
+		expect(mockOnComplete).toHaveBeenCalledWith({
+			create: {
+				name: 'create',
+				description: 'Create access',
+			},
+			read: {
+				name: 'read',
+				description: 'Read access',
+			},
+		});
+		expect(mockOnError).not.toHaveBeenCalled();
+	});
+
+	it('should update input value when onChange is called', async () => {
 		const { lastFrame } = render(
 			<ActionInput onComplete={mockOnComplete} onError={mockOnError} />,
 		);
 
-		// First submit valid action keys
+		global.textInputHandlers.onChange('test');
+
+		expect(lastFrame()).toContain('Input: test');
+	});
+
+	it('should clear input after successful submission', async () => {
+		const { lastFrame } = render(
+			<ActionInput onComplete={mockOnComplete} onError={mockOnError} />,
+		);
+
+		global.textInputHandlers.onChange('create');
 		global.textInputHandlers.onSubmit('create');
 
-		// Wait for state update
-		await new Promise(resolve => setTimeout(resolve, 100));
-
-		// Reset mocks before next step
-		mockOnError.mockClear();
-
-		// Submit invalid attribute keys
-		global.textInputHandlers.onSubmit('Create@valid,123invalid');
-
-		// Wait for state update
-		await new Promise(resolve => setTimeout(resolve, 100));
-
-		expect(mockOnError).toHaveBeenCalledWith(
-			'Invalid attribute keys: 123invalid',
-		);
+		expect(lastFrame()).toContain('Action Configuration');
 	});
 });

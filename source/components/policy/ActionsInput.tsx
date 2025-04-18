@@ -14,30 +14,20 @@ export const ActionInput: React.FC<ActionInputProps> = ({
 	onComplete,
 	onError,
 }) => {
-	const [step, setStep] = useState<'keys' | 'details'>('keys');
-	const [actionKeys, setActionKeys] = useState<string[]>([]);
-	const [actions, setActions] = useState<
-		Record<string, components['schemas']['ActionBlockEditable']>
-	>({});
-	const [currentActionIndex, setCurrentActionIndex] = useState(0);
-
-	// Separate input states for different steps
-	const [actionKeysInput, setActionKeysInput] = useState('');
-	const [actionDetailsInput, setActionDetailsInput] = useState('');
+	const [input, setInput] = useState('');
+	const placeholder = 'create, read, update, delete';
 
 	const validateActionKey = (key: string): boolean => {
 		return /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(key);
 	};
 
-	const validateAttributeKey = (key: string): boolean => {
-		return /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(key);
-	};
-
-	const handleKeysSubmit = (value: string) => {
+	const handleSubmit = (value: string) => {
 		try {
-			// Trim the entire input and split by comma
-			const keys = value
-				.trim()
+			// Use placeholder if input is empty
+			const valueToProcess = value.trim() === '' ? placeholder : value;
+
+			// Split and clean up the input
+			const keys = valueToProcess
 				.split(',')
 				.map(k => k.trim())
 				.filter(Boolean);
@@ -53,64 +43,20 @@ export const ActionInput: React.FC<ActionInputProps> = ({
 				return;
 			}
 
-			setActionKeys(keys);
-			setActionKeysInput(''); // Reset input for next step
-			setStep('details');
-		} catch (err) {
-			onError((err as Error).message);
-		}
-	};
+			// Create actions object with basic configuration
+			const actions = keys.reduce(
+				(acc, key) => {
+					acc[key] = {
+						name: key,
+						description: `${key.charAt(0).toUpperCase() + key.slice(1)} access`,
+					};
+					return acc;
+				},
+				{} as Record<string, components['schemas']['ActionBlockEditable']>,
+			);
 
-	const handleDetailsSubmit = (value: string) => {
-		try {
-			const currentKey = actionKeys[currentActionIndex];
-			// Trim the entire input first
-			const [descPart = '', attrPart = ''] = value
-				.trim()
-				.split('@')
-				.map(s => s.trim());
-
-			// Validate attributes if provided
-			if (attrPart) {
-				const attributeKeys = attrPart
-					.split(',')
-					.map(a => a.trim())
-					.filter(Boolean); // Filter out empty strings after trim
-
-				const invalidAttrs = attributeKeys.filter(
-					key => !validateAttributeKey(key),
-				);
-				if (invalidAttrs.length > 0) {
-					onError(`Invalid attribute keys: ${invalidAttrs.join(', ')}`);
-					return;
-				}
-
-				const action: components['schemas']['ActionBlockEditable'] = {
-					name: currentKey,
-					description: descPart || undefined,
-					attributes:
-						attributeKeys.length > 0
-							? (Object.fromEntries(
-									attributeKeys.map(attr => [attr, {}]),
-								) as Record<string, never>)
-							: undefined,
-				};
-
-				const updatedActions = currentKey
-					? {
-							...actions,
-							[currentKey]: action,
-						}
-					: actions;
-
-				if (currentActionIndex === actionKeys.length - 1) {
-					onComplete(updatedActions);
-				} else {
-					setActions(updatedActions);
-					setCurrentActionIndex(prev => prev + 1);
-					setActionDetailsInput(''); // Clear input for next action
-				}
-			}
+			onComplete(actions);
+			setInput('');
 		} catch (err) {
 			onError((err as Error).message);
 		}
@@ -118,50 +64,21 @@ export const ActionInput: React.FC<ActionInputProps> = ({
 
 	return (
 		<Box flexDirection="column" gap={1}>
-			{step === 'keys' && (
-				<>
-					<Box>
-						<Text bold>Action Configuration</Text>
-					</Box>
-					<Box>
-						<Text>Enter action keys (comma-separated):</Text>
-					</Box>
-					<Box>
-						<Text>{'> '}</Text>
-						<TextInput
-							value={actionKeysInput}
-							onChange={setActionKeysInput}
-							onSubmit={handleKeysSubmit}
-							placeholder={'create, read, update, delete'}
-						/>
-					</Box>
-				</>
-			)}
-
-			{step === 'details' && (
-				<Box flexDirection="column">
-					<Box>
-						<Text bold>
-							Configure action : {actionKeys[currentActionIndex]}
-						</Text>
-					</Box>
-					<Box>
-						<Text>Format: description@attribute1,attribute2</Text>
-					</Box>
-					<Box>
-						<Text>{'> '}</Text>
-						<TextInput
-							value={actionDetailsInput}
-							onChange={setActionDetailsInput}
-							onSubmit={handleDetailsSubmit}
-							placeholder="Create new resource@owner,department"
-						/>
-					</Box>
-					<Box>
-						<Text>{`Action ${currentActionIndex + 1} of ${actionKeys.length}`}</Text>
-					</Box>
-				</Box>
-			)}
+			<Box>
+				<Text bold>Action Configuration</Text>
+			</Box>
+			<Box>
+				<Text>Enter action keys (comma-separated):</Text>
+			</Box>
+			<Box>
+				<Text>{'> '}</Text>
+				<TextInput
+					value={input}
+					onChange={setInput}
+					onSubmit={handleSubmit}
+					placeholder={placeholder}
+				/>
+			</Box>
 		</Box>
 	);
 };

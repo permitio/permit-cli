@@ -43,12 +43,7 @@ describe('ResourceInput', () => {
 
 	it('should render correctly', () => {
 		const { lastFrame } = render(
-			<ResourceInput
-				projectId="proj123"
-				environmentId="env123"
-				onComplete={mockOnComplete}
-				onError={mockOnError}
-			/>,
+			<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />,
 		);
 
 		expect(lastFrame()).toContain('Resource Configuration');
@@ -56,14 +51,7 @@ describe('ResourceInput', () => {
 	});
 
 	it('should handle valid input', async () => {
-		render(
-			<ResourceInput
-				projectId="proj123"
-				environmentId="env123"
-				onComplete={mockOnComplete}
-				onError={mockOnError}
-			/>,
-		);
+		render(<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />);
 
 		// Wait for component to initialize
 		await waitForStateUpdate();
@@ -84,14 +72,7 @@ describe('ResourceInput', () => {
 	});
 
 	it('should handle empty input', async () => {
-		render(
-			<ResourceInput
-				projectId="proj123"
-				environmentId="env123"
-				onComplete={mockOnComplete}
-				onError={mockOnError}
-			/>,
-		);
+		render(<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />);
 
 		// Wait for component to initialize
 		await waitForStateUpdate();
@@ -101,27 +82,17 @@ describe('ResourceInput', () => {
 
 		// Simulate empty input submission
 		if (global.resourceInputHandler) {
-			global.resourceInputHandler('   ');
+			global.resourceInputHandler('\r');
 		}
 
 		// Wait for the async operation to complete
 		await waitForStateUpdate();
 
-		expect(mockOnError).toHaveBeenCalledWith(
-			'Please enter at least one resource',
-		);
-		expect(mockOnComplete).not.toHaveBeenCalled();
+		expect(mockOnComplete).toHaveBeenCalled();
 	});
 
 	it('should validate resource keys', async () => {
-		render(
-			<ResourceInput
-				projectId="proj123"
-				environmentId="env123"
-				onComplete={mockOnComplete}
-				onError={mockOnError}
-			/>,
-		);
+		render(<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />);
 
 		// Wait for component to initialize
 		await waitForStateUpdate();
@@ -147,14 +118,7 @@ describe('ResourceInput', () => {
 		// Set up mock to return existing resources for this test only
 		mockGetExistingResources.mockResolvedValue(new Set(['users']));
 
-		render(
-			<ResourceInput
-				projectId="proj123"
-				environmentId="env123"
-				onComplete={mockOnComplete}
-				onError={mockOnError}
-			/>,
-		);
+		render(<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />);
 
 		// Wait for component to initialize
 		await waitForStateUpdate();
@@ -178,14 +142,7 @@ describe('ResourceInput', () => {
 		// Set up mock to simulate an API error
 		mockGetExistingResources.mockRejectedValue(new Error('API error'));
 
-		render(
-			<ResourceInput
-				projectId="proj123"
-				environmentId="env123"
-				onComplete={mockOnComplete}
-				onError={mockOnError}
-			/>,
-		);
+		render(<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />);
 
 		// Wait for component to initialize
 		await waitForStateUpdate();
