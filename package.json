@@ -24,6 +24,7 @@
 		"dist"
 	],
 	"dependencies": {
+		"@apidevtools/swagger-parser": "^10.1.1",
 		"@scaleway/random-name": "^5.1.1",
 		"cli-table": "^0.3.11",
 		"clipboardy": "^4.0.0",
