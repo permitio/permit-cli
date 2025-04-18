@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Text } from 'ink';
 import TextInput from 'ink-text-input';
 import Spinner from 'ink-spinner';
@@ -19,13 +19,20 @@ type Field = 'key' | 'secret' | 'name' | 'done' | 'input';
 export default function CreateProxyConfigComponent({ options }: Props) {
 	const { scope } = useAuth();
 
+	// Destructure initial option values for stable deps
+	const {
+		key: initialKey = '',
+		secret: initialSecret = '',
+		name: initialName = '',
+	} = options;
+
 	// Parse structured data (mapping_rules, auth_mechanism, etc.)
 	const { payload, parseError } = useParseProxyData(options);
 
 	// Local state for interactive fields
-	const [proxyKey, setProxyKey] = useState<string>(options.key || '');
-	const [proxySecret, setProxySecret] = useState<string>(options.secret || '');
-	const [proxyName, setProxyName] = useState<string>(options.name || '');
+	const [proxyKey, setProxyKey] = useState<string>(initialKey);
+	const [proxySecret, setProxySecret] = useState<string>(initialSecret);
+	const [proxyName, setProxyName] = useState<string>(initialName);
 
 	const [currentField, setCurrentField] = useState<Field>('key');
 
@@ -36,7 +43,7 @@ export default function CreateProxyConfigComponent({ options }: Props) {
 		formatErrorMessage,
 		setStatus,
 		setErrorMessage,
-	} = useCreateProxy(scope.project_id, scope.environment_id, options.apiKey);
+	} = useCreateProxy();
 
 	// Trigger creation with the latest field values
 	const triggerCreate = useCallback(() => {
@@ -70,18 +77,21 @@ export default function CreateProxyConfigComponent({ options }: Props) {
 	}, [parseError, setErrorMessage, setStatus]);
 
 	// On mount: auto-trigger for prefilled or enter interactive mode
+	const hasMountedRef = useRef(false);
 	useEffect(() => {
-		if (options.key && options.secret && options.name) {
+		if (hasMountedRef.current) return;
+		hasMountedRef.current = true;
+
+		if (initialKey && initialSecret && initialName) {
 			setCurrentField('done');
 			triggerCreate();
 		} else {
 			setStatus('input');
-			if (!options.key) setCurrentField('key');
-			else if (!options.secret) setCurrentField('secret');
-			else if (!options.name) setCurrentField('name');
+			if (!initialKey) setCurrentField('key');
+			else if (!initialSecret) setCurrentField('secret');
+			else if (!initialName) setCurrentField('name');
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [initialKey, initialSecret, initialName, setStatus, triggerCreate]);
 
 	// Once interactive flow completes, fire creation
 	useEffect(() => {

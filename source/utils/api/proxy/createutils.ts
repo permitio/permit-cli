@@ -1,5 +1,5 @@
 export type ProxyConfigOptions = {
-	secret: string;
+	secret: string | Record<string, string>;
 	key: string;
 	name: string;
 	/**
@@ -8,6 +8,7 @@ export type ProxyConfigOptions = {
 	 */
 	mapping_rules?: Array<{
 		url: string;
+		url_type?: 'regex';
 		http_method:
 			| 'get'
 			| 'put'
@@ -16,7 +17,7 @@ export type ProxyConfigOptions = {
 			| 'options'
 			| 'head'
 			| 'patch';
-		resource?: string;
+		resource: string;
 		headers?: Record<string, string>;
 		action?: string;
 		priority?: number;
@@ -32,26 +33,22 @@ export type ProxyConfigOptions = {
  * Throws an error if validation fails.
  */
 export function validateProxyConfig(options: ProxyConfigOptions) {
-	// Validate key: must be non-empty and match the regex.
 	const keyRegex = /^[A-Za-z0-9\-_]+$/;
-	if (!options.key || options.key.trim() === '') {
+
+	// Validate key
+	if (!options.key?.trim()) {
 		throw new Error('Missing Error: key is required');
 	}
 	if (!keyRegex.test(options.key)) {
 		throw new Error('Validation Error: Invalid key');
 	}
 
-	// Validate secret: must be a non-empty string.
-	if (options.secret === undefined || options.secret.trim() === '') {
-		throw new Error('Missing Error: secret is required');
-	}
-
-	// Validate name: must be non-empty.
-	if (!options.name || options.name.trim() === '') {
+	// Validate name
+	if (!options.name?.trim()) {
 		throw new Error('Missing Error: name is required');
 	}
 
-	// Validate auth_mechanism: must be one of 'Bearer', 'Basic', or 'Headers'
+	// Validate auth_mechanism
 	const allowedAuth = ['Bearer', 'Basic', 'Headers'];
 	if (!allowedAuth.includes(options.auth_mechanism)) {
 		throw new Error(
@@ -59,49 +56,103 @@ export function validateProxyConfig(options: ProxyConfigOptions) {
 		);
 	}
 
+	// Validate secret based on auth_mechanism
+	switch (options.auth_mechanism) {
+		case 'Bearer':
+			if (typeof options.secret !== 'string' || !options.secret.trim()) {
+				throw new Error(
+					'Validation Error: Bearer secret must be a non-empty string',
+				);
+			}
+			break;
+		case 'Basic':
+			if (
+				typeof options.secret !== 'string' ||
+				!options.secret.trim() ||
+				!/.+:.+/.test(options.secret)
+			) {
+				throw new Error(
+					'Validation Error: Basic secret must be a string of the form "username:password"',
+				);
+			}
+			break;
+		case 'Headers':
+			if (
+				typeof options.secret !== 'object' ||
+				options.secret === null ||
+				Array.isArray(options.secret)
+			) {
+				throw new Error(
+					'Validation Error: Headers secret must be an object of headers',
+				);
+			}
+			Object.entries(options.secret).forEach(([key, value]) => {
+				if (typeof value !== 'string') {
+					throw new Error(
+						`Validation Error: secret header '${key}' must be a string`,
+					);
+				}
+			});
+			break;
+	}
+
+	// Validate mapping_rules
 	if (options.mapping_rules) {
 		if (!Array.isArray(options.mapping_rules)) {
 			throw new Error('Validation Error: mapping_rules must be an array');
 		}
 
 		options.mapping_rules.forEach((rule, index) => {
-			if (!rule.url || rule.url.trim() === '') {
+			if (!rule.url?.trim()) {
 				throw new Error(
 					`Missing Error: mapping_rules[${index}].url is required`,
 				);
 			}
 			try {
 				new URL(rule.url);
-			} catch (err) {
+			} catch {
 				throw new Error(
-					`Validation Error: {${err}}mapping_rules[${index}].url is invalid`,
+					`Validation Error: mapping_rules[${index}].url is invalid`,
 				);
 			}
 
-			if (!rule.resource || rule.resource.trim() === '') {
-				throw new Error(
-					`Missing Error: mapping_rules[${index}].resource is required`,
-				);
-			}
-
-			if (!rule.headers || typeof rule.headers !== 'object') {
-				throw new Error(
-					`Validation Error: mapping_rules[${index}].headers must be an object`,
-				);
-			}
-
-			Object.entries(rule.headers).forEach(([headerKey, headerValue]) => {
-				if (typeof headerValue !== 'string') {
-					throw new Error(
-						`Validation Error: mapping_rules[${index}].headers['${headerKey}'] must be a string`,
-					);
-				}
-			});
-
-			// Validate http_method is provided (it should be since it's required by type).
 			if (!rule.http_method) {
 				throw new Error(
 					`Missing Error: mapping_rules[${index}].http_method is required`,
+				);
+			}
+
+			if (!rule.resource?.trim() || !keyRegex.test(rule.resource)) {
+				throw new Error(
+					`Validation Error: mapping_rules[${index}].resource is invalid`,
+				);
+			}
+
+			if (rule.headers) {
+				if (typeof rule.headers !== 'object' || Array.isArray(rule.headers)) {
+					throw new Error(
+						`Validation Error: mapping_rules[${index}].headers must be an object`,
+					);
+				}
+				Object.entries(rule.headers).forEach(([headerKey, headerValue]) => {
+					if (typeof headerValue !== 'string') {
+						throw new Error(
+							`Validation Error: mapping_rules[${index}].headers['${headerKey}'] must be a string`,
+						);
+					}
+				});
+			}
+
+			// Optional validations
+			if (rule.url_type && rule.url_type !== 'regex') {
+				throw new Error(
+					`Validation Error: mapping_rules[${index}].url_type must be 'regex' if provided`,
+				);
+			}
+
+			if (rule.priority !== undefined && typeof rule.priority !== 'number') {
+				throw new Error(
+					`Validation Error: mapping_rules[${index}].priority must be a number`,
 				);
 			}
 		});

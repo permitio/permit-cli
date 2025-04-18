@@ -7,12 +7,8 @@ import {
 
 type CreateStatus = 'idle' | 'processing' | 'done' | 'error' | 'input';
 
-export function useCreateProxy(
-	projectId: string | undefined,
-	environmentId: string | undefined,
-	apiKey?: string,
-) {
-	const { authenticatedApiClient, unAuthenticatedApiClient } = useClient();
+export function useCreateProxy() {
+	const { authenticatedApiClient } = useClient();
 	const [status, setStatus] = useState<CreateStatus>('processing');
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -43,12 +39,6 @@ export function useCreateProxy(
 
 	const createProxy = useCallback(
 		async (payload: ProxyConfigOptions) => {
-			if (!projectId || !environmentId) {
-				setErrorMessage('Project ID or Environment ID is missing');
-				setStatus('error');
-				return;
-			}
-
 			// Validate the payload using our unified util.
 			try {
 				validateProxyConfig(payload);
@@ -64,17 +54,12 @@ export function useCreateProxy(
 
 			setStatus('processing');
 			try {
-				const apiClient = apiKey
-					? unAuthenticatedApiClient(apiKey)
-					: authenticatedApiClient();
-
-				const result = await apiClient.POST(
+				const result = await authenticatedApiClient().POST(
 					'/v2/facts/{proj_id}/{env_id}/proxy_configs',
-					{ proj_id: projectId, env_id: environmentId },
+					{},
 					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 					// @ts-expect-error
 					{ ...payload, mapping_rules: payload.mapping_rules || [] },
-					undefined,
 				);
 
 				// Handle validation errors (422)
@@ -95,15 +80,7 @@ export function useCreateProxy(
 				handleCatchError(error);
 			}
 		},
-		[
-			apiKey,
-			authenticatedApiClient,
-			environmentId,
-			projectId,
-			handleApiError,
-			handleCatchError,
-			unAuthenticatedApiClient,
-		],
+		[authenticatedApiClient, handleApiError, handleCatchError],
 	);
 
 	const formatErrorMessage = useCallback((message: string) => {
