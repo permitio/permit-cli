@@ -12,20 +12,6 @@ export const options = object({
 				description: 'Your Permit.io API key',
 			}),
 		),
-	projectId: string()
-		.optional()
-		.describe(
-			option({
-				description: 'Permit.io Project ID',
-			}),
-		),
-	envId: string()
-		.optional()
-		.describe(
-			option({
-				description: 'Permit.io Environment ID',
-			}),
-		),
 	expandKey: boolean()
 		.optional()
 		.default(false)

@@ -13,8 +13,8 @@ export default function APIListProxyTableComponent({ options }: Props) {
 	const { scope } = useAuth();
 	const { status, errorMessage, proxies, totalCount, listProxies } =
 		useListProxy(
-			scope.project_id || options.projectId,
-			scope.environment_id || options.envId,
+			scope.project_id,
+			scope.environment_id,
 			options.apiKey,
 			options.page,
 			options.perPage,

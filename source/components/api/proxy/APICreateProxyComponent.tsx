@@ -36,11 +36,7 @@ export default function CreateProxyConfigComponent({ options }: Props) {
 		formatErrorMessage,
 		setStatus,
 		setErrorMessage,
-	} = useCreateProxy(
-		scope.project_id || options.projId,
-		scope.environment_id || options.envId,
-		options.apiKey,
-	);
+	} = useCreateProxy(scope.project_id, scope.environment_id, options.apiKey);
 
 	// Trigger creation with the latest field values
 	const triggerCreate = useCallback(() => {

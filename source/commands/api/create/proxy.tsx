@@ -11,8 +11,7 @@ import {
 import { option } from 'pastel';
 import CreateProxyConfigComponent from '../../../components/api/proxy/APICreateProxyComponent.js';
 
-export const description =
-	'Creates a new URL mapping configuration in Permit';
+export const description = 'Creates a new URL mapping configuration in Permit';
 
 export const options = object({
 	apiKey: string()
@@ -20,20 +19,6 @@ export const options = object({
 		.describe(
 			option({
 				description: 'Your Permit.io API key',
-			}),
-		),
-	projId: string()
-		.optional()
-		.describe(
-			option({
-				description: 'ID or slug of the project',
-			}),
-		),
-	envId: string()
-		.optional()
-		.describe(
-			option({
-				description: 'ID or slug of the environment',
 			}),
 		),
 	secret: string()
