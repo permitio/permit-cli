@@ -40,7 +40,7 @@ export const options = object({
 		.describe(
 			option({
 				description:
-					'Secret used by the Permit Proxy to authenticate with your backend.',
+					'Secret used by the Permit Proxy to authenticate with your HTTP API.',
 			}),
 		)
 		.optional(),
