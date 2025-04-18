@@ -45,6 +45,15 @@ export default function CreateProxyConfigComponent({ options }: Props) {
 		setErrorMessage,
 	} = useCreateProxy();
 
+	useEffect(() => {
+		if (!scope.project_id || !scope.environment_id) {
+			setErrorMessage(
+				'Error: scope.project_id and scope.environment_id are required.',
+			);
+			setStatus('error');
+		}
+	}, [scope.project_id, scope.environment_id, setErrorMessage, setStatus]);
+
 	// Trigger creation with the latest field values
 	const triggerCreate = useCallback(() => {
 		createProxy({
