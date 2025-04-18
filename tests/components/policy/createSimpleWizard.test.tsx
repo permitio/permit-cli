@@ -68,11 +68,6 @@ describe('CreateSimpleWizard', () => {
 		});
 	});
 
-	it('renders initial RBAC configuration heading', () => {
-		const { lastFrame } = render(<CreateSimpleWizard apiKey={apiKey} />);
-		expect(lastFrame()).toContain('RBAC Policy Configuration');
-	});
-
 	it('initially renders the ResourceInput component', () => {
 		render(<CreateSimpleWizard />);
 

@@ -15,7 +15,7 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({
 }) => {
 	const [input, setInput] = useState('');
 	const { getExistingResources, status } = useResourcesApi();
-	const placeholder = 'posts, comments, authors';
+	const placeholder = 'Posts, Comments, Authors';
 
 	const validateResourceKey = (key: string): boolean => {
 		return /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(key);
@@ -73,7 +73,7 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({
 	return (
 		<Box flexDirection="column" gap={1}>
 			<Box>
-				<Text bold>Resource Configuration</Text>
+				<Text bold>Configure Resources</Text>
 			</Box>
 			<Box>
 				<Text>Enter resource keys (comma-separated):</Text>
@@ -81,17 +81,12 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({
 
 			<Box>
 				<Text dimColor>
-					Example: <Text color="yellow">{placeholder}</Text>
+					For Example: <Text color="yellow">{placeholder}</Text>
 				</Text>
 			</Box>
 			<Box>
 				<Text>{'> '}</Text>
-				<TextInput
-					value={input}
-					onChange={setInput}
-					onSubmit={handleSubmit}
-					placeholder={placeholder}
-				/>
+				<TextInput value={input} onChange={setInput} onSubmit={handleSubmit} />
 			</Box>
 			{status === 'processing' && <Text>Validating resources...</Text>}
 		</Box>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import { useRolesApi } from '../../hooks/useRolesApi.js';
@@ -21,11 +21,7 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 	const { getExistingRoles, status } = useRolesApi();
 
 	// Improved placeholder: a real, clear example
-	const placeholder = useMemo(() => {
-		if (availableResources.length === 0) return 'admin|resource';
-		if (availableActions.length === 0) return `admin|${availableResources[0]}`;
-		return `admin|${availableResources[0]}:${availableActions[0]}|${availableResources[0]}`;
-	}, [availableResources, availableActions]);
+	const placeholder = 'admin|posts, user|posts:read|posts:create';
 
 	const validateRoleKey = (key: string): boolean =>
 		/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(key);
@@ -107,7 +103,7 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 	return (
 		<Box flexDirection="column" gap={1}>
 			<Box>
-				<Text bold>Role Configuration</Text>
+				<Text bold>Configure Roles and Permissions</Text>
 			</Box>
 			{availableResources.length > 0 && (
 				<Box>
@@ -122,7 +118,7 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 
 			<Box>
 				<Text>
-					Enter roles in the format:{' '}
+					Roles/Permissions Convention:{' '}
 					<Text color="cyan">role|resource:action|resource:action</Text> or{' '}
 					<Text color="cyan">role|resource</Text>
 				</Text>

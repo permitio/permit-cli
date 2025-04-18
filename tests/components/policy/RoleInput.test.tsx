@@ -45,8 +45,8 @@ describe('RoleInput', () => {
 				onError={mockOnError}
 			/>,
 		);
-		expect(lastFrame()).toContain('Role Configuration');
-		expect(lastFrame()).toContain('Enter roles in the format');
+		expect(lastFrame()).toContain('Configure Roles and Permissions');
+		expect(lastFrame()).toContain('Roles/Permissions Convention');
 		expect(lastFrame()).toContain('Example:');
 		expect(lastFrame()).toContain('Input:');
 	});

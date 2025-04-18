@@ -144,8 +144,6 @@ export default function CreateSimpleWizard({
 
 	return (
 		<Box flexDirection="column" padding={1}>
-			<Text bold>RBAC Policy Configuration</Text>
-
 			{status === 'processing' && <Text>Processing your request...</Text>}
 
 			{status === 'error' && (

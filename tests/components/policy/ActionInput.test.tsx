@@ -33,7 +33,7 @@ describe('ActionInput', () => {
 				availableResources={availableResources}
 			/>,
 		);
-		expect(lastFrame()).toContain('Action Configuration');
+		expect(lastFrame()).toContain('Configure Actions');
 		expect(lastFrame()).toContain('Resources: users, posts');
 		expect(lastFrame()).toContain('Example:');
 		expect(lastFrame()).toContain('Input:');

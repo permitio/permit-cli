@@ -67,7 +67,7 @@ export const ActionInput: React.FC<ActionInputProps> = ({
 	return (
 		<Box flexDirection="column" gap={1}>
 			<Box>
-				<Text bold>Action Configuration</Text>
+				<Text bold>Configure Actions</Text>
 			</Box>
 			{availableResources.length > 0 && (
 				<Box>
@@ -80,17 +80,12 @@ export const ActionInput: React.FC<ActionInputProps> = ({
 			</Box>
 			<Box>
 				<Text dimColor>
-					Example: <Text color="yellow">{placeholder}</Text>
+					For Example: <Text color="yellow">{placeholder}</Text>
 				</Text>
 			</Box>
 			<Box>
 				<Text>{'> '}</Text>
-				<TextInput
-					value={input}
-					onChange={setInput}
-					onSubmit={handleSubmit}
-					placeholder={placeholder}
-				/>
+				<TextInput value={input} onChange={setInput} onSubmit={handleSubmit} />
 			</Box>
 		</Box>
 	);

@@ -38,7 +38,7 @@ describe('ResourceInput', () => {
 		const { lastFrame } = render(
 			<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />,
 		);
-		expect(lastFrame()).toContain('Resource Configuration');
+		expect(lastFrame()).toContain('Configure Resources');
 		expect(lastFrame()).toContain('Example:');
 		expect(lastFrame()).toContain('Input:');
 	});
