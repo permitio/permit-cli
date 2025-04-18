@@ -84,7 +84,7 @@ const useClient = () => {
 			if (error) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-expect-error
-				newError = error instanceof String ? error : error.detail.toString();
+				newError = error instanceof String ? error : error.detail;
 			}
 			return { data, response, error: newError };
 		};
