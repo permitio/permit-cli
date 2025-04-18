@@ -33,26 +33,40 @@ export default function APIListProxyTableComponent({ options }: Props) {
 	]);
 
 	// Prepare table data
-	const tableData = useMemo(
-		() =>
-			proxies.map((proxy, i) => ({
+	const tableData = useMemo(() => {
+		return proxies.map((proxy, i) => {
+			const urlsOnly =
+				Array.isArray(proxy.mapping_rules) && proxy.mapping_rules.length
+					? proxy.mapping_rules.map(r => r.url).join(', ')
+					: '';
+
+			// full pretty‐printed rule details
+			const fullDetails =
+				Array.isArray(proxy.mapping_rules) && proxy.mapping_rules.length
+					? proxy.mapping_rules
+							.map(r => {
+								const parts: string[] = [];
+								parts.push(`${r.url}`);
+								parts.push(`(${r.http_method.toUpperCase()})`);
+								if (r.resource) parts.push(`→ ${r.resource}`);
+								if (r.action) parts.push(`[action: ${r.action}]`);
+								if (r.priority != null) parts.push(`(prio: ${r.priority})`);
+								return parts.join(' ');
+							})
+							.join(', ')
+					: '';
+
+			return {
 				'#': (options.page - 1) * options.perPage + i + 1,
 				key: options.expandKey ? proxy.key : proxy.key.slice(0, 7) + '...',
 				secret: proxy.secret,
 				name: proxy.name,
 				auth_mechanism: proxy.auth_mechanism,
-				mapping_rules:
-					Array.isArray(proxy.mapping_rules) && proxy.mapping_rules.length
-						? proxy.mapping_rules
-								.map(r => r.url || '')
-								.filter(Boolean)
-								.join(', ')
-						: '',
-			})),
-		[proxies, options.page, options.perPage, options.expandKey],
-	);
+				mapping_rules: options.expandKey ? fullDetails : urlsOnly,
+			};
+		});
+	}, [proxies, options.page, options.perPage, options.expandKey]);
 
-	// Column headers
 	const headers = [
 		'#',
 		'key',
@@ -62,7 +76,6 @@ export default function APIListProxyTableComponent({ options }: Props) {
 		'mapping_rules',
 	];
 
-	// Loading state
 	if (status === 'processing') {
 		return (
 			<Box>
@@ -73,12 +86,10 @@ export default function APIListProxyTableComponent({ options }: Props) {
 		);
 	}
 
-	// Error state
 	if (status === 'error' && errorMessage) {
 		return <Text color="red">Error: {errorMessage}</Text>;
 	}
 
-	// Done: render table once
 	if (status === 'done') {
 		return (
 			<Static items={[{ key: 'proxy-configs' }]}>

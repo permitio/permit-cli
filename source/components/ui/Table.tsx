@@ -29,16 +29,18 @@ const TableComponent: React.FC<Props> = ({
 			return row;
 		});
 
-		// Calculate column widths
+		// Calculate column widths based on the longest cell (or header) in each column
 		const colWidths = headers.map(header => {
-			const firstVal = updatedRows[0]?.[header];
-			if (typeof firstVal === 'string') {
-				return Math.max(header.length * 2, Math.floor(firstVal.length * 1.5));
-			}
-			return 8;
+			const allValues = updatedRows.map(r => String(r[header] ?? ''));
+			const maxCellLength = Math.max(
+				header.length,
+				...allValues.map(v => v.length),
+			);
+			// add a little padding so things don't butt right up against the border
+			return maxCellLength + 2;
 		});
 
-		// Instantiate cli-table
+		// Instantiate cli-table with dynamic widths
 		const cliTable = new Table({
 			head: headers.map(h => chalk.hex(headersHexColor)(h)),
 			colWidths,
@@ -46,7 +48,7 @@ const TableComponent: React.FC<Props> = ({
 
 		// Push values into table
 		updatedRows.forEach(row => {
-			const vals = headers.map(h => row[h] ?? 'Empty');
+			const vals = headers.map(h => row[h] ?? '');
 			cliTable.push(vals);
 		});
 
@@ -54,7 +56,6 @@ const TableComponent: React.FC<Props> = ({
 	}, [data, headers, headersHexColor]);
 
 	if (!tableString) return null;
-
 	return <Text>{tableString}</Text>;
 };
 
