@@ -36,6 +36,40 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 	const validateAction = (action: string): boolean =>
 		!!action && availableActions.includes(action);
 
+	// Live preview of parsed roles and permissions
+	const getCurrentRoles = () => {
+		const valueToProcess = input.trim() === '' ? placeholder : input;
+		const roleDefs = valueToProcess
+			.split(',')
+			.map(r => r.trim())
+			.filter(Boolean);
+
+		return roleDefs
+			.map(def => {
+				const [role, ...perms] = def.split(':');
+				if (!role || !validateRoleKey(role) || perms.length === 0) return null;
+				const permissionsRaw = perms
+					.join(':')
+					.split('|')
+					.map(p => p.trim())
+					.filter(Boolean);
+
+				const permissions: string[] = [];
+				for (const perm of permissionsRaw) {
+					const [resource, action] = perm.split(':');
+					if (!resource || !validateResource(resource)) continue;
+					if (!action) {
+						permissions.push(...availableActions.map(a => `${resource}:${a}`));
+					} else if (validateAction(action)) {
+						permissions.push(`${resource}:${action}`);
+					}
+				}
+				if (permissions.length === 0) return null;
+				return { role, permissions };
+			})
+			.filter(Boolean);
+	};
+
 	const handleSubmit = async (value: string) => {
 		try {
 			const valueToProcess = value.trim() === '' ? placeholder : value;
@@ -75,7 +109,6 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 						return;
 					}
 					if (!action) {
-						// Expand to all actions for this resource
 						permissions.push(...availableActions.map(a => `${resource}:${a}`));
 					} else {
 						if (!validateAction(action)) {
@@ -105,11 +138,35 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 		}
 	};
 
+	const currentRoles = getCurrentRoles();
+
 	return (
 		<Box flexDirection="column" gap={1}>
 			<Box>
 				<Text bold>Role Configuration</Text>
 			</Box>
+			{availableResources.length > 0 && (
+				<Box>
+					<Text color="cyan">Resources: {availableResources.join(', ')}</Text>
+				</Box>
+			)}
+			{availableActions.length > 0 && (
+				<Box>
+					<Text color="cyan">Actions: {availableActions.join(', ')}</Text>
+				</Box>
+			)}
+			{currentRoles.length > 0 && (
+				<Box flexDirection="column">
+					<Text color="cyan">Current:</Text>
+					{currentRoles
+						.filter(role => role !== null)
+						.map(({ role, permissions }) => (
+							<Text key={role}>
+								{role}: {permissions.join(', ')}
+							</Text>
+						))}
+				</Box>
+			)}
 			<Box>
 				<Text>
 					Enter roles in the format:{' '}

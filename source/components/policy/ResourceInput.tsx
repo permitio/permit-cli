@@ -21,6 +21,14 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({
 		return /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(key);
 	};
 
+	const getCurrentResourceKeys = () => {
+		const valueToProcess = input.trim() === '' ? placeholder.trim() : input;
+		return valueToProcess
+			.split(',')
+			.map(k => k.trim())
+			.filter(k => k.length > 0);
+	};
+
 	const handleSubmit = async (value: string) => {
 		try {
 			// Use placeholder if input is empty
@@ -35,7 +43,6 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({
 				.map(k => k.trim())
 				.filter(k => k.length > 0);
 
-			// ...rest of your existing validation logic...
 			if (resourceKeys.length === 0) {
 				onError('Please enter at least one resource');
 				return;
@@ -81,6 +88,13 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({
 			<Box>
 				<Text>Enter resource keys (comma-separated):</Text>
 			</Box>
+			{getCurrentResourceKeys().length > 0 && (
+				<Box>
+					<Text color="cyan">
+						Current: {getCurrentResourceKeys().join(', ')}
+					</Text>
+				</Box>
+			)}
 			<Box>
 				<Text>{'> '}</Text>
 				<TextInput

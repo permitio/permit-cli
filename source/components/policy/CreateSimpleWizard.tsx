@@ -173,6 +173,7 @@ export default function CreateSimpleWizard({
 						<ActionInput
 							onComplete={handleActionsComplete}
 							onError={handleError}
+							availableResources={resources.map(r => r.key)}
 						/>
 					)}
 

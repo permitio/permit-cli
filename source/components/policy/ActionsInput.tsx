@@ -8,11 +8,13 @@ interface ActionInputProps {
 		actions: Record<string, components['schemas']['ActionBlockEditable']>,
 	) => void;
 	onError: (error: string) => void;
+	availableResources: string[];
 }
 
 export const ActionInput: React.FC<ActionInputProps> = ({
 	onComplete,
 	onError,
+	availableResources = [],
 }) => {
 	const [input, setInput] = useState('');
 	const placeholder = 'create, read, update, delete';
@@ -21,12 +23,17 @@ export const ActionInput: React.FC<ActionInputProps> = ({
 		return /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(key);
 	};
 
+	const getCurrentActionKeys = () => {
+		const valueToProcess = input.trim() === '' ? placeholder : input;
+		return valueToProcess
+			.split(',')
+			.map(k => k.trim())
+			.filter(Boolean);
+	};
+
 	const handleSubmit = (value: string) => {
 		try {
-			// Use placeholder if input is empty
 			const valueToProcess = value.trim() === '' ? placeholder : value;
-
-			// Split and clean up the input
 			const keys = valueToProcess
 				.split(',')
 				.map(k => k.trim())
@@ -43,7 +50,6 @@ export const ActionInput: React.FC<ActionInputProps> = ({
 				return;
 			}
 
-			// Create actions object with basic configuration
 			const actions = keys.reduce(
 				(acc, key) => {
 					acc[key] = {
@@ -67,6 +73,16 @@ export const ActionInput: React.FC<ActionInputProps> = ({
 			<Box>
 				<Text bold>Action Configuration</Text>
 			</Box>
+			{availableResources.length > 0 && (
+				<Box>
+					<Text color="cyan">Resources: {availableResources.join(', ')}</Text>
+				</Box>
+			)}
+			{getCurrentActionKeys().length > 0 && (
+				<Box>
+					<Text color="cyan">Current: {getCurrentActionKeys().join(', ')}</Text>
+				</Box>
+			)}
 			<Box>
 				<Text>Enter action keys (comma-separated):</Text>
 			</Box>
