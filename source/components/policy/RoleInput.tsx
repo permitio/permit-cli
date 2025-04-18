@@ -125,7 +125,7 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 			</Box>
 			<Box>
 				<Text dimColor>
-					Example: <Text color="yellow">{placeholder}</Text>
+					For Example: <Text color="yellow">{placeholder}</Text>
 				</Text>
 			</Box>
 			<Box>
@@ -134,7 +134,6 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 					value={input}
 					onChange={setInput}
 					onSubmit={handleSubmit}
-					placeholder={placeholder}
 				/>
 			</Box>
 			{status === 'processing' && <Text>Validating roles...</Text>}
