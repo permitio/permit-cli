@@ -124,7 +124,7 @@ export function validateProxyConfig(options: ProxyConfigOptions) {
 
 			if (!rule.resource?.trim() || !keyRegex.test(rule.resource)) {
 				throw new Error(
-					`Validation Error: mapping_rules[${index}].resource is invalid`,
+					`Validation Error: mapping_rules[${index}].resource is invalid ${rule.resource}.`,
 				);
 			}
 

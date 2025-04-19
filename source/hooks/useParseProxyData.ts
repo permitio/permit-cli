@@ -10,51 +10,70 @@ type MappingRuleType = NonNullable<ProxyConfigOptions['mapping_rules']>[number];
 
 /**
  * Parses a mapping rule string into a full mapping rule object.
- * Expected format: "url|http_method|[resource]|[headers]|[action]|[priority]"
+ * Expected format: "method|url|resource|[action]|[priority]|[{Key:Value,...}]|[url_type]"
  */
 function parseMappingRule(ruleStr: string, index: number): MappingRuleType {
 	const parts = ruleStr.split('|').map(s => s.trim());
 
-	// Ensure that both URL and HTTP method are provided.
-	if (!parts[0] || !parts[1]) {
+	// method, url, and resource are all required
+	if (!parts[0]) {
 		throw new Error(
-			`Mapping rule at index ${index} must include at least "url" and "http_method".`,
+			`Mapping rule at index ${index} must include an HTTP method as the first part.`,
+		);
+	}
+	if (!parts[1]) {
+		throw new Error(
+			`Mapping rule at index ${index} must include a URL as the second part.`,
+		);
+	}
+	if (!parts[2]) {
+		throw new Error(
+			`Mapping rule at index ${index} must include a resource as the third part.`,
 		);
 	}
 
-	// Using non-null assertion for the required fields.
-	const url: string = parts[0]!;
-	const httpMethod: string = parts[1]!; // We already checked it's truthy.
+	const httpMethod = parts[0].toLowerCase() as MappingRuleType['http_method'];
+	const url = parts[1];
+	const resource = parts[2];
+	// validate resource format
+	if (!/^[A-Za-z0-9\-_]+$/.test(resource)) {
+		throw new Error(
+			`Mapping rule at index ${index} has invalid resource "${resource}". Resource must match /^[A-Za-z0-9\\-_]+$/.`,
+		);
+	}
 
-	// For optional parts, supply defaults.
-	const resource: string = parts[2] ?? '';
-	const headersStr: string = parts[3] ?? '{}';
-	const action: string | undefined = parts[4] ? parts[4] : undefined;
-	const priorityStr: string | undefined = parts[5] ? parts[5] : undefined;
+	// optional action comes after resource
+	const action = parts[3] || undefined;
 
-	// Parsing headers (if the string is valid JSON, otherwise default to an empty object).
+	// Parse priority
+	const priorityNum = parts[4] ? Number(parts[4]) : undefined;
+	const priority = Number.isNaN(priorityNum) ? undefined : priorityNum;
+
+	// Parse headers: expect {Key:Value,...}
+	const headersStr = parts[5] ?? '';
 	let headers: Record<string, string> = {};
-	try {
-		headers = JSON.parse(headersStr);
-	} catch {
-		headers = {};
+	if (headersStr.startsWith('{') && headersStr.endsWith('}')) {
+		const inner = headersStr.slice(1, -1);
+		inner.split(',').forEach(pair => {
+			const [rawKey, rawVal] = pair.split(':');
+			if (rawKey && rawVal) {
+				headers[rawKey.trim()] = rawVal.trim();
+			}
+		});
 	}
 
-	let priority: number | undefined;
-	if (priorityStr) {
-		priority = Number(priorityStr);
-		if (Number.isNaN(priority)) {
-			priority = undefined;
-		}
-	}
+	// Parse url_type: 'regex' or 'none'
+	const urlTypeRaw = (parts[6] ?? '').toLowerCase();
+	const url_type = urlTypeRaw === 'regex' ? urlTypeRaw : undefined;
 
 	return {
+		http_method: httpMethod,
 		url,
-		http_method: httpMethod.toLowerCase() as MappingRuleType['http_method'],
 		resource,
-		headers,
 		action,
 		priority,
+		headers,
+		url_type,
 	};
 }
 
@@ -67,7 +86,21 @@ function parseMappingRules(
 	return rulesArray.map((ruleStr, index) => parseMappingRule(ruleStr, index));
 }
 
-export function useParseProxyData(options: CreateProxyOptions): {
+// Define a type for individual mapping rule flags
+type IndividualMappingRuleFlags = {
+	mappingRuleMethod?: string;
+	mappingRuleUrl?: string;
+	mappingRuleResource?: string;
+	mappingRuleAction?: string;
+	mappingRulePriority?: number;
+	mappingRuleHeaders?: string[];
+	mappingRuleUrlType?: string;
+};
+
+// Update the function signature to use the new type
+export function useParseProxyData(
+	options: CreateProxyOptions & IndividualMappingRuleFlags,
+): {
 	payload: ProxyConfigOptions;
 	parseError: string | null;
 	updatePayloadKey: (newKey: string) => void;
@@ -76,22 +109,72 @@ export function useParseProxyData(options: CreateProxyOptions): {
 		let parseError: string | null = null;
 		let mapping_rules: ProxyConfigOptions['mapping_rules'] = [];
 
-		// Parsing the mappingRules provided as an array of strings.
-		if (options.mapping_rules) {
+		// Parse mappingRules provided as array of strings, if any
+		if (options.mappingRules) {
 			try {
-				mapping_rules = parseMappingRules(options.mapping_rules);
+				mapping_rules = parseMappingRules(options.mappingRules as string[]);
 			} catch (err) {
 				parseError = err instanceof Error ? err.message : String(err);
 			}
 		}
 
-		// Build the final payload object. Using default values for missing fields.
+		// Extract individual mapping rule flags
+		const {
+			mappingRuleMethod,
+			mappingRuleUrl,
+			mappingRuleResource,
+			mappingRuleAction,
+			mappingRulePriority,
+			mappingRuleHeaders,
+			mappingRuleUrlType,
+		} = options;
+
+		const hasIndividual =
+			mappingRuleMethod && mappingRuleUrl && mappingRuleResource;
+		if (hasIndividual) {
+			// Ensure required individual parts are present
+			try {
+				// Validate resource format
+				if (!/^[A-Za-z0-9\-_]+$/.test(mappingRuleResource)) {
+					throw new Error(
+						`Invalid resource "${mappingRuleResource}". Must match /^[A-Za-z0-9\\-_]+$/.`,
+					);
+				}
+
+				// Build headers object from array of "Key:Value" strings
+				let hdrs: Record<string, string> = {};
+				if (Array.isArray(mappingRuleHeaders)) {
+					mappingRuleHeaders.forEach((h: string) => {
+						const [k, v] = h.split(':');
+						if (k && v) hdrs[k.trim()] = v.trim();
+					});
+				}
+
+				const rule: MappingRuleType = {
+					http_method:
+						mappingRuleMethod.toLowerCase() as MappingRuleType['http_method'],
+					url: mappingRuleUrl,
+					resource: mappingRuleResource,
+					action: mappingRuleAction,
+					priority: mappingRulePriority,
+					headers: hdrs,
+					url_type:
+						mappingRuleUrlType === 'regex' ? mappingRuleUrlType : undefined,
+				};
+
+				// Push the individual rule into the mapping_rules array
+				mapping_rules = [...mapping_rules, rule];
+			} catch (err) {
+				parseError = err instanceof Error ? err.message : String(err);
+			}
+		}
+
 		const payload: ProxyConfigOptions = {
 			key: options.key || '',
 			secret: options.secret || '',
 			name: options.name || '',
 			mapping_rules,
-			auth_mechanism: options.authMechanism ? options.authMechanism : 'Bearer',
+			auth_mechanism: options.authMechanism || 'Bearer',
 		};
 
 		return {
@@ -101,13 +184,7 @@ export function useParseProxyData(options: CreateProxyOptions): {
 				payload.key = newKey;
 			},
 		};
-	}, [
-		options.key,
-		options.secret,
-		options.name,
-		options.mapping_rules,
-		options.authMechanism,
-	]);
+	}, [options]);
 }
 
 export default useParseProxyData;

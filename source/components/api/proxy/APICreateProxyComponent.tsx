@@ -30,6 +30,7 @@ type Field =
 	| 'mapping_http_method'
 	| 'mapping_resource'
 	| 'mapping_headers'
+	| 'mapping_headers_repeat'
 	| 'mapping_action'
 	| 'mapping_priority'
 	| 'mapping_confirm'
@@ -59,6 +60,12 @@ export default function APICreateProxyComponent({
 		name: initialName = '',
 	} = options;
 
+	const {
+		mappingRuleMethod: initialMappingMethod,
+		mappingRuleUrl: initialMappingUrl,
+		mappingRuleResource: initialMappingResource,
+	} = options;
+
 	// Basic fields
 	const [proxyKey, setProxyKey] = useState(initialKey);
 	const [proxySecret, setProxySecret] = useState(initialSecret);
@@ -68,7 +75,21 @@ export default function APICreateProxyComponent({
 	const [mappingRules, setMappingRules] = useState<MappingRule[]>(
 		payload.mapping_rules || [],
 	);
-	const [currentRule, setCurrentRule] = useState<Partial<MappingRule>>({});
+	const initialSingleRule: Partial<MappingRule> = {};
+	if (initialMappingUrl) initialSingleRule.url = initialMappingUrl;
+	if (initialMappingMethod)
+		initialSingleRule.http_method =
+			initialMappingMethod as MappingRule['http_method'];
+	if (initialMappingResource)
+		initialSingleRule.resource = initialMappingResource;
+	/* …and headers/action/priority/url_type… */
+
+	const hasMappingFlags = Boolean(
+		initialMappingUrl || initialMappingMethod || initialMappingResource,
+	);
+
+	const [currentRule, setCurrentRule] =
+		useState<Partial<MappingRule>>(initialSingleRule);
 	const [headersInput, setHeadersInput] = useState('');
 
 	// “y/n” inputs
@@ -128,7 +149,15 @@ export default function APICreateProxyComponent({
 		setStatus('input');
 
 		if (initialKey && initialSecret && initialName) {
-			setCurrentField('mapping_start');
+			if (hasMappingFlags) {
+				// jump to the first missing bit of that individual rule:
+				if (!initialMappingUrl) setCurrentField('mapping_url');
+				else if (!initialMappingMethod) setCurrentField('mapping_http_method');
+				else if (!initialMappingResource) setCurrentField('mapping_resource');
+				else setCurrentField('mapping_headers');
+			} else {
+				setCurrentField('mapping_start');
+			}
 		} else if (!initialKey) {
 			setCurrentField('key');
 		} else if (!initialSecret) {
@@ -136,7 +165,17 @@ export default function APICreateProxyComponent({
 		} else {
 			setCurrentField('name');
 		}
-	}, [initialKey, initialSecret, initialName, setStatus, setCurrentField]);
+	}, [
+		initialKey,
+		initialSecret,
+		initialName,
+		hasMappingFlags,
+		initialMappingUrl,
+		initialMappingMethod,
+		initialMappingResource,
+		setStatus,
+		setCurrentField,
+	]);
 
 	//  When field becomes “done”, fire off creation
 	useEffect(() => {
@@ -204,14 +243,25 @@ export default function APICreateProxyComponent({
 						try {
 							const parsed: Record<string, string> = JSON.parse(val);
 							if (typeof parsed === 'object' && !Array.isArray(parsed)) {
-								setCurrentRule(r => ({ ...r, headers: parsed }));
+								setCurrentRule(r => ({
+									...r,
+									headers: { ...(r.headers || {}), ...parsed },
+								}));
 							}
 						} catch {
 							// ignore invalid JSON
 						}
 					}
 					setHeadersInput('');
-					setCurrentField('mapping_action');
+					setCurrentField('mapping_headers_repeat');
+					break;
+
+				case 'mapping_headers_repeat':
+					if (val.toLowerCase() === 'n') {
+						setCurrentField('mapping_action');
+					} else {
+						setCurrentField('mapping_headers');
+					}
 					break;
 				case 'mapping_action':
 					if (val) {
@@ -228,11 +278,16 @@ export default function APICreateProxyComponent({
 					}
 					setCurrentField('mapping_confirm');
 					break;
-				case 'mapping_confirm':
-					setMappingRules(rs => [...rs, currentRule as MappingRule]);
+				case 'mapping_confirm': {
+					// make a one‑off copy
+					const finishedRule = { ...(currentRule as MappingRule) };
+
+					setMappingRules(rs => [...rs, finishedRule]);
 					setCurrentRule({});
 					setCurrentField('mapping_repeat');
 					break;
+				}
+
 				case 'mapping_repeat':
 					if (val.toLowerCase() === 'n') {
 						setCurrentField('done');
@@ -368,12 +423,27 @@ export default function APICreateProxyComponent({
 				return (
 					<>
 						<Text color="yellow">
-							Any headers? Enter JSON or press enter to skip:
+							Enter a header as JSON (e.g., {'{"Authorization":"Bearer token"}'}
+							) or press enter to skip:
 						</Text>
 						<TextInput
 							value={headersInput}
 							onChange={setHeadersInput}
 							onSubmit={handleSubmit}
+						/>
+					</>
+				);
+			case 'mapping_headers_repeat':
+				return (
+					<>
+						<Text color="yellow">Add another header? (y/n):</Text>
+						<TextInput
+							value={headersInput}
+							onChange={setHeadersInput}
+							onSubmit={v => {
+								handleSubmit(v);
+								setHeadersInput('');
+							}}
 						/>
 					</>
 				);

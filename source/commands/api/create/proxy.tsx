@@ -7,6 +7,7 @@ import {
 	array,
 	union,
 	literal,
+	number,
 } from 'zod';
 import { option } from 'pastel';
 import CreateProxyConfigComponent from '../../../components/api/proxy/APICreateProxyComponent.js';
@@ -60,14 +61,15 @@ export const options = object({
 			}),
 		)
 		.optional(),
+
 	// Each string is expected to follow the format:
-	// "url|http_method|[resource]|[headers]|[action]|[priority]"
-	mapping_rules: array(
+	// "method|url|resource|action|priority|{Key:Value,...}|url_type"
+	mappingRules: array(
 		string().regex(
-			/^https?:\/\/[^|]+\|(get|put|post|delete|options|head|patch)(\|[^|]+)?(\|[^|]+)?(\|[^|]+)?(\|\d+)?$/i,
+			/^(get|put|post|delete|options|head|patch)\|https?:\/\/[^|]+?\|[A-Za-z0-9\-_]+(?:\|[^|]+)?(?:\|\d+)?(?:\|\{[^:}]+:[^:}]+(?:,[^:}]+:[^:}]+)*\})?(?:\|(regex|none))?$/i,
 			{
 				message:
-					'Mapping rule must be in the format "url|http_method|[resource]|[headers]|[action]|[priority]".',
+					'Mapping rule must start with a valid HTTP method, then a URL, then a resource (e.g. "get|https://api.example.com|users"), then optionally: "|action|priority|{headers}|url_type".',
 			},
 		),
 	)
@@ -75,8 +77,88 @@ export const options = object({
 		.describe(
 			option({
 				description:
-					'Mapping rules to route requests. Accepts a comma-separated list of values in the format: "url|http_method|[resource]|[headers]|[action]|[priority]".',
-				alias: 'mapping_rules',
+					'Mapping rules to route requests. Format: "method|url|resource|[action]|[priority]|[{Key:Value,...}]|[url_type]".',
+				alias: 'mapping-rules',
+			}),
+		),
+
+	// New flags for building a single mapping rule
+	mappingRuleMethod: string()
+		.regex(/^(get|put|post|delete|options|head|patch)$/i, {
+			message:
+				'Must be a valid HTTP method (get|put|post|delete|options|head|patch).',
+		})
+		.optional()
+		.describe(
+			option({
+				description: 'HTTP method for a single mapping rule.',
+				alias: 'mapping-rule-method',
+			}),
+		),
+
+	mappingRuleUrl: string()
+		.url({ message: 'Must be a valid URL (e.g. https://api.example.com).' })
+		.optional()
+		.describe(
+			option({
+				description: 'Target URL for a single mapping rule.',
+				alias: 'mapping-rule-url',
+			}),
+		),
+
+	mappingRuleResource: string()
+		.regex(/^[A-Za-z0-9\-_]+$/, {
+			message: 'Resource must match /^[A-Za-z0-9\\-_]+$/.',
+		})
+		.optional()
+		.describe(
+			option({
+				description:
+					'Resource to match against the request (no leading slash).',
+				alias: 'mapping-rule-resource',
+			}),
+		),
+
+	mappingRuleAction: string()
+		.optional()
+		.describe(
+			option({
+				description: 'Optional action name for the mapping rule.',
+				alias: 'mapping-rule-action',
+			}),
+		),
+
+	mappingRulePriority: number()
+		.int()
+		.positive()
+		.optional()
+		.describe(
+			option({
+				description:
+					'Optional priority (positive integer) for the mapping rule.',
+				alias: 'mapping-rule-priority',
+			}),
+		),
+
+	mappingRuleHeaders: array(
+		string().regex(/^[^:]+:[^:]+$/, {
+			message: 'Each header must be in "Key:Value" format.',
+		}),
+	)
+		.optional()
+		.describe(
+			option({
+				description: 'Optional list of headers, each as "Key:Value".',
+				alias: 'mapping-rule-headers',
+			}),
+		),
+
+	mappingRuleUrlType: union([literal('regex'), literal('none')])
+		.optional()
+		.describe(
+			option({
+				description: 'How to interpret the URL: "regex" or "none".',
+				alias: 'mapping-rule-url-type',
 			}),
 		),
 });

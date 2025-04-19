@@ -6,6 +6,7 @@ type ListStatus = 'processing' | 'done' | 'error';
 
 interface RawMappingRule {
 	url: string;
+	url_type?: string;
 	http_method: 'get' | 'put' | 'post' | 'delete' | 'options' | 'head' | 'patch';
 	resource?: string;
 	headers?: Record<string, string>;
@@ -26,7 +27,7 @@ export function useListProxy(
 	environmentId: string | undefined,
 	apiKey?: string,
 	initialPage: number = 1,
-	perPage: number = 30,
+	perPage: number = 100,
 ) {
 	const { authenticatedApiClient, unAuthenticatedApiClient } = useClient();
 	const [status, setStatus] = useState<ListStatus>('processing');
@@ -83,6 +84,7 @@ export function useListProxy(
 						mapping_rules: Array.isArray(item.mapping_rules)
 							? item.mapping_rules.map(rule => ({
 									url: rule.url,
+									url_type: rule.url_type === 'regex' ? 'regex' : undefined,
 									http_method: rule.http_method,
 									resource: rule.resource || '',
 									headers: rule.headers || {},

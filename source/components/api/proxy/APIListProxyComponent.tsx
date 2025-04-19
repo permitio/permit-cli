@@ -51,6 +51,16 @@ export default function APIListProxyTableComponent({ options }: Props) {
 								if (r.resource) parts.push(`→ ${r.resource}`);
 								if (r.action) parts.push(`[action: ${r.action}]`);
 								if (r.priority != null) parts.push(`(prio: ${r.priority})`);
+
+								// NEW: url_type
+								if (r.url_type) parts.push(`[type: ${r.url_type}]`);
+
+								// NEW: headers
+								const hdrs = Object.entries(r.headers || {})
+									.map(([k, v]) => `${k}=${v}`)
+									.join(', ');
+								if (hdrs) parts.push(`[headers: ${hdrs}]`);
+
 								return parts.join(' ');
 							})
 							.join(', ')
