@@ -39,6 +39,15 @@ export const options = object({
 				alias: 'l',
 			}),
 		),
+	all: boolean()
+		.optional()
+		.default(false)
+		.describe(
+			option({
+				description: 'Fetch all pages of users',
+				alias: 'a',
+			}),
+		),
 });
 
 type Props = {

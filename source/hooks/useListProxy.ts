@@ -27,7 +27,7 @@ export function useListProxy(
 	environmentId: string | undefined,
 	apiKey?: string,
 	initialPage: number = 1,
-	perPage: number = 100,
+	perPage: number = 30,
 ) {
 	const { authenticatedApiClient, unAuthenticatedApiClient } = useClient();
 	const [status, setStatus] = useState<ListStatus>('processing');
@@ -36,45 +36,64 @@ export function useListProxy(
 	const [totalCount, setTotalCount] = useState<number>(0);
 	const [page, setPage] = useState<number>(initialPage);
 
-	const listProxies = useCallback(async () => {
-		if (!projectId || !environmentId) {
-			setErrorMessage('Project ID or Environment ID is missing');
-			setStatus('error');
-			return;
-		}
-		setStatus('processing');
-		try {
-			const apiClient = apiKey
-				? unAuthenticatedApiClient(apiKey)
-				: authenticatedApiClient();
-
-			const result = await apiClient.GET(
-				'/v2/facts/{proj_id}/{env_id}/proxy_configs',
-				{ proj_id: projectId, env_id: environmentId },
-				undefined,
-				{ page, per_page: perPage },
-			);
-
-			if (result.error) {
-				console.error('API Error:', result.error);
-				setErrorMessage(
-					typeof result.error === 'object' &&
-						result.error !== null &&
-						'message' in result.error
-						? (result.error as { message: string }).message
-						: result.error || 'Unknown error',
-				);
+	const listProxies = useCallback(
+		async (fetchAll: boolean = false) => {
+			if (!projectId || !environmentId) {
+				setErrorMessage('Project ID or Environment ID is missing');
 				setStatus('error');
 				return;
 			}
+			setStatus('processing');
+			try {
+				const apiClient = apiKey
+					? unAuthenticatedApiClient(apiKey)
+					: authenticatedApiClient();
 
-			if (result.response.status >= 200 && result.response.status < 300) {
-				const data: RawProxyConfig[] = Array.isArray(result.data)
-					? result.data
-					: result.data || [];
+				let allProxies: RawProxyConfig[] = [];
+				let currentPage = page;
+
+				do {
+					const result = await apiClient.GET(
+						'/v2/facts/{proj_id}/{env_id}/proxy_configs',
+						{ proj_id: projectId, env_id: environmentId },
+						undefined,
+						{ page: currentPage, per_page: perPage },
+					);
+
+					if (result.error) {
+						console.error('API Error:', result.error);
+						setErrorMessage(
+							typeof result.error === 'object' &&
+								result.error !== null &&
+								'message' in result.error
+								? (result.error as { message: string }).message
+								: result.error || 'Unknown error',
+						);
+						setStatus('error');
+						return;
+					}
+
+					if (result.response.status >= 200 && result.response.status < 300) {
+						const data: RawProxyConfig[] = Array.isArray(result.data)
+							? result.data
+							: result.data || [];
+
+						allProxies = [...allProxies, ...data];
+
+						if (!fetchAll || data.length < perPage) break;
+
+						currentPage++;
+					} else {
+						setErrorMessage(
+							`Unexpected API status code: ${result.response.status}`,
+						);
+						setStatus('error');
+						return;
+					}
+				} while (fetchAll);
 
 				setProxies(
-					data.map((item: RawProxyConfig) => ({
+					allProxies.map((item: RawProxyConfig) => ({
 						key: item.key,
 						secret:
 							typeof item.secret === 'string'
@@ -95,27 +114,23 @@ export function useListProxy(
 						auth_mechanism: item.auth_mechanism,
 					})),
 				);
-				setTotalCount(result.data?.length || data.length);
+				setTotalCount(allProxies.length);
 				setStatus('done');
-			} else {
-				setErrorMessage(
-					`Unexpected API status code: ${result.response.status}`,
-				);
+			} catch (error) {
+				setErrorMessage(error instanceof Error ? error.message : String(error));
 				setStatus('error');
 			}
-		} catch (error) {
-			setErrorMessage(error instanceof Error ? error.message : String(error));
-			setStatus('error');
-		}
-	}, [
-		apiKey,
-		authenticatedApiClient,
-		environmentId,
-		page,
-		perPage,
-		projectId,
-		unAuthenticatedApiClient,
-	]);
+		},
+		[
+			apiKey,
+			authenticatedApiClient,
+			environmentId,
+			page,
+			perPage,
+			projectId,
+			unAuthenticatedApiClient,
+		],
+	);
 
 	return { status, errorMessage, proxies, totalCount, listProxies, setPage };
 }

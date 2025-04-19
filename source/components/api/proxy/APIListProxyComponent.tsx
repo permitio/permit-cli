@@ -22,11 +22,12 @@ export default function APIListProxyTableComponent({ options }: Props) {
 
 	// Fetch proxies on mount & dependency changes
 	useEffect(() => {
-		listProxies();
+		listProxies(options.all);
 	}, [
 		listProxies,
 		options.page,
 		options.perPage,
+		options.all,
 		scope.project_id,
 		scope.environment_id,
 		options.apiKey,
