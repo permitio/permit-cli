@@ -1,4 +1,3 @@
-// File: tests/hooks/useCreateProxy.test.tsx
 import React from 'react';
 import { render } from 'ink-testing-library';
 import { Text } from 'ink';
@@ -68,7 +67,6 @@ describe('useCreateProxy', () => {
 		await delay(50);
 		const h = getHook();
 		expect(h.status).toBe('error');
-		// Since the hook doesn't guard for missing IDs, the POST result.path is undefined and throws:
 		expect(h.errorMessage).toMatch(/Cannot read properties of undefined/);
 	});
 

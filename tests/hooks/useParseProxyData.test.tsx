@@ -1,4 +1,3 @@
-// File: tests/hooks/useParseProxyData.test.ts
 import React from 'react';
 import { Text } from 'ink';
 import { render } from 'ink-testing-library';
@@ -42,9 +41,8 @@ describe('useParseProxyData', () => {
 	describe('basic payload defaults', () => {
 		it('returns empty/default fields when options is {}', () => {
 			const { lastFrame } = render(<TestComponent options={{}} />);
-			// only strip newlines, leave spaces intact
 			const frame = lastFrame()!.replace(/\n/g, '');
-			expect(frame).toContain('key:'); // no space expected
+			expect(frame).toContain('key:'); 
 			expect(frame).toContain('secret:');
 			expect(frame).toContain('name:');
 			expect(frame).toContain('mapping_rules: []');
@@ -62,18 +60,15 @@ describe('useParseProxyData', () => {
 				],
 			};
 			const { lastFrame } = render(<TestComponent options={opts} />);
-			// strip ALL whitespace so we can do direct substring matching
 			const frame = lastFrame()!.replace(/\s+/g, '');
 			expect(frame).toContain(
 				`"http_method":"get","url":"https://api.example.com","resource":"users"`,
 			);
 			expect(frame).toContain(`"action":"getUsers"`);
 			expect(frame).toContain(`"priority":10`);
-			// internal space in header value is removed by \s+ strip → "Bearerabc"
 			expect(frame).toContain(`"Authorization":"Bearerabc"`);
 			expect(frame).toContain(`"X-Custom":"v7"`);
 			expect(frame).toContain(`"url_type":"regex"`);
-			// same whitespace stripping applies to parseError
 			expect(frame).toContain('parseError:null');
 		});
 
@@ -117,7 +112,6 @@ describe('useParseProxyData', () => {
 			const { lastFrame } = render(<TestComponent options={opts} />);
 			const frame = lastFrame()!.replace(/\s+/g, '');
 			expect(frame).toContain('mapping_rules:[]');
-			// error text is fully collapsed → match without spaces
 			expect(frame).toMatch(/parseError:.*mustincludearesource/);
 		});
 	});

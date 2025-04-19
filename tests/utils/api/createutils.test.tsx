@@ -113,7 +113,6 @@ describe('validateProxyConfig', () => {
 							url: 'http://valid.com',
 							http_method: 'get',
 							resource: 'res',
-							// use a truthy non‐object so the headers‐check runs
 							headers: [] as any,
 						},
 					],

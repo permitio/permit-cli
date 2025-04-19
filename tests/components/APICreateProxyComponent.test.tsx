@@ -1,4 +1,3 @@
-// File: tests/components/APICreateProxyComponent.test.tsx
 import React from 'react';
 import { render } from 'ink-testing-library';
 import { Text } from 'ink';

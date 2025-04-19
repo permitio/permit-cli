@@ -44,7 +44,7 @@ export const options = object({
 		.describe(
 			option({
 				description:
-					'Human-readable name of the proxy config (e.g., Stripe API).',
+					'The name of the proxy config, for example(e.g., Stripe API).',
 			}),
 		)
 		.optional(),
@@ -174,3 +174,4 @@ export default function Proxy({ options }: Props) {
 		</AuthProvider>
 	);
 }
+ 

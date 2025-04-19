@@ -82,7 +82,6 @@ export default function APICreateProxyComponent({
 			initialMappingMethod as MappingRule['http_method'];
 	if (initialMappingResource)
 		initialSingleRule.resource = initialMappingResource;
-	/* …and headers/action/priority/url_type… */
 
 	const hasMappingFlags = Boolean(
 		initialMappingUrl || initialMappingMethod || initialMappingResource,
@@ -249,7 +248,7 @@ export default function APICreateProxyComponent({
 								}));
 							}
 						} catch {
-							// ignore invalid JSON
+							// ignoring invalid JSON
 						}
 					}
 					setHeadersInput('');
@@ -357,7 +356,7 @@ export default function APICreateProxyComponent({
 			case 'mapping_url':
 				return (
 					<>
-						<Text color="yellow">Enter mapping rule URL (full URL):</Text>
+						<Text color="yellow">Enter mapping rule URL-must start from http/https (full URL):</Text>
 						<TextInput
 							value={currentRule.url || ''}
 							onChange={url => setCurrentRule(r => ({ ...r, url }))}

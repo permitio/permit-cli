@@ -1,4 +1,3 @@
-// File: tests/api-create-proxy.test.tsx
 import React from 'react';
 import { Text, Box } from 'ink';
 import { render } from 'ink-testing-library';
