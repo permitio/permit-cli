@@ -356,7 +356,9 @@ export default function APICreateProxyComponent({
 			case 'mapping_url':
 				return (
 					<>
-						<Text color="yellow">Enter mapping rule URL-must start from http/https (full URL):</Text>
+						<Text color="yellow">
+							Enter mapping rule URL-must start from http/https (full URL):
+						</Text>
 						<TextInput
 							value={currentRule.url || ''}
 							onChange={url => setCurrentRule(r => ({ ...r, url }))}

@@ -42,7 +42,7 @@ describe('useParseProxyData', () => {
 		it('returns empty/default fields when options is {}', () => {
 			const { lastFrame } = render(<TestComponent options={{}} />);
 			const frame = lastFrame()!.replace(/\n/g, '');
-			expect(frame).toContain('key:'); 
+			expect(frame).toContain('key:');
 			expect(frame).toContain('secret:');
 			expect(frame).toContain('name:');
 			expect(frame).toContain('mapping_rules: []');
