@@ -1,3 +1,4 @@
+// File: tests/api-create-proxy.test.tsx
 import React from 'react';
 import { Text, Box } from 'ink';
 import { render } from 'ink-testing-library';
@@ -18,8 +19,8 @@ vi.mock('../source/components/api/proxy/APICreateProxyComponent', () => ({
 			<Text>name: {options.name || 'undefined'}</Text>
 			<Text>authMechanism: {options.authMechanism || 'undefined'}</Text>
 			<Text>
-				mapping_rules:{' '}
-				{options.mapping_rules ? JSON.stringify(options.mapping_rules) : '[]'}
+				mappingRules:{' '}
+				{options.mappingRules ? JSON.stringify(options.mappingRules) : '[]'}
 			</Text>
 		</Box>
 	),
@@ -56,7 +57,14 @@ const createOptions = (partialOptions: Partial<Options> = {}): Options =>
 		key: 'default-key',
 		name: 'default-name',
 		authMechanism: 'Bearer',
-		mapping_rules: undefined,
+		mappingRules: undefined,
+		mappingRuleMethod: undefined,
+		mappingRuleUrl: undefined,
+		mappingRuleResource: undefined,
+		mappingRuleAction: undefined,
+		mappingRulePriority: undefined,
+		mappingRuleHeaders: undefined,
+		mappingRuleUrlType: undefined,
 		...partialOptions,
 	}) as Options;
 
@@ -83,7 +91,7 @@ describe('Proxy Command', () => {
 		expect(lastFrame()).toContain('key: default-key');
 		expect(lastFrame()).toContain('name: default-name');
 		expect(lastFrame()).toContain('authMechanism: Bearer');
-		expect(lastFrame()).toContain('mapping_rules: []');
+		expect(lastFrame()).toContain('mappingRules: []');
 	});
 
 	it('should pass apiKey to AuthProvider when provided', () => {
@@ -101,7 +109,7 @@ describe('Proxy Command', () => {
 			key: 'proxy-key',
 			name: 'My Proxy',
 			authMechanism: 'Basic',
-			mapping_rules: ['http://example.com|get|resource|{}|action|1'],
+			mappingRules: ['http://example.com|get|resource|{}|action|1'],
 		};
 		const options = createOptions(fullOptions);
 		const { lastFrame } = render(<Proxy options={options} />);
@@ -112,7 +120,7 @@ describe('Proxy Command', () => {
 		expect(lastFrame()).toContain('name: My Proxy');
 		expect(lastFrame()).toContain('authMechanism: Basic');
 		expect(lastFrame()).toContain(
-			'mapping_rules: ["http://example.com|get|resource|{}|action|1"]',
+			'mappingRules: ["http://example.com|get|resource|{}|action|1"]',
 		);
 	});
 
@@ -135,21 +143,24 @@ describe('Proxy Command', () => {
 			});
 			expect(good.success).toBe(true);
 
-			const bad = proxyOptions.safeParse({ key: 'k', authMechanism: 'OAuth' });
+			const bad = proxyOptions.safeParse({
+				key: 'k',
+				authMechanism: 'OAuth',
+			});
 			expect(bad.success).toBe(false);
 		});
 
-		it('should validate mapping_rules format', () => {
-			const validRule = 'https://api.test.com|post|res|hdrs|act|10';
+		it('should validate mappingRules format', () => {
+			const validRule = 'post|https://api.test.com|res|act|10|{X:1}|regex';
 			const result = proxyOptions.safeParse({
 				key: 'k',
-				mapping_rules: [validRule],
+				mappingRules: [validRule],
 			});
 			expect(result.success).toBe(true);
 
 			const invalid = proxyOptions.safeParse({
 				key: 'k',
-				mapping_rules: ['bad-format'],
+				mappingRules: ['bad-format'],
 			});
 			expect(invalid.success).toBe(false);
 		});
@@ -161,7 +172,7 @@ describe('Proxy Command', () => {
 				key: 'k1',
 				name: 'Name',
 				authMechanism: 'Bearer',
-				mapping_rules: ['http://x|head'],
+				mappingRules: [],
 			};
 			const result = proxyOptions.safeParse(payload);
 			expect(result.success).toBe(true);

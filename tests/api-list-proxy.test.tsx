@@ -84,6 +84,7 @@ describe('List Proxy Command', () => {
 			expandKey: true,
 			page: 5,
 			perPage: 50,
+			all: true,
 		};
 		const options = createOptions(custom);
 		const { lastFrame } = render(<ListProxy options={options} />);
@@ -123,6 +124,7 @@ describe('List Proxy Command', () => {
 
 		it('should accept multiple valid options together', () => {
 			const payload = {
+				all: false,
 				apiKey: 'a',
 				expandKey: true,
 				page: 3,

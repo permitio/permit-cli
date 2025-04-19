@@ -31,7 +31,7 @@ describe('validateProxyConfig', () => {
 
 	it('throws if secret is missing or empty', () => {
 		expect(() => validateProxyConfig({ ...baseConfig, secret: '' })).toThrow(
-			'Missing Error: secret is required',
+			'Validation Error: Bearer secret must be a non-empty string',
 		);
 	});
 
@@ -101,7 +101,7 @@ describe('validateProxyConfig', () => {
 						},
 					],
 				}),
-			).toThrow(/mapping_rules\[0\]\.resource is required/);
+			).toThrow(/Validation Error: mapping_rules\[0\]\.resource is invalid \./);
 		});
 
 		it('throws if headers is not an object', () => {
@@ -113,7 +113,8 @@ describe('validateProxyConfig', () => {
 							url: 'http://valid.com',
 							http_method: 'get',
 							resource: 'res',
-							headers: '' as any,
+							// use a truthy non‐object so the headers‐check runs
+							headers: [] as any,
 						},
 					],
 				}),

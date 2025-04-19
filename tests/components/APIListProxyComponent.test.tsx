@@ -52,6 +52,7 @@ const createOptions = (partial = {}) => ({
 	expandKey: false,
 	page: 1,
 	perPage: 30,
+	all: true,
 	...partial,
 });
 
@@ -106,7 +107,10 @@ describe('APIListProxyTableComponent', () => {
 				secret: 'sec1',
 				name: 'name1',
 				auth_mechanism: 'Bearer',
-				mapping_rules: [{ url: 'http://a' }, { url: 'http://b' }],
+				mapping_rules: [
+					{ url: 'http://a', http_method: 'get', resource: '' },
+					{ url: 'http://b', http_method: 'post', resource: '' },
+				],
 			},
 		];
 
@@ -121,6 +125,7 @@ describe('APIListProxyTableComponent', () => {
 		expect(output).toContain('sec1');
 		expect(output).toContain('name1');
 		expect(output).toContain('Bearer');
+		// truncated, comma-separated URLs
 		expect(output).toContain('http://a');
 		expect(output).toContain('http://b');
 	});
