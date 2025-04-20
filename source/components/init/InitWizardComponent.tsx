@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { options } from '../../commands/init.js';
 import { type infer as zInfer } from 'zod';
-import SelectInput from 'ink-select-input';
 import { Box, Text } from 'ink';
 import Spinner from 'ink-spinner';
 
 import PolicyStepComponent from './PolicyStepComponent.js';
+import DataSetupComponent from './DataSetupComponent.js';
 
 type Props = {
 	options: zInfer<typeof options>;
@@ -26,6 +26,19 @@ export default function InitWizardComponent({ options }: Props) {
 	const [resource, setResource] = useState<string | null>(null);
 	const [user, setUser] = useState<string | null>(null);
 
+	useEffect(() => {
+		if (overallStep === 'error') {
+			setTimeout(() => {
+				process.exit(1);
+			}, 500);
+		}
+		if (overallStep === 'done') {
+			setTimeout(() => {
+				process.exit(0);
+			}, 500);
+		}
+	}, [overallStep]);
+
 	if (overallStep === 'policy') {
 		return (
 			<Box flexDirection={'column'}>
@@ -43,5 +56,41 @@ export default function InitWizardComponent({ options }: Props) {
 			</Box>
 		);
 	}
+	if (overallStep === 'dataSetup') {
+		return (
+			<Box flexDirection={'column'}>
+				<DataSetupComponent
+					apiKey={options.apiKey}
+					onComplete={user => {
+						setUser(user);
+						setOverallStep('enforce');
+					}}
+					onError={error => {
+						setError(error);
+						setOverallStep('error');
+					}}
+				/>
+			</Box>
+		);
+	}
+
+	if (overallStep === 'processing') {
+		return (
+			<Box flexDirection={'column'}>
+				<Text>
+					Processing... <Spinner type="dots" />
+				</Text>
+			</Box>
+		);
+	}
+
+	if (overallStep === 'error') {
+		return (
+			<Box flexDirection={'column'}>
+				<Text color="red">Error: {error}</Text>
+			</Box>
+		);
+	}
+
 	return null;
 }

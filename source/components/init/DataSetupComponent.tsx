@@ -8,10 +8,15 @@ import APISyncUserComponent from '../api/sync/APISyncUserComponent.js';
 import GeneratedUsersComponent from './GenerateUsersComponent.js';
 
 type Props = {
+	apiKey?: string;
 	onComplete: (user: string) => void;
 	onError: (error: string) => void;
 };
-export default function DataSetupComponent({ onComplete, onError }: Props) {
+export default function DataSetupComponent({
+	apiKey,
+	onComplete,
+	onError,
+}: Props) {
 	const [step, setStep] = useState<
 		| 'Manual'
 		| 'Generate'
@@ -92,7 +97,7 @@ export default function DataSetupComponent({ onComplete, onError }: Props) {
 			<Box flexDirection={'column'}>
 				<Text> Creating User {currIndex + 1} : </Text>
 				<APISyncUserComponent
-					options={{}}
+					options={{ apiKey: apiKey }}
 					onComplete={currentUser => {
 						if (!user) {
 							setUser(currentUser);
