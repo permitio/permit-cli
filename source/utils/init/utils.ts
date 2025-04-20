@@ -48,4 +48,5 @@ export const installationCommand = {
 	java: `// add this line to install the Permit.io Java SDK in your project
              implementation 'io.permit:permit-sdk-java'`,
 	dotnet: `dotnet add package Permit`,
+	go: `go get github.com/permitio/permit-golang`,
 };
