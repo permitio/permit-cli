@@ -215,7 +215,7 @@ const useClient = () => {
 
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-expect-error
-			const { response, error } = await client.PUT(path, {
+			const { response, error } = await client.PATCH(path, {
 				params: {
 					query: query ?? undefined,
 					path: path_values

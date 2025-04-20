@@ -82,12 +82,11 @@ export const useResourcesApi = () => {
 
 				// Update existing resources with PATCH
 				for (const resource of existingResources) {
-					const rescourceToUpdate: components['schemas']['ResourceUpdate'] = {
-						...resource,
-					};
+					const { key, ...rescourceToUpdate } = resource;
+
 					const { error } = await client.PATCH(
 						`/v2/schema/{proj_id}/{env_id}/resources/{resource_id}`,
-						{ resource_id: resource.key },
+						{ resource_id: key },
 						rescourceToUpdate,
 						undefined,
 					);

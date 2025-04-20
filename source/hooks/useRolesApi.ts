@@ -87,16 +87,16 @@ export const useRolesApi = () => {
 
 				// Update existing roles with PATCH
 				for (const role of existingRoles) {
-					const roleToUpdate: components['schemas']['RoleUpdate'] = { ...role };
+					const { key, ...roleToUpdate } = role;
 
 					const { error } = await client.PATCH(
 						`/v2/schema/{proj_id}/{env_id}/roles/{role_id}`,
-						{ role_id: role.key },
+						{ role_id: key },
 						roleToUpdate,
 						undefined,
 					);
 
-					if (error) throw new Error(error);
+					if (error) throw new Error(error + 'at patch role');
 				}
 
 				setStatus('done');
