@@ -201,7 +201,6 @@ describe('useRolesApi', () => {
 			{
 				name: 'Administrator',
 				permissions: ['posts:read', 'posts:write'],
-				key: 'admin',
 			},
 			undefined,
 		);
@@ -247,7 +246,7 @@ describe('useRolesApi', () => {
 		expect(mockPatchFn).toHaveBeenCalledWith(
 			'/v2/schema/{proj_id}/{env_id}/roles/{role_id}',
 			{ role_id: 'admin' },
-			{ name: 'Administrator', permissions: ['*:*'], key: 'admin' },
+			{ name: 'Administrator', permissions: ['*:*'] },
 			undefined,
 		);
 

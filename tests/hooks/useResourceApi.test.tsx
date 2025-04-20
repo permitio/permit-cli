@@ -174,7 +174,7 @@ describe('useResourceApi', () => {
 		expect(mockPatchFn).toHaveBeenCalledWith(
 			'/v2/schema/{proj_id}/{env_id}/resources/{resource_id}',
 			{ resource_id: 'existing' },
-			{ name: 'Updated Name', actions: {}, key: 'existing' }, // key should be removed
+			{ name: 'Updated Name', actions: {} }, // key should be removed
 			undefined,
 		);
 		// POST shouldn't be called for existing resources
