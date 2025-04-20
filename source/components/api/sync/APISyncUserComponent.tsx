@@ -13,9 +13,15 @@ type ExtendedOptions = zType<typeof originalOptions>;
 
 type Props = {
 	options: ExtendedOptions;
+	onComplete?: (user: string) => void;
+	onError?: (error: string) => void;
 };
 
-export default function APISyncUserComponent({ options }: Props) {
+export default function APISyncUserComponent({
+	options,
+	onComplete,
+	onError,
+}: Props) {
 	const { scope } = useAuth();
 
 	// Parse user data using the new hook
@@ -60,6 +66,26 @@ export default function APISyncUserComponent({ options }: Props) {
 			syncUser(userId, payload);
 		}
 	}, [payload, userId, syncUser, status, setStatus]);
+	useEffect(() => {
+		if (status === 'done') {
+			if (onComplete) {
+				onComplete(payload.key || '');
+			} else {
+				setTimeout(() => {
+					process.exit(0);
+				}, 500);
+			}
+		} else if (status === 'error' && errorMessage) {
+			if (onError) {
+				onError(errorMessage);
+			} else {
+				setTimeout(() => {
+					process.exit(1);
+				}, 500);
+			}
+		}
+	}, [status, errorMessage, onComplete, onError, payload.key]);
+
 	const handleUserIdSubmit = useCallback(
 		(value: string) => {
 			if (value.trim() === '') return; // Prevent empty submission
@@ -75,7 +101,7 @@ export default function APISyncUserComponent({ options }: Props) {
 	return (
 		<>
 			{status === 'processing' && <Spinner type="dots" />}
-			{status === 'error' && errorMessage && (
+			{status === 'error' && errorMessage && !onError && (
 				<Text color="red">Error: {formatErrorMessage(errorMessage)}</Text>
 			)}
 			{status === 'done' && (

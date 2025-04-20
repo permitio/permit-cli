@@ -3,7 +3,7 @@ import { useGeneratePolicySnapshot } from '../test/hooks/usePolicySnapshot.js';
 import { Text } from 'ink';
 import Spinner from 'ink-spinner';
 type Props = {
-	onComplete: () => void;
+	onComplete: (user: string) => void;
 	onError: (error: string) => void;
 };
 
@@ -20,8 +20,8 @@ export default function GeneratedUsersComponent({
 	}, [error, onError]);
 
 	useEffect(() => {
-		if (state === 'done' && dryUsers) {
-			onComplete();
+		if (state === 'done' && dryUsers.length > 0) {
+			onComplete(dryUsers[0]?.key || '');
 		}
 	}, [state, dryUsers, onComplete]);
 
