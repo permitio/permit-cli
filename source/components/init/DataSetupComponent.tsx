@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Box, Text } from 'ink';
 import SelectInput from 'ink-select-input';
 import Spinner from 'ink-spinner';
@@ -46,6 +46,42 @@ export default function DataSetupComponent({
 	const [userCount, setUserCount] = useState<number>(0);
 	const [count, setCount] = useState<string>('0');
 	const [currIndex, setCurrIndex] = useState<number>(0);
+
+	const handleGenerateComplete = useCallback(
+		(currentUser: {
+			userId: string;
+			firstName?: string;
+			lastName?: string;
+			email?: string;
+		}) => {
+			setUser(currentUser);
+			setStep('done');
+		},
+		[],
+	);
+
+	const handleError = useCallback((errorMsg: string) => {
+		setError(errorMsg);
+		setStep('error');
+	}, []);
+
+	const handleManualComplete = useCallback(
+		(currentUser: {
+			userId: string;
+			firstName?: string;
+			lastName?: string;
+			email?: string;
+		}) => {
+			if (!user) {
+				setUser(currentUser);
+			}
+			setCurrIndex(currIndex => currIndex + 1);
+			if (currIndex + 1 >= userCount) {
+				setStep('done');
+			}
+		},
+		[user, currIndex, userCount],
+	);
 
 	useEffect(() => {
 		if (error) {
@@ -120,19 +156,8 @@ export default function DataSetupComponent({
 				<Text> Creating User {currIndex + 1} : </Text>
 				<APISyncUserComponent
 					options={{ apiKey: apiKey }}
-					onComplete={currentUser => {
-						if (!user) {
-							setUser(currentUser);
-						}
-						setCurrIndex(currIndex + 1);
-						if (currIndex + 1 >= userCount) {
-							setStep('done');
-						}
-					}}
-					onError={error => {
-						setError(error);
-						setStep('error');
-					}}
+					onComplete={handleManualComplete}
+					onError={handleError}
 				/>
 			</Box>
 		);
@@ -141,16 +166,9 @@ export default function DataSetupComponent({
 	if (step === 'Generate') {
 		return (
 			<Box flexDirection={'column'}>
-				<Text>Generating Users...</Text>
 				<GeneratedUsersComponent
-					onComplete={currentUser => {
-						setUser(currentUser);
-						setStep('done');
-					}}
-					onError={error => {
-						setError(error);
-						setStep('error');
-					}}
+					onComplete={handleGenerateComplete}
+					onError={handleError}
 				/>
 			</Box>
 		);

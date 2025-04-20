@@ -6,6 +6,7 @@ import { promisify } from 'node:util';
 import { loadAuthToken } from '../../lib/auth.js';
 import { API_PDPS_CONFIG_URL } from '../../config.js';
 import { useAuth } from '../AuthProvider.js';
+import SelectInput from 'ink-select-input';
 
 const execAsync = promisify(exec);
 
@@ -31,6 +32,9 @@ export default function PDPRunComponent({
 		name: string;
 	} | null>(null);
 	const [dockerAvailable, setDockerAvailable] = useState(true);
+	const [waitDisplay, setWaitDisplay] = useState<boolean>(
+		onComplete ? true : false,
+	);
 
 	useEffect(() => {
 		const generateDockerCommand = async () => {
@@ -100,7 +104,7 @@ export default function PDPRunComponent({
 							setContainerInfo({ id: containerId, name: containerName });
 
 							// Call onComplete prop when everything is successful
-							if (onComplete) {
+							if (onComplete && !waitDisplay) {
 								onComplete();
 							}
 						} catch (err) {
@@ -111,7 +115,7 @@ export default function PDPRunComponent({
 					}
 				} else {
 					// For dry run, we also call onComplete since we successfully generated the command
-					if (onComplete) {
+					if (onComplete && !waitDisplay) {
 						onComplete();
 					}
 				}
@@ -129,7 +133,15 @@ export default function PDPRunComponent({
 		};
 
 		generateDockerCommand();
-	}, [opa, dryRun, authToken, dockerAvailable, onComplete, onError]);
+	}, [
+		opa,
+		dryRun,
+		authToken,
+		dockerAvailable,
+		waitDisplay,
+		onComplete,
+		onError,
+	]);
 
 	if (loading) {
 		return (
@@ -168,11 +180,26 @@ export default function PDPRunComponent({
 		);
 	}
 
-	if (dryRun) {
+	if (dryRun && !waitDisplay) {
 		return (
 			<Box flexDirection="column">
 				<Text>Run the following command to start the PDP container:</Text>
 				<Text>{dockerCommand}</Text>
+			</Box>
+		);
+	}
+
+	if (dryRun && onComplete) {
+		return (
+			<Box flexDirection="column">
+				<Text>Run the following command to start the PDP container: !</Text>
+				<Text>{dockerCommand}</Text>
+				<SelectInput
+					items={[{ label: 'Continue', value: 'continue' }]}
+					onSelect={() => {
+						setWaitDisplay(false);
+					}}
+				/>
 			</Box>
 		);
 	}

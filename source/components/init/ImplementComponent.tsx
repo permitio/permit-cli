@@ -152,8 +152,13 @@ export default function ImplementComponent({
 					<Text bold color="yellow">
 						Code Sample:
 					</Text>
-					<Box borderStyle="round" padding={1}>
-						<Text>{implementCode}</Text>
+					<Box
+						borderStyle="round"
+						padding={1}
+						flexDirection={'column'}
+						width={80}
+					>
+						<Text wrap="wrap">{implementCode}</Text>
 					</Box>
 				</Box>
 
