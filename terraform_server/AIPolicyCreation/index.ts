@@ -3,6 +3,10 @@ import { CoreMessage, streamText, tool } from 'ai';
 import dotenv from 'dotenv';
 import { z } from 'zod';
 import * as readline from 'node:readline/promises';
+import chalk from 'chalk';
+
+// Use require for cli-table
+const Table = require('cli-table');
 
 dotenv.config();
 
@@ -40,7 +44,32 @@ Your task:
 - Avoid asking follow-up questions unless absolutely necessary.
 - Don't use the keys "admin", "viewer", "editor" for roles.
 - In the terraform file, add field of "attributes" with empty object {} for each resource.
-- Always output valid JSON and Terraform file using the permit.io terraform provider. Do not add explanations or text outside the JSON and the Terraform file.
+- Always output as a table with the following format:
+| Resource Name | Actions |
+| Role Name | Permissions |
+- after the table, ask the user if they want to generate a terraform file for the policy.
+- If the user says "yes", generate a terraform file with the following format:
+	- For the resource block, use the following format:
+		resource "permitio_resource" "resource_name" {
+			key         = "resource_name"
+			name        = "Resource Name"
+			description = "Description of the resource"
+			attributes  = {}
+			actions     = {
+				"action1" : { "name" : "Action 1" },
+				"action2" : { "name" : "Action 2" }
+			}
+		}
+	- For the role block, use the following format:
+		resource "permitio_role" "role_name" {
+			key         = "role_name"
+			name        = "Role Name"
+			description = "Description of the role"
+			permissions = ["resource_name:action1", "resource_name:action2"]
+			depends_on = [
+				permitio_resource.resource_name
+			]
+		}
 - For the Terraform file, use the following format for the provider block:
 	terraform {
 		required_providers {
@@ -415,6 +444,58 @@ ${roleKeys
 		console.log('Tool Calls:', toolCalls);
 		console.log('Tool Results:', toolResults);
 		messages.push({ role: 'assistant', content: fullResponse });
+
+		// Parse the JSON response and display it as a table
+		try {
+			// Extract JSON from the response
+			const jsonMatch = fullResponse.match(/\{[\s\S]*\}/);
+			if (jsonMatch) {
+				const jsonStr = jsonMatch[0];
+				const policy = JSON.parse(jsonStr);
+				
+				// Display resources table
+				if (policy.resources && policy.resources.length > 0) {
+					const resourceTable = new Table({
+						head: [chalk.hex('#00FF00')('Resource Name'), chalk.hex('#00FF00')('Actions')],
+						colWidths: [20, 40]
+					});
+					
+					policy.resources.forEach(resource => {
+						resourceTable.push([
+							resource.name,
+							resource.actions.join(', ')
+						]);
+					});
+					
+					console.log('\nResources:');
+					console.log(resourceTable.toString());
+				}
+				
+				// Display roles table
+				if (policy.roles && policy.roles.length > 0) {
+					const roleTable = new Table({
+						head: [chalk.hex('#00FF00')('Role Name'), chalk.hex('#00FF00')('Permissions')],
+						colWidths: [20, 60]
+					});
+					
+					policy.roles.forEach(role => {
+						const permissions = role.permissions.map(p => 
+							`${p.resource}: ${p.actions.join(', ')}`
+						).join('\n');
+						
+						roleTable.push([
+							role.name,
+							permissions
+						]);
+					});
+					
+					console.log('\nRoles:');
+					console.log(roleTable.toString());
+				}
+			}
+		} catch (error) {
+			console.error('Error parsing JSON response:', error);
+		}
 	}
 }
 
