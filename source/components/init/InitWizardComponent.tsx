@@ -6,6 +6,7 @@ import Spinner from 'ink-spinner';
 
 import PolicyStepComponent from './PolicyStepComponent.js';
 import DataSetupComponent from './DataSetupComponent.js';
+import EnforceComponent from './EnforceComponent.js';
 
 type Props = {
 	options: zInfer<typeof options>;
@@ -64,6 +65,22 @@ export default function InitWizardComponent({ options }: Props) {
 					onComplete={user => {
 						setUser(user);
 						setOverallStep('enforce');
+					}}
+					onError={error => {
+						setError(error);
+						setOverallStep('error');
+					}}
+				/>
+			</Box>
+		);
+	}
+
+	if (overallStep === 'enforce') {
+		return (
+			<Box flexDirection={'column'} marginY={1}>
+				<EnforceComponent
+					onComplete={() => {
+						setOverallStep('implement');
 					}}
 					onError={error => {
 						setError(error);

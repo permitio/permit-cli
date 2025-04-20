@@ -12,9 +12,16 @@ const execAsync = promisify(exec);
 type Props = {
 	opa?: number;
 	dryRun?: boolean;
+	onComplete?: () => void;
+	onError?: (error: string) => void;
 };
 
-export default function PDPRunComponent({ opa, dryRun = false }: Props) {
+export default function PDPRunComponent({
+	opa,
+	dryRun = false,
+	onComplete,
+	onError,
+}: Props) {
 	const { authToken } = useAuth();
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -67,7 +74,6 @@ export default function PDPRunComponent({ opa, dryRun = false }: Props) {
 					try {
 						await execAsync('docker --version');
 						setDockerAvailable(true);
-						// eslint-disable-next-line @typescript-eslint/no-unused-vars
 					} catch (_) {
 						// Not using the error value, using underscore to indicate intentionally unused
 						setDockerAvailable(false);
@@ -92,25 +98,38 @@ export default function PDPRunComponent({ opa, dryRun = false }: Props) {
 							const containerName = nameOutput.trim().replace(/^\//, ''); // Remove leading / from name
 
 							setContainerInfo({ id: containerId, name: containerName });
+
+							// Call onComplete prop when everything is successful
+							if (onComplete) {
+								onComplete();
+							}
 						} catch (err) {
 							const errorMessage =
 								err instanceof Error ? err.message : String(err);
 							throw new Error(`Failed to run Docker command: ${errorMessage}`);
 						}
 					}
+				} else {
+					// For dry run, we also call onComplete since we successfully generated the command
+					if (onComplete) {
+						onComplete();
+					}
 				}
 			} catch (err) {
-				setError(err instanceof Error ? err.message : String(err));
+				const errorMessage = err instanceof Error ? err.message : String(err);
+				setError(errorMessage);
+
+				// Call onError prop when an error occurs
+				if (onError) {
+					onError(errorMessage);
+				}
 			} finally {
 				setLoading(false);
 			}
 		};
 
 		generateDockerCommand();
-
-		// No need for cleanup function - we're running Docker in detached mode,
-		// so it won't stop when the component unmounts
-	}, [opa, dryRun, authToken, dockerAvailable]);
+	}, [opa, dryRun, authToken, dockerAvailable, onComplete, onError]);
 
 	if (loading) {
 		return (

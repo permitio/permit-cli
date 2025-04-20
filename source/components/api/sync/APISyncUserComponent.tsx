@@ -70,18 +70,10 @@ export default function APISyncUserComponent({
 		if (status === 'done') {
 			if (onComplete) {
 				onComplete(payload.key || '');
-			} else {
-				setTimeout(() => {
-					process.exit(0);
-				}, 500);
 			}
 		} else if (status === 'error' && errorMessage) {
 			if (onError) {
 				onError(errorMessage);
-			} else {
-				setTimeout(() => {
-					process.exit(1);
-				}, 500);
 			}
 		}
 	}, [status, errorMessage, onComplete, onError, payload.key]);
