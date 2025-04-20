@@ -161,9 +161,9 @@ describe('RoleInput', () => {
 		expect(lastFrame()).toContain('Invalid action in permission: users:fly');
 	});
 
-	it('rejects duplicate role', async () => {
+	it('accepts existing roles', async () => {
 		mockGetExistingRoles.mockResolvedValue(new Set(['admin']));
-		const { lastFrame } = render(
+		render(
 			<RoleInput
 				availableActions={availableActions}
 				availableResources={availableResources}
@@ -172,8 +172,13 @@ describe('RoleInput', () => {
 		);
 		global.textInputHandlers.onSubmit('admin|users:create');
 		await new Promise(r => setTimeout(r, 50));
-		expect(mockOnComplete).not.toHaveBeenCalled();
-		expect(lastFrame()).toContain('Roles already exist: admin');
+		expect(mockOnComplete).toHaveBeenCalledWith([
+			{
+				key: 'admin',
+				name: 'admin',
+				permissions: ['users:create'],
+			},
+		]);
 	});
 
 	it('shows error if no permissions', async () => {

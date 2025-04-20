@@ -84,12 +84,15 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 					return;
 				}
 
-				// Only add roles that don't already exist
+				// Add role regardless of whether it exists or not
+				roles.push({
+					key: role,
+					name: role,
+					permissions,
+				});
 			}
 
-			// If there are existing roles, show error and don't proceed
-
-			// No existing roles, proceed normally
+			// Process all roles, including existing ones
 			onComplete(roles);
 			setInput('');
 		} catch (err) {

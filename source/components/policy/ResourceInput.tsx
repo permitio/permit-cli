@@ -10,7 +10,6 @@ interface ResourceInputProps {
 export const ResourceInput: React.FC<ResourceInputProps> = ({ onComplete }) => {
 	const [input, setInput] = useState('');
 	const [validationError, setValidationError] = useState<string | null>(null);
-
 	const placeholder = 'Posts, Comments, Authors';
 
 	const validateResourceKey = (key: string): boolean => {

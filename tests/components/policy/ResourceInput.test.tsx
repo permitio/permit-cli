@@ -87,13 +87,15 @@ describe('ResourceInput', () => {
 		]);
 	});
 
-	it('shows error for duplicate resources', async () => {
+	it('accepts existing resources', async () => {
 		mockGetExistingResources.mockResolvedValue(new Set(['posts']));
-		const { lastFrame } = render(<ResourceInput onComplete={mockOnComplete} />);
+		render(<ResourceInput onComplete={mockOnComplete} />);
 		global.textInputHandlers.onSubmit('posts,comments');
 		await new Promise(r => setTimeout(r, 50));
-		expect(lastFrame()).toContain('Resources already exist: posts');
-		expect(mockOnComplete).not.toHaveBeenCalled();
+		expect(mockOnComplete).toHaveBeenCalledWith([
+			{ key: 'posts', name: 'posts', actions: {} },
+			{ key: 'comments', name: 'comments', actions: {} },
+		]);
 	});
 
 	it('clears input after successful submission', async () => {
