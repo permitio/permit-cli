@@ -74,7 +74,6 @@ describe('CreateSimpleWizard', () => {
 		expect(ResourceInput).toHaveBeenCalledWith(
 			expect.objectContaining({
 				onComplete: expect.any(Function),
-				onError: expect.any(Function),
 			}),
 			expect.anything(),
 		);
@@ -97,7 +96,7 @@ describe('CreateSimpleWizard', () => {
 		expect(ActionInput).toHaveBeenCalledWith(
 			expect.objectContaining({
 				onComplete: expect.any(Function),
-				onError: expect.any(Function),
+				availableResources: ['resource1'],
 			}),
 			expect.anything(),
 		);
@@ -126,38 +125,9 @@ describe('CreateSimpleWizard', () => {
 				availableActions: ['read'],
 				availableResources: ['resource1'],
 				onComplete: expect.any(Function),
-				onError: expect.any(Function),
 			}),
 			expect.anything(),
 		);
-	});
-
-	it('handles errors from ResourceInput component', async () => {
-		const { lastFrame } = render(<CreateSimpleWizard />);
-
-		// Extract the onError handler from ResourceInput
-		vi.mocked(ResourceInput).mock.calls[0][0].onError('Resource error test');
-
-		// Check that error is displayed
-		expect(lastFrame()).toContain('[Error] Resource error test');
-	});
-
-	it('handles errors from ActionInput component', () => {
-		const { lastFrame } = render(<CreateSimpleWizard />);
-
-		// Extract the onError handler from ActionInput
-		const onCompleteResources =
-			vi.mocked(ResourceInput).mock.calls[0][0].onComplete;
-		onCompleteResources([{ key: 'resource1', name: 'resource1', actions: {} }]);
-
-		const onError = vi.mocked(ActionInput).mock.calls[0][0].onError;
-
-		// Call onError with an error message
-		onError('Action error test');
-
-		// Check that error is displayed
-		expect(lastFrame()).toContain('[Error] Action error test');
-		expect(mockExit).toHaveBeenCalledWith(1);
 	});
 
 	it('displays processing message when submitting role data', () => {

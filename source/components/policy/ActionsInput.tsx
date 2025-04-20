@@ -7,27 +7,30 @@ interface ActionInputProps {
 	onComplete: (
 		actions: Record<string, components['schemas']['ActionBlockEditable']>,
 	) => void;
-	onError: (error: string) => void;
 	availableResources: string[];
 }
 
 export const ActionInput: React.FC<ActionInputProps> = ({
 	onComplete,
-	onError,
 	availableResources = [],
 }) => {
 	const [input, setInput] = useState('');
-	const placeholder = 'create, read, update, delete';
+	const [validationError, setValidationError] = useState<string | null>(null);
+	const placeholder = 'Create, Read, Update, Delete';
 
 	const validateActionKey = (key: string): boolean => {
 		return /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(key);
 	};
 
 	const handleSubmit = (value: string) => {
+		// Clear any previous validation errors
+		setValidationError(null);
+
 		if (value.trim() === '') {
 			setInput(placeholder);
 			return;
 		}
+
 		try {
 			const valueToProcess = value.trim();
 			const keys = valueToProcess
@@ -36,13 +39,13 @@ export const ActionInput: React.FC<ActionInputProps> = ({
 				.filter(Boolean);
 
 			if (keys.length === 0) {
-				onError('Please enter at least one action');
+				setValidationError('Please enter at least one action');
 				return;
 			}
 
 			const invalidKeys = keys.filter(key => !validateActionKey(key));
 			if (invalidKeys.length > 0) {
-				onError(`Invalid action keys: ${invalidKeys.join(', ')}`);
+				setValidationError(`Invalid action keys: ${invalidKeys.join(', ')}`);
 				return;
 			}
 
@@ -60,7 +63,7 @@ export const ActionInput: React.FC<ActionInputProps> = ({
 			onComplete(actions);
 			setInput('');
 		} catch (err) {
-			onError((err as Error).message);
+			setValidationError((err as Error).message);
 		}
 	};
 
@@ -87,6 +90,11 @@ export const ActionInput: React.FC<ActionInputProps> = ({
 				<Text>{'> '}</Text>
 				<TextInput value={input} onChange={setInput} onSubmit={handleSubmit} />
 			</Box>
+			{validationError && (
+				<Box>
+					<Text color="red">{validationError}</Text>
+				</Box>
+			)}
 		</Box>
 	);
 };

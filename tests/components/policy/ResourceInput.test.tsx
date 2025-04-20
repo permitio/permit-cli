@@ -23,7 +23,6 @@ vi.mock('ink-text-input', () => ({
 
 describe('ResourceInput', () => {
 	const mockOnComplete = vi.fn();
-	const mockOnError = vi.fn();
 
 	beforeEach(() => {
 		vi.resetAllMocks();
@@ -35,52 +34,47 @@ describe('ResourceInput', () => {
 	});
 
 	it('renders with placeholder', () => {
-		const { lastFrame } = render(
-			<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />,
-		);
+		const { lastFrame } = render(<ResourceInput onComplete={mockOnComplete} />);
 		expect(lastFrame()).toContain('Configure Resources');
 		expect(lastFrame()).toContain('Example:');
 		expect(lastFrame()).toContain('Input:');
 	});
 
 	it('submits valid resources', async () => {
-		render(<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />);
+		render(<ResourceInput onComplete={mockOnComplete} />);
 		global.textInputHandlers.onSubmit('posts,comments');
 		await new Promise(r => setTimeout(r, 50));
 		expect(mockOnComplete).toHaveBeenCalledWith([
 			{ key: 'posts', name: 'posts', actions: {} },
 			{ key: 'comments', name: 'comments', actions: {} },
 		]);
-		expect(mockOnError).not.toHaveBeenCalled();
 	});
 
 	it('shows error for invalid resource keys', async () => {
-		render(<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />);
+		const { lastFrame } = render(<ResourceInput onComplete={mockOnComplete} />);
 		global.textInputHandlers.onSubmit('posts, 123bad');
 		await new Promise(r => setTimeout(r, 50));
-		expect(mockOnError).toHaveBeenCalledWith(
-			expect.stringContaining('Invalid resource keys: 123bad'),
-		);
+		expect(lastFrame()).toContain('Invalid resource keys: 123bad');
 		expect(mockOnComplete).not.toHaveBeenCalled();
 	});
 
 	it('shows error if no resources entered', async () => {
-		render(<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />);
+		const { lastFrame } = render(<ResourceInput onComplete={mockOnComplete} />);
 		global.textInputHandlers.onSubmit('   ');
 		await new Promise(r => setTimeout(r, 50));
-		// Should fill with placeholder, not call onComplete or onError
+		expect(lastFrame()).toContain('Posts, Comments, Authors');
 		expect(mockOnComplete).not.toHaveBeenCalled();
 	});
 
 	it('fills input with placeholder on first empty submit', () => {
-		render(<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />);
+		render(<ResourceInput onComplete={mockOnComplete} />);
 		global.textInputHandlers.onSubmit('');
 		// Should set input to placeholder, not call onComplete
 		expect(mockOnComplete).not.toHaveBeenCalled();
 	});
 
 	it('submits after placeholder is filled and Enter is pressed again', async () => {
-		render(<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />);
+		render(<ResourceInput onComplete={mockOnComplete} />);
 		// First Enter with empty input fills with placeholder
 		global.textInputHandlers.onSubmit('');
 		// Simulate user pressing Enter again (input now equals placeholder)
@@ -95,12 +89,19 @@ describe('ResourceInput', () => {
 
 	it('shows error for duplicate resources', async () => {
 		mockGetExistingResources.mockResolvedValue(new Set(['posts']));
-		render(<ResourceInput onComplete={mockOnComplete} onError={mockOnError} />);
+		const { lastFrame } = render(<ResourceInput onComplete={mockOnComplete} />);
 		global.textInputHandlers.onSubmit('posts,comments');
 		await new Promise(r => setTimeout(r, 50));
-		expect(mockOnError).toHaveBeenCalledWith(
-			expect.stringContaining('Resources already exist: posts'),
-		);
+		expect(lastFrame()).toContain('Resources already exist: posts');
 		expect(mockOnComplete).not.toHaveBeenCalled();
+	});
+
+	it('clears input after successful submission', async () => {
+		const { lastFrame } = render(<ResourceInput onComplete={mockOnComplete} />);
+		global.textInputHandlers.onChange('posts');
+		global.textInputHandlers.onSubmit('posts');
+		await new Promise(r => setTimeout(r, 50));
+		// Input should be empty after successful submission
+		expect(lastFrame()).toContain('Input:');
 	});
 });

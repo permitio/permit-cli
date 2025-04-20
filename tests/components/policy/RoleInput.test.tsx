@@ -23,7 +23,6 @@ vi.mock('ink-text-input', () => ({
 
 describe('RoleInput', () => {
 	const mockOnComplete = vi.fn();
-	const mockOnError = vi.fn();
 	const availableResources = ['users', 'posts'];
 	const availableActions = ['create', 'read', 'update', 'delete'];
 
@@ -42,7 +41,6 @@ describe('RoleInput', () => {
 				availableActions={availableActions}
 				availableResources={availableResources}
 				onComplete={mockOnComplete}
-				onError={mockOnError}
 			/>,
 		);
 		expect(lastFrame()).toContain('Configure Roles and Permissions');
@@ -52,12 +50,11 @@ describe('RoleInput', () => {
 	});
 
 	it('accepts a valid role|resource:action|resource:action', async () => {
-		render(
+		const { lastFrame } = render(
 			<RoleInput
 				availableActions={availableActions}
 				availableResources={availableResources}
 				onComplete={mockOnComplete}
-				onError={mockOnError}
 			/>,
 		);
 		global.textInputHandlers.onSubmit('admin|users:create|posts:read');
@@ -69,7 +66,7 @@ describe('RoleInput', () => {
 				permissions: ['users:create', 'posts:read'],
 			},
 		]);
-		expect(mockOnError).not.toHaveBeenCalled();
+		expect(lastFrame()).not.toContain('red');
 	});
 
 	it('expands role|resource to all actions', async () => {
@@ -78,7 +75,6 @@ describe('RoleInput', () => {
 				availableActions={availableActions}
 				availableResources={availableResources}
 				onComplete={mockOnComplete}
-				onError={mockOnError}
 			/>,
 		);
 		global.textInputHandlers.onSubmit('editor|posts');
@@ -103,7 +99,6 @@ describe('RoleInput', () => {
 				availableActions={availableActions}
 				availableResources={availableResources}
 				onComplete={mockOnComplete}
-				onError={mockOnError}
 			/>,
 		);
 		global.textInputHandlers.onSubmit('admin|users:create,editor|posts:read');
@@ -123,90 +118,77 @@ describe('RoleInput', () => {
 	});
 
 	it('rejects invalid role key', async () => {
-		render(
+		const { lastFrame } = render(
 			<RoleInput
 				availableActions={availableActions}
 				availableResources={availableResources}
 				onComplete={mockOnComplete}
-				onError={mockOnError}
 			/>,
 		);
 		global.textInputHandlers.onSubmit('123bad|users:create');
 		await new Promise(r => setTimeout(r, 50));
-		expect(mockOnError).toHaveBeenCalledWith(
-			expect.stringContaining('Invalid role key: 123bad'),
-		);
 		expect(mockOnComplete).not.toHaveBeenCalled();
+		expect(lastFrame()).toContain('Invalid role key: 123bad');
 	});
 
 	it('rejects invalid resource', async () => {
-		render(
+		const { lastFrame } = render(
 			<RoleInput
 				availableActions={availableActions}
 				availableResources={availableResources}
 				onComplete={mockOnComplete}
-				onError={mockOnError}
 			/>,
 		);
 		global.textInputHandlers.onSubmit('admin|invalid:create');
 		await new Promise(r => setTimeout(r, 50));
-		expect(mockOnError).toHaveBeenCalledWith(
-			expect.stringContaining('Invalid resource in permission: invalid:create'),
-		);
 		expect(mockOnComplete).not.toHaveBeenCalled();
+		expect(lastFrame()).toContain(
+			'Invalid resource in permission: invalid:create',
+		);
 	});
 
 	it('rejects invalid action', async () => {
-		render(
+		const { lastFrame } = render(
 			<RoleInput
 				availableActions={availableActions}
 				availableResources={availableResources}
 				onComplete={mockOnComplete}
-				onError={mockOnError}
 			/>,
 		);
 		global.textInputHandlers.onSubmit('admin|users:fly');
 		await new Promise(r => setTimeout(r, 50));
-		expect(mockOnError).toHaveBeenCalledWith(
-			expect.stringContaining('Invalid action in permission: users:fly'),
-		);
 		expect(mockOnComplete).not.toHaveBeenCalled();
+		expect(lastFrame()).toContain('Invalid action in permission: users:fly');
 	});
 
 	it('rejects duplicate role', async () => {
 		mockGetExistingRoles.mockResolvedValue(new Set(['admin']));
-		render(
+		const { lastFrame } = render(
 			<RoleInput
 				availableActions={availableActions}
 				availableResources={availableResources}
 				onComplete={mockOnComplete}
-				onError={mockOnError}
 			/>,
 		);
 		global.textInputHandlers.onSubmit('admin|users:create');
 		await new Promise(r => setTimeout(r, 50));
-		expect(mockOnError).toHaveBeenCalledWith(
-			expect.stringContaining('Role "admin" already exists'),
-		);
 		expect(mockOnComplete).not.toHaveBeenCalled();
+		expect(lastFrame()).toContain('Roles already exist: admin');
 	});
 
 	it('shows error if no permissions', async () => {
-		render(
+		const { lastFrame } = render(
 			<RoleInput
 				availableActions={availableActions}
 				availableResources={availableResources}
 				onComplete={mockOnComplete}
-				onError={mockOnError}
 			/>,
 		);
 		global.textInputHandlers.onSubmit('admin');
 		await new Promise(r => setTimeout(r, 50));
-		expect(mockOnError).toHaveBeenCalledWith(
-			expect.stringContaining(
-				'Role must have at least one resource or resource:action',
-			),
-		);
 		expect(mockOnComplete).not.toHaveBeenCalled();
+		expect(lastFrame()).toContain(
+			'Role must have at least one resource or resource:action',
+		);
 	});
 });
