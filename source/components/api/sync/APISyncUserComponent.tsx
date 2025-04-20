@@ -91,7 +91,7 @@ export default function APISyncUserComponent({
 				onError(errorMessage);
 			}
 		}
-	}, [status, errorMessage, onComplete, onError, payload.key]);
+	}, [status, errorMessage, onComplete, onError, payload]);
 
 	const handleUserIdSubmit = useCallback(
 		(value: string) => {

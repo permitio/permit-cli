@@ -7,6 +7,7 @@ import Spinner from 'ink-spinner';
 import PolicyStepComponent from './PolicyStepComponent.js';
 import DataSetupComponent from './DataSetupComponent.js';
 import EnforceComponent from './EnforceComponent.js';
+import ImplementComponent from './ImplementComponent.js';
 
 type Props = {
 	options: zInfer<typeof options>;
@@ -23,14 +24,14 @@ export default function InitWizardComponent({ options }: Props) {
 		| 'error'
 	>('policy');
 	const [error, setError] = useState<string | null>(null);
-	const [action, setAction] = useState<string | null>(null);
-	const [resource, setResource] = useState<string | null>(null);
+	const [action, setAction] = useState<string>('');
+	const [resource, setResource] = useState<string>('');
 	const [user, setUser] = useState<{
 		userId: string;
 		firstName?: string;
 		lastName?: string;
 		email?: string;
-	} | null>(null);
+	}>({ userId: '' });
 
 	useEffect(() => {
 		if (overallStep === 'error') {
@@ -95,6 +96,25 @@ export default function InitWizardComponent({ options }: Props) {
 			</Box>
 		);
 	}
+	if (overallStep === 'implement') {
+		return (
+			<Box flexDirection={'column'}>
+				<ImplementComponent
+					action={action}
+					resource={resource}
+					user={user}
+					apiKey={options.apiKey}
+					onComplete={() => {
+						setOverallStep('done');
+					}}
+					onError={error => {
+						setError(error);
+						setOverallStep('error');
+					}}
+				/>
+			</Box>
+		);
+	}
 
 	if (overallStep === 'processing') {
 		return (
@@ -110,6 +130,13 @@ export default function InitWizardComponent({ options }: Props) {
 		return (
 			<Box flexDirection={'column'}>
 				<Text color="red">Error: {error}</Text>
+			</Box>
+		);
+	}
+	if (overallStep === 'done') {
+		return (
+			<Box flexDirection={'column'}>
+				<Text>Setup Completed!</Text>
 			</Box>
 		);
 	}

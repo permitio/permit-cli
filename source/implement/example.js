@@ -6,7 +6,7 @@ const port = 4000;
 
 const permit = new Permit({
 	pdp: 'https://cloudpdp.api.permit.io',
-	token: '<YOUR_PERMIT_API_KEY>',
+	token: '<<API_KEY>>',
 });
 
 app.get('/', async (req, res) => {

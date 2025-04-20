@@ -89,27 +89,6 @@ export async function ApplyTemplateLocally(
 		}
 	}
 }
-export function getResourceAndAction(fileName: string): {
-	resource: string;
-	action: string;
-} {
-	try {
-		const fileContent = getFileContent(fileName);
-		const resourcesAndActions = extractResourcesAndActions(fileContent);
-		if (
-			resourcesAndActions.length > 0 &&
-			resourcesAndActions[0] &&
-			resourcesAndActions[0].actions.length > 0
-		) {
-			const resource = resourcesAndActions[0].resource;
-			const action = resourcesAndActions[0].actions[0] || '';
-			return { resource, action };
-		}
-		return { resource: '', action: '' };
-	} catch {
-		return { resource: '', action: '' };
-	}
-}
 
 type ResourceActionMap = {
 	resource: string;
@@ -167,4 +146,26 @@ export function extractResourcesAndActions(
 	}
 
 	return resources;
+}
+
+export function getResourceAndAction(fileName: string): {
+	resource: string;
+	action: string;
+} {
+	try {
+		const fileContent = getFileContent(fileName);
+		const resourcesAndActions = extractResourcesAndActions(fileContent);
+		if (
+			resourcesAndActions.length > 0 &&
+			resourcesAndActions[0] &&
+			resourcesAndActions[0].actions.length > 0
+		) {
+			const resource = resourcesAndActions[0].resource;
+			const action = resourcesAndActions[0].actions[0] || '';
+			return { resource, action };
+		}
+		return { resource: '', action: '' };
+	} catch {
+		return { resource: '', action: '' };
+	}
 }

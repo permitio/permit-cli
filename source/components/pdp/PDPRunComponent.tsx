@@ -74,7 +74,7 @@ export default function PDPRunComponent({
 					try {
 						await execAsync('docker --version');
 						setDockerAvailable(true);
-					} catch (_) {
+					} catch {
 						// Not using the error value, using underscore to indicate intentionally unused
 						setDockerAvailable(false);
 						throw new Error(
