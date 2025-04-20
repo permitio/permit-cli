@@ -25,13 +25,13 @@ app.get('/', async (req, res) => {
 		res
 			.status(200)
 			.send(
-				`${user.firstName} ${user.lastName} is PERMITTED to 'read' 'diagnosis' !`,
+				`${user.firstName} ${user.lastName} is PERMITTED to '<<ACTIONS>>' '<<RESOURCES>>' !`,
 			);
 	} else {
 		res
 			.status(403)
 			.send(
-				`${user.firstName} ${user.lastName} is NOT PERMITTED to 'read' 'diagnosis' !`,
+				`${user.firstName} ${user.lastName} is NOT PERMITTED to '<<ACTIONS>>' '<<RESOURCES>>' !`,
 			);
 	}
 });
