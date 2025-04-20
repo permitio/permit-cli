@@ -89,3 +89,82 @@ export async function ApplyTemplateLocally(
 		}
 	}
 }
+export function getResourceAndAction(fileName: string): {
+	resource: string;
+	action: string;
+} {
+	try {
+		const fileContent = getFileContent(fileName);
+		const resourcesAndActions = extractResourcesAndActions(fileContent);
+		if (
+			resourcesAndActions.length > 0 &&
+			resourcesAndActions[0] &&
+			resourcesAndActions[0].actions.length > 0
+		) {
+			const resource = resourcesAndActions[0].resource;
+			const action = resourcesAndActions[0].actions[0] || '';
+			return { resource, action };
+		}
+		return { resource: '', action: '' };
+	} catch {
+		return { resource: '', action: '' };
+	}
+}
+
+type ResourceActionMap = {
+	resource: string;
+	actions: string[];
+};
+
+export function extractResourcesAndActions(
+	tfString: string,
+): ResourceActionMap[] {
+	const lines = tfString.split('\n').map(line => line.trim());
+	const resources: ResourceActionMap[] = [];
+
+	let currentResource: ResourceActionMap | null = null;
+	let inActionsBlock = false;
+
+	for (const line of lines) {
+		// Match resource declaration
+		if (line.startsWith('resource "permitio_resource"')) {
+			const match = line.match(/"permitio_resource"\s+"(.+?)"/);
+			if (match && match[1]) {
+				currentResource = {
+					resource: match[1],
+					actions: [],
+				};
+			}
+		}
+
+		if (currentResource) {
+			// Detect start of actions block
+			if (line === 'actions = {') {
+				inActionsBlock = true;
+				continue;
+			}
+
+			// Detect end of actions block
+			if (inActionsBlock && line === '}') {
+				inActionsBlock = false;
+				continue;
+			}
+
+			// While in actions block, extract keys
+			if (inActionsBlock) {
+				const actionMatch = line.match(/"(.+?)"\s*=/);
+				if (actionMatch && actionMatch[1]) {
+					currentResource.actions.push(actionMatch[1]);
+				}
+			}
+
+			// Close off the resource block (assuming it ends after actions)
+			if (line === '}' && !inActionsBlock) {
+				resources.push(currentResource);
+				currentResource = null;
+			}
+		}
+	}
+
+	return resources;
+}

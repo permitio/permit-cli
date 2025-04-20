@@ -3,6 +3,7 @@ import {
 	getFiles,
 	ApplyTemplate,
 	ApplyTemplateLocally,
+	getResourceAndAction,
 } from '../../../lib/env/template/utils.js';
 import SelectInput from 'ink-select-input';
 import { Text } from 'ink';
@@ -12,6 +13,8 @@ import { useAuth } from '../../AuthProvider.js';
 type Props = {
 	local?: boolean;
 	template?: string;
+	onComplete?: (resource: string, action: string) => void;
+	onError?: (error: string) => void;
 };
 
 type SelectItemType = {
@@ -19,23 +22,41 @@ type SelectItemType = {
 	value: string;
 };
 
-export default function ApplyComponent({ local, template }: Props) {
+export default function ApplyComponent({
+	local,
+	template,
+	onComplete,
+	onError,
+}: Props) {
 	const [errorMessage, setErrorMessage] = useState('');
 	const [successMessage, setSuccessMessage] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
 	const files = getFiles();
 	const { authToken: key } = useAuth();
+	const [resource, setResource] = useState<string | null>(null);
+	const [action, setAction] = useState<string | null>(null);
 
 	const selectionValues = files.map(file => ({
 		label: file,
 		value: file,
 	}));
 
+	useEffect(() => {
+		if (onError && errorMessage) {
+			onError(errorMessage);
+		}
+		if (onComplete && successMessage) {
+			onComplete(resource || '', action || '');
+		}
+	}, [errorMessage, successMessage, onError, onComplete, resource, action]);
+
 	// Memoized function to apply template
 	const applyTemplate = useCallback(
 		async (selectedTemplate: string) => {
 			setIsLoading(true);
-
+			const { resource, action } = getResourceAndAction(selectedTemplate);
+			setResource(resource);
+			setAction(action);
 			try {
 				const message = local
 					? await ApplyTemplateLocally(selectedTemplate, key)
@@ -74,7 +95,7 @@ export default function ApplyComponent({ local, template }: Props) {
 				<Text color="cyan">
 					<Spinner type="dots" /> Applying template...
 				</Text>
-			) : errorMessage ? (
+			) : errorMessage && !onError ? (
 				<Text color="red">{errorMessage}</Text>
 			) : successMessage ? (
 				<Text color="green">{successMessage}</Text>
