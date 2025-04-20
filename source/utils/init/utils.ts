@@ -40,3 +40,12 @@ export function getFormatedFile(
 
 	return formattedContent;
 }
+
+export const installationCommand = {
+	python: 'pip install permit fastapi "uvicorn[standard]"',
+	node: 'npm install permitio',
+	ruby: 'gem install permit-sdk webrick',
+	java: `// add this line to install the Permit.io Java SDK in your project
+             implementation 'io.permit:permit-sdk-java'`,
+	dotnet: `dotnet add package Permit`,
+};
