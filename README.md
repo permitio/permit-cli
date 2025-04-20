@@ -67,7 +67,10 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
 - `policy create simple` - Create a simple policy Table
 
 - `test` - commands for testing authorization policies
+
   - `run audit` - test PDP against past authorization decisions
+
+- `init` - A Complete wizard to take the users through all the steps, from configuring policy to enforcing it.
 
 ---
 
@@ -98,6 +101,22 @@ This command will log you out from your Permit account and remove the stored key
 
 ```bash
 permit logout
+```
+
+---
+
+### `init`
+
+This command is a wizard command that should take the users through all the steps, from configuring policy to enforcing it in the application
+
+#### `Options`
+
+- `api-key <string>`(Optional): use a environment API Key to create and store the policy.
+
+#### `Example`
+
+```bash
+permit init
 ```
 
 ---
