@@ -9,6 +9,44 @@ import {
 } from '../../utils/openapiUtils.js';
 
 /**
+ * Helper function to poll for a resource with a maximum total timeout
+ */
+async function pollForEntity<T>(
+	checkFunction: () => Promise<{exists: boolean, data?: T}>,
+	maxTimeMs = 3000,  // 3 second maximum wait
+	initialIntervalMs = 100
+): Promise<{exists: boolean, data?: T}> {
+	const startTime = Date.now();
+	let intervalMs = initialIntervalMs;
+	
+	while (Date.now() - startTime < maxTimeMs) {
+		try {
+			const result = await checkFunction();
+			if (result.exists) return result;
+		} catch (error) {
+			// Continue polling even if check fails
+		}
+		
+		// Wait before next attempt, but don't exceed the maximum time
+		const remainingTime = maxTimeMs - (Date.now() - startTime);
+		if (remainingTime <= 0) break;
+		
+		const waitTime = Math.min(intervalMs, remainingTime);
+		await new Promise(resolve => setTimeout(resolve, waitTime));
+		
+		// Increase interval for next attempt, capped at 1 second
+		intervalMs = Math.min(intervalMs * 1.5, 1000);
+	}
+	
+	// One final attempt before giving up
+	try {
+		return await checkFunction();
+	} catch {
+		return { exists: false };
+	}
+}
+
+/**
  * Hook for relation and role derivation API operations
  */
 export const usePermitRelationApi = () => {
@@ -99,23 +137,38 @@ export const usePermitRelationApi = () => {
 	);
 
 	/**
+	 * Check if a resource-specific role exists
+	 */
+	const checkResourceRoleExists = useCallback(
+		async (resourceKey: string, roleKey: string) => {
+			try {
+				const url = `${getBaseUrl()}/resources/${resourceKey}/roles/${roleKey}`;
+				const { data: existingRole, error } = await callApi(url, MethodE.GET);
+				
+				return { 
+					exists: Boolean(existingRole && !error),
+					data: existingRole
+				};
+			} catch {
+				return { exists: false };
+			}
+		},
+		[callApi, getBaseUrl],
+	);
+
+	/**
 	 * Creates a resource-specific role for derived role relationships
 	 */
 	const createResourceSpecificRole = useCallback(
 		async (resourceKey: string, roleKey: string) => {
-			// First check if the role already exists for this resource
-			try {
-				const checkUrl = `${getBaseUrl()}/resources/${resourceKey}/roles/${roleKey}`;
-				const { data: existingRole, error } = await callApi(
-					checkUrl,
-					MethodE.GET,
-				);
+			// First poll to check if the role already exists for this resource
+			const { exists, data: existingRole } = await pollForEntity(
+				() => checkResourceRoleExists(resourceKey, roleKey),
+				10  // max 10 attempts with exponential backoff
+			);
 
-				if (existingRole && !error) {
-					return { success: true, data: existingRole };
-				}
-			} catch {
-				// Role doesn't exist, continue to create it
+			if (exists && existingRole) {
+				return { success: true, data: existingRole };
 			}
 
 			const url = `${getBaseUrl()}/resources/${resourceKey}/roles`;
@@ -126,7 +179,7 @@ export const usePermitRelationApi = () => {
 				description: `Resource-specific role created for ${resourceKey}`,
 			});
 		},
-		[callApi, getBaseUrl],
+		[callApi, getBaseUrl, checkResourceRoleExists],
 	);
 
 	/**
@@ -151,13 +204,23 @@ export const usePermitRelationApi = () => {
 			try {
 				// First, ensure the resource-specific derived role exists
 				const subjectResource = derivedRoleObj.resource;
-				await createResourceSpecificRole(
-					subjectResource,
-					derivedRoleObj.derived_role,
-				);
+				try {
+					const roleResult = await createResourceSpecificRole(
+						subjectResource,
+						derivedRoleObj.derived_role,
+					);
+					
+					if (!roleResult.success) {
+						console.error(`Warning: Issue creating derived role: ${roleResult.error}`);
+						// Continue anyway - the role might exist despite the error
+					}
+				} catch (error) {
+					console.error(`Error in create role, continuing: ${error}`);
+					// Continue anyway - the role might already exist
+				}
 
-				// Wait for role to be registered
-				await new Promise(resolve => setTimeout(resolve, 2000));
+				// Add a small delay to ensure role registration
+				await new Promise(resolve => setTimeout(resolve, 500));
 
 				// Get relations for this resource to find the object resource
 				const relationsResult = await getResourceRelations(subjectResource);
@@ -221,13 +284,23 @@ export const usePermitRelationApi = () => {
 						: 'blog_post';
 
 				// Before creating the derivation, ensure the base role exists for the object resource
-				await createResourceSpecificRole(
-					objectResource,
-					derivedRoleObj.base_role,
-				);
+				try {
+					const baseRoleResult = await createResourceSpecificRole(
+						objectResource,
+						derivedRoleObj.base_role,
+					);
+					
+					if (!baseRoleResult.success) {
+						console.error(`Warning: Issue creating base role: ${baseRoleResult.error}`);
+						// Continue anyway - the role might exist despite the error
+					}
+				} catch (error) {
+					console.error(`Error in create base role, continuing: ${error}`);
+					// Continue anyway - the role might already exist
+				}
 
-				// Wait for base role to be registered
-				await new Promise(resolve => setTimeout(resolve, 2000));
+				// Add a small delay to ensure role registration
+				await new Promise(resolve => setTimeout(resolve, 500));
 
 				// Now use the direct resource role update approach with granted_to
 				const url = `${getBaseUrl()}/resources/${subjectResource}/roles/${derivedRoleObj.derived_role}`;

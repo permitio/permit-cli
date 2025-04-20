@@ -37,6 +37,24 @@ interface ProcessorProps {
 }
 
 /**
+ * Polls for a resource until it exists or max attempts are reached
+ */
+async function pollForResource(
+	checkResourceExists: () => Promise<boolean>,
+	maxAttempts = 10,
+	intervalMs = 500
+): Promise<boolean> {
+	for (let attempt = 0; attempt < maxAttempts; attempt++) {
+		const exists = await checkResourceExists();
+		if (exists) return true;
+		
+		// Exponential backoff with a base of intervalMs
+		await new Promise(resolve => setTimeout(resolve, intervalMs * Math.pow(1.5, attempt)));
+	}
+	return false;
+}
+
+/**
  * Hook that contains the OpenAPI processing logic
  */
 export const useOpenapiProcessor = ({
@@ -392,7 +410,7 @@ export const useOpenapiProcessor = ({
 									`${relationData.subject_resource} to ${relationData.object_resource}`,
 							};
 
-							// First, check if both resources exist
+							// First, check if both resources exist, create if they don't
 							if (!resources.has(sanitizedRelation.subject_resource)) {
 								await createResource(
 									sanitizedRelation.subject_resource,
@@ -409,8 +427,13 @@ export const useOpenapiProcessor = ({
 								resources.add(sanitizedRelation.object_resource);
 							}
 
-							// Wait for resources to be properly registered
-							await new Promise(resolve => setTimeout(resolve, 1000));
+							// Instead of polling for resource availability, continue with relation creation
+							// and handle any errors that might occur
+							
+							setProgress(`Creating relation between ${sanitizedRelation.subject_resource} and ${sanitizedRelation.object_resource}...`);
+							
+							// Add a small delay to allow resources to be registered
+							await new Promise(resolve => setTimeout(resolve, 300));
 
 							// Create the relation
 							const relationResult = await createRelation(sanitizedRelation);
@@ -436,9 +459,6 @@ export const useOpenapiProcessor = ({
 					}
 				}
 			}
-
-			// Wait for relations to be processed
-			await new Promise(resolve => setTimeout(resolve, 2000));
 
 			// Create resource roles and derived roles
 			setProgress('Creating role derivations and resource-specific roles...');
