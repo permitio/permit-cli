@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
-import { useRolesApi } from '../../hooks/useRolesApi.js';
 import { components } from '../../lib/api/v1.js';
 
 interface RoleInputProps {
@@ -17,7 +16,6 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 }) => {
 	const [input, setInput] = useState('');
 	const [validationError, setValidationError] = useState<string | null>(null);
-	const { getExistingRoles, status } = useRolesApi();
 
 	// Improved placeholder: a real, clear example
 	const placeholder = 'Admin|Posts, User|Posts:Read|Posts:Create';
@@ -47,20 +45,13 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 				.map(r => r.trim())
 				.filter(Boolean);
 
-			const existingRolesSet = await getExistingRoles();
 			const roles: components['schemas']['RoleCreate'][] = [];
-			const existingRoles: string[] = [];
 
 			for (const def of roleDefs) {
 				const [role, ...permParts] = def.split('|').map(s => s.trim());
 				if (!role || !validateRoleKey(role)) {
 					setValidationError(`Invalid role key: ${role}`);
 					return;
-				}
-
-				// Track existing roles
-				if (existingRolesSet && existingRolesSet.has(role)) {
-					existingRoles.push(role);
 				}
 
 				if (permParts.length === 0) {
@@ -94,20 +85,9 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 				}
 
 				// Only add roles that don't already exist
-				if (!existingRolesSet || !existingRolesSet.has(role)) {
-					roles.push({
-						key: role,
-						name: role,
-						permissions,
-					});
-				}
 			}
 
 			// If there are existing roles, show error and don't proceed
-			if (existingRoles.length > 0) {
-				setValidationError(`Roles already exist: ${existingRoles.join(', ')}`);
-				return;
-			}
 
 			// No existing roles, proceed normally
 			onComplete(roles);
@@ -151,7 +131,6 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 				<Text>{'> '}</Text>
 				<TextInput value={input} onChange={setInput} onSubmit={handleSubmit} />
 			</Box>
-			{status === 'processing' && <Text>Validating roles...</Text>}
 			{validationError && (
 				<Box>
 					<Text color="red">{validationError}</Text>

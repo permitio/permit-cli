@@ -59,15 +59,38 @@ export const useResourcesApi = () => {
 
 			try {
 				const client = authenticatedApiClient();
+				const existingResourceKeys = await getExistingResources();
 
-				for (const resource of resources) {
+				// Separate existing and new resources
+				const existingResources = resources.filter(resource =>
+					existingResourceKeys.has(resource.key),
+				);
+				const newResources = resources.filter(
+					resource => !existingResourceKeys.has(resource.key),
+				);
+
+				// Create new resources with POST
+				for (const resource of newResources) {
 					const { error } = await client.POST(
 						`/v2/schema/{proj_id}/{env_id}/resources`,
 						undefined,
-
 						resource,
 					);
 
+					if (error) throw new Error(error);
+				}
+
+				// Update existing resources with PATCH
+				for (const resource of existingResources) {
+					const rescourceToUpdate: components['schemas']['ResourceUpdate'] = {
+						...resource,
+					};
+					const { error } = await client.PATCH(
+						`/v2/schema/{proj_id}/{env_id}/resources/{resource_id}`,
+						{ resource_id: resource.key },
+						rescourceToUpdate,
+						undefined,
+					);
 					if (error) throw new Error(error);
 				}
 
@@ -78,7 +101,7 @@ export const useResourcesApi = () => {
 				throw error;
 			}
 		},
-		[authenticatedApiClient],
+		[authenticatedApiClient, getExistingResources],
 	);
 
 	return useMemo(

@@ -194,6 +194,59 @@ const useClient = () => {
 			return { data, response, error: newError };
 		};
 
+		const PATCH = async <
+			Path extends PathsWithMethod<paths, 'patch'>,
+			Init extends MaybeOptionalInit<paths[Path], 'patch'>,
+		>(
+			path: Path,
+			path_values: Omit<
+				paths[Path]['patch']['parameters']['path'],
+				'proj_id' | 'org_id' | 'env_id'
+			>,
+			body?: paths[Path]['patch']['requestBody']['content']['application/json'],
+			query?: paths[Path]['patch']['parameters']['query'],
+		): Promise<
+			Omit<
+				FetchResponse<paths[Path]['patch'], Init, 'application/json'>,
+				'error'
+			> & { error: string | null }
+		> => {
+			const globalScope = globalScopeGetterSetter.scopeGetter();
+
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-expect-error
+			const { data, response, error } = await client.PUT(path, {
+				params: {
+					query: query ?? undefined,
+					path: path_values
+						? {
+								...{
+									org_id: globalScope?.organization_id,
+									proj_id: globalScope?.project_id,
+									env_id: globalScope?.environment_id,
+								},
+								...path_values,
+							}
+						: {
+								org_id: globalScope?.organization_id,
+								proj_id: globalScope?.project_id,
+								env_id: globalScope?.environment_id,
+							},
+				},
+				body: body ?? undefined, // Only include if body exists
+			});
+			let newError: string | null = null;
+			if (error) {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-expect-error
+				newError = error instanceof String ? error : JSON.stringify(error);
+			}
+			return {
+				response,
+				error: newError,
+			};
+		};
+
 		const DELETE = async <
 			Path extends PathsWithMethod<paths, 'delete'>,
 			Init extends MaybeOptionalInit<paths[Path], 'delete'>,
@@ -249,6 +302,7 @@ const useClient = () => {
 			POST,
 			PUT,
 			DELETE,
+			PATCH,
 		};
 	};
 

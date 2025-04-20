@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
-import { useResourcesApi } from '../../hooks/useResourcesApi.js';
 import { components } from '../../lib/api/v1.js';
 
 interface ResourceInputProps {
@@ -11,7 +10,7 @@ interface ResourceInputProps {
 export const ResourceInput: React.FC<ResourceInputProps> = ({ onComplete }) => {
 	const [input, setInput] = useState('');
 	const [validationError, setValidationError] = useState<string | null>(null);
-	const { getExistingResources, status } = useResourcesApi();
+
 	const placeholder = 'Posts, Comments, Authors';
 
 	const validateResourceKey = (key: string): boolean => {
@@ -41,18 +40,6 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({ onComplete }) => {
 			const invalidKeys = resourceKeys.filter(key => !validateResourceKey(key));
 			if (invalidKeys.length > 0) {
 				setValidationError(`Invalid resource keys: ${invalidKeys.join(', ')}`);
-				return;
-			}
-
-			const existingResources = await getExistingResources();
-			const conflictingResources = resourceKeys.filter(key =>
-				existingResources.has(key),
-			);
-
-			if (conflictingResources.length > 0) {
-				setValidationError(
-					`Resources already exist: ${conflictingResources.join(', ')}`,
-				);
 				return;
 			}
 
@@ -90,7 +77,6 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({ onComplete }) => {
 				<Text>{'> '}</Text>
 				<TextInput value={input} onChange={setInput} onSubmit={handleSubmit} />
 			</Box>
-			{status === 'processing' && <Text>Validating resources...</Text>}
 			{validationError && (
 				<Box>
 					<Text color="red">{validationError}</Text>
