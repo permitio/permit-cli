@@ -1,7 +1,5 @@
 import React from 'react';
 import { AuthProvider } from '../../components/AuthProvider.js';
-console.log('AuthProvider type:', typeof AuthProvider);
-console.log('AuthProvider value:', AuthProvider);
 
 import { type infer as zInfer, object, string } from 'zod';
 import { option } from 'pastel';

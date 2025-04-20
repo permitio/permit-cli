@@ -33,6 +33,103 @@ export const TFChatComponent = () => {
 	const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
 	const [currentResponse, setCurrentResponse] = useState('');
 	const [tableData, setTableData] = useState<PolicyData | null>(null);
+	const [waitingForApproval, setWaitingForApproval] = useState(false);
+	const [terraformOutput, setTerraformOutput] = useState<string | null>(null);
+	const [chatEnded, setChatEnded] = useState(false);
+
+	const generateTerraformFile = () => {
+		if (!tableData) return;
+
+		const { resources, roles } = tableData;
+
+		// Convert resource names to keys (lowercase, no spaces)
+		const resourceKeys = resources.map(r => ({
+			...r,
+			key: r.name.toLowerCase().replace(/\s+/g, '_'),
+		}));
+
+		// Convert role names to keys
+		const roleKeys = roles.map(r => ({
+			...r,
+			key: r.name.toLowerCase().replace(/\s+/g, '_'),
+		}));
+
+		const terraform = `terraform {
+  required_providers {
+    permitio = {
+      source  = "registry.terraform.io/permitio/permit-io"
+      version = "~> 0.0.14"
+    }
+  }
+}
+
+provider "permitio" {
+  api_url = "https://api.permit.io"
+  api_key = "" // Set this to Permit.io API key
+}
+
+${resourceKeys
+	.map(
+		r => `resource "permitio_resource" "${r.key}" {
+  key         = "${r.key}"
+  name        = "${r.name}"
+  description = "${r.name} resource"
+  attributes  = {}
+  actions     = {
+    ${r.actions.map(a => `"${a.toLowerCase()}" : { "name" : "${a.charAt(0).toUpperCase() + a.slice(1)}" }`).join(',\n    ')}
+  }
+}`,
+	)
+	.join('\n\n')}
+
+${roleKeys
+	.map(
+		r => `resource "permitio_role" "${r.key}" {
+  key         = "${r.key}"
+  name        = "${r.name}"
+  description = "${r.name} role"
+  permissions = [
+    ${r.permissions.map(p => `"${p.resource.toLowerCase()}:${p.actions.join(',')}"`).join(',\n    ')}
+  ]
+}`,
+	)
+	.join('\n\n')}
+`;
+
+		setTerraformOutput(terraform);
+		setWaitingForApproval(false);
+
+		// Add message about Terraform file generation and close the chat
+		setMessages(prevMessages => [
+			...prevMessages,
+			{
+				role: 'assistant',
+				content:
+					'Terraform file generated successfully! Chat ended. Thank you for using the policy creation tool.',
+			},
+		]);
+
+		// Close the chat
+		setChatEnded(true);
+	};
+
+	const handleApprovalResponse = (response: string) => {
+		if (response === 'yes' || response === 'y') {
+			// Generate Terraform file
+			generateTerraformFile();
+		} else {
+			// End the chat
+			setMessages(prevMessages => [
+				...prevMessages,
+				{
+					role: 'assistant',
+					content: 'Chat ended. Thank you for using the policy creation tool.',
+				},
+			]);
+			setWaitingForApproval(false);
+			setChatEnded(true);
+		}
+	};
 
 	const sendMessage = async (message: string) => {
 		try {
@@ -42,6 +139,7 @@ export const TFChatComponent = () => {
 				{ role: 'user', content: message },
 			]);
 			setTableData(null);
+			setTerraformOutput(null);
 
 			const response = await fetch('http://localhost:3000/chat', {
 				method: 'POST',
@@ -96,6 +194,9 @@ export const TFChatComponent = () => {
 						...prevMessages,
 						{ role: 'assistant', content: messageWithoutJson },
 					]);
+
+					// Set waiting for approval state
+					setWaitingForApproval(true);
 				} else {
 					// If no JSON found, add the full message
 					setMessages(prevMessages => [
@@ -129,7 +230,11 @@ export const TFChatComponent = () => {
 
 	const handleSubmit = (value: string) => {
 		if (value.trim()) {
-			sendMessage(value.trim());
+			if (waitingForApproval) {
+				handleApprovalResponse(value.trim().toLowerCase());
+			} else {
+				sendMessage(value.trim());
+			}
 			setInput('');
 		}
 	};
@@ -197,6 +302,21 @@ export const TFChatComponent = () => {
 						<Text>{rolesTable}</Text>
 					</>
 				)}
+				{waitingForApproval && (
+					<Text color="yellow">Do you approve this policy? (yes/no)</Text>
+				)}
+			</Box>
+		);
+	};
+
+	// Function to render Terraform output
+	const renderTerraformOutput = () => {
+		if (!terraformOutput) return null;
+
+		return (
+			<Box flexDirection="column">
+				<Text color="cyan">Terraform Configuration:</Text>
+				<Text>{terraformOutput}</Text>
 			</Box>
 		);
 	};
@@ -213,12 +333,19 @@ export const TFChatComponent = () => {
 				<Text color="yellow">Assistant: {currentResponse}</Text>
 			)}
 			{!isWaitingForResponse && tableData && renderTables()}
-			<TextInput
-				value={input}
-				onChange={setInput}
-				onSubmit={handleSubmit}
-				placeholder="Type your message..."
-			/>
+			{!isWaitingForResponse && terraformOutput && renderTerraformOutput()}
+			{!chatEnded && (
+				<TextInput
+					value={input}
+					onChange={setInput}
+					onSubmit={handleSubmit}
+					placeholder={
+						waitingForApproval
+							? "Type 'yes' or 'no'..."
+							: 'Type your message...'
+					}
+				/>
+			)}
 		</Box>
 	);
 };
