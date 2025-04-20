@@ -13,7 +13,17 @@ type ExtendedOptions = zType<typeof originalOptions>;
 
 type Props = {
 	options: ExtendedOptions;
-	onComplete?: (user: string) => void;
+	onComplete?: ({
+		userId,
+		firstName,
+		lastName,
+		email,
+	}: {
+		userId: string;
+		firstName?: string;
+		lastName?: string;
+		email?: string;
+	}) => void;
 	onError?: (error: string) => void;
 };
 
@@ -69,7 +79,12 @@ export default function APISyncUserComponent({
 	useEffect(() => {
 		if (status === 'done') {
 			if (onComplete) {
-				onComplete(payload.key || '');
+				onComplete({
+					userId: payload.key,
+					firstName: payload.firstName,
+					lastName: payload.lastName,
+					email: payload.email,
+				});
 			}
 		} else if (status === 'error' && errorMessage) {
 			if (onError) {

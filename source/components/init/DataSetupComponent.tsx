@@ -9,7 +9,17 @@ import GeneratedUsersComponent from './GenerateUsersComponent.js';
 
 type Props = {
 	apiKey?: string;
-	onComplete: (user: string) => void;
+	onComplete: ({
+		userId,
+		firstName,
+		lastName,
+		email,
+	}: {
+		userId: string;
+		firstName?: string;
+		lastName?: string;
+		email?: string;
+	}) => void;
 	onError: (error: string) => void;
 };
 export default function DataSetupComponent({
@@ -27,7 +37,12 @@ export default function DataSetupComponent({
 		| 'askCount'
 	>('initial');
 	const [error, setError] = useState<string | null>(null);
-	const [user, setUser] = useState<string | null>(null);
+	const [user, setUser] = useState<{
+		userId: string;
+		firstName?: string;
+		lastName?: string;
+		email?: string;
+	} | null>(null);
 	const [userCount, setUserCount] = useState<number>(0);
 	const [count, setCount] = useState<string>('0');
 	const [currIndex, setCurrIndex] = useState<number>(0);
@@ -37,7 +52,14 @@ export default function DataSetupComponent({
 			onError(error);
 		}
 		if (step === 'done') {
-			onComplete(user || '');
+			onComplete(
+				user as {
+					userId: string;
+					firstName: string;
+					lastName: string;
+					email: string;
+				},
+			);
 		}
 	}, [error, onError, step, onComplete, user]);
 

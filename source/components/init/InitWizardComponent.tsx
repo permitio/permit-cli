@@ -25,7 +25,12 @@ export default function InitWizardComponent({ options }: Props) {
 	const [error, setError] = useState<string | null>(null);
 	const [action, setAction] = useState<string | null>(null);
 	const [resource, setResource] = useState<string | null>(null);
-	const [user, setUser] = useState<string | null>(null);
+	const [user, setUser] = useState<{
+		userId: string;
+		firstName?: string;
+		lastName?: string;
+		email?: string;
+	} | null>(null);
 
 	useEffect(() => {
 		if (overallStep === 'error') {
