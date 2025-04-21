@@ -21,11 +21,11 @@ export interface PathItem {
 	'x-permit-resource'?: string;
 	get?: Operation;
 	post?: Operation;
-	put?: Operation; 
+	put?: Operation;
 	delete?: Operation;
-	patch?: Operation; 
+	patch?: Operation;
 	options?: Operation;
-	head?: Operation; 
+	head?: Operation;
 	[key: string]: unknown;
 }
 
@@ -72,7 +72,6 @@ export interface ErrorObject {
 	message?: string;
 	detail?: string;
 }
-
 
 export const HTTP_METHODS = [
 	'get',
@@ -125,7 +124,7 @@ export const isDuplicateError = (error: unknown): boolean => {
 					const parsedError = JSON.parse(error) as ErrorObject;
 					if (
 						parsedError.error_code === DUPLICATE_ENTITY_CODE ||
-						parsedError.title === ROLE_ALREADY_EXISTS_TITLE || 
+						parsedError.title === ROLE_ALREADY_EXISTS_TITLE ||
 						(parsedError.detail &&
 							typeof parsedError.detail === 'string' &&
 							parsedError.detail.includes(ALREADY_EXISTS_MSG))
@@ -133,6 +132,7 @@ export const isDuplicateError = (error: unknown): boolean => {
 						isDuplicate = true;
 					}
 				} catch {
+					// Ignore JSON parsing errors - this is expected for non-JSON error strings
 				}
 			}
 		}
@@ -156,6 +156,7 @@ export const isDuplicateError = (error: unknown): boolean => {
 			}
 		}
 	} catch {
+		// Ignore any errors during error type checking - continue with default result
 	}
 
 	return isDuplicate; // Explicitly return the boolean variable
@@ -163,13 +164,13 @@ export const isDuplicateError = (error: unknown): boolean => {
 
 // Response data types
 export interface ApiResponseData<T> {
-	data?: T[]; 
+	data?: T[];
 	[key: string]: unknown;
 }
 
 export interface ApiResponse<T = unknown> {
-	success?: boolean; 
-	data?: T; 
+	success?: boolean;
+	data?: T;
 	error?: string | ErrorObject | null;
 	status?: number;
 }

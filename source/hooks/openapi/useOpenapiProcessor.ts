@@ -123,6 +123,8 @@ export const useOpenapiProcessor = ({
 					existingResources = resourcesArray;
 				}
 			} catch {
+				// Continue with empty resources array if fetching fails
+				// This is acceptable as we'll handle duplicates later
 			}
 
 			try {
@@ -134,6 +136,8 @@ export const useOpenapiProcessor = ({
 					existingRoles = rolesArray; // Assign the array directly
 				}
 			} catch {
+				// Continue with empty roles array if fetching fails
+				// This is acceptable as we'll handle duplicates later
 			}
 
 			setProgress('Processing OpenAPI extensions...');
@@ -142,7 +146,6 @@ export const useOpenapiProcessor = ({
 			for (const [, pathItem] of Object.entries(parsedSpec.paths || {})) {
 				if (!pathItem || typeof pathItem !== 'object') continue;
 
-				
 				const typedPathItem = pathItem as PathItem;
 
 				const rawResource = typedPathItem[PERMIT_EXTENSIONS.RESOURCE];
@@ -230,7 +233,6 @@ export const useOpenapiProcessor = ({
 			for (const [, pathItem] of Object.entries(parsedSpec.paths || {})) {
 				if (!pathItem || typeof pathItem !== 'object') continue;
 
-				
 				const typedPathItem = pathItem as PathItem;
 
 				// Process HTTP methods for roles
@@ -364,7 +366,6 @@ export const useOpenapiProcessor = ({
 			for (const [, pathItem] of Object.entries(parsedSpec.paths || {})) {
 				if (!pathItem || typeof pathItem !== 'object') continue;
 
-				
 				const typedPathItem = pathItem as PathItem;
 
 				const rawResource = typedPathItem[PERMIT_EXTENSIONS.RESOURCE];
@@ -417,7 +418,6 @@ export const useOpenapiProcessor = ({
 								resources.add(sanitizedRelation.object_resource);
 							}
 
-							
 							setProgress(
 								`Creating relation between ${sanitizedRelation.subject_resource} and ${sanitizedRelation.object_resource}...`,
 							);
@@ -458,7 +458,6 @@ export const useOpenapiProcessor = ({
 			)) {
 				if (!pathItem || typeof pathItem !== 'object') continue;
 
-				
 				const typedPathItem = pathItem as PathItem;
 
 				const rawResource = typedPathItem[PERMIT_EXTENSIONS.RESOURCE];
