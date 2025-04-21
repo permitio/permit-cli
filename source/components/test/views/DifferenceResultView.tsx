@@ -10,7 +10,7 @@ const DifferenceResultView: React.FC<DifferenceResultViewProps> = ({
 	result,
 }) => (
 	<>
-		<Text>User: {result.auditLog.user_id}</Text>
+		<Text>User: {result.auditLog.user_key || result.auditLog.user_id}</Text>
 		<Text>
 			Resource: {result.auditLog.resource} (type:{' '}
 			{result.auditLog.resource_type})

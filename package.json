@@ -1,6 +1,6 @@
 {
 	"name": "@permitio/cli",
-	"version": "0.1.8",
+	"version": "0.1.9",
 	"license": "MIT",
 	"bin": {
 		"permit": "dist/cli.js"
@@ -15,7 +15,7 @@
 		"predev": "cpx 'source/commands/env/export/templates/*.hcl' 'dist/commands/env/export/templates'",
 		"dev": " NODE_NO_WARNINGS=1 tsc --watch",
 		"lint": "prettier --check . && eslint \"source/**/*.{js,ts,tsx}\"",
-		"lint:fix": "eslint \"source/**/*.{js,ts,tsx}\" --fix",
+		"lint:fix": "prettier --write . && eslint \"source/**/*.{js,ts,tsx}\" --fix",
 		"test": "prettier --check ./source && vitest run --coverage",
 		"simple-check": "npx tsx ./source/cli.tsx pdp check -u filip@permit.io -a create -r task",
 		"test:ts": "tsc --noEmit"
