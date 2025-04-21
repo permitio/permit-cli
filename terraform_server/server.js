@@ -4,8 +4,9 @@ import path from 'path';
 import cors from 'cors';
 import { execSync } from 'child_process';
 import bodyParser from 'body-parser';
+import { streamText } from 'ai';
 import { openai } from '@ai-sdk/openai';
-import { streamText, tool } from 'ai';
+import tools from './tools/aiTools.js';
 import { z } from 'zod';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
@@ -50,7 +51,9 @@ Your task:
 - Avoid asking follow-up questions unless absolutely necessary.
 - Don't use the keys "admin", "viewer", "editor" for roles.
 - In the terraform file, add field of "attributes" with empty object {} for each resource.
-- Always output valid JSON and Terraform file using the permit.io terraform provider.`,
+- return only the table output without any other text above it.
+- Always output valid JSON and Terraform file using the permit.io terraform provider.
+- When using tools, make sure to include the formattedOutput in your response.`,
 	},
 ];
 
@@ -102,102 +105,24 @@ app.post('/chat', async (req, res) => {
 
 		messages.push({ role: 'user', content: message });
 
+		// Send the joke as a loading message
+		const joke = "Why did the developer get locked out of production?\nBecause they didn't have the right commit-ment level of permissions.\n \n loading...";
+		res.write(`data: ${JSON.stringify({ delta: joke })}\n\n`);
+		
+		// Send a message to disable user input
+		res.write(`data: ${JSON.stringify({ type: 'disable_input' })}\n\n`);
+
 		const result = await streamText({
 			model: openai('gpt-4'),
 			messages,
-			tools: {
-				analyzePolicy: tool({
-					description: 'Analyze a policy description and extract required components',
-					parameters: z.object({
-						description: z.string().describe('The policy description to analyze'),
-					}),
-					execute: async () => {
-						return {
-							components: {
-								resources: [],
-								actions: [],
-								roles: [],
-								permissions: [],
-							},
-							suggestions: [],
-						};
-					},
-				}),
-				createPolicy: tool({
-					description: 'Create a policy based on extracted components',
-					parameters: z.object({
-						resource: z.string().describe('The resource being accessed'),
-						actions: z.array(z.string()).describe('Actions that can be performed'),
-						role: z.string().describe('The role that has access'),
-						permissions: z.array(z.string()).describe('Permissions granted to the role'),
-					}),
-					execute: async ({ resource, actions, role, permissions }) => ({
-						policy: {
-							resource,
-							actions,
-							role,
-							permissions,
-						},
-					}),
-				}),
-				validatePolicy: tool({
-					description: 'Validate a policy against security best practices',
-					parameters: z.object({
-						policy: z.object({
-							resource: z.string(),
-							actions: z.array(z.string()),
-							role: z.string(),
-							permissions: z.array(z.string()),
-						}),
-					}),
-					execute: async () => ({
-						isValid: true,
-						suggestions: [],
-						warnings: [],
-					}),
-				}),
-				generateTerraform: tool({
-					description: 'Generate Terraform configuration for a policy',
-					parameters: z.object({
-						policy: z.object({
-							resources: z.array(z.object({
-								name: z.string(),
-								actions: z.array(z.string()),
-							})),
-							roles: z.array(z.object({
-								name: z.string(),
-								permissions: z.array(z.object({
-									resource: z.string(),
-									actions: z.array(z.string()),
-								})),
-							})),
-						}),
-					}),
-					execute: async ({ policy }) => {
-						// Convert resource names to keys (lowercase, no spaces)
-						const resourceKeys = policy.resources.map(r => ({
-							...r,
-							key: r.name.toLowerCase().replace(/\s+/g, '_'),
-						}));
-
-						// Convert role names to keys
-						const roleKeys = policy.roles.map(r => ({
-							...r,
-							key: r.name.toLowerCase().replace(/\s+/g, '_'),
-						}));
-
-						const terraform = generateTerraformConfig(resourceKeys, roleKeys);
-						return {
-							terraform,
-							message: 'Generated Terraform configuration',
-						};
-					},
-				}),
-			},
+			tools,
 		});
 
+		// Stream the text but don't show it to the user
+		let collectedText = '';
 		for await (const delta of result.textStream) {
-			res.write(`data: ${JSON.stringify({ delta })}\n\n`);
+			collectedText += delta;
+			// Don't send each delta to avoid showing raw JSON
 		}
 
 		const [toolCalls, toolResults] = await Promise.all([
@@ -205,7 +130,39 @@ app.post('/chat', async (req, res) => {
 			result.toolResults,
 		]);
 
-		res.write(`data: ${JSON.stringify({ toolCalls, toolResults })}\n\n`);
+		// Check if any tool results have formattedOutput
+		const formattedOutputs = toolResults
+			.filter(result => result && result.formattedOutput)
+			.map(result => result.formattedOutput)
+			.join('\n\n');
+
+		// Extract policy data from tool results
+		const policyData = toolResults.find(result => result && result.policy)?.policy;
+		
+		if (policyData) {
+			// Send the policy data as a JSON object in the response text
+			res.write(`data: ${JSON.stringify({ delta: JSON.stringify(policyData) })}\n\n`);
+		} else if (formattedOutputs) {
+			// Send only the table part of the formatted output
+			// Extract just the table part by finding the first table marker
+			const tableStartIndex = formattedOutputs.indexOf('┌');
+			if (tableStartIndex !== -1) {
+				const tableOnly = formattedOutputs.substring(tableStartIndex);
+				res.write(`data: ${JSON.stringify({ delta: tableOnly })}\n\n`);
+			} else {
+				// If no table found, send the formatted output
+				res.write(`data: ${JSON.stringify({ delta: formattedOutputs })}\n\n`);
+			}
+		} else {
+			// If no formatted output, send the collected text
+			res.write(`data: ${JSON.stringify({ delta: collectedText })}\n\n`);
+		}
+
+		// Send a message to enable user input
+		res.write(`data: ${JSON.stringify({ type: 'enable_input' })}\n\n`);
+		
+		// Send the done message
+		res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
 		res.end();
 
 	} catch (error) {
@@ -214,42 +171,7 @@ app.post('/chat', async (req, res) => {
 	}
 });
 
-function generateTerraformConfig(resourceKeys, roleKeys) {
-	return `terraform {
-  required_providers {
-    permitio = {
-      source  = "registry.terraform.io/permitio/permit-io"
-      version = "~> 0.0.14"
-    }
-  }
-}
-
-provider "permitio" {
-  api_url = "https://api.permit.io"
-  api_key = "" // Set this to Permit.io API key
-}
-
-${resourceKeys.map(r => `resource "permitio_resource" "${r.key}" {
-  key         = "${r.key}"
-  name        = "${r.name}"
-  description = "${r.name} resource"
-  attributes  = {}
-  actions     = {
-    ${r.actions.map(a => `"${a.toLowerCase()}" : { "name" : "${a.charAt(0).toUpperCase() + a.slice(1)}" }`).join(',\n    ')}
-  }
-}`).join('\n\n')}
-
-${roleKeys.map(r => `resource "permitio_role" "${r.key}" {
-  key         = "${r.key}"
-  name        = "${r.name}"
-  description = "${r.name} role"
-  permissions = [
-    ${r.permissions.map(p => `"${p.resource.toLowerCase()}:${p.actions.join(',')}"`).join(',\n    ')}
-  ]
-}`).join('\n\n')}`;
-}
-
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
 	console.log(`Server running on port ${PORT}`);
 });

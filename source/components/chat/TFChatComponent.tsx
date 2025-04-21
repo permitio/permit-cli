@@ -36,6 +36,7 @@ export const TFChatComponent = () => {
 	const [waitingForApproval, setWaitingForApproval] = useState(false);
 	const [terraformOutput, setTerraformOutput] = useState<string | null>(null);
 	const [chatEnded, setChatEnded] = useState(false);
+	const [inputDisabled, setInputDisabled] = useState(false);
 
 	const generateTerraformFile = () => {
 		if (!tableData) return;
@@ -89,7 +90,9 @@ ${roleKeys
   name        = "${r.name}"
   description = "${r.name} role"
   permissions = [
-    ${r.permissions.map(p => `"${p.resource.toLowerCase()}:${p.actions.join(',')}"`).join(',\n    ')}
+    ${r.permissions
+			.flatMap(p => p.actions.map(a => `"${p.resource.toLowerCase()}:${a}"`))
+			.join(',\n    ')}
   ]
 }`,
 	)
@@ -173,6 +176,10 @@ ${roleKeys
 						if (data.delta) {
 							accumulatedResponse += data.delta;
 							setCurrentResponse(accumulatedResponse);
+						} else if (data.type === 'disable_input') {
+							setInputDisabled(true);
+						} else if (data.type === 'enable_input') {
+							setInputDisabled(false);
 						}
 					}
 				}
@@ -334,7 +341,7 @@ ${roleKeys
 			)}
 			{!isWaitingForResponse && tableData && renderTables()}
 			{!isWaitingForResponse && terraformOutput && renderTerraformOutput()}
-			{!chatEnded && (
+			{!chatEnded && !inputDisabled && (
 				<TextInput
 					value={input}
 					onChange={setInput}
