@@ -12,32 +12,32 @@ import {
  * Helper function to poll for a resource with a maximum total timeout
  */
 async function pollForEntity<T>(
-	checkFunction: () => Promise<{exists: boolean, data?: T}>,
-	maxTimeMs = 3000,  // 3 second maximum wait
-	initialIntervalMs = 100
-): Promise<{exists: boolean, data?: T}> {
+	checkFunction: () => Promise<{ exists: boolean; data?: T }>,
+	maxTimeMs = 3000, // 3 second maximum wait
+	initialIntervalMs = 100,
+): Promise<{ exists: boolean; data?: T }> {
 	const startTime = Date.now();
 	let intervalMs = initialIntervalMs;
-	
+
 	while (Date.now() - startTime < maxTimeMs) {
 		try {
 			const result = await checkFunction();
 			if (result.exists) return result;
-		} catch (error) {
+		} catch {
 			// Continue polling even if check fails
 		}
-		
+
 		// Wait before next attempt, but don't exceed the maximum time
 		const remainingTime = maxTimeMs - (Date.now() - startTime);
 		if (remainingTime <= 0) break;
-		
+
 		const waitTime = Math.min(intervalMs, remainingTime);
 		await new Promise(resolve => setTimeout(resolve, waitTime));
-		
+
 		// Increase interval for next attempt, capped at 1 second
 		intervalMs = Math.min(intervalMs * 1.5, 1000);
 	}
-	
+
 	// One final attempt before giving up
 	try {
 		return await checkFunction();
@@ -52,7 +52,7 @@ async function pollForEntity<T>(
 export const usePermitRelationApi = () => {
 	const { authToken, scope } = useAuth();
 
-	// Construct base URL with the correct project and environment IDs
+	// Construct base URL with project and environment IDs
 	const getBaseUrl = useCallback(() => {
 		return `${PERMIT_API_URL}/v2/schema/${scope.project_id}/${scope.environment_id}`;
 	}, [scope.project_id, scope.environment_id]);
@@ -144,10 +144,10 @@ export const usePermitRelationApi = () => {
 			try {
 				const url = `${getBaseUrl()}/resources/${resourceKey}/roles/${roleKey}`;
 				const { data: existingRole, error } = await callApi(url, MethodE.GET);
-				
-				return { 
+
+				return {
 					exists: Boolean(existingRole && !error),
-					data: existingRole
+					data: existingRole,
 				};
 			} catch {
 				return { exists: false };
@@ -164,7 +164,7 @@ export const usePermitRelationApi = () => {
 			// First poll to check if the role already exists for this resource
 			const { exists, data: existingRole } = await pollForEntity(
 				() => checkResourceRoleExists(resourceKey, roleKey),
-				10  // max 10 attempts with exponential backoff
+				10, // max 10 attempts with exponential backoff
 			);
 
 			if (exists && existingRole) {
@@ -209,9 +209,11 @@ export const usePermitRelationApi = () => {
 						subjectResource,
 						derivedRoleObj.derived_role,
 					);
-					
+
 					if (!roleResult.success) {
-						console.error(`Warning: Issue creating derived role: ${roleResult.error}`);
+						console.error(
+							`Warning: Issue creating derived role: ${roleResult.error}`,
+						);
 						// Continue anyway - the role might exist despite the error
 					}
 				} catch (error) {
@@ -225,16 +227,26 @@ export const usePermitRelationApi = () => {
 				// Get relations for this resource to find the object resource
 				const relationsResult = await getResourceRelations(subjectResource);
 
-				if (
-					!relationsResult.success ||
-					!relationsResult.data ||
-					!relationsResult.data.data ||
-					!Array.isArray(relationsResult.data.data) ||
-					relationsResult.data.data.length === 0
-				) {
+				// Safely check for relations data
+				if (!relationsResult.success || !relationsResult.data) {
 					return {
 						success: false,
 						error: `Could not find relations for resource ${subjectResource}`,
+					};
+				}
+
+				// Type guard to ensure data property exists and is an object
+				const relationsData = relationsResult.data;
+				if (
+					typeof relationsData !== 'object' ||
+					!relationsData ||
+					!('data' in relationsData) ||
+					!Array.isArray(relationsData.data) ||
+					relationsData.data.length === 0
+				) {
+					return {
+						success: false,
+						error: `No valid relations data found for resource ${subjectResource}`,
 					};
 				}
 
@@ -244,12 +256,10 @@ export const usePermitRelationApi = () => {
 
 				if (relationKey) {
 					// Find relation by key with proper type casting
-					const foundRelation = relationsResult.data.data.find(
-						(rel: unknown) => {
-							const typedRel = rel as { key: string };
-							return typedRel.key === relationKey;
-						},
-					);
+					const foundRelation = relationsData.data.find((rel: unknown) => {
+						const typedRel = rel as { key: string };
+						return typedRel.key === relationKey;
+					});
 					relationObj = foundRelation as
 						| { key: string; object_resource: string }
 						| undefined;
@@ -262,7 +272,7 @@ export const usePermitRelationApi = () => {
 					}
 				} else {
 					// Just use the first relation
-					relationObj = relationsResult.data.data[0] as {
+					relationObj = relationsData.data[0] as {
 						key: string;
 						object_resource: string;
 					};
@@ -289,9 +299,11 @@ export const usePermitRelationApi = () => {
 						objectResource,
 						derivedRoleObj.base_role,
 					);
-					
+
 					if (!baseRoleResult.success) {
-						console.error(`Warning: Issue creating base role: ${baseRoleResult.error}`);
+						console.error(
+							`Warning: Issue creating base role: ${baseRoleResult.error}`,
+						);
 						// Continue anyway - the role might exist despite the error
 					}
 				} catch (error) {

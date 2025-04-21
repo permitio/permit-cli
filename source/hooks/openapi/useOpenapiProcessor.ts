@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import path from 'node:path';
 import SwaggerParser from '@apidevtools/swagger-parser';
-import { useOpenapiApi } from '../../../hooks/openapi/useOpenapiApi.js';
+import { useOpenapiApi } from './useOpenapiApi.js';
 import {
 	OpenApiDocument,
 	PathItem,
@@ -10,7 +10,8 @@ import {
 	sanitizeKey,
 	isDuplicateError,
 	UrlMapping,
-} from '../../../utils/openapiUtils.js';
+	ApiResponse,
+} from '../../utils/openapiUtils.js';
 
 // Define constants for repeated error messages
 const ERROR_CREATING_RESOURCE = 'Failed to create resource';
@@ -36,23 +37,10 @@ interface ProcessorProps {
 	setProcessingDone: (done: boolean) => void;
 }
 
-/**
- * Polls for a resource until it exists or max attempts are reached
- */
-async function pollForResource(
-	checkResourceExists: () => Promise<boolean>,
-	maxAttempts = 10,
-	intervalMs = 500
-): Promise<boolean> {
-	for (let attempt = 0; attempt < maxAttempts; attempt++) {
-		const exists = await checkResourceExists();
-		if (exists) return true;
-		
-		// Exponential backoff with a base of intervalMs
-		await new Promise(resolve => setTimeout(resolve, intervalMs * Math.pow(1.5, attempt)));
-	}
-	return false;
-}
+// Define specific types for inner data if needed (optional but good practice)
+type ResourceKey = { key: string };
+type RoleKey = { key: string };
+type RoleWithPermissions = { permissions?: string[] };
 
 /**
  * Hook that contains the OpenAPI processing logic
@@ -123,27 +111,29 @@ export const useOpenapiProcessor = ({
 			const warnings: string[] = [];
 
 			// List existing resources and roles to avoid conflicts
-			let existingResources: Array<{ key: string }> = [];
-			let existingRoles: Array<{ key: string }> = [];
+			let existingResources: ResourceKey[] = [];
+			let existingRoles: RoleKey[] = [];
 
 			try {
-				const { data: resourcesData } = await listResources();
-				if (resourcesData?.data) {
-					// Type assertion to ensure proper typing
-					existingResources = resourcesData.data as Array<{ key: string }>;
+				const { data: resourcesArray } = (await listResources()) as ApiResponse<
+					ResourceKey[]
+				>;
+				if (resourcesArray) {
+					// Check if the array exists
+					existingResources = resourcesArray;
 				}
 			} catch {
-				// Silently continue if we can't get existing resources
 			}
 
 			try {
-				const { data: rolesData } = await listRoles();
-				if (rolesData?.data) {
-					// Type assertion to ensure proper typing
-					existingRoles = rolesData.data as Array<{ key: string }>;
+				const { data: rolesArray } = (await listRoles()) as ApiResponse<
+					RoleKey[]
+				>;
+				if (rolesArray) {
+					// Check if the array exists
+					existingRoles = rolesArray; // Assign the array directly
 				}
 			} catch {
-				// Silently continue if we can't get existing roles
 			}
 
 			setProgress('Processing OpenAPI extensions...');
@@ -152,7 +142,7 @@ export const useOpenapiProcessor = ({
 			for (const [, pathItem] of Object.entries(parsedSpec.paths || {})) {
 				if (!pathItem || typeof pathItem !== 'object') continue;
 
-				// Cast to our PathItem type with extensions
+				
 				const typedPathItem = pathItem as PathItem;
 
 				const rawResource = typedPathItem[PERMIT_EXTENSIONS.RESOURCE];
@@ -240,7 +230,7 @@ export const useOpenapiProcessor = ({
 			for (const [, pathItem] of Object.entries(parsedSpec.paths || {})) {
 				if (!pathItem || typeof pathItem !== 'object') continue;
 
-				// Cast to our PathItem type with extensions
+				
 				const typedPathItem = pathItem as PathItem;
 
 				// Process HTTP methods for roles
@@ -275,14 +265,12 @@ export const useOpenapiProcessor = ({
 									} else {
 										// Role exists but wasn't in our list, try to update it
 										try {
-											// Get existing role to preserve permissions
-											const { data: existingRole } = await getRole(
+											const { data: roleObject } = (await getRole(
 												role as string,
-											);
+											)) as ApiResponse<RoleWithPermissions>;
 
-											// Get existing permissions and add the new one if not already present
-											const existingPermissions =
-												existingRole?.['permissions'] || [];
+											// Access permissions safely from the role object
+											const existingPermissions = roleObject?.permissions || [];
 											let permissions: string[] = Array.isArray(
 												existingPermissions,
 											)
@@ -333,10 +321,12 @@ export const useOpenapiProcessor = ({
 						} else {
 							try {
 								// Get existing role to preserve permissions
-								const { data: existingRole } = await getRole(role as string);
+								const { data: roleObject } = (await getRole(
+									role as string,
+								)) as ApiResponse<RoleWithPermissions>;
 
-								// Get existing permissions and add the new one if not already present
-								const existingPermissions = existingRole?.['permissions'] || [];
+								// Access permissions safely from the role object
+								const existingPermissions = roleObject?.permissions || [];
 								let permissions: string[] = Array.isArray(existingPermissions)
 									? existingPermissions
 									: [];
@@ -374,7 +364,7 @@ export const useOpenapiProcessor = ({
 			for (const [, pathItem] of Object.entries(parsedSpec.paths || {})) {
 				if (!pathItem || typeof pathItem !== 'object') continue;
 
-				// Cast to our PathItem type with extensions
+				
 				const typedPathItem = pathItem as PathItem;
 
 				const rawResource = typedPathItem[PERMIT_EXTENSIONS.RESOURCE];
@@ -427,11 +417,11 @@ export const useOpenapiProcessor = ({
 								resources.add(sanitizedRelation.object_resource);
 							}
 
-							// Instead of polling for resource availability, continue with relation creation
-							// and handle any errors that might occur
 							
-							setProgress(`Creating relation between ${sanitizedRelation.subject_resource} and ${sanitizedRelation.object_resource}...`);
-							
+							setProgress(
+								`Creating relation between ${sanitizedRelation.subject_resource} and ${sanitizedRelation.object_resource}...`,
+							);
+
 							// Add a small delay to allow resources to be registered
 							await new Promise(resolve => setTimeout(resolve, 300));
 
@@ -468,7 +458,7 @@ export const useOpenapiProcessor = ({
 			)) {
 				if (!pathItem || typeof pathItem !== 'object') continue;
 
-				// Cast to our PathItem type with extensions
+				
 				const typedPathItem = pathItem as PathItem;
 
 				const rawResource = typedPathItem[PERMIT_EXTENSIONS.RESOURCE];
@@ -634,6 +624,7 @@ export const useOpenapiProcessor = ({
 		listRoles,
 		updateResource,
 		updateRole,
+		// Note: existingResources and existingRoles are not dependencies as they are populated within the callback
 	]);
 
 	return { processSpec };

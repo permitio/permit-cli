@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import OpenapiForm from './OpenapiForm.js';
 import OpenapiResults from './OpenapiResults.js';
-import { useOpenapiProcessor } from './OpenapiProcessor.js';
+import { useOpenapiProcessor } from '../../../hooks/openapi/useOpenapiProcessor.js';
 
 interface OpenapiComponentProps {
 	specFile?: string;
