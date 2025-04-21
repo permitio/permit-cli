@@ -2,45 +2,30 @@ import { useCallback } from 'react';
 import path from 'node:path';
 import SwaggerParser from '@apidevtools/swagger-parser';
 import { useOpenapiApi } from './useOpenapiApi.js';
+import { OpenApiDocument, ApiResponse } from '../../utils/openapiUtils.js';
 import {
-	OpenApiDocument,
-	PathItem,
-	Operation,
-	HTTP_METHODS,
-	sanitizeKey,
-	isDuplicateError,
-	UrlMapping,
-	ApiResponse,
-} from '../../utils/openapiUtils.js';
-
-// Define constants for repeated error messages
-const ERROR_CREATING_RESOURCE = 'Failed to create resource';
-const ERROR_CREATING_ROLE = 'Failed to create role';
-const ERROR_UPDATING_ROLE = 'Failed to update role';
-const ERROR_CREATING_RESOURCE_ROLE = 'Failed to create resource role';
-
-// Define all x-permit extensions as object properties
-const PERMIT_EXTENSIONS = {
-	RESOURCE: 'x-permit-resource',
-	ACTION: 'x-permit-action',
-	ROLE: 'x-permit-role',
-	RESOURCE_ROLE: 'x-permit-resource-role',
-	RELATION: 'x-permit-relation',
-	DERIVED_ROLE: 'x-permit-derived-role',
-};
-
-interface ProcessorProps {
-	inputPath: string;
-	setProgress: (message: string) => void;
-	setStatus: (status: 'loading' | 'error' | 'success') => void;
-	setError: (error: string | null) => void;
-	setProcessingDone: (done: boolean) => void;
-}
-
-// Define specific types for inner data if needed (optional but good practice)
-type ResourceKey = { key: string };
-type RoleKey = { key: string };
-type RoleWithPermissions = { permissions?: string[] };
+	ProcessorProps,
+	ProcessorContext,
+	ResourceKey,
+	RoleKey,
+	RoleWithPermissions,
+	ResourceResponse,
+	ActionResponse,
+	RoleResponse,
+	RelationResponse,
+	RelationRequest,
+	DerivedRoleResponse,
+	DerivedRoleRequest,
+	UrlMappingResponse,
+	UrlMappingRequest,
+	processResources,
+	processRoles,
+	processResourceRoles,
+	processRelations,
+	processDerivedRoles,
+	generateUrlMappings,
+	createMappings,
+} from './process/openapiProcessorExports.js';
 
 /**
  * Hook that contains the OpenAPI processing logic
@@ -100,31 +85,31 @@ export const useOpenapiProcessor = ({
 					? parsedSpec.servers[0].url
 					: '';
 
-			// Track created entities and errors
-			const resources = new Set<string>();
-			const actions = new Map<string, Set<string>>();
-			const roles = new Set<string>();
-			const resourceRoles = new Map<string, boolean>();
-			const relations = new Map<string, string>(); // Map relation key to JSON string of relation object
-			const mappings: UrlMapping[] = [];
-			const errors: string[] = [];
-			const warnings: string[] = [];
+			// Create context for processing
+			const context: ProcessorContext = {
+				resources: new Set<string>(),
+				actions: new Map<string, Set<string>>(),
+				roles: new Set<string>(),
+				resourceRoles: new Map<string, boolean>(),
+				relations: new Map<string, string>(),
+				mappings: [],
+				errors: [],
+				warnings: [],
+				existingResources: [],
+				existingRoles: [],
+				baseUrl,
+			};
 
 			// List existing resources and roles to avoid conflicts
-			let existingResources: ResourceKey[] = [];
-			let existingRoles: RoleKey[] = [];
-
 			try {
 				const { data: resourcesArray } = (await listResources()) as ApiResponse<
 					ResourceKey[]
 				>;
 				if (resourcesArray) {
-					// Check if the array exists
-					existingResources = resourcesArray;
+					context.existingResources = resourcesArray;
 				}
 			} catch {
 				// Continue with empty resources array if fetching fails
-				// This is acceptable as we'll handle duplicates later
 			}
 
 			try {
@@ -132,466 +117,101 @@ export const useOpenapiProcessor = ({
 					RoleKey[]
 				>;
 				if (rolesArray) {
-					// Check if the array exists
-					existingRoles = rolesArray; // Assign the array directly
+					context.existingRoles = rolesArray;
 				}
 			} catch {
 				// Continue with empty roles array if fetching fails
-				// This is acceptable as we'll handle duplicates later
 			}
 
+			// Process each stage in sequence
 			setProgress('Processing OpenAPI extensions...');
-
-			// Create/update all resources and actions
-			for (const [, pathItem] of Object.entries(parsedSpec.paths || {})) {
-				if (!pathItem || typeof pathItem !== 'object') continue;
-
-				const typedPathItem = pathItem as PathItem;
-
-				const rawResource = typedPathItem[PERMIT_EXTENSIONS.RESOURCE];
-				if (!rawResource) continue;
-
-				// Sanitize resource key
-				const resource = sanitizeKey(rawResource as string);
-
-				// Create or update resource
-				if (!resources.has(resource)) {
-					// Check if resource already exists
-					const resourceExists = existingResources.some(
-						r => r.key === resource,
-					);
-
-					if (!resourceExists) {
-						try {
-							const result = await createResource(
-								resource,
-								rawResource as string,
-							);
-							if (result.error) {
-								if (!isDuplicateError(result.error)) {
-									errors.push(
-										`${ERROR_CREATING_RESOURCE} ${resource}: ${JSON.stringify(result.error)}`,
-									);
-								} else {
-									await updateResource(resource, rawResource as string);
-								}
-							}
-						} catch (resourceError) {
-							errors.push(
-								`Error creating resource ${resource}: ${resourceError}`,
-							);
-						}
-					} else {
-						try {
-							await updateResource(resource, rawResource as string);
-						} catch (updateError) {
-							warnings.push(
-								`Error updating resource ${resource}: ${updateError}`,
-							);
-						}
-					}
-
-					resources.add(resource);
-					actions.set(resource, new Set());
-				}
-
-				// Process HTTP methods to create actions
-				for (const method of HTTP_METHODS) {
-					const operation = typedPathItem[method] as Operation | undefined;
-					if (!operation) continue;
-
-					// Get action from x-permit-action or default to HTTP method
-					const action = operation[PERMIT_EXTENSIONS.ACTION] || method;
-
-					// Create action if needed
-					const resourceActions = actions.get(resource);
-					if (resourceActions && !resourceActions.has(action as string)) {
-						try {
-							const result = await createAction(
-								resource,
-								action as string,
-								action as string,
-							);
-							if (result.error) {
-								if (!isDuplicateError(result.error)) {
-									errors.push(
-										`Failed to create action ${action}: ${JSON.stringify(result.error)}`,
-									);
-								}
-							}
-							resourceActions.add(action as string);
-						} catch (actionError) {
-							errors.push(`Error creating action ${action}: ${actionError}`);
-						}
-					}
-				}
-			}
-
-			//  Create/update all roles
-			setProgress('Creating roles and permissions...');
-
-			for (const [, pathItem] of Object.entries(parsedSpec.paths || {})) {
-				if (!pathItem || typeof pathItem !== 'object') continue;
-
-				const typedPathItem = pathItem as PathItem;
-
-				// Process HTTP methods for roles
-				for (const method of HTTP_METHODS) {
-					const operation = typedPathItem[method] as Operation | undefined;
-					if (!operation) continue;
-
-					// Create/update role if specified and not already processed
-					const role = operation[PERMIT_EXTENSIONS.ROLE];
-					if (role && !roles.has(role as string)) {
-						// Check if role already exists
-						const roleExists = existingRoles.some(r => r.key === role);
-
-						// Get the operation's resource and action for permissions
-						const resource = sanitizeKey(
-							(typedPathItem[PERMIT_EXTENSIONS.RESOURCE] as string) || '',
-						);
-						const action = operation[PERMIT_EXTENSIONS.ACTION] || method;
-
-						// Create permission string if resource and action exist
-						const permissionStr =
-							resource && action ? `${resource}:${action}` : undefined;
-
-						if (!roleExists) {
-							try {
-								const result = await createRole(role as string, role as string);
-								if (result.error) {
-									if (!isDuplicateError(result.error)) {
-										errors.push(
-											`${ERROR_CREATING_ROLE} ${role}: ${JSON.stringify(result.error)}`,
-										);
-									} else {
-										// Role exists but wasn't in our list, try to update it
-										try {
-											const { data: roleObject } = (await getRole(
-												role as string,
-											)) as ApiResponse<RoleWithPermissions>;
-
-											// Access permissions safely from the role object
-											const existingPermissions = roleObject?.permissions || [];
-											let permissions: string[] = Array.isArray(
-												existingPermissions,
-											)
-												? existingPermissions
-												: [];
-
-											if (
-												permissionStr &&
-												!permissions.includes(permissionStr)
-											) {
-												permissions = [...permissions, permissionStr];
-											}
-
-											// Update the role with the new permissions
-											const updateResult = await updateRole(
-												role as string,
-												role as string,
-												permissions,
-											);
-											if (updateResult.error) {
-												warnings.push(
-													`${ERROR_UPDATING_ROLE} ${role}: ${JSON.stringify(updateResult.error)}`,
-												);
-											}
-										} catch (getRoleError) {
-											warnings.push(
-												`Failed to get role details for ${role}: ${getRoleError}`,
-											);
-										}
-									}
-								} else {
-									// If we have a permission to add, update the role with it
-									if (permissionStr) {
-										try {
-											await updateRole(role as string, role as string, [
-												permissionStr,
-											]);
-										} catch (updateError) {
-											warnings.push(
-												`Failed to add permission to role ${role}: ${updateError}`,
-											);
-										}
-									}
-								}
-							} catch (roleError) {
-								errors.push(`Error creating role ${role}: ${roleError}`);
-							}
-						} else {
-							try {
-								// Get existing role to preserve permissions
-								const { data: roleObject } = (await getRole(
-									role as string,
-								)) as ApiResponse<RoleWithPermissions>;
-
-								// Access permissions safely from the role object
-								const existingPermissions = roleObject?.permissions || [];
-								let permissions: string[] = Array.isArray(existingPermissions)
-									? existingPermissions
-									: [];
-
-								if (permissionStr && !permissions.includes(permissionStr)) {
-									permissions = [...permissions, permissionStr];
-								}
-
-								// Update the role with the new permissions
-								const updateResult = await updateRole(
-									role as string,
-									role as string,
-									permissions,
-								);
-								if (updateResult.error) {
-									warnings.push(
-										`${ERROR_UPDATING_ROLE} ${role}: ${JSON.stringify(updateResult.error)}`,
-									);
-								}
-							} catch (getRoleError) {
-								warnings.push(
-									`Failed to get role details for ${role}: ${getRoleError}`,
-								);
-							}
-						}
-
-						roles.add(role as string);
-					}
-				}
-			}
-
-			// Create relations
-			setProgress('Creating relations between resources...');
-
-			for (const [, pathItem] of Object.entries(parsedSpec.paths || {})) {
-				if (!pathItem || typeof pathItem !== 'object') continue;
-
-				const typedPathItem = pathItem as PathItem;
-
-				const rawResource = typedPathItem[PERMIT_EXTENSIONS.RESOURCE];
-				if (!rawResource) continue;
-
-				// Process HTTP methods
-				for (const method of HTTP_METHODS) {
-					const operation = typedPathItem[method] as Operation | undefined;
-					if (!operation) continue;
-
-					// Process relation
-					const relation = operation[PERMIT_EXTENSIONS.RELATION];
-					if (relation && typeof relation === 'object') {
-						try {
-							type RelationData = {
-								subject_resource: string;
-								object_resource: string;
-								key?: string;
-								name?: string;
-							};
-
-							const relationData = relation as unknown as RelationData;
-
-							const sanitizedRelation = {
-								...relationData,
-								subject_resource: sanitizeKey(relationData.subject_resource),
-								object_resource: sanitizeKey(relationData.object_resource),
-								key:
-									relationData.key ||
-									`${sanitizeKey(relationData.subject_resource)}_${sanitizeKey(relationData.object_resource)}`,
-								name:
-									relationData.name ||
-									`${relationData.subject_resource} to ${relationData.object_resource}`,
-							};
-
-							// First, check if both resources exist, create if they don't
-							if (!resources.has(sanitizedRelation.subject_resource)) {
-								await createResource(
-									sanitizedRelation.subject_resource,
-									relationData.subject_resource,
-								);
-								resources.add(sanitizedRelation.subject_resource);
-							}
-
-							if (!resources.has(sanitizedRelation.object_resource)) {
-								await createResource(
-									sanitizedRelation.object_resource,
-									relationData.object_resource,
-								);
-								resources.add(sanitizedRelation.object_resource);
-							}
-
-							setProgress(
-								`Creating relation between ${sanitizedRelation.subject_resource} and ${sanitizedRelation.object_resource}...`,
-							);
-
-							// Add a small delay to allow resources to be registered
-							await new Promise(resolve => setTimeout(resolve, 300));
-
-							// Create the relation
-							const relationResult = await createRelation(sanitizedRelation);
-
-							if (relationResult.error) {
-								if (!isDuplicateError(relationResult.error)) {
-									errors.push(
-										`Failed to create relation: ${JSON.stringify(relationResult.error)}`,
-									);
-								} else {
-									warnings.push(`Relation already exists, skipping creation`);
-								}
-							}
-
-							// Store the relation for use in role derivation
-							relations.set(
-								sanitizedRelation.key,
-								JSON.stringify(sanitizedRelation),
-							);
-						} catch (relationError) {
-							errors.push(`Error creating relation: ${relationError}`);
-						}
-					}
-				}
-			}
-
-			// Create resource roles and derived roles
-			setProgress('Creating role derivations and resource-specific roles...');
-
-			for (const [pathKey, pathItem] of Object.entries(
+			await processResources(
+				context,
 				parsedSpec.paths || {},
-			)) {
-				if (!pathItem || typeof pathItem !== 'object') continue;
+				createResource as (
+					key: string,
+					name: string,
+				) => Promise<ApiResponse<ResourceResponse>>,
+				updateResource as (
+					key: string,
+					name: string,
+				) => Promise<ApiResponse<ResourceResponse>>,
+				createAction as (
+					resource: string,
+					action: string,
+					description: string,
+				) => Promise<ApiResponse<ActionResponse>>,
+			);
 
-				const typedPathItem = pathItem as PathItem;
+			setProgress('Creating roles and permissions...');
+			await processRoles(
+				context,
+				parsedSpec.paths || {},
+				getRole as (role: string) => Promise<ApiResponse<RoleWithPermissions>>,
+				createRole as (
+					key: string,
+					name: string,
+				) => Promise<ApiResponse<RoleResponse>>,
+				updateRole as (
+					key: string,
+					name: string,
+					permissions: string[],
+				) => Promise<ApiResponse<RoleResponse>>,
+			);
 
-				const rawResource = typedPathItem[PERMIT_EXTENSIONS.RESOURCE];
-				if (!rawResource) continue;
+			setProgress('Creating relations between resources...');
+			await processRelations(
+				context,
+				parsedSpec.paths || {},
+				createResource as (
+					key: string,
+					name: string,
+				) => Promise<ApiResponse<ResourceResponse>>,
+				createRelation as (
+					relationData: RelationRequest,
+				) => Promise<ApiResponse<RelationResponse>>,
+				setProgress,
+			);
 
-				const resource = sanitizeKey(rawResource as string);
+			setProgress('Creating role derivations and resource-specific roles...');
+			await processResourceRoles(
+				context,
+				parsedSpec.paths || {},
+				createResourceRole as (
+					resource: string,
+					role: string,
+					name: string,
+					permission: string,
+				) => Promise<ApiResponse<RoleResponse>>,
+			);
 
-				// Process HTTP methods
-				for (const method of HTTP_METHODS) {
-					const operation = typedPathItem[method] as Operation | undefined;
-					if (!operation) continue;
+			await processDerivedRoles(
+				context,
+				parsedSpec.paths || {},
+				createDerivedRole as (
+					derivedRoleData: DerivedRoleRequest,
+				) => Promise<ApiResponse<DerivedRoleResponse>>,
+			);
 
-					// Process resource roles
-					const resourceRole = operation[PERMIT_EXTENSIONS.RESOURCE_ROLE];
-					if (resourceRole) {
-						const sanitizedResourceRole = `${resource}_${resourceRole}`;
-						if (!resourceRoles.has(sanitizedResourceRole)) {
-							try {
-								// Create individual permission for specific action instead of wildcard
-								const action = operation[PERMIT_EXTENSIONS.ACTION] || method;
-								const permissionString = `${resource}:${action}`;
+			await generateUrlMappings(context, parsedSpec.paths || {});
 
-								const result = await createResourceRole(
-									resource,
-									sanitizedResourceRole,
-									`${rawResource} ${resourceRole}`,
-									permissionString,
-								);
-
-								if (result.error) {
-									if (!isDuplicateError(result.error)) {
-										errors.push(
-											`${ERROR_CREATING_RESOURCE_ROLE} ${resourceRole}: ${JSON.stringify(result.error)}`,
-										);
-									} else {
-										warnings.push(
-											`Resource role ${sanitizedResourceRole} already exists, skipping creation`,
-										);
-									}
-								}
-								resourceRoles.set(sanitizedResourceRole, true);
-							} catch (resourceRoleError) {
-								errors.push(
-									`Error creating resource role ${resourceRole}: ${resourceRoleError}`,
-								);
-							}
-						}
-					}
-
-					// Process derived role
-					const derivedRole = operation[PERMIT_EXTENSIONS.DERIVED_ROLE];
-					if (derivedRole && typeof derivedRole === 'object') {
-						type DerivedRoleData = {
-							base_role: string;
-							derived_role: string;
-							resource?: string;
-							relation?: string;
-						};
-
-						try {
-							const derivedRoleData = derivedRole as DerivedRoleData;
-
-							// Use the resource from the path if not specified
-							const resourceKey = sanitizeKey(
-								derivedRoleData.resource ||
-									(typedPathItem[PERMIT_EXTENSIONS.RESOURCE] as string) ||
-									'',
-							);
-
-							try {
-								// Create the derived role
-								const derivedRoleResult = await createDerivedRole({
-									...derivedRoleData,
-									resource: resourceKey,
-								});
-
-								if (derivedRoleResult.error) {
-									warnings.push(
-										`Could not create role derivation automatically: ${JSON.stringify(derivedRoleResult.error)}`,
-									);
-								}
-							} catch (innerError) {
-								warnings.push(
-									`Could not create role derivation automatically: ${innerError}`,
-								);
-							}
-						} catch (derivedRoleError) {
-							warnings.push(
-								`Could not set up role derivation: ${derivedRoleError}`,
-							);
-						}
-					}
-
-					// Add URL mapping with absolute path
-					const action = operation[PERMIT_EXTENSIONS.ACTION] || method;
-					mappings.push({
-						url: baseUrl ? `${baseUrl}${pathKey}` : pathKey,
-						http_method: method as string,
-						resource: resource,
-						action: action as string,
-					});
-				}
-			}
-
-			// Create URL mappings
 			setProgress('Creating URL mappings...');
-			if (mappings.length > 0) {
-				try {
-					// Try to delete existing mappings first
-					try {
-						await deleteUrlMappings('openapi');
-					} catch {
-						// No existing mappings to delete or error deleting
-					}
-
-					const result = await createUrlMappings(
-						mappings,
-						'Bearer',
-						'openapi_token',
-					);
-					if (result.error) {
-						errors.push(
-							`Failed to create URL mappings: ${JSON.stringify(result.error)}`,
-						);
-					}
-				} catch (mappingError) {
-					errors.push(`Error creating URL mappings: ${mappingError}`);
-				}
-			}
+			await createMappings(
+				context,
+				deleteUrlMappings as (
+					source: string,
+				) => Promise<ApiResponse<Record<string, unknown>>>,
+				createUrlMappings as (
+					mappings: UrlMappingRequest[],
+					authType: string,
+					tokenHeader: string,
+				) => Promise<ApiResponse<UrlMappingResponse[]>>,
+			);
 
 			// Check if there were any errors
-			if (errors.length > 0) {
+			if (context.errors.length > 0) {
 				setError(
-					`Completed with ${errors.length} errors. Last error: ${errors[errors.length - 1]}`,
+					`Completed with ${context.errors.length} errors. Last error: ${context.errors[context.errors.length - 1]}`,
 				);
 				setStatus('error');
 			} else {
@@ -623,7 +243,6 @@ export const useOpenapiProcessor = ({
 		listRoles,
 		updateResource,
 		updateRole,
-		// Note: existingResources and existingRoles are not dependencies as they are populated within the callback
 	]);
 
 	return { processSpec };
