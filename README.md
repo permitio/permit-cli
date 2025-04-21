@@ -543,7 +543,7 @@ $ permit policy create simple \
   --api-key permit_key_abc123
   --resources users:Users@department,role --resources posts:Posts@category \
   --actions create:Create --actions read:Read \
-  --roles admin:users:create|posts:read --roles editor:posts
+  --roles admin|users:create|posts:read --roles editor|posts
 ```
 
 ---

@@ -1,27 +1,24 @@
 import React, { useState } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
-import { useRolesApi } from '../../hooks/useRolesApi.js';
 import { components } from '../../lib/api/v1.js';
 
 interface RoleInputProps {
 	availableActions: string[];
 	availableResources: string[];
 	onComplete: (roles: components['schemas']['RoleCreate'][]) => void;
-	onError: (error: string) => void;
 }
 
 export const RoleInput: React.FC<RoleInputProps> = ({
 	availableActions,
 	availableResources,
 	onComplete,
-	onError,
 }) => {
 	const [input, setInput] = useState('');
-	const { getExistingRoles, status } = useRolesApi();
+	const [validationError, setValidationError] = useState<string | null>(null);
 
 	// Improved placeholder: a real, clear example
-	const placeholder = 'admin|posts, user|posts:read|posts:create';
+	const placeholder = 'Admin|Posts, User|Posts:Read|Posts:Create';
 
 	const validateRoleKey = (key: string): boolean =>
 		/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(key);
@@ -32,12 +29,15 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 	const validateAction = (action: string): boolean =>
 		!!action && availableActions.includes(action);
 
-	// Improved handleSubmit: first Enter fills input, second Enter submits
 	const handleSubmit = async (value: string) => {
+		// Clear any previous validation errors
+		setValidationError(null);
+
 		if (value.trim() === '') {
 			setInput(placeholder);
 			return;
 		}
+
 		try {
 			const valueToProcess = value.trim();
 			const roleDefs = valueToProcess
@@ -45,21 +45,19 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 				.map(r => r.trim())
 				.filter(Boolean);
 
-			const existingRolesSet = await getExistingRoles();
 			const roles: components['schemas']['RoleCreate'][] = [];
 
 			for (const def of roleDefs) {
 				const [role, ...permParts] = def.split('|').map(s => s.trim());
 				if (!role || !validateRoleKey(role)) {
-					onError(`Invalid role key: ${role}`);
+					setValidationError(`Invalid role key: ${role}`);
 					return;
 				}
-				if (existingRolesSet && existingRolesSet.has(role)) {
-					onError(`Role "${role}" already exists`);
-					return;
-				}
+
 				if (permParts.length === 0) {
-					onError('Role must have at least one resource or resource:action');
+					setValidationError(
+						'Role must have at least one resource or resource:action',
+					);
 					return;
 				}
 
@@ -67,14 +65,14 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 				for (const perm of permParts) {
 					const [resource, action] = perm.split(':').map(s => s.trim());
 					if (!resource || !validateResource(resource)) {
-						onError(`Invalid resource in permission: ${perm}`);
+						setValidationError(`Invalid resource in permission: ${perm}`);
 						return;
 					}
 					if (!action) {
 						permissions.push(...availableActions.map(a => `${resource}:${a}`));
 					} else {
 						if (!validateAction(action)) {
-							onError(`Invalid action in permission: ${perm}`);
+							setValidationError(`Invalid action in permission: ${perm}`);
 							return;
 						}
 						permissions.push(`${resource}:${action}`);
@@ -82,10 +80,11 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 				}
 
 				if (permissions.length === 0) {
-					onError(`No valid permissions for role: ${role}`);
+					setValidationError(`No valid permissions for role: ${role}`);
 					return;
 				}
 
+				// Add role regardless of whether it exists or not
 				roles.push({
 					key: role,
 					name: role,
@@ -93,10 +92,11 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 				});
 			}
 
+			// Process all roles, including existing ones
 			onComplete(roles);
 			setInput('');
 		} catch (err) {
-			onError((err as Error).message);
+			setValidationError((err as Error).message);
 		}
 	};
 
@@ -123,16 +123,22 @@ export const RoleInput: React.FC<RoleInputProps> = ({
 					<Text color="cyan">role|resource</Text>
 				</Text>
 			</Box>
+
 			<Box>
 				<Text dimColor>
 					For Example: <Text color="yellow">{placeholder}</Text>
 				</Text>
 			</Box>
+
 			<Box>
 				<Text>{'> '}</Text>
 				<TextInput value={input} onChange={setInput} onSubmit={handleSubmit} />
 			</Box>
-			{status === 'processing' && <Text>Validating roles...</Text>}
+			{validationError && (
+				<Box>
+					<Text color="red">{validationError}</Text>
+				</Box>
+			)}
 		</Box>
 	);
 };

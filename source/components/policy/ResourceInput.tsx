@@ -1,20 +1,15 @@
 import React, { useState } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
-import { useResourcesApi } from '../../hooks/useResourcesApi.js';
 import { components } from '../../lib/api/v1.js';
 
 interface ResourceInputProps {
 	onComplete: (resources: components['schemas']['ResourceCreate'][]) => void;
-	onError: (error: string) => void;
 }
 
-export const ResourceInput: React.FC<ResourceInputProps> = ({
-	onComplete,
-	onError,
-}) => {
+export const ResourceInput: React.FC<ResourceInputProps> = ({ onComplete }) => {
 	const [input, setInput] = useState('');
-	const { getExistingResources, status } = useResourcesApi();
+	const [validationError, setValidationError] = useState<string | null>(null);
 	const placeholder = 'Posts, Comments, Authors';
 
 	const validateResourceKey = (key: string): boolean => {
@@ -22,6 +17,9 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({
 	};
 
 	const handleSubmit = async (value: string) => {
+		// Clear any previous validation errors
+		setValidationError(null);
+
 		if (value.trim() === '') {
 			setInput(placeholder);
 			return;
@@ -34,23 +32,13 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({
 				.filter(k => k.length > 0);
 
 			if (resourceKeys.length === 0) {
-				onError('Please enter at least one resource');
+				setValidationError('Please enter at least one resource');
 				return;
 			}
 
 			const invalidKeys = resourceKeys.filter(key => !validateResourceKey(key));
 			if (invalidKeys.length > 0) {
-				onError(`Invalid resource keys: ${invalidKeys.join(', ')}`);
-				return;
-			}
-
-			const existingResources = await getExistingResources();
-			const conflictingResources = resourceKeys.filter(key =>
-				existingResources.has(key),
-			);
-
-			if (conflictingResources.length > 0) {
-				onError(`Resources already exist: ${conflictingResources.join(', ')}`);
+				setValidationError(`Invalid resource keys: ${invalidKeys.join(', ')}`);
 				return;
 			}
 
@@ -66,7 +54,7 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({
 			// Clear input after successful submission
 			setInput('');
 		} catch (err) {
-			onError((err as Error).message);
+			setValidationError((err as Error).message);
 		}
 	};
 
@@ -88,7 +76,11 @@ export const ResourceInput: React.FC<ResourceInputProps> = ({
 				<Text>{'> '}</Text>
 				<TextInput value={input} onChange={setInput} onSubmit={handleSubmit} />
 			</Box>
-			{status === 'processing' && <Text>Validating resources...</Text>}
+			{validationError && (
+				<Box>
+					<Text color="red">{validationError}</Text>
+				</Box>
+			)}
 		</Box>
 	);
 };

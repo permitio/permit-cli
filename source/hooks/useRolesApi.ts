@@ -66,16 +66,37 @@ export const useRolesApi = () => {
 
 			try {
 				const client = authenticatedApiClient();
+				const existingRoleKeys = await getExistingRoles();
 
-				for (const role of roles) {
+				// Separate existing and new roles
+				const existingRoles = roles.filter(role =>
+					existingRoleKeys.has(role.key),
+				);
+				const newRoles = roles.filter(role => !existingRoleKeys.has(role.key));
+
+				// Create new roles with POST
+				for (const role of newRoles) {
 					const { error } = await client.POST(
 						`/v2/schema/{proj_id}/{env_id}/roles`,
 						undefined,
-
 						role,
 					);
 
 					if (error) throw new Error(error);
+				}
+
+				// Update existing roles with PATCH
+				for (const role of existingRoles) {
+					const { key, ...roleToUpdate } = role;
+
+					const { error } = await client.PATCH(
+						`/v2/schema/{proj_id}/{env_id}/roles/{role_id}`,
+						{ role_id: key },
+						roleToUpdate,
+						undefined,
+					);
+
+					if (error) throw new Error(error + 'at patch role');
 				}
 
 				setStatus('done');
@@ -85,7 +106,7 @@ export const useRolesApi = () => {
 				throw error;
 			}
 		},
-		[authenticatedApiClient],
+		[authenticatedApiClient, getExistingRoles],
 	);
 
 	return useMemo(

@@ -177,16 +177,12 @@ export default function CreateSimpleWizard({
 			{status === 'idle' && (
 				<>
 					{step === 'resources' && !presentResources && (
-						<ResourceInput
-							onComplete={handleResourcesComplete}
-							onError={handleError}
-						/>
+						<ResourceInput onComplete={handleResourcesComplete} />
 					)}
 
 					{step === 'actions' && !presentActions && (
 						<ActionInput
 							onComplete={handleActionsComplete}
-							onError={handleError}
 							availableResources={resources.map(r => r.key)}
 						/>
 					)}
@@ -195,7 +191,6 @@ export default function CreateSimpleWizard({
 						<RoleInput
 							availableActions={Object.keys(actions)}
 							onComplete={handleRolesComplete}
-							onError={handleError}
 							availableResources={resources.map(r => r.key)}
 						/>
 					)}

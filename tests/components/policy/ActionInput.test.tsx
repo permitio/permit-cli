@@ -14,7 +14,6 @@ vi.mock('ink-text-input', () => ({
 
 describe('ActionInput', () => {
 	const mockOnComplete = vi.fn();
-	const mockOnError = vi.fn();
 	const availableResources = ['users', 'posts'];
 
 	beforeEach(() => {
@@ -29,7 +28,6 @@ describe('ActionInput', () => {
 		const { lastFrame } = render(
 			<ActionInput
 				onComplete={mockOnComplete}
-				onError={mockOnError}
 				availableResources={availableResources}
 			/>,
 		);
@@ -43,7 +41,6 @@ describe('ActionInput', () => {
 		render(
 			<ActionInput
 				onComplete={mockOnComplete}
-				onError={mockOnError}
 				availableResources={availableResources}
 			/>,
 		);
@@ -55,7 +52,6 @@ describe('ActionInput', () => {
 		render(
 			<ActionInput
 				onComplete={mockOnComplete}
-				onError={mockOnError}
 				availableResources={availableResources}
 			/>,
 		);
@@ -64,21 +60,19 @@ describe('ActionInput', () => {
 			create: { name: 'create', description: 'Create access' },
 			read: { name: 'read', description: 'Read access' },
 		});
-		expect(mockOnError).not.toHaveBeenCalled();
 	});
 
-	it('shows error for invalid action keys', () => {
-		render(
+	it('shows error for invalid action keys', async () => {
+		const { lastFrame } = render(
 			<ActionInput
 				onComplete={mockOnComplete}
-				onError={mockOnError}
 				availableResources={availableResources}
 			/>,
 		);
 		global.textInputHandlers.onSubmit('create, 123bad');
-		expect(mockOnError).toHaveBeenCalledWith(
-			expect.stringContaining('Invalid action keys: 123bad'),
-		);
+		// Wait for the component to update
+		await new Promise(r => setTimeout(r, 50));
+		expect(lastFrame()).toContain('Invalid action keys: 123bad');
 		expect(mockOnComplete).not.toHaveBeenCalled();
 	});
 
@@ -86,7 +80,6 @@ describe('ActionInput', () => {
 		render(
 			<ActionInput
 				onComplete={mockOnComplete}
-				onError={mockOnError}
 				availableResources={availableResources}
 			/>,
 		);
@@ -99,7 +92,6 @@ describe('ActionInput', () => {
 		render(
 			<ActionInput
 				onComplete={mockOnComplete}
-				onError={mockOnError}
 				availableResources={availableResources}
 			/>,
 		);
@@ -113,5 +105,35 @@ describe('ActionInput', () => {
 			update: { name: 'update', description: 'Update access' },
 			delete: { name: 'delete', description: 'Delete access' },
 		});
+	});
+
+	it('shows error when no actions are provided', async () => {
+		const { lastFrame } = render(
+			<ActionInput
+				onComplete={mockOnComplete}
+				availableResources={availableResources}
+			/>,
+		);
+		global.textInputHandlers.onSubmit('   ,   ');
+		await new Promise(r => setTimeout(r, 50));
+		expect(lastFrame()).toContain('Please enter at least one action');
+		expect(mockOnComplete).not.toHaveBeenCalled();
+	});
+
+	it('clears input after successful submission', async () => {
+		const { lastFrame } = render(
+			<ActionInput
+				onComplete={mockOnComplete}
+				availableResources={availableResources}
+			/>,
+		);
+		// Set input
+		global.textInputHandlers.onChange('create');
+		// Submit
+		global.textInputHandlers.onSubmit('create');
+		// Wait for state updates
+		await new Promise(r => setTimeout(r, 50));
+		// Input should be cleared
+		expect(lastFrame()).toContain('Input:');
 	});
 });

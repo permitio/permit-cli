@@ -10,6 +10,7 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 // Create mock functions at module level so they're accessible throughout tests
 const mockGetFn = vi.fn();
 const mockPostFn = vi.fn();
+const mockPatchFn = vi.fn();
 const mockUnauthGetFn = vi.fn();
 const mockUnauthPostFn = vi.fn();
 
@@ -19,6 +20,7 @@ vi.mock('../../source/hooks/useClient.js', () => ({
 		authenticatedApiClient: () => ({
 			GET: mockGetFn,
 			POST: mockPostFn,
+			PATCH: mockPatchFn,
 		}),
 		unAuthenticatedApiClient: () => ({
 			GET: mockUnauthGetFn,
@@ -30,8 +32,14 @@ vi.mock('../../source/hooks/useClient.js', () => ({
 // Test component to call and display hook results
 const TestComponent = ({
 	operation,
+	resources = [{ key: 'test', name: 'Test', actions: {} }],
 }: {
 	operation: 'getExisting' | 'createBulk';
+	resources?: Array<{
+		key: string;
+		name: string;
+		actions: Record<string, any>;
+	}>;
 }) => {
 	const { getExistingResources, createBulkResources, status, errorMessage } =
 		useResourcesApi();
@@ -42,8 +50,8 @@ const TestComponent = ({
 				const results = await getExistingResources();
 				return Array.from(results).join(',');
 			} else if (operation === 'createBulk') {
-				await createBulkResources([{ key: 'test', name: 'Test', actions: {} }]);
-				return 'created';
+				await createBulkResources(resources);
+				return 'completed';
 			}
 			return '';
 		} catch (error) {
@@ -56,7 +64,7 @@ const TestComponent = ({
 
 	React.useEffect(() => {
 		handleOperation().then(setResult);
-	}, [operation]);
+	}, [operation, JSON.stringify(resources)]);
 
 	return (
 		<>
@@ -110,33 +118,104 @@ describe('useResourceApi', () => {
 		expect(lastFrame()).toContain('Error: API error');
 	});
 
-	it('should create resources successfully', async () => {
+	it('should create new resources with POST', async () => {
+		// Mock empty existing resources
+		mockGetFn.mockResolvedValue({
+			data: [],
+			error: null,
+		});
+
 		// Mock successful POST
 		mockPostFn.mockResolvedValue({
 			data: { key: 'test' },
 			error: null,
 		});
 
-		const { lastFrame } = render(<TestComponent operation="createBulk" />);
+		const resource = { key: 'test', name: 'Test', actions: {} };
+		const { lastFrame } = render(
+			<TestComponent operation="createBulk" resources={[resource]} />,
+		);
 
 		await delay(50);
 
 		expect(lastFrame()).toContain('Status: done');
 		expect(lastFrame()).toContain('Error: none');
-		expect(lastFrame()).toContain('Result: created');
+		expect(lastFrame()).toContain('Result: completed');
 		expect(mockPostFn).toHaveBeenCalledWith(
 			'/v2/schema/{proj_id}/{env_id}/resources',
 			undefined,
-			{ key: 'test', name: 'Test', actions: {} },
+			resource,
+		);
+		// PATCH shouldn't be called for new resources
+		expect(mockPatchFn).not.toHaveBeenCalled();
+	});
+
+	it('should update existing resources with PATCH', async () => {
+		// Mock existing resources
+		mockGetFn.mockResolvedValue({
+			data: [{ key: 'existing' }],
+			error: null,
+		});
+
+		// Mock successful PATCH
+		mockPatchFn.mockResolvedValue({
+			data: { key: 'existing' },
+			error: null,
+		});
+
+		const resource = { key: 'existing', name: 'Updated Name', actions: {} };
+		const { lastFrame } = render(
+			<TestComponent operation="createBulk" resources={[resource]} />,
+		);
+
+		await delay(50);
+
+		expect(lastFrame()).toContain('Status: done');
+		expect(mockPatchFn).toHaveBeenCalledWith(
+			'/v2/schema/{proj_id}/{env_id}/resources/{resource_id}',
+			{ resource_id: 'existing' },
+			{ name: 'Updated Name', actions: {} }, // key should be removed
+			undefined,
+		);
+		// POST shouldn't be called for existing resources
+		expect(mockPostFn).not.toHaveBeenCalled();
+	});
+
+	it('should handle both new and existing resources', async () => {
+		// Mock existing resources
+		mockGetFn.mockResolvedValue({
+			data: [{ key: 'existing' }],
+			error: null,
+		});
+
+		// Mock successful POST and PATCH
+		mockPostFn.mockResolvedValue({ data: { key: 'new' }, error: null });
+		mockPatchFn.mockResolvedValue({ data: { name: 'existing' }, error: null });
+
+		const resources = [
+			{ key: 'existing', name: 'Updated Name', actions: {} },
+			{ key: 'new', name: 'New Resource', actions: {} },
+		];
+
+		const { lastFrame } = render(
+			<TestComponent operation="createBulk" resources={resources} />,
+		);
+
+		await delay(100);
+
+		expect(lastFrame()).toContain('Status: done');
+
+		expect(mockPostFn).toHaveBeenCalledWith(
+			'/v2/schema/{proj_id}/{env_id}/resources',
+			undefined,
+			{ key: 'new', name: 'New Resource', actions: {} },
 		);
 	});
 
 	it('should handle errors when creating resources', async () => {
-		// Mock POST error
-		mockPostFn.mockResolvedValue({
-			data: null,
-			error: 'POST error',
-		});
+		// Mock GET success but POST error
+		mockGetFn.mockResolvedValue({ data: [], error: null });
+		mockPostFn.mockResolvedValue({ data: null, error: 'POST error' });
 
 		const { lastFrame } = render(<TestComponent operation="createBulk" />);
 
@@ -144,6 +223,27 @@ describe('useResourceApi', () => {
 
 		expect(lastFrame()).toContain('Status: error');
 		expect(lastFrame()).toContain('Error: POST error');
+	});
+
+	it('should handle errors when updating resources', async () => {
+		// Mock existing resources
+		mockGetFn.mockResolvedValue({
+			data: [{ key: 'existing' }],
+			error: null,
+		});
+
+		// Mock PATCH error
+		mockPatchFn.mockResolvedValue({ data: null, error: 'PATCH error' });
+
+		const resource = { key: 'existing', name: 'Test', actions: {} };
+		const { lastFrame } = render(
+			<TestComponent operation="createBulk" resources={[resource]} />,
+		);
+
+		await delay(50);
+
+		expect(lastFrame()).toContain('Status: error');
+		expect(lastFrame()).toContain('Error: PATCH error');
 	});
 
 	it('should handle invalid response formats', async () => {
