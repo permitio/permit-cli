@@ -57,13 +57,16 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
 - `opa` - a collection of commands for better OPA experience
   - `policy` - print the available policies of an active OPA instance
 - `gitops create github` - configure Permit environment to use [GitOps flow](https://docs.permit.io/integrations/gitops/overview/)
+- `gitops env clone` - clone a environment of the gitops repository or a complete project.
 - `api` - direct access to Permit.io's API functionality
   - `users` - manage users in your Permit.io account
     - `list` - list all users in your Permit.io account
     - `assign` - assign a user to a specific role in your Permit.io account
     - `unassign` - remove a role assignment from a user in your Permit.io account
   - `sync` - To sync the data from CLI to permit.io
-    - `user` - To update or create a user from the CLI.
+    - `user` - To update or create a user from the CL
+- `policy create simple` - Create a simple policy Table
+
 - `test` - commands for testing authorization policies
   - `run audit` - test PDP against past authorization decisions
 
@@ -442,6 +445,20 @@ This command will configure your Permit environment to use the GitOps flow with 
 - `--key <string>` (Optional) - a Permit API key to authenticate the operation. If not provided, the command will take the one you logged in with.
 - `--inactive <boolean>` (Optional) - set the environment to inactive after configuring GitOps (default: `false`)
 
+---
+
+### `gitops env clone`
+
+This clones the environment or the complete project from the active gitops repository.
+
+#### options
+
+- `--api-key <string>` (Optional) - The API key to select the project. The API Key is of the scope `Project`.
+- `--dry-run` (Optional) - Instead of executing the code it just displays the command to be executed.
+- `--project` (Optional) - Instead of selecting an environment branch to clone it does the standard clone operation.
+
+---
+
 ### `api`
 
 This collection of commands provides direct access to Permit.io's API functionality.
@@ -509,6 +526,40 @@ Use this command to remove a role assignment from a user in your Permit.io accou
 ```bash
 $ permit api users unassign --user user@example.com --role admin --tenant default
 ```
+
+---
+
+### `policy create simple`
+
+A simple policy table creation wizard with the resources, actions and roles.
+You can provide resources, actions, and roles as arguments or enter them interactively.
+
+#### Options
+
+- `api-key <string> ` Optional: The Permit API key of the environment.
+
+- `resources <string[]>` (Optional) : Array of resources in the format: "key:name@attribute1,attribute2"
+  - `key`: Resource Key
+  - `name`: Resource display Name
+  - `@attribute1,attribute2` : comma-seperated list of attributes.
+- `actions <string[]>` (Optional) : Array of actions in the format: "key:description@attribute1,attribute2"
+  - `key` : Action Key
+  - `description` : Action description
+  - `@attribute1,attribute2`: Comma-sperated list of attributes.
+- `roles <string[]>` (Optional) : Array of roles in the format: "role|resource:action|resource:action" or "role|resource"
+
+  - `role`: Role key
+  - `resource:action`: The resource and the action to declare the permissions.
+
+```bash
+$ permit policy create simple \
+  --api-key permit_key_abc123
+  --resources users:Users@department,role --resources posts:Posts@category \
+  --actions create:Create --actions read:Read \
+  --roles admin|users:create|posts:read --roles editor|posts
+```
+
+---
 
 ### `test`
 
