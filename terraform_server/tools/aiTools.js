@@ -61,25 +61,25 @@ const tools = {
 	generatePolicy: tool({
 		description: 'Generate a policy structure based on user description',
 		parameters: z.object({
-			description: z.string().describe('The description of the system or use case'),
+			description: z
+				.string()
+				.describe('The description of the system or use case'),
 		}),
 		execute: async () => {
 			// This is a placeholder implementation
 			// In a real implementation, this would generate a policy based on the description
 			const policy = {
-				resources: [
-					{ name: 'Example Resource', actions: ['read', 'write'] }
-				],
+				resources: [{ name: 'Example Resource', actions: ['read', 'write'] }],
 				roles: [
 					{ name: 'User', permissions: ['read:resource'] },
-					{ name: 'Admin', permissions: ['read:resource', 'write:resource'] }
+					{ name: 'Admin', permissions: ['read:resource', 'write:resource'] },
 				],
 				actions: ['read', 'write'],
-				permissions: ['read:resource', 'write:resource']
+				permissions: ['read:resource', 'write:resource'],
 			};
 
 			return {
-				policy: policy
+				policy: policy,
 			};
 		},
 	}),

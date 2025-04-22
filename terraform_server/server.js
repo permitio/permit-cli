@@ -184,7 +184,9 @@ app.post('/chat', async (req, res) => {
 		res.end();
 	} catch (error) {
 		console.error('Error in chat:', error);
-		res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
+		res.write(
+			`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`,
+		);
 		res.write(`data: ${JSON.stringify({ type: 'enable_input' })}\n\n`);
 		res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
 		res.end();
