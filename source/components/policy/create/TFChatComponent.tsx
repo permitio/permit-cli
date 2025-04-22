@@ -5,7 +5,6 @@ import { useAuth } from '../../AuthProvider.js';
 import fs from 'fs';
 import path from 'path';
 import { ApplyTemplate } from '../../../lib/env/template/utils.js';
-import { TERRAFORM_PERMIT_URL } from '../../../config.js';
 import { PolicyTables } from './PolicyTables.js';
 import { generateTerraform } from './TerraformGenerator.js';
 import { PolicyData } from './types.js';
@@ -129,7 +128,7 @@ export const TFChatComponent = () => {
 			setTableData(null);
 			setTerraformOutput(null);
 
-			const response = await fetch(`${TERRAFORM_PERMIT_URL}/chat`, {
+			const response = await fetch('http://localhost:3000/chat', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

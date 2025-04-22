@@ -17,63 +17,57 @@ export const PolicyTables: React.FC<PolicyTablesProps> = ({
 
 	const { resources, roles } = tableData;
 
-	// Create resources table
-	let resourcesTable = null;
-	if (resources && resources.length > 0) {
-		const table = new Table({
-			head: [
-				chalk.hex('#00FF00')('Resource Name'),
-				chalk.hex('#00FF00')('Actions'),
-			],
-			colWidths: [20, 40],
+	// Calculate column widths based on content
+	const roleColumnWidths = roles.map(r => Math.max(15, r.name.length + 2));
+
+	const table = new Table({
+		head: [
+			'', // Empty header for resources/actions column
+			...roles.map(r => chalk.hex('#FFA500')(r.name)), // Orange color for role names
+		],
+		colWidths: [30, ...roleColumnWidths],
+		chars: {
+			top: '─',
+			'top-mid': '┬',
+			'top-left': '┌',
+			'top-right': '┐',
+			bottom: '─',
+			'bottom-mid': '┴',
+			'bottom-left': '└',
+			'bottom-right': '┘',
+			left: '│',
+			'left-mid': '├',
+			mid: '─',
+			'mid-mid': '┼',
+			right: '│',
+			'right-mid': '┤',
+			middle: '│',
+		},
+	});
+
+	// Add rows for each resource and its actions
+	resources.forEach(resource => {
+		// Add resource name in light purple
+		table.push([chalk.hex('#9370DB')(resource.name), ...roles.map(() => '')]);
+
+		// Add actions under the resource
+		resource.actions.forEach(action => {
+			const row = [
+				`  ${action}`, // Indent actions
+				...roles.map(role => {
+					const hasPermission = role.permissions.some(
+						p => p.resource === resource.name && p.actions.includes(action),
+					);
+					return hasPermission ? '✓' : '';
+				}),
+			];
+			table.push(row);
 		});
-
-		resources.forEach(resource => {
-			table.push([resource.name, resource.actions.join(', ')]);
-		});
-
-		resourcesTable = table.toString();
-	}
-
-	// Create roles table
-	let rolesTable = null;
-	if (roles && roles.length > 0) {
-		const table = new Table({
-			head: [
-				chalk.hex('#00FF00')('Role Name'),
-				chalk.hex('#00FF00')('Permissions'),
-			],
-			colWidths: [20, 60],
-		});
-
-		roles.forEach(role => {
-			const permissions = role.permissions
-				.map(
-					(p: { resource: string; actions: string[] }) =>
-						`${p.resource}: ${p.actions.join(', ')}`,
-				)
-				.join('\n');
-
-			table.push([role.name, permissions]);
-		});
-
-		rolesTable = table.toString();
-	}
+	});
 
 	return (
 		<Box flexDirection="column">
-			{resourcesTable && (
-				<>
-					<Text>Resources:</Text>
-					<Text>{resourcesTable}</Text>
-				</>
-			)}
-			{rolesTable && (
-				<>
-					<Text>Roles:</Text>
-					<Text>{rolesTable}</Text>
-				</>
-			)}
+			<Text>{table.toString()}</Text>
 			{waitingForApproval && (
 				<Text color="yellow">Do you approve this policy? (yes/no)</Text>
 			)}
