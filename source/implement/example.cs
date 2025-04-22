@@ -21,25 +21,25 @@ HttpListenerContext ctx = await listener.GetContextAsync();
 HttpListenerResponse resp = ctx.Response;
 
                 // in a real app, you would typically decode the user id from a JWT token
-                UserKey user = new UserKey("<<USER_ID>>", "<<FIRST_NAME>>", "<<LAST_NAME>>", "<<EMAIL>>");
+                UserKey user = new UserKey("{{USER_ID}}", "{{FIRST_NAME}}", "{{LAST_NAME}}", "{{EMAIL}}");
                 // init Permit SDK
-                string clientToken = "<<API_KEY>>";
+                string clientToken = "{{API_KEY}}";
                 Permit permit = new Permit(
                     clientToken,
-                    "https://cloudpdp.api.permit.io"
+                    "http://localhost:7766"
                 );
                 // After we created this user in the previous step, we also synced the user's identifier
                 // to permit.io servers with permit.write(permit.api.syncUser(user)). The user identifier
                 // can be anything (email, db id, etc) but must be unique for each user. Now that the
                 // user is synced, we can use its identifier to check permissions with 'permit.check()'.
-                bool permitted = await permit.Check(user.key, "<<ACTIONS>>", "<<RESOURCES>>");
+                bool permitted = await permit.Check(user.key, "{{ACTIONS}}", "{{RESOURCES}}");
                 if (permitted)
                 {
-                    await SendResponseAsync(resp, 200, String.Format(pageData, user.firstName + user.lastName, "Permitted", "<<ACTIONS>>", "<<RESOURCES>>"));
+                    await SendResponseAsync(resp, 200, String.Format(pageData, user.firstName + user.lastName, "Permitted", "{{ACTIONS}}", "{{RESOURCES}}"));
                 }
                 else
                 {
-                    await SendResponseAsync(resp, 403, String.Format(pageData, user.firstName + user.lastName, "NOT Permitted", "<<ACTIONS>>", "<<RESOURCES>>"));
+                    await SendResponseAsync(resp, 403, String.Format(pageData, user.firstName + user.lastName, "NOT Permitted", "{{ACTIONS}}", "{{RESOURCES}}"));
                 }
             }
         }
@@ -63,5 +63,4 @@ HttpListenerResponse resp = ctx.Response;
             listener.Close();
         }
     }
-
 }

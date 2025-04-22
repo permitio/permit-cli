@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import Handlebars from 'handlebars';
 
 const implementDir = 'source/implement';
 
@@ -22,17 +23,25 @@ export function getFormatedFile(
 	userFirstName?: string,
 	userLastName?: string,
 ) {
-	const fileContent = getFileContent(fileName);
-	const formattedContent = fileContent
-		.replace(/<<API_KEY>>/g, apiKey)
-		.replace(/<<ACTIONS>>/g, action)
-		.replace(/<<RESOURCES>>/g, resource)
-		.replace(/<<USER_ID>>/g, userId || '')
-		.replace(/<<EMAIL>>/g, userEmail || '')
-		.replace(/<<FIRST_NAME>>/g, userFirstName || '')
-		.replace(/<<LAST_NAME>>/g, userLastName || '');
+	// Get the template content
+	const templateContent = getFileContent(fileName);
 
-	return formattedContent;
+	// Compile the Handlebars template
+	const template = Handlebars.compile(templateContent);
+
+	// Define the context with all variables
+	const context = {
+		API_KEY: apiKey,
+		ACTIONS: action,
+		RESOURCES: resource,
+		USER_ID: userId || '',
+		EMAIL: userEmail || '',
+		FIRST_NAME: userFirstName || '',
+		LAST_NAME: userLastName || '',
+	};
+
+	// Render the template with the context
+	return template(context);
 }
 
 export const installationCommand = {
@@ -40,7 +49,7 @@ export const installationCommand = {
 	node: 'npm install permitio',
 	ruby: 'gem install permit-sdk webrick',
 	java: `// add this line to install the Permit.io Java SDK in your project
-             implementation 'io.permit:permit-sdk-java'`,
+           implementation 'io.permit:permit-sdk-java'`,
 	dotnet: `dotnet add package Permit`,
 	go: `go get github.com/permitio/permit-golang`,
 };
