@@ -4,6 +4,8 @@ import TextInput from 'ink-text-input';
 import Table from 'cli-table';
 import chalk from 'chalk';
 import { useAuth } from '../../AuthProvider.js';
+import fs from 'fs';
+import path from 'path';
 
 // Define interfaces for the policy data structure
 interface Resource {
@@ -43,62 +45,49 @@ export const TFChatComponent = () => {
 
 	const applyTerraform = useCallback(async () => {
 		try {
-			console.log('applyTerraform called, terraformOutput:', terraformOutput);
-			// Check if terraformOutput is set
 			if (!terraformOutput) {
 				throw new Error('Terraform output is not set');
 			}
 
-			// First check if the API endpoint is available
+			// Create a temporary file with the terraform content
+			const tempDir = path.join(process.cwd(), 'temp');
+			if (!fs.existsSync(tempDir)) {
+				fs.mkdirSync(tempDir, { recursive: true });
+			}
+
+			const tempFileName = `temp-${Math.random().toString(36).substring(7)}`;
+			const tempFilePath = path.join(tempDir, `${tempFileName}.tf`);
+
+			// Write the terraform content to the temporary file
+			fs.writeFileSync(tempFilePath, terraformOutput, 'utf-8');
+
 			try {
-				const healthCheck = await fetch('http://localhost:3000/health', {
-					method: 'GET',
+				// Use a direct approach to apply the Terraform configuration
+				const response = await fetch('http://localhost:3000/apply', {
+					method: 'POST',
 					headers: {
-						'Content-Type': 'application/json',
+						'Content-Type': 'application/x-hcl',
+						Authorization: authToken,
 					},
+					body: terraformOutput,
 				});
 
-				if (!healthCheck.ok) {
-					throw new Error('API endpoint is not available');
+				if (!response.ok) {
+					const errorText = await response.text();
+					throw new Error(`Server error: ${response.status} - ${errorText}`);
 				}
-			} catch {
-				throw new Error(
-					'Could not connect to the API endpoint. Make sure the server is running.',
-				);
+
+				await response.json();
+				setMessages(prevMessages => [
+					...prevMessages,
+					{ role: 'assistant', content: 'Terraform applied successfully!' },
+				]);
+			} finally {
+				// Clean up the temporary file
+				if (fs.existsSync(tempFilePath)) {
+					fs.unlinkSync(tempFilePath);
+				}
 			}
-
-			// Now apply the Terraform file
-			console.log('Sending Terraform output:', terraformOutput);
-			console.log('Terraform output type:', typeof terraformOutput);
-
-			// Make sure terraformOutput is a string
-			if (typeof terraformOutput !== 'string') {
-				console.error('Terraform output is not a string:', terraformOutput);
-				throw new Error('Terraform output is not a string');
-			}
-
-			const response = await fetch('http://localhost:3000/apply', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/x-hcl',
-					Authorization: authToken, // Use authToken from AuthProvider
-				},
-				body: terraformOutput, // Send the terraform content directly
-			});
-
-			if (!response.ok) {
-				const errorText = await response.text();
-				throw new Error(
-					`Server responded with status ${response.status}: ${errorText}`,
-				);
-			}
-
-			await response.json();
-			// Add success message after the table
-			setMessages(prevMessages => [
-				...prevMessages,
-				{ role: 'assistant', content: `Terraform applied successfully!` },
-			]);
 		} catch (error) {
 			console.error('Error applying Terraform:', error);
 			setMessages(prevMessages => [
@@ -109,7 +98,7 @@ export const TFChatComponent = () => {
 				},
 			]);
 		}
-	}, [terraformOutput, authToken, setMessages]);
+	}, [terraformOutput, authToken]);
 
 	const generateTerraformFile = () => {
 		if (!tableData) return;
