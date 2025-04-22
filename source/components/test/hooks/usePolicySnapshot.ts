@@ -69,6 +69,7 @@ export const useGeneratePolicySnapshot = ({
 	dryRun,
 	models,
 	path,
+	isTestTenant = true,
 }: GeneratePolicySnapshotProps) => {
 	const { getRoles } = useRolesApi();
 	const { createTenant } = useTenantApi();
@@ -182,7 +183,9 @@ export const useGeneratePolicySnapshot = ({
 	}, [getResources]);
 
 	const creatNewTenant = useCallback(async () => {
-		const name = 'test-tenant-' + randomName('', '');
+		const name = isTestTenant
+			? 'test-tenant-' + randomName('', '')
+			: randomName('', '');
 		setTenantId(name);
 		const body: CreateTenantBody = {
 			key: name,
@@ -197,7 +200,7 @@ export const useGeneratePolicySnapshot = ({
 			return;
 		}
 		setState('resources');
-	}, [createTenant]);
+	}, [createTenant, isTestTenant]);
 
 	const generateRBACConfig = useCallback(() => {
 		const config: RBACConfig[] = generatedUsersRBACRef.current.flatMap(user =>

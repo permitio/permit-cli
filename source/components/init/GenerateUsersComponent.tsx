@@ -30,11 +30,13 @@ export default function GeneratedUsersComponent({
 		() => ({
 			dryRun: true,
 			models: ['RBAC'],
+			isTestTenant: false,
 		}),
 		[],
 	);
 
-	const { state, error, dryUsers } = useGeneratePolicySnapshot(snapshotOptions);
+	const { state, error, dryUsers, tenantId } =
+		useGeneratePolicySnapshot(snapshotOptions);
 
 	// Handle errors
 	useEffect(() => {
@@ -72,7 +74,13 @@ export default function GeneratedUsersComponent({
 	};
 
 	// Generate formatted user list for display
-	const formatUserInfo = (user: any) => {
+	const formatUserInfo = (user: {
+		key: string;
+		email: string;
+		firstName: string;
+		lastName: string;
+		roles: string[];
+	}) => {
 		const name = [user.firstName, user.lastName].filter(Boolean).join(' ');
 
 		return `${user.key}${name ? ` (${name})` : ''}${
@@ -93,7 +101,9 @@ export default function GeneratedUsersComponent({
 	// Layout for users generated
 	return (
 		<Box flexDirection="column">
-			<Text>Generated {dryUsers?.length || 0} users:</Text>
+			<Text>
+				Generated {dryUsers?.length || 0} users in Tenant {tenantId}:
+			</Text>
 
 			<Box flexDirection="column" marginTop={1} marginBottom={1}>
 				{dryUsers && dryUsers.length > 0 ? (

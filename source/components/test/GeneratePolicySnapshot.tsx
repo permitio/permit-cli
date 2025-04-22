@@ -8,6 +8,7 @@ export type GeneratePolicySnapshotProps = {
 	models: string[];
 	codeSample?: 'jest' | 'pytest';
 	path?: string;
+	isTestTenant?: boolean;
 };
 
 export function GeneratePolicySnapshot({
