@@ -2,65 +2,284 @@ import React from 'react';
 import { render, cleanup } from 'ink-testing-library';
 import GenerateUsersComponent from '../../../source/components/init/GenerateUsersComponent.js';
 import { useGeneratePolicySnapshot } from '../../../source/components/test/hooks/usePolicySnapshot.js';
-import { vi, describe, it, expect } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { type Mock } from 'vitest';
 
-vi.mock('../../../source/components/test/hooks/usePolicySnapshot.js', () => ({
-	useGeneratePolicySnapshot: vi.fn(() => ({
-		state: 'processing',
-		error: null,
-		dryUsers: ['user-1'],
-	})),
+// Store the SelectInput callback for testing
+let selectInputCallback:
+	| ((item: { label: string; value: string }) => void)
+	| null = null;
+
+// Mock the SelectInput component
+vi.mock('ink-select-input', () => ({
+	default: ({
+		items,
+		onSelect,
+	}: {
+		items: Array<{ label: string; value: string }>;
+		onSelect: (item: { label: string; value: string }) => void;
+	}) => {
+		// Store the callback for later use in tests
+		selectInputCallback = onSelect;
+		return <span>Continue</span>; // Render something simple that will appear in the output
+	},
 }));
+
+// Mock the usePolicySnapshot hook
+vi.mock('../../../source/components/test/hooks/usePolicySnapshot.js', () => ({
+	useGeneratePolicySnapshot: vi.fn(),
+}));
+
 describe('GenerateUsersComponent', () => {
 	const mockOnComplete = vi.fn();
 	const mockOnError = vi.fn();
 	const mockUseGeneratePolicySnapshot = useGeneratePolicySnapshot as Mock;
-	it('renders without crashing', () => {
+
+	beforeEach(() => {
+		vi.resetAllMocks();
+		selectInputCallback = null; // Reset the callback between tests
+
+		// Default mock implementation
+		mockUseGeneratePolicySnapshot.mockReturnValue({
+			state: 'roles',
+			error: null,
+			dryUsers: [],
+			tenantId: 'test-tenant-123',
+		});
+	});
+
+	afterEach(() => {
+		cleanup();
+	});
+
+	it('renders loading state', () => {
+		// Test when loading roles
+		mockUseGeneratePolicySnapshot.mockReturnValueOnce({
+			state: 'roles',
+			error: null,
+			dryUsers: [],
+			tenantId: undefined,
+		});
+
 		const { lastFrame } = render(
 			<GenerateUsersComponent
 				onComplete={mockOnComplete}
 				onError={mockOnError}
 			/>,
 		);
+
+		expect(lastFrame()).toContain('Generating users...');
+	});
+
+	it('renders rbac-tenant state correctly', () => {
+		mockUseGeneratePolicySnapshot.mockReturnValueOnce({
+			state: 'rbac-tenant',
+			error: null,
+			dryUsers: [],
+			tenantId: undefined,
+		});
+
+		const { lastFrame } = render(
+			<GenerateUsersComponent
+				onComplete={mockOnComplete}
+				onError={mockOnError}
+			/>,
+		);
+
+		expect(lastFrame()).toContain('Generating users...');
+	});
+
+	it('renders rbac-users state correctly', () => {
+		mockUseGeneratePolicySnapshot.mockReturnValueOnce({
+			state: 'rbac-users',
+			error: null,
+			dryUsers: [],
+			tenantId: 'tenant-123',
+		});
+
+		const { lastFrame } = render(
+			<GenerateUsersComponent
+				onComplete={mockOnComplete}
+				onError={mockOnError}
+			/>,
+		);
+
 		expect(lastFrame()).toContain('Generating users...');
 	});
 
 	it('handles errors correctly', async () => {
 		mockUseGeneratePolicySnapshot.mockReturnValueOnce({
-			state: 'error',
+			state: 'done',
 			error: 'An error occurred',
 			dryUsers: [],
+			tenantId: 'tenant-123',
 		});
+
 		render(
 			<GenerateUsersComponent
 				onComplete={mockOnComplete}
 				onError={mockOnError}
 			/>,
 		);
+
 		await new Promise(resolve => setTimeout(resolve, 50)); // Wait for useEffect to run
-		expect(mockOnError).toHaveBeenCalled();
+
+		expect(mockOnError).toHaveBeenCalledWith('An error occurred');
 		expect(mockOnComplete).not.toHaveBeenCalled();
 	});
-	it('calls onComplete with user data', async () => {
+
+	it('renders user list when users are generated', () => {
+		// Mock a successful generation with users
 		mockUseGeneratePolicySnapshot.mockReturnValueOnce({
 			state: 'done',
 			error: null,
-			dryUsers: [{ key: 'user-1' }],
+			dryUsers: [
+				{
+					key: 'johndoe',
+					firstName: 'John',
+					lastName: 'Doe',
+					email: 'john@example.com',
+					roles: ['admin'],
+				},
+				{
+					key: 'janedoe',
+					firstName: 'Jane',
+					lastName: 'Doe',
+					email: 'jane@example.com',
+					roles: ['user'],
+				},
+			],
+			tenantId: 'tenant-abc',
 		});
+
 		const { lastFrame } = render(
 			<GenerateUsersComponent
 				onComplete={mockOnComplete}
 				onError={mockOnError}
 			/>,
 		);
-		await new Promise(resolve => setTimeout(resolve, 50)); // Wait for useEffect to run
-		expect(mockOnComplete).toHaveBeenCalledWith({
-			userId: 'user-1',
-			firstName: undefined,
-			lastName: undefined,
-			email: undefined,
+
+		expect(lastFrame()).toContain('Generated 2 users in Tenant tenant-abc:');
+		expect(lastFrame()).toContain(
+			'1. johndoe (John Doe) - john@example.com (primary)',
+		);
+		expect(lastFrame()).toContain('2. janedoe (Jane Doe) - jane@example.com');
+	});
+
+	it('formats user info correctly with partial data', () => {
+		mockUseGeneratePolicySnapshot.mockReturnValueOnce({
+			state: 'done',
+			error: null,
+			dryUsers: [
+				{
+					key: 'user1',
+					firstName: '',
+					lastName: '',
+					email: '',
+					roles: [],
+				},
+				{
+					key: 'user2',
+					firstName: 'Only',
+					lastName: '',
+					email: '',
+					roles: [],
+				},
+				{
+					key: 'user3',
+					firstName: '',
+					lastName: '',
+					email: 'only@email.com',
+					roles: [],
+				},
+			],
+			tenantId: 'tenant-test',
 		});
-		expect(lastFrame()).toContain('Generated 1 users');
+
+		const { lastFrame } = render(
+			<GenerateUsersComponent
+				onComplete={mockOnComplete}
+				onError={mockOnError}
+			/>,
+		);
+
+		expect(lastFrame()).toContain('1. user1 (primary)');
+		expect(lastFrame()).toContain('2. user2 (Only)');
+		expect(lastFrame()).toContain('3. user3 - only@email.com');
+	});
+
+	it('handles empty user list in done state', () => {
+		mockUseGeneratePolicySnapshot.mockReturnValueOnce({
+			state: 'done',
+			error: null,
+			dryUsers: [],
+			tenantId: 'tenant-empty',
+		});
+
+		const { lastFrame } = render(
+			<GenerateUsersComponent
+				onComplete={mockOnComplete}
+				onError={mockOnError}
+			/>,
+		);
+
+		expect(lastFrame()).toContain('Generated 0 users');
+		expect(lastFrame()).toContain('No users generated');
+		// Continue button shouldn't appear with empty users
+		expect(selectInputCallback).toBeFalsy();
+	});
+
+	it('prevents multiple calls to onComplete', async () => {
+		mockUseGeneratePolicySnapshot.mockReturnValue({
+			state: 'done',
+			error: null,
+			dryUsers: [
+				{
+					key: 'user123',
+					firstName: 'Test',
+					lastName: 'User',
+					email: 'test@example.com',
+					roles: [],
+				},
+			],
+			tenantId: 'tenant-123',
+		});
+
+		render(
+			<GenerateUsersComponent
+				onComplete={mockOnComplete}
+				onError={mockOnError}
+			/>,
+		);
+
+		// Wait for component to render
+		await new Promise(resolve => setTimeout(resolve, 50));
+
+		// Call the callback directly, twice
+		if (selectInputCallback) {
+			selectInputCallback({ label: 'Continue', value: 'continue' });
+			selectInputCallback({ label: 'Continue', value: 'continue' });
+		}
+
+		// Should only be called once
+		expect(mockOnComplete).toHaveBeenCalledTimes(1);
+	});
+
+	it('passes correct snapshot options to usePolicySnapshot', () => {
+		render(
+			<GenerateUsersComponent
+				onComplete={mockOnComplete}
+				onError={mockOnError}
+			/>,
+		);
+
+		// Check that the hook was called with the correct options
+		expect(mockUseGeneratePolicySnapshot).toHaveBeenCalledWith(
+			expect.objectContaining({
+				dryRun: true,
+				models: ['RBAC'],
+				isTestTenant: false, // as set in the component
+			}),
+		);
 	});
 });
