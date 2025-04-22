@@ -9,19 +9,19 @@ import {
 import { saveFile } from '../../../utils/fileSaver.js';
 import Spinner from 'ink-spinner';
 
-type CodeSampleProps = {
-	codeSample: 'jest' | 'pytest' | 'vitest';
+type frameworkProps = {
+	framework: 'jest' | 'pytest' | 'vitest';
 	configPath?: string;
 	path?: string;
-	pdpPath?: string;
+	pdpUrl?: string;
 };
 
 export function CodeSampleComponent({
-	codeSample,
+	framework,
 	configPath,
 	path,
-	pdpPath,
-}: CodeSampleProps) {
+	pdpUrl,
+}: frameworkProps) {
 	const [code, setCode] = useState<string | undefined>(undefined);
 	const [state, setState] = useState<'loading' | 'done'>('loading');
 	const [error, setError] = useState<string | undefined>(undefined);
@@ -34,18 +34,18 @@ export function CodeSampleComponent({
 	}, [error]);
 
 	useEffect(() => {
-		if (auth.loading && state !== 'loading') return;
-		if (codeSample === 'jest') {
-			setCode(generateJestSample(pdpPath, configPath, auth.authToken));
-		} else if (codeSample === 'pytest') {
-			setCode(generatePytestSample(pdpPath, configPath, auth.authToken));
-		} else if (codeSample === 'vitest') {
-			setCode(generateVitestSample(pdpPath, configPath, auth.authToken));
+		if (auth.loading) return;
+		if (framework === 'jest') {
+			setCode(generateJestSample(pdpUrl, configPath, auth.authToken));
+		} else if (framework === 'pytest') {
+			setCode(generatePytestSample(pdpUrl, configPath, auth.authToken));
+		} else if (framework === 'vitest') {
+			setCode(generateVitestSample(pdpUrl, configPath, auth.authToken));
 		}
 		if (!path) {
 			setState('done');
 		}
-	}, [auth, codeSample, configPath, path, pdpPath, state]);
+	}, [auth, framework, configPath, path, pdpUrl, state]);
 
 	const saveCodeTOPath = useCallback(async () => {
 		const { error } = await saveFile(path ?? '', code ?? '');
@@ -56,10 +56,12 @@ export function CodeSampleComponent({
 	}, [code, path]);
 
 	useEffect(() => {
-		if (code) {
+		if (code && path) {
 			saveCodeTOPath();
+		} else if (code) {
+			setState('done');
 		}
-	}, [code, saveCodeTOPath]);
+	}, [code, path, saveCodeTOPath]);
 
 	return (
 		<>

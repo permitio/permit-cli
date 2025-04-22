@@ -6,7 +6,6 @@ import { useGeneratePolicySnapshot } from './hooks/usePolicySnapshot.js';
 export type GeneratePolicySnapshotProps = {
 	dryRun: boolean;
 	models: string[];
-	codeSample?: 'jest' | 'pytest';
 	path?: string;
 };
 

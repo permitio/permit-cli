@@ -7,7 +7,7 @@ import { option } from 'pastel';
 import { CodeSampleComponent } from '../../../components/test/code-samples/CodeSampleComponent.js';
 
 export const options = zod.object({
-	codeSample: zod.enum(['jest', 'pytest', 'vitest']).describe(
+	framework: zod.enum(['jest', 'pytest', 'vitest']).describe(
 		option({
 			description:
 				'Test code sample that iterates the config file and asserts the results.',
@@ -16,6 +16,7 @@ export const options = zod.object({
 	configPath: zod
 		.string()
 		.optional()
+		.default('authz-test.json')
 		.describe(
 			option({
 				description: 'Optional: Path to the generated config json file',
@@ -37,9 +38,10 @@ export const options = zod.object({
 				description: 'Optional: API Key to be used for running tests',
 			}),
 		),
-	pdpPath: zod
+	pdpUrl: zod
 		.string()
 		.optional()
+		.default('http://localhost:7766')
 		.describe(
 			option({
 				description: 'Optional: PDP to be used in tests.',
@@ -52,15 +54,15 @@ type Props = {
 };
 
 export default function E2e({
-	options: { codeSample, configPath, path, apiKey, pdpPath },
+	options: { framework, configPath, path, apiKey, pdpUrl },
 }: Props) {
 	return (
 		<AuthProvider scope={'environment'} permit_key={apiKey} skipLogin={true}>
 			<CodeSampleComponent
-				codeSample={codeSample}
+				framework={framework}
 				path={path}
 				configPath={configPath}
-				pdpPath={pdpPath}
+				pdpUrl={pdpUrl}
 			/>
 		</AuthProvider>
 	);

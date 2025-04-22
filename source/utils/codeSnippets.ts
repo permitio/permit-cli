@@ -1,5 +1,5 @@
 export const generateVitestSample = (
-	pdp_path?: string,
+	pdp_url?: string,
 	config_path?: string,
 	api_key?: string,
 ) => {
@@ -8,7 +8,7 @@ import { readFileSync } from 'fs';
 import { Permit } from 'permitio';
 
 const JSON_PATH = ${config_path ? `"${config_path}"` : '"<YOUR_JSON_PATH_HERE>"'};
-const PDP_URL = ${pdp_path ? `"${pdp_path}"` : '"<YOUR_PDP_URL_HERE>"'}; // If using Permit's PD : https://cloudpdp.api.permit.io
+const PDP_URL = ${pdp_url ? `"${pdp_url}"` : '"<YOUR_PDP_URL_HERE>"'}; // If using Permit's PD : https://cloudpdp.api.permit.io
 const PERMIT_ENV_TOKEN = ${api_key ? `"${api_key}"` : '"<YOUR_PERMIT_ENV_TOKEN_HERE>"'};
 
 const permit = new Permit({
@@ -30,7 +30,7 @@ describe('Permit access checks', () => {
 };
 
 export const generateJestSample = (
-	pdp_path?: string,
+	pdp_url?: string,
 	config_path?: string,
 	api_key?: string,
 ) => {
@@ -39,7 +39,7 @@ import { readFileSync } from 'fs';
 import { Permit } from 'permitio';
 
 const JSON_PATH = ${config_path ? `"${config_path}"` : '"<YOUR_JSON_PATH_HERE>"'};
-const PDP_URL = ${pdp_path ? `"${pdp_path}"` : '"<YOUR_PDP_URL_HERE>"'}; // If using Permit's PD : https://cloudpdp.api.permit.io
+const PDP_URL = ${pdp_url ? `"${pdp_url}"` : '"<YOUR_PDP_URL_HERE>"'}; // If using Permit's PD : https://cloudpdp.api.permit.io
 const PERMIT_ENV_TOKEN = ${api_key ? `"${api_key}"` : '"<YOUR_PERMIT_ENV_TOKEN_HERE>"'};
 
 const permit = new Permit({
@@ -61,7 +61,7 @@ describe('Permit access checks', () => {
 };
 
 export const generatePytestSample = (
-	pdp_path?: string,
+	pdp_url?: string,
 	config_path?: string,
 	api_key?: string,
 ) => {
@@ -72,7 +72,7 @@ import pytest_asyncio
 from permit import Permit
 
 JSON_PATH = ${config_path ? `"${config_path}"` : "'<YOUR_JSON_PATH_HERE>'"}
-PDP_URL = ${pdp_path ? `"${pdp_path}"` : "'<YOUR_PDP_URL_HERE>'"}  # If using Permit's PD : https://cloudpdp.api.permit.io
+PDP_URL = ${pdp_url ? `"${pdp_url}"` : "'<YOUR_PDP_URL_HERE>'"}  # If using Permit's PD : https://cloudpdp.api.permit.io
 PERMIT_ENV_TOKEN = ${api_key ? `"${api_key}"` : "'<YOUR_PERMIT_ENV_TOKEN_HERE>'"}
 
 permit = Permit(

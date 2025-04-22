@@ -35,15 +35,6 @@ export const options = zod.object({
 					'Optional: an array of all the models the user wants to generate.',
 			}),
 		),
-	codeSample: zod
-		.enum(['jest', 'pytest'])
-		.optional()
-		.describe(
-			option({
-				description:
-					'Optional: Test code sample that iterates the config file and asserts the results.',
-			}),
-		),
 	path: zod
 		.string()
 		.optional()
@@ -60,16 +51,11 @@ type Props = {
 };
 
 export default function E2e({
-	options: { dryRun, models, codeSample, path, apiKey },
+	options: { dryRun, models, path, apiKey },
 }: Props) {
 	return (
 		<AuthProvider scope={'environment'} permit_key={apiKey}>
-			<GeneratePolicySnapshot
-				dryRun={dryRun}
-				models={models}
-				codeSample={codeSample}
-				path={path}
-			/>
+			<GeneratePolicySnapshot dryRun={dryRun} models={models} path={path} />
 		</AuthProvider>
 	);
 }
