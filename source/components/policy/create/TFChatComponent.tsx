@@ -6,6 +6,7 @@ import chalk from 'chalk';
 import { useAuth } from '../../AuthProvider.js';
 import fs from 'fs';
 import path from 'path';
+import { ApplyTemplate } from '../../../lib/env/template/utils.js';
 
 // Define interfaces for the policy data structure
 interface Resource {
@@ -50,7 +51,7 @@ export const TFChatComponent = () => {
 			}
 
 			// Create a temporary file with the terraform content
-			const tempDir = path.join(process.cwd(), 'temp');
+			const tempDir = path.join(process.cwd(), 'source', 'templates');
 			if (!fs.existsSync(tempDir)) {
 				fs.mkdirSync(tempDir, { recursive: true });
 			}
@@ -62,25 +63,16 @@ export const TFChatComponent = () => {
 			fs.writeFileSync(tempFilePath, terraformOutput, 'utf-8');
 
 			try {
-				// Use a direct approach to apply the Terraform configuration
-				const response = await fetch('http://localhost:3000/apply', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/x-hcl',
-						Authorization: authToken,
-					},
-					body: terraformOutput,
-				});
+				// Use the ApplyTemplate function
+				const result = await ApplyTemplate(tempFileName, authToken);
 
-				if (!response.ok) {
-					const errorText = await response.text();
-					throw new Error(`Server error: ${response.status} - ${errorText}`);
+				if (result.startsWith('Error')) {
+					throw new Error(result);
 				}
 
-				await response.json();
 				setMessages(prevMessages => [
 					...prevMessages,
-					{ role: 'assistant', content: 'Terraform applied successfully!' },
+					{ role: 'assistant', content: result },
 				]);
 			} finally {
 				// Clean up the temporary file
