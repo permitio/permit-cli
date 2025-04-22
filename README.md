@@ -536,10 +536,10 @@ This will start an interactive chat where you can describe your authorization re
 
 For example, you could describe:
 
-- A SaaS application with different user types
-- A microservices architecture with service-to-service communication
+- A CRM SaaS application with different user types
+- Baseline WordPress policy with extended self-service capabilities
 - A file storage system with different access levels
-- A multi-tenant application with tenant isolation
+- Internal ticket management system for production teams
 
 The AI will generate appropriate resources, roles, and permissions based on your description. The generated policy will be displayed in a table format showing the resources, actions, roles, and permissions. You can then approve or reject the generated policy.
 
