@@ -10,11 +10,13 @@ type Props = {
 		firstName,
 		lastName,
 		email,
+		users,
 	}: {
 		userId: string;
 		firstName?: string;
 		lastName?: string;
 		email?: string;
+		users: string[];
 	}) => void;
 	onError: (error: string) => void;
 };
@@ -28,14 +30,14 @@ export default function GeneratedUsersComponent({
 
 	const snapshotOptions = useMemo(
 		() => ({
-			dryRun: true,
+			dryRun: false,
 			models: ['RBAC'],
 			isTestTenant: false,
 		}),
 		[],
 	);
 
-	const { state, error, dryUsers, tenantId } =
+	const { state, error, createdUsers, tenantId } =
 		useGeneratePolicySnapshot(snapshotOptions);
 
 	// Handle errors
@@ -48,27 +50,28 @@ export default function GeneratedUsersComponent({
 
 	// When users are generated, show the continue option
 	useEffect(() => {
-		if (state === 'done' && dryUsers && dryUsers.length > 0) {
+		if (state === 'done' && createdUsers && createdUsers.length > 0) {
 			setShowContinue(true);
 		}
-	}, [state, dryUsers]);
+	}, [state, createdUsers]);
 
 	// Handle user selection and completion
 	const handleContinue = () => {
 		if (
 			!hasCompletedRef.current &&
-			dryUsers &&
-			dryUsers.length > 0 &&
-			dryUsers[0]
+			createdUsers &&
+			createdUsers.length > 0 &&
+			createdUsers[0]
 		) {
 			hasCompletedRef.current = true;
 
-			const user = dryUsers[0];
+			const user = createdUsers[0];
 			onComplete({
 				userId: user.key || 'default-user',
 				firstName: user.firstName || undefined,
 				lastName: user.lastName || undefined,
 				email: user.email || undefined,
+				users: createdUsers.map(user => user.key),
 			});
 		}
 	};
@@ -102,12 +105,12 @@ export default function GeneratedUsersComponent({
 	return (
 		<Box flexDirection="column">
 			<Text>
-				Generated {dryUsers?.length || 0} users in Tenant {tenantId}:
+				Generated {createdUsers?.length || 0} users in Tenant {tenantId}:
 			</Text>
 
 			<Box flexDirection="column" marginTop={1} marginBottom={1}>
-				{dryUsers && dryUsers.length > 0 ? (
-					dryUsers.map((user, i) => (
+				{createdUsers && createdUsers.length > 0 ? (
+					createdUsers.map((user, i) => (
 						<Text key={i}>
 							{i + 1}. {formatUserInfo(user)} {i === 0 ? '(primary)' : ''}
 						</Text>

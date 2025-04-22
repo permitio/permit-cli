@@ -19,6 +19,7 @@ type Props = {
 		firstName?: string;
 		lastName?: string;
 		email?: string;
+		users: string[];
 	}) => void;
 	onError: (error: string) => void;
 };
@@ -49,6 +50,7 @@ export default function DataSetupComponent({
 	const [currIndex, setCurrIndex] = useState<number>(0);
 	// Add a key to force component remount
 	const [componentKey, setComponentKey] = useState<number>(0);
+	const [users, setUsers] = useState<string[]>([]);
 
 	const handleGenerateComplete = useCallback(
 		(currentUser: {
@@ -56,7 +58,9 @@ export default function DataSetupComponent({
 			firstName?: string;
 			lastName?: string;
 			email?: string;
+			users: string[];
 		}) => {
+			setUsers(prev => [...prev, ...currentUser.users]);
 			setUser(currentUser);
 			setStep('done');
 		},
@@ -75,6 +79,7 @@ export default function DataSetupComponent({
 			lastName?: string;
 			email?: string;
 		}) => {
+			setUsers(prev => [...prev, currentUser.userId]);
 			if (currIndex === 0) {
 				setUser(currentUser);
 			}
@@ -102,6 +107,7 @@ export default function DataSetupComponent({
 				firstName: user.firstName,
 				lastName: user.lastName,
 				email: user.email,
+				users: users,
 			});
 		}
 	}, [error, onError, step, onComplete, user]);
