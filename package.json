@@ -11,9 +11,8 @@
 	},
 	"scripts": {
 		"build": "tsc",
-		"postbuild": "rimraf dist/commands/env/export/templates dist/templates dist/implement && cpx 'source/commands/env/export/templates/*.hcl' 'dist/commands/env/export/templates' && cpx 'source/templates/*.tf' 'dist/templates' && cpx 'source/implement/**/*' 'dist/implement'"
-,
-"predev": "cpx 'source/commands/env/export/templates/*.hcl' 'dist/commands/env/export/templates'",
+		"postbuild": "rimraf dist/commands/env/export/templates dist/templates dist/implement && cpx 'source/commands/env/export/templates/*.hcl' 'dist/commands/env/export/templates' && cpx 'source/templates/*.tf' 'dist/templates' && cpx 'source/implement/**/*' 'dist/implement'",
+		"predev": "cpx 'source/commands/env/export/templates/*.hcl' 'dist/commands/env/export/templates'",
 		"dev": " NODE_NO_WARNINGS=1 tsc --watch",
 		"lint": "prettier --check . && eslint \"source/**/*.{js,ts,tsx}\"",
 		"lint:fix": "prettier --write . && eslint \"source/**/*.{js,ts,tsx}\" --fix",

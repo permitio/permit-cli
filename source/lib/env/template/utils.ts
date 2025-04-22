@@ -9,12 +9,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export function getFiles(): string[] {
-	const directory = 'source/templates';
+	const directory = path.join(__dirname + '../../../../templates');
 	return fs.readdirSync(directory).map(file => path.parse(file).name);
 }
 
 function getFileContent(fileName: string): string {
-	const directory = 'source/templates';
+	const directory = path.join(__dirname + '../../../../templates');
 	const filePath = path.join(directory, fileName + '.tf');
 	return fs.readFileSync(filePath, 'utf-8');
 }
