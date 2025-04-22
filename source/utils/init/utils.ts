@@ -1,13 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 
-// Create the equivalent of __dirname for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const implementDir = path.join(__dirname, '../', '../', 'implement');
+const implementDir = 'source/implement';
 
 function getFileContent(fileName: string) {
 	const filePath = path.join(implementDir, fileName);
