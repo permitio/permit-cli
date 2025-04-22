@@ -1,63 +1,33 @@
 import { useCallback, useMemo } from 'react';
-import { MethodE, fetchUtil } from '../../utils/fetchUtil.js';
-import { useAuth } from '../../components/AuthProvider.js';
-import { PERMIT_API_URL } from '../../config.js';
-import { ApiResponse } from '../../utils/openapiUtils.js';
+import useClient from '../../hooks/useClient.js';
 
 /**
  * Hook for role-related Permit API operations
  */
 export const usePermitRoleApi = () => {
-	const { authToken, scope } = useAuth();
+	const { authenticatedApiClient } = useClient();
 
-	// Construct base URL with the correct project and environment IDs
-	const getBaseUrl = useCallback(() => {
-		return `${PERMIT_API_URL}/v2/schema/${scope.project_id}/${scope.environment_id}`;
-	}, [scope.project_id, scope.environment_id]);
-
-	/**
-	 * Make authenticated API call
-	 */
-	const callApi = useCallback(
-		async (
-			endpoint: string,
-			method: MethodE,
-			body?: object,
-		): Promise<ApiResponse> => {
-			try {
-				const response = await fetchUtil(
-					endpoint,
-					method,
-					authToken,
-					undefined,
-					body,
-				);
-
-				return response as ApiResponse;
-			} catch (error) {
-				return { success: false, error: String(error) };
-			}
-		},
-		[authToken],
-	);
+	// Define constants for repeated strings
+	const OPENAPI_DESCRIPTION = 'Role created from OpenAPI spec';
+	const ROLES_ENDPOINT = '/v2/schema/{proj_id}/{env_id}/roles';
 
 	/**
 	 * List all roles in the current environment
 	 */
 	const listRoles = useCallback(async () => {
-		const url = `${getBaseUrl()}/roles`;
-		return await callApi(url, MethodE.GET);
-	}, [callApi, getBaseUrl]);
+		return await authenticatedApiClient().GET(ROLES_ENDPOINT);
+	}, [authenticatedApiClient, ROLES_ENDPOINT]);
 
 	/**
 	 * Get a specific role by key
 	 */
 	const getRole = useCallback(
 		async (roleKey: string) => {
-			const url = `${getBaseUrl()}/roles/${roleKey}`;
-			return await callApi(url, MethodE.GET);
+			return await authenticatedApiClient().GET(`${ROLES_ENDPOINT}/{role_id}`, {
+				role_id: roleKey,
+			});
 		},
-		[callApi, getBaseUrl],
+		[authenticatedApiClient, ROLES_ENDPOINT],
 	);
 
 	/**
@@ -65,31 +35,32 @@ export const usePermitRoleApi = () => {
 	 */
 	const createRole = useCallback(
 		async (roleKey: string, roleName: string) => {
-			const url = `${getBaseUrl()}/roles`;
-			return await callApi(url, MethodE.POST, {
+			return await authenticatedApiClient().POST(ROLES_ENDPOINT, undefined, {
 				key: roleKey,
 				name: roleName,
-				description: `Role created from OpenAPI spec`,
+				description: OPENAPI_DESCRIPTION,
 				permissions: [],
 			});
 		},
-		[callApi, getBaseUrl],
+		[authenticatedApiClient, ROLES_ENDPOINT, OPENAPI_DESCRIPTION],
 	);
 
 	/**
 	 * Updates an existing role with new permissions
-	 * This is used when a role already exists
 	 */
 	const updateRole = useCallback(
 		async (roleKey: string, roleName: string, permissions: string[] = []) => {
-			const url = `${getBaseUrl()}/roles/${roleKey}`;
-			return await callApi(url, MethodE.PATCH, {
-				name: roleName,
-				description: `Role updated from OpenAPI spec`,
-				permissions: permissions,
-			});
+			return await authenticatedApiClient().PATCH(
+				`${ROLES_ENDPOINT}/{role_id}`,
+				{ role_id: roleKey },
+				{
+					name: roleName,
+					description: `${OPENAPI_DESCRIPTION} (updated)`,
+					permissions: permissions,
+				},
+			);
 		},
-		[callApi, getBaseUrl],
+		[authenticatedApiClient, ROLES_ENDPOINT, OPENAPI_DESCRIPTION],
 	);
 
 	/**
@@ -102,15 +73,14 @@ export const usePermitRoleApi = () => {
 			roleName: string,
 			permissionString: string,
 		) => {
-			const url = `${getBaseUrl()}/roles`;
-			return await callApi(url, MethodE.POST, {
+			return await authenticatedApiClient().POST(ROLES_ENDPOINT, undefined, {
 				key: roleKey,
 				name: roleName,
-				description: `Resource role created from OpenAPI spec for ${resourceKey}`,
+				description: `${OPENAPI_DESCRIPTION} for ${resourceKey}`,
 				permissions: [permissionString],
 			});
 		},
-		[callApi, getBaseUrl],
+		[authenticatedApiClient, ROLES_ENDPOINT, OPENAPI_DESCRIPTION],
 	);
 
 	return useMemo(
