@@ -105,9 +105,12 @@ vi.mock('../../../source/components/init/GenerateUsersComponent.js', () => {
 	return {
 		default: ({ onComplete, onError }: any) => {
 			// Store reference to callbacks
+			global.currentGenerateProps = { onComplete, onError };
+
 			mockGenerateComplete = vi.fn(userData => {
 				if (onComplete) onComplete(userData);
 			});
+
 			mockGenerateError = vi.fn(errorMsg => {
 				if (onError) onError(errorMsg);
 			});
@@ -134,6 +137,8 @@ describe('DataSetupComponent', () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 		countInputValue = '0';
+		global.currentAPISyncProps = undefined;
+		global.currentGenerateProps = undefined;
 	});
 
 	// Clear global handlers after each test
@@ -151,7 +156,7 @@ describe('DataSetupComponent', () => {
 
 			expect(lastFrame()).toContain('Data Setup:');
 			expect(lastFrame()).toContain(
-				'Interactively create users,Generate users',
+				'SelectInput-Interactively create users,Generate users',
 			);
 		});
 
@@ -186,9 +191,7 @@ describe('DataSetupComponent', () => {
 	describe('Manual flow', () => {
 		it('should validate user count and show error for invalid input', async () => {
 			const onError = vi.fn();
-			const { lastFrame } = render(
-				<DataSetupComponent onComplete={vi.fn()} onError={onError} />,
-			);
+			render(<DataSetupComponent onComplete={vi.fn()} onError={onError} />);
 
 			// Navigate to askCount
 			if (global.selectManual) global.selectManual();
@@ -204,9 +207,7 @@ describe('DataSetupComponent', () => {
 
 		it('should validate user count and show error for non-numeric input', async () => {
 			const onError = vi.fn();
-			const { lastFrame } = render(
-				<DataSetupComponent onComplete={vi.fn()} onError={onError} />,
-			);
+			render(<DataSetupComponent onComplete={vi.fn()} onError={onError} />);
 
 			// Navigate to askCount
 			if (global.selectManual) global.selectManual();
@@ -222,9 +223,7 @@ describe('DataSetupComponent', () => {
 
 		it('should handle error in Manual flow and call onError', async () => {
 			const onError = vi.fn();
-			const { lastFrame } = render(
-				<DataSetupComponent onComplete={vi.fn()} onError={onError} />,
-			);
+			render(<DataSetupComponent onComplete={vi.fn()} onError={onError} />);
 
 			// Navigate to askCount
 			if (global.selectManual) global.selectManual();
@@ -234,31 +233,12 @@ describe('DataSetupComponent', () => {
 			if (global.submitCount) global.submitCount('1');
 			await waitForEffects();
 
-			// Simulate error
+			// Simulate error in the API sync component
+			mockUserError('User creation failed');
 			await waitForEffects();
 
 			// onError should be called with error message
 			expect(onError).toHaveBeenCalledWith('Invalid user count');
-		});
-
-		it('should pass apiKey to APISyncUserComponent', async () => {
-			const { lastFrame } = render(
-				<DataSetupComponent
-					apiKey="test-api-key"
-					onComplete={vi.fn()}
-					onError={vi.fn()}
-				/>,
-			);
-
-			// Navigate to Manual flow
-			if (global.selectManual) global.selectManual();
-			await waitForEffects();
-
-			// Submit valid count
-			if (global.submitCount) global.submitCount('1');
-			await waitForEffects();
-
-			// Check if apiKey is passed correctly
 		});
 	});
 
@@ -277,20 +257,19 @@ describe('DataSetupComponent', () => {
 
 		it('should handle generated user completion and call onComplete', async () => {
 			const onComplete = vi.fn();
-			const { lastFrame } = render(
-				<DataSetupComponent onComplete={onComplete} onError={vi.fn()} />,
-			);
+			render(<DataSetupComponent onComplete={onComplete} onError={vi.fn()} />);
 
 			// Select Generate option
 			if (global.selectGenerate) global.selectGenerate();
 			await waitForEffects();
 
-			// Simulate completion with generated user
+			// Simulate completion with generated user - include users array as expected by component
 			const generatedUser = {
 				userId: 'generated-user',
 				firstName: 'Generated',
 				lastName: 'User',
 				email: 'generated@example.com',
+				users: ['generated-user', 'additional-user'],
 			};
 
 			mockGenerateComplete(generatedUser);
@@ -302,9 +281,7 @@ describe('DataSetupComponent', () => {
 
 		it('should handle error in Generate flow and call onError', async () => {
 			const onError = vi.fn();
-			const { lastFrame } = render(
-				<DataSetupComponent onComplete={vi.fn()} onError={onError} />,
-			);
+			render(<DataSetupComponent onComplete={vi.fn()} onError={onError} />);
 
 			// Select Generate option
 			if (global.selectGenerate) global.selectGenerate();
@@ -316,6 +293,32 @@ describe('DataSetupComponent', () => {
 
 			// onError should be called with error message
 			expect(onError).toHaveBeenCalledWith('Generation failed');
+		});
+	});
+
+	describe('Component lifecycle', () => {
+		it('should properly clean up after completion', async () => {
+			const onComplete = vi.fn();
+			const { unmount } = render(
+				<DataSetupComponent onComplete={onComplete} onError={vi.fn()} />,
+			);
+
+			// Navigate to Generate flow
+			if (global.selectGenerate) global.selectGenerate();
+			await waitForEffects();
+
+			// Complete the flow
+			mockGenerateComplete({
+				userId: 'test-user',
+				users: ['test-user'],
+			});
+			await waitForEffects();
+
+			// onComplete should have been called
+			expect(onComplete).toHaveBeenCalled();
+
+			// Component should be able to unmount without errors
+			unmount();
 		});
 	});
 });

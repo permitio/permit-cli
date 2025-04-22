@@ -14,6 +14,11 @@ const callbacks = {
 		onComplete: null,
 		onError: null,
 	},
+	assignRole: {
+		onComplete: null,
+		onError: null,
+		users: null,
+	},
 	enforce: {
 		onComplete: null,
 		onError: null,
@@ -46,6 +51,15 @@ vi.mock('../../../source/components/init/DataSetupComponent.js', () => ({
 		callbacks.dataSetup.onComplete = onComplete;
 		callbacks.dataSetup.onError = onError;
 		return <Text>DataSetupComponent</Text>;
+	},
+}));
+
+vi.mock('../../../source/components/init/AssignRoleComponent.js', () => ({
+	default: ({ users, onComplete, onError }) => {
+		callbacks.assignRole.users = users;
+		callbacks.assignRole.onComplete = onComplete;
+		callbacks.assignRole.onError = onError;
+		return <Text>AssignRoleComponent</Text>;
 	},
 }));
 
@@ -115,19 +129,41 @@ describe('InitWizardComponent', () => {
 		expect(callbacks.dataSetup.onError).toBeDefined();
 	});
 
-	it('should transition from dataSetup to enforce step', () => {
+	it('should transition from dataSetup to assignRole step', () => {
 		const { lastFrame } = render(<InitWizardComponent options={mockOptions} />);
 
 		// Progress to dataSetup step first
 		callbacks.policy.onComplete('read', 'document');
 
-		// Trigger completion of dataSetup step
+		// Trigger completion of dataSetup step with users list
 		callbacks.dataSetup.onComplete({
 			userId: 'test-user',
 			firstName: 'Test',
 			lastName: 'User',
 			email: 'test@example.com',
+			users: ['test-user', 'another-user'],
 		});
+
+		// Component should now show AssignRoleComponent
+		expect(lastFrame()).toContain('AssignRoleComponent');
+		expect(callbacks.assignRole.users).toEqual(['test-user', 'another-user']);
+		expect(callbacks.assignRole.onComplete).toBeDefined();
+		expect(callbacks.assignRole.onError).toBeDefined();
+	});
+
+	it('should transition from assignRole to enforce step', () => {
+		const { lastFrame } = render(<InitWizardComponent options={mockOptions} />);
+
+		// Progress through the steps
+		callbacks.policy.onComplete('read', 'document');
+		callbacks.dataSetup.onComplete({
+			userId: 'test-user',
+			firstName: 'Test',
+			lastName: 'User',
+			email: 'test@example.com',
+			users: ['test-user'],
+		});
+		callbacks.assignRole.onComplete();
 
 		// Component should now show EnforceComponent
 		expect(lastFrame()).toContain('EnforceComponent');
@@ -145,7 +181,9 @@ describe('InitWizardComponent', () => {
 			firstName: 'Test',
 			lastName: 'User',
 			email: 'test@example.com',
+			users: ['test-user'],
 		});
+		callbacks.assignRole.onComplete();
 		callbacks.enforce.onComplete();
 
 		// Component should now show ImplementComponent
@@ -157,6 +195,7 @@ describe('InitWizardComponent', () => {
 			firstName: 'Test',
 			lastName: 'User',
 			email: 'test@example.com',
+			users: ['test-user'],
 		});
 		expect(callbacks.implement.apiKey).toBe('test-api-key');
 		expect(callbacks.implement.onComplete).toBeDefined();
@@ -168,7 +207,11 @@ describe('InitWizardComponent', () => {
 
 		// Progress through all steps
 		callbacks.policy.onComplete('read', 'document');
-		callbacks.dataSetup.onComplete({ userId: 'test-user' });
+		callbacks.dataSetup.onComplete({
+			userId: 'test-user',
+			users: ['test-user'],
+		});
+		callbacks.assignRole.onComplete();
 		callbacks.enforce.onComplete();
 		callbacks.implement.onComplete();
 
@@ -190,17 +233,50 @@ describe('InitWizardComponent', () => {
 				step: 'dataSetup',
 				errorMessage: 'Data setup failed',
 				trigger: callbacks => callbacks.dataSetup.onError('Data setup failed'),
+				setupFunction: () => {
+					callbacks.policy.onComplete('read', 'document');
+				},
+			},
+			{
+				step: 'assignRole',
+				errorMessage: 'Role assignment failed',
+				trigger: callbacks =>
+					callbacks.assignRole.onError('Role assignment failed'),
+				setupFunction: () => {
+					callbacks.policy.onComplete('read', 'document');
+					callbacks.dataSetup.onComplete({
+						userId: 'test-user',
+						users: ['test-user'],
+					});
+				},
 			},
 			{
 				step: 'enforce',
 				errorMessage: 'Enforcement failed',
 				trigger: callbacks => callbacks.enforce.onError('Enforcement failed'),
+				setupFunction: () => {
+					callbacks.policy.onComplete('read', 'document');
+					callbacks.dataSetup.onComplete({
+						userId: 'test-user',
+						users: ['test-user'],
+					});
+					callbacks.assignRole.onComplete();
+				},
 			},
 			{
 				step: 'implement',
 				errorMessage: 'Implementation failed',
 				trigger: callbacks =>
 					callbacks.implement.onError('Implementation failed'),
+				setupFunction: () => {
+					callbacks.policy.onComplete('read', 'document');
+					callbacks.dataSetup.onComplete({
+						userId: 'test-user',
+						users: ['test-user'],
+					});
+					callbacks.assignRole.onComplete();
+					callbacks.enforce.onComplete();
+				},
 			},
 		];
 
@@ -212,16 +288,8 @@ describe('InitWizardComponent', () => {
 				<InitWizardComponent options={mockOptions} />,
 			);
 
-			// Progress to the required step
-			callbacks.policy.onComplete('read', 'document');
-
-			if (testCase.step !== 'dataSetup') {
-				callbacks.dataSetup.onComplete({ userId: 'test-user' });
-			}
-
-			if (testCase.step === 'implement') {
-				callbacks.enforce.onComplete();
-			}
+			// Setup to reach the step we want to test
+			testCase.setupFunction();
 
 			// Trigger the error for this step
 			testCase.trigger(callbacks);
@@ -241,7 +309,7 @@ describe('InitWizardComponent', () => {
 
 		const { lastFrame } = render(<InitWizardComponent options={mockOptions} />);
 
-		expect(lastFrame());
+		expect(lastFrame()).toBe('PolicyStepComponent');
 
 		// Clean up
 		mockUseState.mockRestore();

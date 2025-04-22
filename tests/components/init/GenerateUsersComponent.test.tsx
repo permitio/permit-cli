@@ -43,7 +43,7 @@ describe('GenerateUsersComponent', () => {
 		mockUseGeneratePolicySnapshot.mockReturnValue({
 			state: 'roles',
 			error: null,
-			dryUsers: [],
+			createdUsers: [],
 			tenantId: 'test-tenant-123',
 		});
 	});
@@ -57,7 +57,7 @@ describe('GenerateUsersComponent', () => {
 		mockUseGeneratePolicySnapshot.mockReturnValueOnce({
 			state: 'roles',
 			error: null,
-			dryUsers: [],
+			createdUsers: [],
 			tenantId: undefined,
 		});
 
@@ -75,7 +75,7 @@ describe('GenerateUsersComponent', () => {
 		mockUseGeneratePolicySnapshot.mockReturnValueOnce({
 			state: 'rbac-tenant',
 			error: null,
-			dryUsers: [],
+			createdUsers: [],
 			tenantId: undefined,
 		});
 
@@ -93,7 +93,7 @@ describe('GenerateUsersComponent', () => {
 		mockUseGeneratePolicySnapshot.mockReturnValueOnce({
 			state: 'rbac-users',
 			error: null,
-			dryUsers: [],
+			createdUsers: [],
 			tenantId: 'tenant-123',
 		});
 
@@ -111,7 +111,7 @@ describe('GenerateUsersComponent', () => {
 		mockUseGeneratePolicySnapshot.mockReturnValueOnce({
 			state: 'done',
 			error: 'An error occurred',
-			dryUsers: [],
+			createdUsers: [],
 			tenantId: 'tenant-123',
 		});
 
@@ -133,7 +133,7 @@ describe('GenerateUsersComponent', () => {
 		mockUseGeneratePolicySnapshot.mockReturnValueOnce({
 			state: 'done',
 			error: null,
-			dryUsers: [
+			createdUsers: [
 				{
 					key: 'johndoe',
 					firstName: 'John',
@@ -170,7 +170,7 @@ describe('GenerateUsersComponent', () => {
 		mockUseGeneratePolicySnapshot.mockReturnValueOnce({
 			state: 'done',
 			error: null,
-			dryUsers: [
+			createdUsers: [
 				{
 					key: 'user1',
 					firstName: '',
@@ -212,7 +212,7 @@ describe('GenerateUsersComponent', () => {
 		mockUseGeneratePolicySnapshot.mockReturnValueOnce({
 			state: 'done',
 			error: null,
-			dryUsers: [],
+			createdUsers: [],
 			tenantId: 'tenant-empty',
 		});
 
@@ -226,14 +226,63 @@ describe('GenerateUsersComponent', () => {
 		expect(lastFrame()).toContain('Generated 0 users');
 		expect(lastFrame()).toContain('No users generated');
 		// Continue button shouldn't appear with empty users
-		expect(selectInputCallback).toBeFalsy();
+		expect(lastFrame()).not.toContain('Continue');
+	});
+
+	it('calls onComplete with correct user data when continue is selected', async () => {
+		const testUsers = [
+			{
+				key: 'user123',
+				firstName: 'Test',
+				lastName: 'User',
+				email: 'test@example.com',
+				roles: ['admin'],
+			},
+			{
+				key: 'user456',
+				firstName: 'Another',
+				lastName: 'User',
+				email: 'another@example.com',
+				roles: ['user'],
+			},
+		];
+
+		mockUseGeneratePolicySnapshot.mockReturnValue({
+			state: 'done',
+			error: null,
+			createdUsers: testUsers,
+			tenantId: 'tenant-123',
+		});
+
+		render(
+			<GenerateUsersComponent
+				onComplete={mockOnComplete}
+				onError={mockOnError}
+			/>,
+		);
+
+		// Wait for component to render and useEffect to run
+		await new Promise(resolve => setTimeout(resolve, 50));
+
+		// Call the continue callback
+		if (selectInputCallback) {
+			selectInputCallback({ label: 'Continue', value: 'continue' });
+		}
+
+		expect(mockOnComplete).toHaveBeenCalledWith({
+			userId: 'user123',
+			firstName: 'Test',
+			lastName: 'User',
+			email: 'test@example.com',
+			users: ['user123', 'user456'],
+		});
 	});
 
 	it('prevents multiple calls to onComplete', async () => {
 		mockUseGeneratePolicySnapshot.mockReturnValue({
 			state: 'done',
 			error: null,
-			dryUsers: [
+			createdUsers: [
 				{
 					key: 'user123',
 					firstName: 'Test',
@@ -274,12 +323,10 @@ describe('GenerateUsersComponent', () => {
 		);
 
 		// Check that the hook was called with the correct options
-		expect(mockUseGeneratePolicySnapshot).toHaveBeenCalledWith(
-			expect.objectContaining({
-				dryRun: true,
-				models: ['RBAC'],
-				isTestTenant: false, // as set in the component
-			}),
-		);
+		expect(mockUseGeneratePolicySnapshot).toHaveBeenCalledWith({
+			dryRun: false, // Updated to match component implementation
+			models: ['RBAC'],
+			isTestTenant: false,
+		});
 	});
 });
