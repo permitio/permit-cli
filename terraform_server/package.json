@@ -1,17 +1,27 @@
 {
-	"name": "permit-terraform-server",
+	"name": "terraform-server",
 	"version": "1.0.0",
 	"description": "A minimal server to proxy TF apply request and eliminate the need to have it installed locally",
 	"main": "server.js",
 	"type": "module",
 	"scripts": {
-		"dev": "node server.js",
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"start": "node server.js"
 	},
 	"author": "info@permit.io",
 	"license": "ISC",
 	"dependencies": {
+		"@ai-sdk/openai": "^1.3.9",
+		"ai": "^4.3.9",
+		"body-parser": "^2.2.0",
 		"cors": "^2.8.5",
-		"express": "^4.21.2"
+		"dotenv": "^16.4.7",
+		"express": "^4.21.2",
+		"openai": "^4.95.1",
+		"zod": "^3.24.3"
+	},
+	"devDependencies": {
+		"@types/node": "^22.14.0",
+		"tsx": "^4.19.3",
+		"typescript": "^5.8.3"
 	}
 }
