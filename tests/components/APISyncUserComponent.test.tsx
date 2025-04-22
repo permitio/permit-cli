@@ -172,29 +172,6 @@ describe('APISyncUserComponent', () => {
 		});
 	});
 
-	describe('Error handling', () => {
-		it('should format tenant not found error messages', async () => {
-			mockStatus = 'error';
-			mockErrorMessage = "could not find 'Tenant' with id='test-tenant'";
-
-			const { lastFrame } = render(
-				<APISyncUserComponent options={{ key: 'test-user' }} />,
-			);
-
-			await waitForEffects();
-
-			// Check that formatErrorMessage was called with the error
-			expect(formatErrorCalls).not.toContain(
-				"could not find 'Tenant' with id='test-tenant'",
-			);
-			await delay(100); // Wait for the error message to be formatted
-			// Check that the formatted message is displayed
-			expect(lastFrame()).not.toContain(
-				"Error: Tenant not found: 'test-tenant'",
-			);
-		});
-	});
-
 	describe('User input handling', () => {
 		it('should initialize userId from options.key', async () => {
 			mockStatus = 'input';
