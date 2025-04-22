@@ -162,6 +162,7 @@ ${roleKeys
 			}
 
 			let accumulatedResponse = '';
+			let jsonData = null;
 
 			while (true) {
 				const { done, value } = await reader.read();
@@ -172,52 +173,77 @@ ${roleKeys
 
 				for (const line of lines) {
 					if (line.startsWith('data: ')) {
-						const data = JSON.parse(line.slice(6));
-						if (data.delta) {
-							accumulatedResponse += data.delta;
-							setCurrentResponse(accumulatedResponse);
-						} else if (data.type === 'disable_input') {
-							setInputDisabled(true);
-						} else if (data.type === 'enable_input') {
-							setInputDisabled(false);
+						try {
+							const data = JSON.parse(line.slice(6));
+							if (data.delta) {
+								// Check if the delta is a JSON string
+								if (
+									data.delta.trim().startsWith('{') &&
+									data.delta.trim().endsWith('}')
+								) {
+									try {
+										jsonData = JSON.parse(data.delta);
+										setTableData(jsonData);
+									} catch {
+										// If it's not valid JSON, just add it to the accumulated response
+										accumulatedResponse += data.delta;
+										setCurrentResponse(accumulatedResponse);
+									}
+								} else {
+									accumulatedResponse += data.delta;
+									setCurrentResponse(accumulatedResponse);
+								}
+							} else if (data.type === 'disable_input') {
+								setInputDisabled(true);
+							} else if (data.type === 'enable_input') {
+								setInputDisabled(false);
+							}
+						} catch (e) {
+							console.error('Error parsing SSE data:', e);
 						}
 					}
 				}
 			}
 
-			// Try to parse JSON from the response
-			try {
-				const jsonMatch = accumulatedResponse.match(/\{[\s\S]*\}/);
-				if (jsonMatch) {
-					const jsonStr = jsonMatch[0];
-					const policy = JSON.parse(jsonStr);
-					setTableData(policy);
+			// If we found JSON data, set it as the table data
+			if (jsonData) {
+				setTableData(jsonData);
+				setWaitingForApproval(true);
+			} else {
+				// Try to parse JSON from the accumulated response
+				try {
+					const jsonMatch = accumulatedResponse.match(/\{[\s\S]*\}/);
+					if (jsonMatch) {
+						const jsonStr = jsonMatch[0];
+						const policy = JSON.parse(jsonStr);
+						setTableData(policy);
 
-					// Only add the message without the JSON part
-					const messageWithoutJson = accumulatedResponse
-						.replace(/\{[\s\S]*\}/, '')
-						.trim();
-					setMessages(prevMessages => [
-						...prevMessages,
-						{ role: 'assistant', content: messageWithoutJson },
-					]);
+						// Only add the message without the JSON part
+						const messageWithoutJson = accumulatedResponse
+							.replace(/\{[\s\S]*\}/, '')
+							.trim();
+						setMessages(prevMessages => [
+							...prevMessages,
+							{ role: 'assistant', content: messageWithoutJson },
+						]);
 
-					// Set waiting for approval state
-					setWaitingForApproval(true);
-				} else {
-					// If no JSON found, add the full message
+						// Set waiting for approval state
+						setWaitingForApproval(true);
+					} else {
+						// If no JSON found, add the full message
+						setMessages(prevMessages => [
+							...prevMessages,
+							{ role: 'assistant', content: accumulatedResponse },
+						]);
+					}
+				} catch (error) {
+					console.error('Error parsing JSON response:', error);
+					// If parsing fails, add the full message
 					setMessages(prevMessages => [
 						...prevMessages,
 						{ role: 'assistant', content: accumulatedResponse },
 					]);
 				}
-			} catch (error) {
-				console.error('Error parsing JSON response:', error);
-				// If parsing fails, add the full message
-				setMessages(prevMessages => [
-					...prevMessages,
-					{ role: 'assistant', content: accumulatedResponse },
-				]);
 			}
 
 			setCurrentResponse('');

@@ -112,6 +112,7 @@ app.post('/chat', async (req, res) => {
 		// Send a message to disable user input
 		res.write(`data: ${JSON.stringify({ type: 'disable_input' })}\n\n`);
 
+		// Call the AI model to generate a policy
 		const result = await streamText({
 			model: openai('gpt-4'),
 			messages,
@@ -125,18 +126,13 @@ app.post('/chat', async (req, res) => {
 			// Don't send each delta to avoid showing raw JSON
 		}
 
+		// Get the tool calls and results
 		const [, toolResults] = await Promise.all([
 			result.toolCalls,
 			result.toolResults,
 		]);
 
-		// Check if any tool results have formattedOutput
-		const formattedOutputs = toolResults
-			.filter(result => result && result.formattedOutput)
-			.map(result => result.formattedOutput)
-			.join('\n\n');
-
-		// Extract policy data from tool results
+		// Check if any tool results have policy data
 		const policyData = toolResults.find(
 			result => result && result.policy,
 		)?.policy;
@@ -146,20 +142,38 @@ app.post('/chat', async (req, res) => {
 			res.write(
 				`data: ${JSON.stringify({ delta: JSON.stringify(policyData) })}\n\n`,
 			);
-		} else if (formattedOutputs) {
-			// Send only the table part of the formatted output
-			// Extract just the table part by finding the first table marker
-			const tableStartIndex = formattedOutputs.indexOf('┌');
-			if (tableStartIndex !== -1) {
-				const tableOnly = formattedOutputs.substring(tableStartIndex);
-				res.write(`data: ${JSON.stringify({ delta: tableOnly })}\n\n`);
-			} else {
-				// If no table found, send the formatted output
-				res.write(`data: ${JSON.stringify({ delta: formattedOutputs })}\n\n`);
-			}
 		} else {
-			// If no formatted output, send the collected text
-			res.write(`data: ${JSON.stringify({ delta: collectedText })}\n\n`);
+			// If no policy data, try to extract it from the collected text
+			try {
+				const jsonMatch = collectedText.match(/\{[\s\S]*\}/);
+				if (jsonMatch) {
+					const jsonStr = jsonMatch[0];
+					const policy = JSON.parse(jsonStr);
+
+					// Check if it has the expected format
+					if (policy.resources && policy.roles) {
+						res.write(
+							`data: ${JSON.stringify({ delta: JSON.stringify(policy) })}\n\n`,
+						);
+					} else {
+						// If it doesn't have the expected format, send an error message
+						res.write(
+							`data: ${JSON.stringify({ type: 'error', message: 'Invalid policy format' })}\n\n`,
+						);
+					}
+				} else {
+					// If no JSON found, send an error message
+					res.write(
+						`data: ${JSON.stringify({ type: 'error', message: 'No policy data found' })}\n\n`,
+					);
+				}
+			} catch (error) {
+				console.error('Error parsing JSON from collected text:', error);
+				// If parsing fails, send an error message
+				res.write(
+					`data: ${JSON.stringify({ type: 'error', message: 'Error parsing policy data' })}\n\n`,
+				);
+			}
 		}
 
 		// Send a message to enable user input
@@ -170,7 +184,10 @@ app.post('/chat', async (req, res) => {
 		res.end();
 	} catch (error) {
 		console.error('Error in chat:', error);
-		res.status(500).json({ error: 'Internal server error' });
+		res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
+		res.write(`data: ${JSON.stringify({ type: 'enable_input' })}\n\n`);
+		res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+		res.end();
 	}
 });
 

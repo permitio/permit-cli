@@ -1,6 +1,5 @@
 import { tool } from 'ai';
 import { z } from 'zod';
-import { generateTerraformConfig } from './terraformGenerator.js';
 
 const tools = {
 	analyzePolicy: tool({
@@ -32,23 +31,12 @@ const tools = {
 				.array(z.string())
 				.describe('Permissions granted to the role'),
 		}),
-		execute: async ({ resource, actions, role, permissions }) => {
-			// Format the output as a table
-			const tableOutput = `
-| Component | Value |
-|-----------|-------|
-| Resource  | ${resource} |
-| Actions   | ${actions.join(', ')} |
-| Role      | ${role} |
-| Permissions | ${permissions.join(', ')} |
-`;
-
+		execute: async ({ resource, actions, role }) => {
 			return {
 				policy: {
 					resources: [{ name: resource, actions }],
 					roles: [{ name: role, permissions: [{ resource, actions }] }],
 				},
-				formattedOutput: tableOutput,
 			};
 		},
 	}),
@@ -63,75 +51,35 @@ const tools = {
 			}),
 		}),
 		execute: async () => {
-			// Format the output as a table
-			const tableOutput = `
-| Validation | Result |
-|------------|--------|
-| Is Valid   | Yes    |
-| Suggestions | None  |
-| Warnings   | None   |
-`;
-
 			return {
 				isValid: true,
 				suggestions: [],
 				warnings: [],
-				formattedOutput: tableOutput,
 			};
 		},
 	}),
-	generateTerraform: tool({
-		description: 'Generate Terraform configuration for a policy',
+	generatePolicy: tool({
+		description: 'Generate a policy structure based on user description',
 		parameters: z.object({
-			policy: z.object({
-				resources: z.array(
-					z.object({
-						name: z.string(),
-						actions: z.array(z.string()),
-					}),
-				),
-				roles: z.array(
-					z.object({
-						name: z.string(),
-						permissions: z.array(
-							z.object({
-								resource: z.string(),
-								actions: z.array(z.string()),
-							}),
-						),
-					}),
-				),
-			}),
+			description: z.string().describe('The description of the system or use case'),
 		}),
-		execute: async ({ policy }) => {
-			const resourceKeys = policy.resources.map(r => ({
-				...r,
-				key: r.name.toLowerCase().replace(/\s+/g, '_'),
-			}));
-
-			const roleKeys = policy.roles.map(r => ({
-				...r,
-				key: r.name.toLowerCase().replace(/\s+/g, '_'),
-			}));
-
-			const terraform = generateTerraformConfig(resourceKeys, roleKeys);
-
-			// Format the output as a table
-			const tableOutput = `
-| Resource | Actions |
-|----------|---------|
-${policy.resources.map(r => `| ${r.name} | ${r.actions.join(', ')} |`).join('\n')}
-
-| Role | Permissions |
-|------|-------------|
-${policy.roles.map(r => `| ${r.name} | ${r.permissions.map(p => `${p.resource}:${p.actions.join(', ')}`).join(', ')} |`).join('\n')}
-`;
+		execute: async () => {
+			// This is a placeholder implementation
+			// In a real implementation, this would generate a policy based on the description
+			const policy = {
+				resources: [
+					{ name: 'Example Resource', actions: ['read', 'write'] }
+				],
+				roles: [
+					{ name: 'User', permissions: ['read:resource'] },
+					{ name: 'Admin', permissions: ['read:resource', 'write:resource'] }
+				],
+				actions: ['read', 'write'],
+				permissions: ['read:resource', 'write:resource']
+			};
 
 			return {
-				terraform,
-				message: 'Generated Terraform configuration',
-				formattedOutput: tableOutput,
-				policy: policy, // Return the policy data as well
+				policy: policy
 			};
 		},
 	}),
