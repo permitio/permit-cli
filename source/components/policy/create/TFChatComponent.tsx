@@ -3,7 +3,7 @@ import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import Table from 'cli-table';
 import chalk from 'chalk';
-import { useAuth } from '../AuthProvider.js';
+import { useAuth } from '../../AuthProvider.js';
 
 // Define interfaces for the policy data structure
 interface Resource {
