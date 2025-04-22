@@ -30,6 +30,10 @@ vi.mock('../../source/lib/env/template/utils', () => ({
 		async (filename: string, apiKey: string) =>
 			`FileName ${filename} is applied locally.`,
 	),
+	getResourceAndAction: vi.fn(() => ({
+		resource: 'resource',
+		action: 'action',
+	})),
 }));
 
 const enter = '\r';

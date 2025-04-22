@@ -67,7 +67,13 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
 - `policy create simple` - Create a simple policy Table
 
 - `test` - commands for testing authorization policies
+
   - `run audit` - test PDP against past authorization decisions
+
+- `policy` - a collection of commands for better policy experience
+- `policy create ai` - create RBAC policies using natural language
+
+- `init` - A Complete wizard to take the users through all the steps, from configuring policy to enforcing it.
 
 ---
 
@@ -98,6 +104,22 @@ This command will log you out from your Permit account and remove the stored key
 
 ```bash
 permit logout
+```
+
+---
+
+### `init`
+
+This command is a wizard command that should take the users through all the steps, from configuring policy to enforcing it in the application
+
+#### `Options`
+
+- `api-key <string>`(Optional): use a environment API Key to create and store the policy.
+
+#### `Example`
+
+```bash
+permit init
 ```
 
 ---
@@ -391,7 +413,7 @@ This command will Replace User / Sync User in the system. If the user already ex
 ```bash
 $ permit api sync user
   --apiKey "YOUR_API_KEY" \
-  --userid "892179821739812389327" \
+  --key "892179821739812389327" \
   --email "jane@coolcompany.com" \
   --firstName "Jane" \
   --lastName "Doe" \
@@ -566,6 +588,33 @@ $ permit test run audit --users john@example.com alice@example.com --resources d
 # Limit the number of logs processed
 $ permit test run audit --max-logs 500
 ```
+
+### `policy create ai`
+
+This command allows you to create RBAC policies using natural language. It uses AI to convert your descriptions into structured Role-Based Access Control policies that can be applied to your Permit.io environment.
+
+#### Options
+
+- `--api-key <string>` (Optional) - Your Permit.io API key. If not provided, the command will use your stored credentials.
+
+#### Example
+
+```bash
+$ permit policy create ai
+```
+
+This will start an interactive chat where you can describe your authorization requirements in natural language. The AI will convert your description into a structured RBAC policy with resources, roles, and permissions.
+
+For example, you could describe:
+
+- A CRM SaaS application with different user types
+- Baseline WordPress policy with extended self-service capabilities
+- A file storage system with different access levels
+- Internal ticket management system for production teams
+
+The AI will generate appropriate resources, roles, and permissions based on your description. The generated policy will be displayed in a table format showing the resources, actions, roles, and permissions. You can then approve or reject the generated policy.
+
+If you approve the policy, the CLI will apply the policy to your Permit.io environment, creating all the resources, roles, and permissions defined in the policy.
 
 ## Development
 
