@@ -69,6 +69,7 @@ export const useGeneratePolicySnapshot = ({
 	dryRun,
 	models,
 	path,
+	isTestTenant = true,
 }: GeneratePolicySnapshotProps) => {
 	const { getRoles } = useRolesApi();
 	const { createTenant } = useTenantApi();
@@ -92,7 +93,7 @@ export const useGeneratePolicySnapshot = ({
 	const [dryUsers, setDryUsers] = useState<DryUser[]>([]);
 	const generatedUsersRBACRef = useRef<string[]>([]);
 	const userRoleMappingRBACRef = useRef<Record<string, RoleRead[]>>({});
-
+	const [createdUsers, setCreatedUsers] = useState<DryUser[]>([]);
 	const buildUserInfoFromUsername = useCallback((user: string) => {
 		const [firstName = '', lastName = ''] = user.split(' ');
 		return {
@@ -124,34 +125,56 @@ export const useGeneratePolicySnapshot = ({
 		},
 		[buildUserInfoFromUsername],
 	);
-
 	const createUserAndAttachRoles = useCallback(
 		async (
 			usernames: string[],
 			userRoleMappings: Record<string, RoleRead[]>,
 		) => {
-			for (const user of usernames) {
-				const { key, email, firstName, lastName } =
-					buildUserInfoFromUsername(user);
-				// const [firstName = '', lastName = ''] = user.split(' ');
-				const body: CreateUserBody = {
-					key: key,
-					first_name: firstName,
-					last_name: lastName,
-					email: email,
-					attributes: {},
-					role_assignments: userRoleMappings[user]?.map(role => ({
-						role: role.key,
-						tenant: tenantId,
-					})),
-				};
-				const { error } = await createUser(body);
-				if (error) {
-					setError(error);
-					return;
-				}
+			if (usernames.length === 0) {
+				setState('rbac-generate');
+				return;
 			}
-			setState('rbac-generate');
+
+			try {
+				for (const user of usernames) {
+					const { key, email, firstName, lastName } =
+						buildUserInfoFromUsername(user);
+
+					const roles = userRoleMappings[user] || [];
+
+					const body: CreateUserBody = {
+						key: key,
+						first_name: firstName,
+						last_name: lastName,
+						email: email,
+						attributes: {},
+						role_assignments: roles.map(role => ({
+							role: role.key,
+							tenant: tenantId || 'default',
+						})),
+					};
+
+					const result = await createUser(body);
+
+					if (result.error) {
+						setError(result.error);
+						return;
+					}
+					setCreatedUsers(prev => [
+						...prev,
+						{
+							key: body.key,
+							email: body.email ?? '',
+							firstName: body.first_name ?? ' ',
+							lastName: body.last_name ?? ' ',
+							roles: body.role_assignments?.map(role => role.role) ?? [],
+						},
+					]);
+				}
+				setState('rbac-generate');
+			} catch (err) {
+				setError(err instanceof Error ? err.message : String(err));
+			}
 		},
 		[buildUserInfoFromUsername, createUser, tenantId],
 	);
@@ -181,8 +204,14 @@ export const useGeneratePolicySnapshot = ({
 		setState('rbac-users');
 	}, [getResources]);
 
-	const creatNewTenant = useCallback(async () => {
+	const createNewTenant = useCallback(async () => {
+		if (!isTestTenant) {
+			setTenantId('default');
+			setState('resources');
+			return;
+		}
 		const name = 'test-tenant-' + randomName('', '');
+
 		setTenantId(name);
 		const body: CreateTenantBody = {
 			key: name,
@@ -197,7 +226,7 @@ export const useGeneratePolicySnapshot = ({
 			return;
 		}
 		setState('resources');
-	}, [createTenant]);
+	}, [createTenant, isTestTenant]);
 
 	const generateRBACConfig = useCallback(() => {
 		const config: RBACConfig[] = generatedUsersRBACRef.current.flatMap(user =>
@@ -278,16 +307,20 @@ export const useGeneratePolicySnapshot = ({
 	}, [models, modelsGenerated, path, saveConfigToPath]);
 
 	// Step 1 : Get all roles and resources
+
 	useEffect(() => {
 		if (!models.includes('RBAC')) return;
 
 		if (roles.length === 0 && state === 'roles') {
 			fetchRoles();
 		} else if (tenantId === undefined && state === 'rbac-tenant') {
-			creatNewTenant();
-		} else if (state === 'resources') {
+			createNewTenant();
+		} else if (resourcesRef.current.length === 0 && state === 'resources') {
 			fetchResources();
-		} else if (state === 'rbac-users') {
+		} else if (
+			generatedUsersRBACRef.current.length === 0 &&
+			state === 'rbac-users'
+		) {
 			const { generatedUsers, userRoleMappingRBAC } =
 				generateUsersAndRoleMapping();
 			if (dryRun) {
@@ -299,7 +332,7 @@ export const useGeneratePolicySnapshot = ({
 			generateRBACConfig();
 		}
 	}, [
-		creatNewTenant,
+		createNewTenant,
 		createDryUsers,
 		createUserAndAttachRoles,
 		dryRun,
@@ -320,5 +353,6 @@ export const useGeneratePolicySnapshot = ({
 		tenantId,
 		finalConfig,
 		dryUsers,
+		createdUsers,
 	};
 };

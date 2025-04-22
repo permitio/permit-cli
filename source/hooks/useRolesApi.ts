@@ -29,7 +29,7 @@ export const useRolesApi = () => {
 		[authenticatedApiClient],
 	);
 
-	const getExistingRoles = useCallback(async () => {
+	const getExistingRoles = useCallback(async (): Promise<Set<string>> => {
 		try {
 			const client = authenticatedApiClient();
 			const { data, error } = await client.GET(

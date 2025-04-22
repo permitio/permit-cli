@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Text, Box } from 'ink';
 import Spinner from 'ink-spinner';
 import { exec } from 'node:child_process';
@@ -6,15 +6,25 @@ import { promisify } from 'node:util';
 import { loadAuthToken } from '../../lib/auth.js';
 import { API_PDPS_CONFIG_URL } from '../../config.js';
 import { useAuth } from '../AuthProvider.js';
+import SelectInput from 'ink-select-input';
 
 const execAsync = promisify(exec);
 
 type Props = {
 	opa?: number;
 	dryRun?: boolean;
+	onComplete?: () => void;
+	onError?: (error: string) => void;
+	skipWaitScreen?: boolean; // New prop to control wait behavior
 };
 
-export default function PDPRunComponent({ opa, dryRun = false }: Props) {
+export default function PDPRunComponent({
+	opa,
+	dryRun = false,
+	onComplete,
+	onError,
+	skipWaitScreen = true, // Default to showing wait screen
+}: Props) {
 	const { authToken } = useAuth();
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -24,6 +34,20 @@ export default function PDPRunComponent({ opa, dryRun = false }: Props) {
 		name: string;
 	} | null>(null);
 	const [dockerAvailable, setDockerAvailable] = useState(true);
+	const [waitDisplay, setWaitDisplay] = useState<boolean>(
+		!!onComplete && !skipWaitScreen,
+	);
+	const [operationCompleted, setOperationCompleted] = useState(false);
+
+	// Helper function to handle exit if no callbacks provided
+	const exitIfNoCallbacks = useCallback(() => {
+		if (!onComplete && !onError) {
+			// Add a small delay to ensure React renders the final state
+			setTimeout(() => {
+				process.exit(0);
+			}, 100);
+		}
+	}, [onComplete, onError]);
 
 	useEffect(() => {
 		const generateDockerCommand = async () => {
@@ -67,8 +91,7 @@ export default function PDPRunComponent({ opa, dryRun = false }: Props) {
 					try {
 						await execAsync('docker --version');
 						setDockerAvailable(true);
-						// eslint-disable-next-line @typescript-eslint/no-unused-vars
-					} catch (_) {
+					} catch {
 						// Not using the error value, using underscore to indicate intentionally unused
 						setDockerAvailable(false);
 						throw new Error(
@@ -92,25 +115,62 @@ export default function PDPRunComponent({ opa, dryRun = false }: Props) {
 							const containerName = nameOutput.trim().replace(/^\//, ''); // Remove leading / from name
 
 							setContainerInfo({ id: containerId, name: containerName });
+							setOperationCompleted(true);
+
+							// Call onComplete prop immediately if skipWaitScreen is true
+							if (onComplete && skipWaitScreen) {
+								onComplete();
+							} else if (!onComplete && !onError) {
+								// If no callbacks, we'll exit after rendering
+								exitIfNoCallbacks();
+							}
 						} catch (err) {
 							const errorMessage =
 								err instanceof Error ? err.message : String(err);
 							throw new Error(`Failed to run Docker command: ${errorMessage}`);
 						}
 					}
+				} else {
+					// For dry run, mark as completed
+					setOperationCompleted(true);
+
+					// Call onComplete immediately if skipWaitScreen is true
+					if (onComplete && skipWaitScreen) {
+						onComplete();
+					} else if (!onComplete && !onError) {
+						// If no callbacks, we'll exit after rendering
+						exitIfNoCallbacks();
+					}
 				}
 			} catch (err) {
-				setError(err instanceof Error ? err.message : String(err));
+				const errorMessage = err instanceof Error ? err.message : String(err);
+				setError(errorMessage);
+
+				// Call onError prop when an error occurs
+				if (onError) {
+					onError(errorMessage);
+				} else if (!onComplete) {
+					// If no error callback and no completion callback, exit with error code
+					setTimeout(() => {
+						process.exit(1);
+					}, 100);
+				}
 			} finally {
 				setLoading(false);
 			}
 		};
 
 		generateDockerCommand();
-
-		// No need for cleanup function - we're running Docker in detached mode,
-		// so it won't stop when the component unmounts
-	}, [opa, dryRun, authToken, dockerAvailable]);
+	}, [
+		opa,
+		dryRun,
+		authToken,
+		dockerAvailable,
+		skipWaitScreen,
+		onComplete,
+		onError,
+		exitIfNoCallbacks,
+	]);
 
 	if (loading) {
 		return (
@@ -149,13 +209,76 @@ export default function PDPRunComponent({ opa, dryRun = false }: Props) {
 		);
 	}
 
-	if (dryRun) {
+	// For dry run without wait screen
+	if (dryRun && (!waitDisplay || !onComplete)) {
+		// If no callbacks, exit after rendering
+		if (!onComplete && !onError) {
+			exitIfNoCallbacks();
+		}
+
 		return (
 			<Box flexDirection="column">
 				<Text>Run the following command to start the PDP container:</Text>
 				<Text>{dockerCommand}</Text>
 			</Box>
 		);
+	}
+
+	// For dry run with wait screen and continue button
+	if (dryRun && waitDisplay && onComplete) {
+		return (
+			<Box flexDirection="column">
+				<Text>Run the following command to start the PDP container:</Text>
+				<Text>{dockerCommand}</Text>
+				<SelectInput
+					items={[{ label: 'Continue', value: 'continue' }]}
+					onSelect={() => {
+						if (onComplete) {
+							onComplete();
+						}
+						setWaitDisplay(false);
+					}}
+				/>
+			</Box>
+		);
+	}
+
+	// For live run with wait screen and continue button
+	if (waitDisplay && onComplete && operationCompleted) {
+		return (
+			<Box flexDirection="column">
+				<Text color="green">PDP container started successfully!</Text>
+				<Text>
+					Container ID: <Text color="cyan">{containerInfo?.id}</Text>
+				</Text>
+				<Text>
+					Container Name: <Text color="cyan">{containerInfo?.name}</Text>
+				</Text>
+				<Text>
+					The PDP is running on port 7766
+					{opa ? ` with OPA exposed on port ${opa}` : ''}
+				</Text>
+				<Text>
+					To stop the container, run:{' '}
+					<Text color="yellow">docker kill {containerInfo?.id}</Text>
+				</Text>
+				<SelectInput
+					items={[{ label: 'Continue', value: 'continue' }]}
+					onSelect={() => {
+						if (onComplete) {
+							onComplete();
+						}
+						setWaitDisplay(false);
+					}}
+				/>
+			</Box>
+		);
+	}
+
+	// Default success display
+	// If no callbacks, exit after rendering this
+	if (!onComplete && !onError && operationCompleted) {
+		exitIfNoCallbacks();
 	}
 
 	return (
@@ -168,7 +291,7 @@ export default function PDPRunComponent({ opa, dryRun = false }: Props) {
 				Container Name: <Text color="cyan">{containerInfo?.name}</Text>
 			</Text>
 			<Text>
-				The PDP is running on port 7676
+				The PDP is running on port 7766
 				{opa ? ` with OPA exposed on port ${opa}` : ''}
 			</Text>
 			<Text>

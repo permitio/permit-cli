@@ -67,9 +67,13 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
 - `policy create simple` - Create a simple policy Table
 
 - `test` - commands for testing authorization policies
+
   - `run audit` - test PDP against past authorization decisions
+
 - `policy` - a collection of commands for better policy experience
 - `policy create ai` - create RBAC policies using natural language
+
+- `init` - A Complete wizard to take the users through all the steps, from configuring policy to enforcing it.
 
 ---
 
@@ -100,6 +104,22 @@ This command will log you out from your Permit account and remove the stored key
 
 ```bash
 permit logout
+```
+
+---
+
+### `init`
+
+This command is a wizard command that should take the users through all the steps, from configuring policy to enforcing it in the application
+
+#### `Options`
+
+- `api-key <string>`(Optional): use a environment API Key to create and store the policy.
+
+#### `Example`
+
+```bash
+permit init
 ```
 
 ---
@@ -393,7 +413,7 @@ This command will Replace User / Sync User in the system. If the user already ex
 ```bash
 $ permit api sync user
   --apiKey "YOUR_API_KEY" \
-  --userid "892179821739812389327" \
+  --key "892179821739812389327" \
   --email "jane@coolcompany.com" \
   --firstName "Jane" \
   --lastName "Doe" \
