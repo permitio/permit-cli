@@ -202,6 +202,32 @@ export default function PDPRunComponent({
 				/>
 			</Box>
 		);
+	} else if (onComplete) {
+		return (
+			<Box flexDirection="column">
+				<Text color="green">PDP container started successfully!</Text>
+				<Text>
+					Container ID: <Text color="cyan">{containerInfo?.id}</Text>
+				</Text>
+				<Text>
+					Container Name: <Text color="cyan">{containerInfo?.name}</Text>
+				</Text>
+				<Text>
+					The PDP is running on port 7676
+					{opa ? ` with OPA exposed on port ${opa}` : ''}
+				</Text>
+				<Text>
+					To stop the container, run:{' '}
+					<Text color="yellow">docker kill {containerInfo?.id}</Text>
+				</Text>
+				<SelectInput
+					items={[{ label: 'Continue', value: 'continue' }]}
+					onSelect={() => {
+						setWaitDisplay(false);
+					}}
+				/>
+			</Box>
+		);
 	}
 
 	return (

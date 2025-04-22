@@ -22,6 +22,7 @@ type Props = {
 	}) => void;
 	onError: (error: string) => void;
 };
+
 export default function DataSetupComponent({
 	apiKey,
 	onComplete,
@@ -44,8 +45,10 @@ export default function DataSetupComponent({
 		email?: string;
 	} | null>(null);
 	const [userCount, setUserCount] = useState<number>(0);
-	const [count, setCount] = useState<string>('0');
+	const [count, setCount] = useState<string>('');
 	const [currIndex, setCurrIndex] = useState<number>(0);
+	// Add a key to force component remount
+	const [componentKey, setComponentKey] = useState<number>(0);
 
 	const handleGenerateComplete = useCallback(
 		(currentUser: {
@@ -72,30 +75,34 @@ export default function DataSetupComponent({
 			lastName?: string;
 			email?: string;
 		}) => {
-			if (!user) {
+			if (currIndex === 0) {
 				setUser(currentUser);
 			}
-			setCurrIndex(currIndex => currIndex + 1);
+
+			// Check if we've created all users
 			if (currIndex + 1 >= userCount) {
 				setStep('done');
+			} else {
+				// Increment the index for the next user
+				setCurrIndex(prev => prev + 1);
+				// Force component remount with a new key
+				setComponentKey(prev => prev + 1);
 			}
 		},
-		[user, currIndex, userCount],
+		[currIndex, userCount],
 	);
 
 	useEffect(() => {
 		if (error) {
 			onError(error);
 		}
-		if (step === 'done') {
-			onComplete(
-				user as {
-					userId: string;
-					firstName: string;
-					lastName: string;
-					email: string;
-				},
-			);
+		if (step === 'done' && user) {
+			onComplete({
+				userId: user.userId,
+				firstName: user.firstName,
+				lastName: user.lastName,
+				email: user.email,
+			});
 		}
 	}, [error, onError, step, onComplete, user]);
 
@@ -125,6 +132,7 @@ export default function DataSetupComponent({
 			</Box>
 		);
 	}
+
 	if (step === 'askCount') {
 		return (
 			<Box flexDirection={'column'}>
@@ -140,7 +148,10 @@ export default function DataSetupComponent({
 								setCount('0');
 								setStep('error');
 							} else {
+								setCurrIndex(0);
 								setUserCount(parsedCount);
+
+								setComponentKey(0); // Reset component key
 								setStep('Manual');
 							}
 						}}
@@ -153,8 +164,12 @@ export default function DataSetupComponent({
 	if (step === 'Manual') {
 		return (
 			<Box flexDirection={'column'}>
-				<Text> Creating User {currIndex + 1} : </Text>
+				<Text>
+					Creating User {currIndex + 1} of {userCount}:{' '}
+				</Text>
+
 				<APISyncUserComponent
+					key={`user-${componentKey}`}
 					options={{ apiKey: apiKey }}
 					onComplete={handleManualComplete}
 					onError={handleError}
@@ -181,5 +196,14 @@ export default function DataSetupComponent({
 			</Text>
 		);
 	}
+
+	if (step === 'error') {
+		return (
+			<Box flexDirection="column">
+				<Text color="red">Error: {error}</Text>
+			</Box>
+		);
+	}
+
 	return null;
 }

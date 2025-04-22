@@ -78,6 +78,7 @@ export default function APISyncUserComponent({
 	}, [payload, userId, syncUser, status, setStatus]);
 	useEffect(() => {
 		if (status === 'done') {
+			setUserId('');
 			if (onComplete) {
 				onComplete({
 					userId: payload.key,
@@ -86,7 +87,9 @@ export default function APISyncUserComponent({
 					email: payload.email,
 				});
 			}
+			setUserId('');
 		} else if (status === 'error' && errorMessage) {
+			setUserId('');
 			if (onError) {
 				onError(errorMessage);
 			}

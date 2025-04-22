@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { useGeneratePolicySnapshot } from '../test/hooks/usePolicySnapshot.js';
 import { Text, Box } from 'ink';
 import Spinner from 'ink-spinner';
+import SelectInput from 'ink-select-input';
 
 type Props = {
 	onComplete: ({
@@ -23,6 +24,7 @@ export default function GeneratedUsersComponent({
 	onError,
 }: Props) {
 	const hasCompletedRef = useRef(false);
+	const [showContinue, setShowContinue] = useState<boolean>(false);
 
 	const snapshotOptions = useMemo(
 		() => ({
@@ -42,38 +44,82 @@ export default function GeneratedUsersComponent({
 		}
 	}, [error, onError]);
 
+	// When users are generated, show the continue option
 	useEffect(() => {
+		if (state === 'done' && dryUsers && dryUsers.length > 0) {
+			setShowContinue(true);
+		}
+	}, [state, dryUsers]);
+
+	// Handle user selection and completion
+	const handleContinue = () => {
 		if (
-			state === 'done' &&
 			!hasCompletedRef.current &&
 			dryUsers &&
-			dryUsers.length > 0
+			dryUsers.length > 0 &&
+			dryUsers[0]
 		) {
-			// Mark as completed BEFORE taking any action
 			hasCompletedRef.current = true;
 
-			// Use setTimeout to break the current render cycle
-			setTimeout(() => {
-				const user = dryUsers[0];
-				if (user)
-					onComplete({
-						userId: user.key || 'default-user',
-						firstName: user.firstName || undefined,
-						lastName: user.lastName || undefined,
-						email: user.email || undefined,
-					});
-			}, 0);
+			const user = dryUsers[0];
+			onComplete({
+				userId: user.key || 'default-user',
+				firstName: user.firstName || undefined,
+				lastName: user.lastName || undefined,
+				email: user.email || undefined,
+			});
 		}
-	}, [state, dryUsers, onComplete]);
+	};
 
-	return (
-		<Box>
-			{state !== 'done' ? (
+	// Generate formatted user list for display
+	const formatUserInfo = (user: any) => {
+		const name = [user.firstName, user.lastName].filter(Boolean).join(' ');
+
+		return `${user.key}${name ? ` (${name})` : ''}${
+			user.email ? ` - ${user.email}` : ''
+		}`;
+	};
+
+	if (state !== 'done') {
+		return (
+			<Box>
 				<Text>
 					Generating users... <Spinner type="dots" />
 				</Text>
-			) : (
-				<Text>Generated {dryUsers?.length || 0} users</Text>
+			</Box>
+		);
+	}
+
+	// Layout for users generated
+	return (
+		<Box flexDirection="column">
+			<Text>Generated {dryUsers?.length || 0} users:</Text>
+
+			<Box flexDirection="column" marginTop={1} marginBottom={1}>
+				{dryUsers && dryUsers.length > 0 ? (
+					dryUsers.map((user, i) => (
+						<Text key={i}>
+							{i + 1}. {formatUserInfo(user)} {i === 0 ? '(primary)' : ''}
+						</Text>
+					))
+				) : (
+					<Text>No users generated</Text>
+				)}
+			</Box>
+
+			{showContinue && (
+				<Box flexDirection="column" marginTop={1}>
+					<Text>Press Enter to continue </Text>
+					<SelectInput
+						items={[
+							{
+								label: 'Continue',
+								value: 'continue',
+							},
+						]}
+						onSelect={() => handleContinue()}
+					/>
+				</Box>
 			)}
 		</Box>
 	);

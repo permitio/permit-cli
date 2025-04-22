@@ -166,7 +166,7 @@ describe('DataSetupComponent', () => {
 			await waitForEffects();
 
 			expect(lastFrame()).toContain('How many users do you want to create');
-			expect(lastFrame()).toContain('TextInput-0');
+			expect(lastFrame()).toContain('TextInput-');
 		});
 
 		it('should navigate to Generate step when Generate is selected', async () => {
