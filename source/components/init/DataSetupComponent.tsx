@@ -110,7 +110,7 @@ export default function DataSetupComponent({
 				users: users,
 			});
 		}
-	}, [error, onError, step, onComplete, user]);
+	}, [error, onError, step, onComplete, user, users]);
 
 	if (step === 'initial') {
 		return (

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Text, Box } from 'ink';
 import Spinner from 'ink-spinner';
 import { exec } from 'node:child_process';
@@ -40,14 +40,14 @@ export default function PDPRunComponent({
 	const [operationCompleted, setOperationCompleted] = useState(false);
 
 	// Helper function to handle exit if no callbacks provided
-	const exitIfNoCallbacks = () => {
+	const exitIfNoCallbacks = useCallback(() => {
 		if (!onComplete && !onError) {
 			// Add a small delay to ensure React renders the final state
 			setTimeout(() => {
 				process.exit(0);
 			}, 100);
 		}
-	};
+	}, [onComplete, onError]);
 
 	useEffect(() => {
 		const generateDockerCommand = async () => {
@@ -169,6 +169,7 @@ export default function PDPRunComponent({
 		skipWaitScreen,
 		onComplete,
 		onError,
+		exitIfNoCallbacks,
 	]);
 
 	if (loading) {
