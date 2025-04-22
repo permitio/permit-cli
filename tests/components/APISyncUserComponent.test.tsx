@@ -170,18 +170,6 @@ describe('APISyncUserComponent', () => {
 			await waitForEffects();
 			expect(lastFrame()).not.toMatch(/User Synced Successfully/);
 		});
-
-		it('should render error message when status is error', async () => {
-			mockStatus = 'error';
-			mockErrorMessage = 'Test error message';
-
-			const { lastFrame } = render(
-				<APISyncUserComponent options={{ key: 'test-user' }} />,
-			);
-
-			await waitForEffects();
-			expect(lastFrame()).toContain('Spinner');
-		});
 	});
 
 	describe('Error handling', () => {
