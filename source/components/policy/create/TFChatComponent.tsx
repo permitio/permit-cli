@@ -1,33 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
-import Table from 'cli-table';
-import chalk from 'chalk';
 import { useAuth } from '../../AuthProvider.js';
 import fs from 'fs';
 import path from 'path';
 import { ApplyTemplate } from '../../../lib/env/template/utils.js';
-
-// Define interfaces for the policy data structure
-interface Resource {
-	name: string;
-	actions: string[];
-}
-
-interface Permission {
-	resource: string;
-	actions: string[];
-}
-
-interface Role {
-	name: string;
-	permissions: Permission[];
-}
-
-interface PolicyData {
-	resources: Resource[];
-	roles: Role[];
-}
+import { TERRAFORM_PERMIT_URL } from '../../../config.js';
+import { PolicyTables } from './PolicyTables.js';
+import { generateTerraform } from './TerraformGenerator.js';
+import { PolicyData } from './types.js';
 
 export const TFChatComponent = () => {
 	const [input, setInput] = useState('');
@@ -92,93 +73,6 @@ export const TFChatComponent = () => {
 		}
 	}, [terraformOutput, authToken]);
 
-	const generateTerraformFile = () => {
-		if (!tableData) return;
-
-		const { resources, roles } = tableData;
-
-		// Convert resource names to keys (lowercase, no spaces)
-		const resourceKeys = resources.map(r => ({
-			...r,
-			key: r.name.toLowerCase().replace(/\s+/g, '_'),
-		}));
-
-		// Convert role names to keys
-		const roleKeys = roles.map(r => ({
-			...r,
-			key: r.name.toLowerCase().replace(/\s+/g, '_'),
-		}));
-
-		const terraform = `terraform {
-  required_providers {
-    permitio = {
-      source  = "registry.terraform.io/permitio/permit-io"
-      version = "~> 0.0.14"
-    }
-  }
-}
-
-provider "permitio" {
-  api_url = "https://api.permit.io"
-  api_key = "${authToken}"
-}
-
-${resourceKeys
-	.map(
-		r => `resource "permitio_resource" "${r.key}" {
-  key         = "${r.key}"
-  name        = "${r.name}"
-  description = "${r.name} resource"
-  attributes  = {}
-  actions     = {
-    ${r.actions.map(a => `"${a.toLowerCase()}" : { "name" : "${a.charAt(0).toUpperCase() + a.slice(1)}" }`).join(',\n    ')}
-  }
-}`,
-	)
-	.join('\n\n')}
-
-${roleKeys
-	.map(
-		r => `resource "permitio_role" "${r.key}" {
-  key         = "${r.key}"
-  name        = "${r.name}"
-  description = "${r.name} role"
-  permissions = [
-    ${r.permissions
-			.flatMap(p => p.actions.map(a => `"${p.resource.toLowerCase()}:${a}"`))
-			.join(',\n    ')}
-  ]
-  depends_on = [
-    ${r.permissions
-			.map(
-				p =>
-					`permitio_resource.${p.resource.toLowerCase().replace(/\s+/g, '_')}`,
-			)
-			.join(',\n    ')}
-  ]
-}`,
-	)
-	.join('\n\n')}
-`;
-
-		console.log('Setting terraformOutput to:', terraform);
-		// Make sure terraformOutput is a string
-		setTerraformOutput(terraform);
-		setWaitingForApproval(false);
-
-		// Add message about Terraform file generation
-		setMessages(prevMessages => [
-			...prevMessages,
-			{
-				role: 'assistant',
-				content: 'Terraform file generated successfully!',
-			},
-		]);
-
-		// Close the chat
-		setChatEnded(true);
-	};
-
 	// Use useEffect to apply Terraform when terraformOutput changes
 	useEffect(() => {
 		if (terraformOutput && shouldApplyTerraform) {
@@ -190,10 +84,27 @@ ${roleKeys
 	const handleApprovalResponse = (response: string) => {
 		if (response === 'yes' || response === 'y') {
 			// Generate Terraform file
-			generateTerraformFile();
+			if (tableData) {
+				generateTerraform({
+					tableData,
+					authToken,
+					onTerraformGenerated: terraform => {
+						setTerraformOutput(terraform);
+						setWaitingForApproval(false);
+						setMessages(prevMessages => [
+							...prevMessages,
+							{
+								role: 'assistant',
+								content: 'Terraform file generated successfully!',
+							},
+						]);
+						setChatEnded(true);
+					},
+				});
 
-			// Set flag to apply Terraform
-			setShouldApplyTerraform(true);
+				// Set flag to apply Terraform
+				setShouldApplyTerraform(true);
+			}
 		} else {
 			// End the chat
 			setMessages(prevMessages => [
@@ -218,7 +129,7 @@ ${roleKeys
 			setTableData(null);
 			setTerraformOutput(null);
 
-			const response = await fetch('http://localhost:3000/chat', {
+			const response = await fetch(`${TERRAFORM_PERMIT_URL}/chat`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -346,76 +257,6 @@ ${roleKeys
 		}
 	};
 
-	// Function to render tables from policy data
-	const renderTables = () => {
-		if (!tableData) return null;
-
-		const { resources, roles } = tableData;
-
-		// Create resources table
-		let resourcesTable = null;
-		if (resources && resources.length > 0) {
-			const table = new Table({
-				head: [
-					chalk.hex('#00FF00')('Resource Name'),
-					chalk.hex('#00FF00')('Actions'),
-				],
-				colWidths: [20, 40],
-			});
-
-			resources.forEach(resource => {
-				table.push([resource.name, resource.actions.join(', ')]);
-			});
-
-			resourcesTable = table.toString();
-		}
-
-		// Create roles table
-		let rolesTable = null;
-		if (roles && roles.length > 0) {
-			const table = new Table({
-				head: [
-					chalk.hex('#00FF00')('Role Name'),
-					chalk.hex('#00FF00')('Permissions'),
-				],
-				colWidths: [20, 60],
-			});
-
-			roles.forEach(role => {
-				const permissions = role.permissions
-					.map(
-						(p: { resource: string; actions: string[] }) =>
-							`${p.resource}: ${p.actions.join(', ')}`,
-					)
-					.join('\n');
-
-				table.push([role.name, permissions]);
-			});
-
-			rolesTable = table.toString();
-		}
-
-		return (
-			<Box flexDirection="column">
-				{resourcesTable && (
-					<>
-						<Text>Resources:</Text>
-						<Text>{resourcesTable}</Text>
-					</>
-				)}
-				{rolesTable && (
-					<>
-						<Text>Roles:</Text>
-						<Text>{rolesTable}</Text>
-					</>
-				)}
-				{waitingForApproval && (
-					<Text color="yellow">Do you approve this policy? (yes/no)</Text>
-				)}
-			</Box>
-		);
-	};
-
 	return (
 		<Box flexDirection="column">
 			{messages.map((msg, i) => (
@@ -427,7 +268,12 @@ ${roleKeys
 			{isWaitingForResponse && currentResponse && (
 				<Text color="yellow">Assistant: {currentResponse}</Text>
 			)}
-			{!isWaitingForResponse && tableData && renderTables()}
+			{!isWaitingForResponse && tableData && (
+				<PolicyTables
+					tableData={tableData}
+					waitingForApproval={waitingForApproval}
+				/>
+			)}
 			{!chatEnded && !inputDisabled && (
 				<TextInput
 					value={input}
