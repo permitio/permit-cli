@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
+import Spinner from 'ink-spinner';
 import { useAuth } from '../../AuthProvider.js';
 import fs from 'fs';
 import path from 'path';
@@ -22,6 +23,8 @@ export const TFChatComponent = () => {
 	const [chatEnded, setChatEnded] = useState(false);
 	const [inputDisabled, setInputDisabled] = useState(false);
 	const [shouldApplyTerraform, setShouldApplyTerraform] = useState(false);
+	const [isApplyingTerraform, setIsApplyingTerraform] = useState(false);
+	const [terraformSuccess, setTerraformSuccess] = useState(false);
 	const { authToken } = useAuth();
 
 	const applyTerraform = useCallback(async () => {
@@ -29,6 +32,9 @@ export const TFChatComponent = () => {
 			if (!terraformOutput) {
 				throw new Error('Terraform output is not set');
 			}
+
+			setIsApplyingTerraform(true);
+			setTerraformSuccess(false);
 
 			// Create a temporary file with the terraform content
 			const tempDir = path.join(process.cwd(), 'source', 'templates');
@@ -54,11 +60,13 @@ export const TFChatComponent = () => {
 					...prevMessages,
 					{ role: 'assistant', content: result },
 				]);
+				setTerraformSuccess(true);
 			} finally {
 				// Clean up the temporary file
 				if (fs.existsSync(tempFilePath)) {
 					fs.unlinkSync(tempFilePath);
 				}
+				setIsApplyingTerraform(false);
 			}
 		} catch (error) {
 			console.error('Error applying Terraform:', error);
@@ -69,6 +77,8 @@ export const TFChatComponent = () => {
 					content: `Error applying Terraform: ${error instanceof Error ? error.message : 'Unknown error'}`,
 				},
 			]);
+			setIsApplyingTerraform(false);
+			setTerraformSuccess(false);
 		}
 	}, [terraformOutput, authToken]);
 
@@ -90,13 +100,7 @@ export const TFChatComponent = () => {
 					onTerraformGenerated: terraform => {
 						setTerraformOutput(terraform);
 						setWaitingForApproval(false);
-						setMessages(prevMessages => [
-							...prevMessages,
-							{
-								role: 'assistant',
-								content: 'Terraform file generated successfully!',
-							},
-						]);
+						setTerraformSuccess(true);
 						setChatEnded(true);
 					},
 				});
@@ -272,6 +276,18 @@ export const TFChatComponent = () => {
 					tableData={tableData}
 					waitingForApproval={waitingForApproval}
 				/>
+			)}
+			{isApplyingTerraform && (
+				<Box>
+					<Text color="yellow">
+						<Spinner type="dots" /> Applying Terraform plan...
+					</Text>
+				</Box>
+			)}
+			{!isApplyingTerraform && terraformSuccess && (
+				<Text color="green">
+					Assistant: Terraform file generated successfully!
+				</Text>
 			)}
 			{!chatEnded && !inputDisabled && (
 				<TextInput
