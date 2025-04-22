@@ -106,7 +106,7 @@ app.post('/chat', async (req, res) => {
 
 		// Send the joke as a loading message
 		const joke =
-			"Why did the developer get locked out of production?\nBecause they didn't have the right commit-ment level of permissions.\n \n loading...";
+			"What permission did AI grant Skynet?\nI'll be R-BAC.\n\n Loading...";
 		res.write(`data: ${JSON.stringify({ delta: joke })}\n\n`);
 
 		// Send a message to disable user input

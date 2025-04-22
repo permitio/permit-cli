@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import Table from 'cli-table';
 import chalk from 'chalk';
+import { useAuth } from '../AuthProvider.js';
 
 // Define interfaces for the policy data structure
 interface Resource {
@@ -37,6 +38,78 @@ export const TFChatComponent = () => {
 	const [terraformOutput, setTerraformOutput] = useState<string | null>(null);
 	const [chatEnded, setChatEnded] = useState(false);
 	const [inputDisabled, setInputDisabled] = useState(false);
+	const [shouldApplyTerraform, setShouldApplyTerraform] = useState(false);
+	const { authToken } = useAuth();
+
+	const applyTerraform = useCallback(async () => {
+		try {
+			console.log('applyTerraform called, terraformOutput:', terraformOutput);
+			// Check if terraformOutput is set
+			if (!terraformOutput) {
+				throw new Error('Terraform output is not set');
+			}
+
+			// First check if the API endpoint is available
+			try {
+				const healthCheck = await fetch('http://localhost:3000/health', {
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+				});
+
+				if (!healthCheck.ok) {
+					throw new Error('API endpoint is not available');
+				}
+			} catch {
+				throw new Error(
+					'Could not connect to the API endpoint. Make sure the server is running.',
+				);
+			}
+
+			// Now apply the Terraform file
+			console.log('Sending Terraform output:', terraformOutput);
+			console.log('Terraform output type:', typeof terraformOutput);
+
+			// Make sure terraformOutput is a string
+			if (typeof terraformOutput !== 'string') {
+				console.error('Terraform output is not a string:', terraformOutput);
+				throw new Error('Terraform output is not a string');
+			}
+
+			const response = await fetch('http://localhost:3000/apply', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-hcl',
+					Authorization: authToken, // Use authToken from AuthProvider
+				},
+				body: terraformOutput, // Send the terraform content directly
+			});
+
+			if (!response.ok) {
+				const errorText = await response.text();
+				throw new Error(
+					`Server responded with status ${response.status}: ${errorText}`,
+				);
+			}
+
+			await response.json();
+			// Add success message after the table
+			setMessages(prevMessages => [
+				...prevMessages,
+				{ role: 'assistant', content: `Terraform applied successfully!` },
+			]);
+		} catch (error) {
+			console.error('Error applying Terraform:', error);
+			setMessages(prevMessages => [
+				...prevMessages,
+				{
+					role: 'assistant',
+					content: `Error applying Terraform: ${error instanceof Error ? error.message : 'Unknown error'}`,
+				},
+			]);
+		}
+	}, [terraformOutput, authToken, setMessages]);
 
 	const generateTerraformFile = () => {
 		if (!tableData) return;
@@ -66,7 +139,7 @@ export const TFChatComponent = () => {
 
 provider "permitio" {
   api_url = "https://api.permit.io"
-  api_key = "" // Set this to Permit.io API key
+  api_key = "${authToken}"
 }
 
 ${resourceKeys
@@ -94,21 +167,30 @@ ${roleKeys
 			.flatMap(p => p.actions.map(a => `"${p.resource.toLowerCase()}:${a}"`))
 			.join(',\n    ')}
   ]
+  depends_on = [
+    ${r.permissions
+			.map(
+				p =>
+					`permitio_resource.${p.resource.toLowerCase().replace(/\s+/g, '_')}`,
+			)
+			.join(',\n    ')}
+  ]
 }`,
 	)
 	.join('\n\n')}
 `;
 
+		console.log('Setting terraformOutput to:', terraform);
+		// Make sure terraformOutput is a string
 		setTerraformOutput(terraform);
 		setWaitingForApproval(false);
 
-		// Add message about Terraform file generation and close the chat
+		// Add message about Terraform file generation
 		setMessages(prevMessages => [
 			...prevMessages,
 			{
 				role: 'assistant',
-				content:
-					'Terraform file generated successfully! Chat ended. Thank you for using the policy creation tool.',
+				content: 'Terraform file generated successfully!',
 			},
 		]);
 
@@ -116,10 +198,21 @@ ${roleKeys
 		setChatEnded(true);
 	};
 
+	// Use useEffect to apply Terraform when terraformOutput changes
+	useEffect(() => {
+		if (terraformOutput && shouldApplyTerraform) {
+			applyTerraform();
+			setShouldApplyTerraform(false);
+		}
+	}, [terraformOutput, shouldApplyTerraform, applyTerraform]);
+
 	const handleApprovalResponse = (response: string) => {
 		if (response === 'yes' || response === 'y') {
 			// Generate Terraform file
 			generateTerraformFile();
+
+			// Set flag to apply Terraform
+			setShouldApplyTerraform(true);
 		} else {
 			// End the chat
 			setMessages(prevMessages => [
@@ -342,18 +435,6 @@ ${roleKeys
 		);
 	};
 
-	// Function to render Terraform output
-	const renderTerraformOutput = () => {
-		if (!terraformOutput) return null;
-
-		return (
-			<Box flexDirection="column">
-				<Text color="cyan">Terraform Configuration:</Text>
-				<Text>{terraformOutput}</Text>
-			</Box>
-		);
-	};
-
 	return (
 		<Box flexDirection="column">
 			{messages.map((msg, i) => (
@@ -366,7 +447,6 @@ ${roleKeys
 				<Text color="yellow">Assistant: {currentResponse}</Text>
 			)}
 			{!isWaitingForResponse && tableData && renderTables()}
-			{!isWaitingForResponse && terraformOutput && renderTerraformOutput()}
 			{!chatEnded && !inputDisabled && (
 				<TextInput
 					value={input}
