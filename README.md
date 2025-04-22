@@ -410,7 +410,7 @@ This command will Replace User / Sync User in the system. If the user already ex
 ```bash
 $ permit api sync user
   --apiKey "YOUR_API_KEY" \
-  --userid "892179821739812389327" \
+  --key "892179821739812389327" \
   --email "jane@coolcompany.com" \
   --firstName "Jane" \
   --lastName "Doe" \

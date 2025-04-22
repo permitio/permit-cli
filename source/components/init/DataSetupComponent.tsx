@@ -24,6 +24,14 @@ type Props = {
 	onError: (error: string) => void;
 };
 
+type CreatedUser = {
+	userId: string;
+	firstName?: string;
+	lastName?: string;
+	email?: string;
+	roles?: string[];
+};
+
 export default function DataSetupComponent({
 	apiKey,
 	onComplete,
@@ -37,20 +45,18 @@ export default function DataSetupComponent({
 		| 'initial'
 		| 'processing'
 		| 'askCount'
+		| 'userSummary'
 	>('initial');
 	const [error, setError] = useState<string | null>(null);
-	const [user, setUser] = useState<{
-		userId: string;
-		firstName?: string;
-		lastName?: string;
-		email?: string;
-	} | null>(null);
+	const [user, setUser] = useState<CreatedUser | null>(null);
 	const [userCount, setUserCount] = useState<number>(0);
 	const [count, setCount] = useState<string>('');
 	const [currIndex, setCurrIndex] = useState<number>(0);
 	// Add a key to force component remount
 	const [componentKey, setComponentKey] = useState<number>(0);
 	const [users, setUsers] = useState<string[]>([]);
+	// Track created users with more details for summary
+	const [createdUsers, setCreatedUsers] = useState<CreatedUser[]>([]);
 
 	const handleGenerateComplete = useCallback(
 		(currentUser: {
@@ -78,15 +84,21 @@ export default function DataSetupComponent({
 			firstName?: string;
 			lastName?: string;
 			email?: string;
+			roles?: string[];
 		}) => {
+			// Add user to our collections
 			setUsers(prev => [...prev, currentUser.userId]);
+			setCreatedUsers(prev => [...prev, currentUser]);
+
+			// Save first user data for completion callback
 			if (currIndex === 0) {
 				setUser(currentUser);
 			}
 
 			// Check if we've created all users
 			if (currIndex + 1 >= userCount) {
-				setStep('done');
+				// Show summary when all users are created
+				setStep('userSummary');
 			} else {
 				// Increment the index for the next user
 				setCurrIndex(prev => prev + 1);
@@ -97,6 +109,7 @@ export default function DataSetupComponent({
 		[currIndex, userCount],
 	);
 
+	// Handle completion and error states
 	useEffect(() => {
 		if (error) {
 			onError(error);
@@ -156,7 +169,7 @@ export default function DataSetupComponent({
 							} else {
 								setCurrIndex(0);
 								setUserCount(parsedCount);
-
+								setCreatedUsers([]); // Reset created users
 								setComponentKey(0); // Reset component key
 								setStep('Manual');
 							}
@@ -180,6 +193,44 @@ export default function DataSetupComponent({
 					onComplete={handleManualComplete}
 					onError={handleError}
 				/>
+			</Box>
+		);
+	}
+
+	if (step === 'userSummary') {
+		return (
+			<Box flexDirection="column">
+				<Text color="green">
+					Successfully created {createdUsers.length} users:
+				</Text>
+
+				<Box flexDirection="column" marginY={1}>
+					{createdUsers.map((user, idx) => (
+						<Box key={idx} marginLeft={1}>
+							<Text>
+								{idx + 1}. <Text bold>{user.userId}</Text>
+								{user.firstName || user.lastName
+									? ` (${[user.firstName, user.lastName].filter(Boolean).join(' ')})`
+									: ''}
+								{user.roles && user.roles.length > 0
+									? ` - Role: ${user.roles.join(', ')}`
+									: ''}
+							</Text>
+						</Box>
+					))}
+				</Box>
+
+				<Box marginTop={1}>
+					<SelectInput
+						items={[
+							{
+								label: 'Continue',
+								value: 'continue',
+							},
+						]}
+						onSelect={() => setStep('done')}
+					/>
+				</Box>
 			</Box>
 		);
 	}

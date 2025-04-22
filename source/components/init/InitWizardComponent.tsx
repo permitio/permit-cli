@@ -6,7 +6,6 @@ import Spinner from 'ink-spinner';
 
 import PolicyStepComponent from './PolicyStepComponent.js';
 import DataSetupComponent from './DataSetupComponent.js';
-import AssignRoleComponent from './AssignRoleComponent.js';
 import EnforceComponent from './EnforceComponent.js';
 import ImplementComponent from './ImplementComponent.js';
 
@@ -18,7 +17,6 @@ export default function InitWizardComponent({ options }: Props) {
 	const [overallStep, setOverallStep] = useState<
 		| 'policy'
 		| 'dataSetup'
-		| 'assignRole'
 		| 'enforce'
 		| 'implement'
 		| 'processing'
@@ -34,8 +32,6 @@ export default function InitWizardComponent({ options }: Props) {
 		lastName?: string;
 		email?: string;
 	}>({ userId: '' });
-	const [users, setUsers] = useState<string[]>([]);
-
 	useEffect(() => {
 		if (overallStep === 'error') {
 			setTimeout(() => {
@@ -73,24 +69,6 @@ export default function InitWizardComponent({ options }: Props) {
 					apiKey={options.apiKey}
 					onComplete={user => {
 						setUser(user);
-						setOverallStep('assignRole');
-						setUsers(user.users);
-					}}
-					onError={error => {
-						setError(error);
-						setOverallStep('error');
-					}}
-				/>
-			</Box>
-		);
-	}
-
-	if (overallStep === 'assignRole') {
-		return (
-			<Box flexDirection={'column'}>
-				<AssignRoleComponent
-					users={users}
-					onComplete={() => {
 						setOverallStep('enforce');
 					}}
 					onError={error => {
