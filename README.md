@@ -543,7 +543,7 @@ For example, you could describe:
 
 The AI will generate appropriate resources, roles, and permissions based on your description. The generated policy will be displayed in a table format showing the resources, actions, roles, and permissions. You can then approve or reject the generated policy.
 
-If you approve the policy, the command will automatically generate and apply a Terraform file to your current Permit.io environment, creating all the resources, roles, and permissions defined in the policy.
+If you approve the policy, the CLI will apply the policy to your Permit.io environment, creating all the resources, roles, and permissions defined in the policy.
 
 ## Development
 
