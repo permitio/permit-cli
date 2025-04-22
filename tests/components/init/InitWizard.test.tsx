@@ -140,7 +140,6 @@ describe('InitWizardComponent', () => {
 			// Complete data setup
 			callbacks.dataSetup.onComplete(mockUser);
 
-			// Complete enforce step
 			callbacks.enforce.onComplete();
 
 			// Verify implement step received correct data
