@@ -452,43 +452,43 @@ ${roleKeys
 			if (jsonMatch) {
 				const jsonStr = jsonMatch[0];
 				const policy = JSON.parse(jsonStr);
-				
+
 				// Display resources table
 				if (policy.resources && policy.resources.length > 0) {
 					const resourceTable = new Table({
-						head: [chalk.hex('#00FF00')('Resource Name'), chalk.hex('#00FF00')('Actions')],
-						colWidths: [20, 40]
+						head: [
+							chalk.hex('#00FF00')('Resource Name'),
+							chalk.hex('#00FF00')('Actions'),
+						],
+						colWidths: [20, 40],
 					});
-					
+
 					policy.resources.forEach(resource => {
-						resourceTable.push([
-							resource.name,
-							resource.actions.join(', ')
-						]);
+						resourceTable.push([resource.name, resource.actions.join(', ')]);
 					});
-					
+
 					console.log('\nResources:');
 					console.log(resourceTable.toString());
 				}
-				
+
 				// Display roles table
 				if (policy.roles && policy.roles.length > 0) {
 					const roleTable = new Table({
-						head: [chalk.hex('#00FF00')('Role Name'), chalk.hex('#00FF00')('Permissions')],
-						colWidths: [20, 60]
+						head: [
+							chalk.hex('#00FF00')('Role Name'),
+							chalk.hex('#00FF00')('Permissions'),
+						],
+						colWidths: [20, 60],
 					});
-					
+
 					policy.roles.forEach(role => {
-						const permissions = role.permissions.map(p => 
-							`${p.resource}: ${p.actions.join(', ')}`
-						).join('\n');
-						
-						roleTable.push([
-							role.name,
-							permissions
-						]);
+						const permissions = role.permissions
+							.map(p => `${p.resource}: ${p.actions.join(', ')}`)
+							.join('\n');
+
+						roleTable.push([role.name, permissions]);
 					});
-					
+
 					console.log('\nRoles:');
 					console.log(roleTable.toString());
 				}

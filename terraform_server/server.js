@@ -7,7 +7,6 @@ import bodyParser from 'body-parser';
 import { streamText } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import tools from './tools/aiTools.js';
-import { z } from 'zod';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -106,9 +105,10 @@ app.post('/chat', async (req, res) => {
 		messages.push({ role: 'user', content: message });
 
 		// Send the joke as a loading message
-		const joke = "Why did the developer get locked out of production?\nBecause they didn't have the right commit-ment level of permissions.\n \n loading...";
+		const joke =
+			"Why did the developer get locked out of production?\nBecause they didn't have the right commit-ment level of permissions.\n \n loading...";
 		res.write(`data: ${JSON.stringify({ delta: joke })}\n\n`);
-		
+
 		// Send a message to disable user input
 		res.write(`data: ${JSON.stringify({ type: 'disable_input' })}\n\n`);
 
@@ -125,7 +125,7 @@ app.post('/chat', async (req, res) => {
 			// Don't send each delta to avoid showing raw JSON
 		}
 
-		const [toolCalls, toolResults] = await Promise.all([
+		const [, toolResults] = await Promise.all([
 			result.toolCalls,
 			result.toolResults,
 		]);
@@ -137,11 +137,15 @@ app.post('/chat', async (req, res) => {
 			.join('\n\n');
 
 		// Extract policy data from tool results
-		const policyData = toolResults.find(result => result && result.policy)?.policy;
-		
+		const policyData = toolResults.find(
+			result => result && result.policy,
+		)?.policy;
+
 		if (policyData) {
 			// Send the policy data as a JSON object in the response text
-			res.write(`data: ${JSON.stringify({ delta: JSON.stringify(policyData) })}\n\n`);
+			res.write(
+				`data: ${JSON.stringify({ delta: JSON.stringify(policyData) })}\n\n`,
+			);
 		} else if (formattedOutputs) {
 			// Send only the table part of the formatted output
 			// Extract just the table part by finding the first table marker
@@ -160,11 +164,10 @@ app.post('/chat', async (req, res) => {
 
 		// Send a message to enable user input
 		res.write(`data: ${JSON.stringify({ type: 'enable_input' })}\n\n`);
-		
+
 		// Send the done message
 		res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
 		res.end();
-
 	} catch (error) {
 		console.error('Error in chat:', error);
 		res.status(500).json({ error: 'Internal server error' });
