@@ -66,7 +66,6 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
 - `test` - commands for testing authorization policies
   - `run audit` - test PDP against past authorization decisions
 - `policy` - a collection of commands for better policy experience
-  - `create` - create a new policy using natural language
 - `policy create ai` - create RBAC policies using natural language
 
 ---
