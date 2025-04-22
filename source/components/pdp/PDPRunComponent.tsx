@@ -15,6 +15,7 @@ type Props = {
 	dryRun?: boolean;
 	onComplete?: () => void;
 	onError?: (error: string) => void;
+	skipWaitScreen?: boolean; // New prop to control wait behavior
 };
 
 export default function PDPRunComponent({
@@ -22,6 +23,7 @@ export default function PDPRunComponent({
 	dryRun = false,
 	onComplete,
 	onError,
+	skipWaitScreen = true, // Default to showing wait screen
 }: Props) {
 	const { authToken } = useAuth();
 	const [loading, setLoading] = useState(true);
@@ -33,8 +35,19 @@ export default function PDPRunComponent({
 	} | null>(null);
 	const [dockerAvailable, setDockerAvailable] = useState(true);
 	const [waitDisplay, setWaitDisplay] = useState<boolean>(
-		onComplete ? true : false,
+		!!onComplete && !skipWaitScreen,
 	);
+	const [operationCompleted, setOperationCompleted] = useState(false);
+
+	// Helper function to handle exit if no callbacks provided
+	const exitIfNoCallbacks = () => {
+		if (!onComplete && !onError) {
+			// Add a small delay to ensure React renders the final state
+			setTimeout(() => {
+				process.exit(0);
+			}, 100);
+		}
+	};
 
 	useEffect(() => {
 		const generateDockerCommand = async () => {
@@ -102,10 +115,14 @@ export default function PDPRunComponent({
 							const containerName = nameOutput.trim().replace(/^\//, ''); // Remove leading / from name
 
 							setContainerInfo({ id: containerId, name: containerName });
+							setOperationCompleted(true);
 
-							// Call onComplete prop when everything is successful
-							if (onComplete && !waitDisplay) {
+							// Call onComplete prop immediately if skipWaitScreen is true
+							if (onComplete && skipWaitScreen) {
 								onComplete();
+							} else if (!onComplete && !onError) {
+								// If no callbacks, we'll exit after rendering
+								exitIfNoCallbacks();
 							}
 						} catch (err) {
 							const errorMessage =
@@ -114,9 +131,15 @@ export default function PDPRunComponent({
 						}
 					}
 				} else {
-					// For dry run, we also call onComplete since we successfully generated the command
-					if (onComplete && !waitDisplay) {
+					// For dry run, mark as completed
+					setOperationCompleted(true);
+
+					// Call onComplete immediately if skipWaitScreen is true
+					if (onComplete && skipWaitScreen) {
 						onComplete();
+					} else if (!onComplete && !onError) {
+						// If no callbacks, we'll exit after rendering
+						exitIfNoCallbacks();
 					}
 				}
 			} catch (err) {
@@ -126,6 +149,11 @@ export default function PDPRunComponent({
 				// Call onError prop when an error occurs
 				if (onError) {
 					onError(errorMessage);
+				} else if (!onComplete) {
+					// If no error callback and no completion callback, exit with error code
+					setTimeout(() => {
+						process.exit(1);
+					}, 100);
 				}
 			} finally {
 				setLoading(false);
@@ -138,7 +166,7 @@ export default function PDPRunComponent({
 		dryRun,
 		authToken,
 		dockerAvailable,
-		waitDisplay,
+		skipWaitScreen,
 		onComplete,
 		onError,
 	]);
@@ -180,7 +208,13 @@ export default function PDPRunComponent({
 		);
 	}
 
-	if (dryRun && !waitDisplay) {
+	// For dry run without wait screen
+	if (dryRun && (!waitDisplay || !onComplete)) {
+		// If no callbacks, exit after rendering
+		if (!onComplete && !onError) {
+			exitIfNoCallbacks();
+		}
+
 		return (
 			<Box flexDirection="column">
 				<Text>Run the following command to start the PDP container:</Text>
@@ -189,20 +223,27 @@ export default function PDPRunComponent({
 		);
 	}
 
-	if (dryRun && onComplete) {
+	// For dry run with wait screen and continue button
+	if (dryRun && waitDisplay && onComplete) {
 		return (
 			<Box flexDirection="column">
-				<Text>Run the following command to start the PDP container: !</Text>
+				<Text>Run the following command to start the PDP container:</Text>
 				<Text>{dockerCommand}</Text>
 				<SelectInput
 					items={[{ label: 'Continue', value: 'continue' }]}
 					onSelect={() => {
+						if (onComplete) {
+							onComplete();
+						}
 						setWaitDisplay(false);
 					}}
 				/>
 			</Box>
 		);
-	} else if (onComplete) {
+	}
+
+	// For live run with wait screen and continue button
+	if (waitDisplay && onComplete && operationCompleted) {
 		return (
 			<Box flexDirection="column">
 				<Text color="green">PDP container started successfully!</Text>
@@ -213,7 +254,7 @@ export default function PDPRunComponent({
 					Container Name: <Text color="cyan">{containerInfo?.name}</Text>
 				</Text>
 				<Text>
-					The PDP is running on port 7676
+					The PDP is running on port 7766
 					{opa ? ` with OPA exposed on port ${opa}` : ''}
 				</Text>
 				<Text>
@@ -223,11 +264,20 @@ export default function PDPRunComponent({
 				<SelectInput
 					items={[{ label: 'Continue', value: 'continue' }]}
 					onSelect={() => {
+						if (onComplete) {
+							onComplete();
+						}
 						setWaitDisplay(false);
 					}}
 				/>
 			</Box>
 		);
+	}
+
+	// Default success display
+	// If no callbacks, exit after rendering this
+	if (!onComplete && !onError && operationCompleted) {
+		exitIfNoCallbacks();
 	}
 
 	return (
@@ -240,7 +290,7 @@ export default function PDPRunComponent({
 				Container Name: <Text color="cyan">{containerInfo?.name}</Text>
 			</Text>
 			<Text>
-				The PDP is running on port 7676
+				The PDP is running on port 7766
 				{opa ? ` with OPA exposed on port ${opa}` : ''}
 			</Text>
 			<Text>

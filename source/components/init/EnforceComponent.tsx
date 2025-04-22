@@ -55,6 +55,7 @@ export default function EnforceComponent({ onComplete, onError }: Props) {
 			<Box flexDirection="column">
 				<Text>Running PDP...</Text>
 				<PDPRunComponent
+					skipWaitScreen={false}
 					onComplete={() => {
 						setStep('done');
 					}}
@@ -74,6 +75,7 @@ export default function EnforceComponent({ onComplete, onError }: Props) {
 					onComplete={() => {
 						setStep('done');
 					}}
+					skipWaitScreen={false}
 					onError={error => {
 						setError(error);
 						setStep('error');
