@@ -6,8 +6,8 @@ import {
 	getResourceAndAction,
 } from '../../../lib/env/template/utils.js';
 import SelectInput from 'ink-select-input';
-import { Text } from 'ink';
-import Spinner from 'ink-spinner'; // Import Spinner
+import { Text, Box } from 'ink';
+import Spinner from 'ink-spinner';
 import { useAuth } from '../../AuthProvider.js';
 
 type Props = {
@@ -31,6 +31,7 @@ export default function ApplyComponent({
 	const [errorMessage, setErrorMessage] = useState('');
 	const [successMessage, setSuccessMessage] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
+	const [showContinue, setShowContinue] = useState(false);
 	const files = getFiles();
 	const { authToken: key } = useAuth();
 	const [resource, setResource] = useState<string | null>(null);
@@ -41,14 +42,29 @@ export default function ApplyComponent({
 		value: file,
 	}));
 
+	// Modified to handle errors immediately but success with Continue button
 	useEffect(() => {
-		if (onError && errorMessage) {
-			onError(errorMessage);
+		if (errorMessage) {
+			if (onError) onError(errorMessage);
+			else {
+				setTimeout(() => {
+					process.exit(1);
+				}, 500);
+			}
 		}
-		if (onComplete && successMessage) {
-			onComplete(resource || '', action || '');
+		if (successMessage && !onComplete) {
+			setTimeout(() => {
+				process.exit(0);
+			}, 500);
 		}
-	}, [errorMessage, successMessage, onError, onComplete, resource, action]);
+		// Don't automatically call onComplete - we'll do it when Continue is pressed
+	}, [errorMessage, onError, successMessage, onComplete]);
+
+	const handleContinue = useCallback(() => {
+		if (onComplete && resource && action) {
+			onComplete(resource, action);
+		}
+	}, [onComplete, resource, action]);
 
 	// Memoized function to apply template
 	const applyTemplate = useCallback(
@@ -66,6 +82,10 @@ export default function ApplyComponent({
 					setErrorMessage(message);
 				} else {
 					setSuccessMessage(message);
+					// If we have an onComplete handler, show the continue button
+					if (onComplete) {
+						setShowContinue(true);
+					}
 				}
 			} catch (error) {
 				setErrorMessage(error instanceof Error ? error.message : String(error));
@@ -73,15 +93,15 @@ export default function ApplyComponent({
 				setIsLoading(false);
 			}
 		},
-		[local, key],
-	); // Dependencies ensure function remains stable
+		[local, key, onComplete],
+	);
 
 	// If a template is passed as a prop, apply it once
 	useEffect(() => {
 		if (template) {
 			applyTemplate(template);
 		}
-	}, [template, applyTemplate]); // Ensures function isn't recreated unnecessarily
+	}, [template, applyTemplate]);
 
 	// Handle user selection from SelectInput
 	const handleSelect = async (item: SelectItemType) => {
@@ -90,7 +110,7 @@ export default function ApplyComponent({
 	};
 
 	return (
-		<>
+		<Box flexDirection="column">
 			{isLoading ? (
 				<Text color="cyan">
 					<Spinner type="dots" /> Applying template...
@@ -98,13 +118,25 @@ export default function ApplyComponent({
 			) : errorMessage && !onError ? (
 				<Text color="red">{errorMessage}</Text>
 			) : successMessage ? (
-				<Text color="green">{successMessage}</Text>
+				<>
+					<Text color="green">{successMessage}</Text>
+
+					{showContinue && (
+						<Box marginTop={1} flexDirection={'column'}>
+							<Text>Press Enter to continue</Text>
+							<SelectInput
+								items={[{ label: 'Continue', value: 'continue' }]}
+								onSelect={() => handleContinue()}
+							/>
+						</Box>
+					)}
+				</>
 			) : !template ? (
 				<>
 					<Text>Select Template </Text>
 					<SelectInput items={selectionValues} onSelect={handleSelect} />
 				</>
 			) : null}
-		</>
+		</Box>
 	);
 }
