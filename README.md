@@ -402,14 +402,13 @@ The command uses the following `-x-permit` extensions in your OpenAPI spec to ma
 - `x-permit-relation` - A JSON object defining a relation between resources.
 - `x-permit-derived-role` - A JSON object defining role derivation rules.
 
-
 #### Example OpenAPI Spec with Permit Extensions
 
 ```yaml
 openapi: 3.0.3
 info:
-  title: "Blog API with Permit Extensions"
-  version: "1.0.0"
+  title: 'Blog API with Permit Extensions'
+  version: '1.0.0'
 paths:
   /posts:
     x-permit-resource: blog_post
@@ -464,6 +463,7 @@ paths:
         derived_role: commenter
       # ...
 ```
+
 Check this repo for a good [example](https://github.com/daveads/openapispec)
 
 #### Complex Extension Objects
@@ -474,10 +474,10 @@ For the more complex extensions that accept objects instead of strings, here's t
 
 ```json
 {
-  "subject_resource": "string",  // Required: The source resource in the relation
-  "object_resource": "string",   // Required: The target resource in the relation
-  "key": "string",               // Optional: Unique identifier for the relation (generated if not provided)
-  "name": "string"               // Optional: Human-readable name (generated if not provided)
+	"subject_resource": "string", // Required: The source resource in the relation
+	"object_resource": "string", // Required: The target resource in the relation
+	"key": "string", // Optional: Unique identifier for the relation (generated if not provided)
+	"name": "string" // Optional: Human-readable name (generated if not provided)
 }
 ```
 
@@ -485,11 +485,11 @@ For the more complex extensions that accept objects instead of strings, here's t
 
 ```json
 {
-  "key": "string",          // Optional: Unique identifier for the derived role
-  "name": "string",         // Optional: Human-readable name for the derived role
-  "base_role": "string",    // Required: The role that grants the derived role
-  "derived_role": "string", // Required: The role to be derived
-  "resource": "string"      // Optional: The resource that the derived role applies to (defaults to the path's resource)
+	"key": "string", // Optional: Unique identifier for the derived role
+	"name": "string", // Optional: Human-readable name for the derived role
+	"base_role": "string", // Required: The role that grants the derived role
+	"derived_role": "string", // Required: The role to be derived
+	"resource": "string" // Optional: The resource that the derived role applies to (defaults to the path's resource)
 }
 ```
 
@@ -498,6 +498,7 @@ For the more complex extensions that accept objects instead of strings, here's t
 After creating the policy elements based on the `-x-permit` extensions, the command will automatically create URL mappings in Permit. These mappings connect API endpoints to the appropriate resources and actions for runtime authorization checks.
 
 For each endpoint with the required extensions, a mapping rule will be created with:
+
 - URL path from the OpenAPI spec
 - HTTP method
 - Resource from `x-permit-resource`
