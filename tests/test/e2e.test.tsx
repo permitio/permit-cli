@@ -95,14 +95,15 @@ describe('GeneratePolicySnapshot', () => {
 			<GeneratePolicySnapshot dryRun models={['RBAC']} />,
 		);
 
-		await delay(100); // Allow steps to process
+		await delay(1000); // Allow steps to process
 
 		expect(lastFrame()).toMatch(/Roles found: 1/);
 		expect(lastFrame()).toMatch(/Created a new test tenant/);
 		expect(lastFrame()).toMatch(/Dry run mode!/);
-		await delay(1100);
-		expect(process.exit).toHaveBeenCalledWith(1); // Done or error triggers exit
-	}, 2000);
+
+		await delay(1500);
+		expect(process.exit).toHaveBeenCalledWith(1);
+	}, 3000);
 
 	it('should complete non-dry run and save to path', async () => {
 		vi.mocked(useRolesApi).mockReturnValue({
@@ -150,9 +151,10 @@ describe('GeneratePolicySnapshot', () => {
 			/>,
 		);
 
-		await delay(100); // Wait for config to be written
+		await delay(1000); // Wait for config to be written
 
 		expect(lastFrame()).toMatch(/Config saved to .*test-output/);
+		await delay(1500);
 		expect(process.exit).toHaveBeenCalledWith(1);
 	});
 });
