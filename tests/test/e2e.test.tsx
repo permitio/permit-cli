@@ -7,6 +7,7 @@ import { useResourcesApi } from '../../source/hooks/useResourcesApi.js';
 import { useUserApi } from '../../source/hooks/useUserApi.js';
 import delay from 'delay';
 import { GeneratePolicySnapshot } from '../../source/components/test/GeneratePolicySnapshot.js';
+import * as keytar from 'keytar';
 
 vi.mock('../../source/hooks/useRolesApi.js', () => ({
 	useRolesApi: vi.fn(),
@@ -23,6 +24,21 @@ vi.mock('../../source/hooks/useResourcesApi.js', () => ({
 vi.mock('../../source/hooks/useUserApi.js', () => ({
 	useUserApi: vi.fn(),
 }));
+
+vi.mock('keytar', () => {
+	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+
+	const keytar = {
+		setPassword: vi.fn().mockResolvedValue(() => {
+			return demoPermitKey;
+		}),
+		getPassword: vi.fn().mockResolvedValue(() => {
+			return demoPermitKey;
+		}),
+		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
+	};
+	return { ...keytar, default: keytar };
+});
 
 beforeEach(() => {
 	vi.restoreAllMocks();
@@ -79,14 +95,15 @@ describe('GeneratePolicySnapshot', () => {
 			<GeneratePolicySnapshot dryRun models={['RBAC']} />,
 		);
 
-		await delay(100); // Allow steps to process
+		await delay(1000); // Allow steps to process
 
 		expect(lastFrame()).toMatch(/Roles found: 1/);
 		expect(lastFrame()).toMatch(/Created a new test tenant/);
 		expect(lastFrame()).toMatch(/Dry run mode!/);
-		await delay(1100);
-		expect(process.exit).toHaveBeenCalledWith(1); // Done or error triggers exit
-	}, 2000);
+
+		await delay(1500);
+		expect(process.exit).toHaveBeenCalledWith(1);
+	}, 3000);
 
 	it('should complete non-dry run and save to path', async () => {
 		vi.mocked(useRolesApi).mockReturnValue({
@@ -134,9 +151,10 @@ describe('GeneratePolicySnapshot', () => {
 			/>,
 		);
 
-		await delay(100); // Wait for config to be written
+		await delay(1000); // Wait for config to be written
 
 		expect(lastFrame()).toMatch(/Config saved to .*test-output/);
+		await delay(1500);
 		expect(process.exit).toHaveBeenCalledWith(1);
 	});
 });

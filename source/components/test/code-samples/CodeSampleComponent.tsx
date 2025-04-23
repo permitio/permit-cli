@@ -28,10 +28,10 @@ export function CodeSampleComponent({
 	const auth = useAuth();
 
 	useEffect(() => {
-		if (error) {
+		if (error || state === 'done') {
 			process.exit(1);
 		}
-	}, [error]);
+	}, [error, state]);
 
 	useEffect(() => {
 		if (auth.loading) return;
