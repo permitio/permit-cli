@@ -77,7 +77,7 @@ async function pollForEntity<T>(
 
 // --- The Hook ---
 /**
- * Hook for relation and role derivation API
+ * Hook for relation and role derivation API operations
  */
 export const usePermitRelationApi = () => {
 	useAuth();
@@ -234,7 +234,7 @@ export const usePermitRelationApi = () => {
 			const body: RelationCreate = {
 				key: relationInput.key || 'relation',
 				name: relationInput.name || 'Relation',
-				subject_resource: relationInput.object_resource, // API expects the *target* resource here
+				subject_resource: relationInput.object_resource,
 				description:
 					relationInput.description || 'Relation created from OpenAPI spec',
 			};
@@ -275,7 +275,7 @@ export const usePermitRelationApi = () => {
 					response,
 				} = await authenticatedApiClient().GET(path, pathParams);
 				if (error && response?.status !== 404) {
-					/* Log non-404 errors if needed */
+					/* Log non-404 */
 				}
 				return { exists: Boolean(existingRole && !error), data: existingRole };
 			} catch (error: unknown) {
@@ -375,7 +375,7 @@ export const usePermitRelationApi = () => {
 			} = derivedRoleInput;
 
 			try {
-				// Ensure derived role exists on subject resource
+				//Ensure derived role exists on subject resource
 				const roleCreateResult = await createResourceSpecificRole(
 					subjectResourceKey,
 					derivedRoleKey,
@@ -484,12 +484,8 @@ export const usePermitRelationApi = () => {
 				return handleError(operation, error);
 			}
 		},
-		[
-			authenticatedApiClient,
-			createResourceSpecificRole,
-			getResourceRelations,
-			checkResourceRoleExists,
-		],
+
+		[authenticatedApiClient, createResourceSpecificRole, getResourceRelations],
 	);
 
 	// Return memoized API functions
@@ -502,7 +498,7 @@ export const usePermitRelationApi = () => {
 			createDerivedRole,
 			checkResourceRoleExists,
 		}),
-
+		// Final dependency array for useMemo should include all returned functions
 		[
 			getRelationByKey,
 			getResourceRelations,
