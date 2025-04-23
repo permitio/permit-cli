@@ -8,7 +8,9 @@ import Spinner from 'ink-spinner';
 import { usersApi, type UserData } from '../../utils/permitApi.js';
 
 type Props = {
-	options: zInfer<typeof options>;
+	options: zInfer<typeof options> & {
+		includeResourceInstanceRoles?: boolean;
+	};
 };
 
 // Transforms API data into table-friendly format while preserving type safety
@@ -79,6 +81,7 @@ export default function PermitUsersListComponent({ options }: Props) {
 					perPage: options.perPage,
 					role: options.role,
 					tenant: options.tenant,
+					include_resource_instance_roles: options.includeResourceInstanceRoles,
 				});
 
 				if (!response.success) {

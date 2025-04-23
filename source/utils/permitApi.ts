@@ -64,6 +64,7 @@ export interface ListUsersRequest extends PermitApiOptions {
 	perPage?: number;
 	role?: string;
 	tenant?: string;
+	include_resource_instance_roles?: boolean;
 }
 
 export interface RoleAssignmentRequest extends PermitApiOptions {
@@ -88,6 +89,11 @@ export const usersApi = {
 				page: String(options.page || 1),
 				per_page: String(options.perPage || 50),
 				...(options.role && { role: options.role }),
+				...(options.include_resource_instance_roles !== undefined && {
+					include_resource_instance_roles: String(
+						options.include_resource_instance_roles,
+					),
+				}),
 			},
 		);
 	},
