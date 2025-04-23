@@ -198,10 +198,78 @@ export const useOpenapiProcessor = ({
 			setProgress('Creating URL mappings...');
 			await createMappings(
 				context,
-				deleteUrlMappings as (
+				((source: string) => deleteUrlMappings(source)) as unknown as (
 					source: string,
 				) => Promise<ApiResponse<Record<string, unknown>>>,
-				createUrlMappings as (
+				((
+					mappings: UrlMappingRequest[],
+					authType: string,
+					tokenHeader: string,
+				) => {
+					// Define allowed HTTP methods type
+					type HttpMethod =
+						| 'get'
+						| 'put'
+						| 'post'
+						| 'delete'
+						| 'options'
+						| 'head'
+						| 'patch';
+
+					// Use type from components schema with proper constraints
+					type MappingRuleWithHeaders = {
+						url: string;
+						http_method: HttpMethod;
+						resource: string;
+						headers: Record<string, string>;
+						action?: string;
+						url_type?: 'regex';
+					};
+
+					// Convert the UrlMappingRequest[] to MappingRule[]
+					const adaptedMappings = mappings.map(mapping => {
+						// Normalize http_method to ensure it matches the allowed values
+						const httpMethod = mapping.http_method.toLowerCase() as HttpMethod;
+
+						// Validate http_method is one of the allowed values
+						if (
+							![
+								'get',
+								'put',
+								'post',
+								'delete',
+								'options',
+								'head',
+								'patch',
+							].includes(httpMethod)
+						) {
+							throw new Error(
+								`Invalid HTTP method: ${mapping.http_method}. Must be one of: get, put, post, delete, options, head, patch`,
+							);
+						}
+
+						// Create properly typed object
+						const result: MappingRuleWithHeaders = {
+							url: mapping.url,
+							http_method: httpMethod,
+							resource: mapping.resource,
+							headers: {}, // Empty headers object as required by API
+						};
+
+						// Add optional properties if they exist
+						if (mapping.action) result.action = mapping.action;
+
+						// Only set url_type if the source mapping has a urlType property
+						// AND it's specifically the value "regex"
+						if ('urlType' in mapping && mapping.urlType === 'regex') {
+							result.url_type = 'regex';
+						}
+
+						return result;
+					});
+
+					return createUrlMappings(adaptedMappings, authType, tokenHeader);
+				}) as unknown as (
 					mappings: UrlMappingRequest[],
 					authType: string,
 					tokenHeader: string,
