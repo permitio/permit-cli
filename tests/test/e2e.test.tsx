@@ -7,6 +7,8 @@ import { useResourcesApi } from '../../source/hooks/useResourcesApi.js';
 import { useUserApi } from '../../source/hooks/useUserApi.js';
 import delay from 'delay';
 import { GeneratePolicySnapshot } from '../../source/components/test/GeneratePolicySnapshot.js';
+import * as keytar from 'keytar';
+
 
 vi.mock('../../source/hooks/useRolesApi.js', () => ({
 	useRolesApi: vi.fn(),
@@ -23,6 +25,21 @@ vi.mock('../../source/hooks/useResourcesApi.js', () => ({
 vi.mock('../../source/hooks/useUserApi.js', () => ({
 	useUserApi: vi.fn(),
 }));
+
+vi.mock('keytar', () => {
+	const demoPermitKey = 'permit_key_'.concat('a'.repeat(97));
+
+	const keytar = {
+		setPassword: vi.fn().mockResolvedValue(() => {
+			return demoPermitKey;
+		}),
+		getPassword: vi.fn().mockResolvedValue(() => {
+			return demoPermitKey;
+		}),
+		deletePassword: vi.fn().mockResolvedValue(demoPermitKey),
+	};
+	return { ...keytar, default: keytar };
+});
 
 beforeEach(() => {
 	vi.restoreAllMocks();
