@@ -634,6 +634,7 @@ The project uses TypeScript definitions generated from Permit.io's OpenAPI specs
 ```bash
 npm run update-types
 ```
+
 This will download the latest OpenAPI specifications from Permit.io's API endpoints and generate updated TypeScript definitions.
 
 ### Add New Commands
