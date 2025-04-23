@@ -18,7 +18,8 @@
 		"lint:fix": "prettier --write . && eslint \"source/**/*.{js,ts,tsx}\" --fix",
 		"test": "prettier --check ./source && vitest run --coverage",
 		"simple-check": "npx tsx ./source/cli.tsx pdp check -u filip@permit.io -a create -r task",
-		"test:ts": "tsc --noEmit"
+		"test:ts": "tsc --noEmit",
+		"update-types": "curl -o openapi.json https://api.permit.io/v2/openapi.json && openapi-typescript openapi.json -o ./source/lib/api/v1.d.ts && curl -o pdp-openapi.json https://pdp-api.permit.io/openapi.json && openapi-typescript pdp-openapi.json -o ./source/lib/api/pdp-v1.d.ts && rimraf openapi.json pdp-openapi.json"
 	},
 	"files": [
 		"dist"
