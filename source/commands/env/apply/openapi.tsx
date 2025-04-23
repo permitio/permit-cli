@@ -9,7 +9,7 @@ export const description =
 	'Apply permissions policy from an OpenAPI spec using the `-x-permit` extensions.';
 
 export const options = zod.object({
-	key: zod
+	apiKey: zod
 		.string()
 		.optional()
 		.describe(
@@ -34,9 +34,9 @@ type Props = {
 	readonly options: zInfer<typeof options>;
 };
 
-export default function Openapi({ options: { key, specFile } }: Props) {
+export default function Openapi({ options: { apiKey, specFile } }: Props) {
 	return (
-		<AuthProvider permit_key={key} scope={'environment'}>
+		<AuthProvider permit_key={apiKey} scope={'environment'}>
 			<OpenapiComponent specFile={specFile} />
 		</AuthProvider>
 	);

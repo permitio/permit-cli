@@ -53,6 +53,8 @@ $ permit pdp check --user user@permit.io --action list --resource transactions
   - `template` - manage and apply policy and authorization templates in an environment
     - `list` - list all the available policy templates
     - `apply` - apply an environment template to your current environment
+  - `apply` - apply configurations to your environment
+    - `openapi` - create policy schema from an OpenAPI specification
 - `opa` - a collection of commands for better OPA experience
   - `policy` - print the available policies of an active OPA instance
 - `gitops create github` - configure Permit environment to use [GitOps flow](https://docs.permit.io/integrations/gitops/overview/)
@@ -364,6 +366,144 @@ The command is using the Terraform provider to apply the template, but it's not 
 ```bash
 $ permit env template apply --template my-template
 ```
+
+### `env apply openapi`
+
+This command creates a full policy schema in Permit by reading an OpenAPI spec file and using `-x-permit` extensions to define resources, actions, roles, relations, and more. This enables developers to use their OpenAPI schema as a configuration source for their authorization policy.
+
+#### Options
+
+- `--api-key <string>` (Optional) - API key for Permit authentication
+- `--spec-file <string>` (Optional) - Path to the OpenAPI file to read from. It could be a local path or an HTTP endpoint.
+
+#### Example
+
+```bash
+# Run with spec file locally:
+$ permit env apply openapi --spec-file ./api-spec.json
+
+# Run With API key:
+$ permit env apply openapi --key permit_key_... --spec-file https://raw.githubusercontent.com/daveads/openapispec/main/blog-api.json
+```
+
+#### OpenAPI Extensions
+
+The command uses the following `-x-permit` extensions in your OpenAPI spec to map elements to the Permit policy:
+
+##### Path or Endpoint Level Extensions
+
+- `x-permit-resource` - The resource name to map the path to. This field is **REQUIRED** for a path to be mapped.
+
+##### Operation Level Extensions (HTTP Method Level)
+
+- `x-permit-action` - Name of an action to map the HTTP method to. If not provided, the HTTP method name (get, post, etc.) will be used as the action.
+- `x-permit-role` - Name of a top-level role that is ALLOWED for this particular operation.
+- `x-permit-resource-role` - Name of a resource-level role that is ALLOWED for this particular operation.
+- `x-permit-relation` - A JSON object defining a relation between resources.
+- `x-permit-derived-role` - A JSON object defining role derivation rules.
+
+
+#### Example OpenAPI Spec with Permit Extensions
+
+```yaml
+openapi: 3.0.3
+info:
+  title: "Blog API with Permit Extensions"
+  version: "1.0.0"
+paths:
+  /posts:
+    x-permit-resource: blog_post
+    get:
+      summary: List all posts
+      x-permit-action: list
+      x-permit-role: viewer
+      # ...
+    post:
+      summary: Create a new post
+      x-permit-action: create
+      x-permit-role: editor
+      x-permit-resource-role: post_creator
+      # ...
+  /posts/{postId}:
+    x-permit-resource: blog_post
+    get:
+      summary: Get a post by ID
+      x-permit-action: read
+      x-permit-role: viewer
+      # ...
+    put:
+      summary: Update a post
+      x-permit-action: update
+      x-permit-role: editor
+      # ...
+    delete:
+      summary: Delete a post
+      x-permit-action: delete
+      x-permit-role: admin
+      # ...
+  /posts/{postId}/comments:
+    x-permit-resource: blog_comment
+    get:
+      summary: Get comments for a post
+      x-permit-action: list
+      x-permit-role: viewer
+      x-permit-relation:
+        subject_resource: blog_comment
+        object_resource: blog_post
+        key: belongs_to_post
+        name: Belongs To Post
+      # ...
+    post:
+      summary: Add a comment to a post
+      x-permit-action: create
+      x-permit-role: commenter
+      x-permit-derived-role:
+        key: post_commenter
+        name: Post Commenter
+        base_role: viewer
+        derived_role: commenter
+      # ...
+```
+Check this repo for a good [example](https://github.com/daveads/openapispec)
+
+#### Complex Extension Objects
+
+For the more complex extensions that accept objects instead of strings, here's the expected structure:
+
+##### `x-permit-relation` Object Structure
+
+```json
+{
+  "subject_resource": "string",  // Required: The source resource in the relation
+  "object_resource": "string",   // Required: The target resource in the relation
+  "key": "string",               // Optional: Unique identifier for the relation (generated if not provided)
+  "name": "string"               // Optional: Human-readable name (generated if not provided)
+}
+```
+
+##### `x-permit-derived-role` Object Structure
+
+```json
+{
+  "key": "string",          // Optional: Unique identifier for the derived role
+  "name": "string",         // Optional: Human-readable name for the derived role
+  "base_role": "string",    // Required: The role that grants the derived role
+  "derived_role": "string", // Required: The role to be derived
+  "resource": "string"      // Optional: The resource that the derived role applies to (defaults to the path's resource)
+}
+```
+
+#### URL Mapping
+
+After creating the policy elements based on the `-x-permit` extensions, the command will automatically create URL mappings in Permit. These mappings connect API endpoints to the appropriate resources and actions for runtime authorization checks.
+
+For each endpoint with the required extensions, a mapping rule will be created with:
+- URL path from the OpenAPI spec
+- HTTP method
+- Resource from `x-permit-resource`
+- Action from `x-permit-action` or the HTTP method
+
+This enables Permit to perform authorization checks directly against your API endpoints.
 
 ---
 
