@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Text } from 'ink';
+import { Newline, Text } from 'ink';
 import Spinner from 'ink-spinner';
 import { useGeneratePolicySnapshot } from './hooks/usePolicySnapshot.js';
 import { CodeSampleComponent } from './code-samples/CodeSampleComponent.js';
@@ -18,11 +18,10 @@ export function GeneratePolicySnapshot({
 	models,
 	path,
 	snippet,
-	snippetPath,
 }: GeneratePolicySnapshotProps) {
+	const filePath = snippet && !path ? 'authz-test.json' : path;
 	const { state, error, roles, tenantId, finalConfig, dryUsers } =
-		useGeneratePolicySnapshot({ dryRun, models, path });
-	// const [, setCode] = useState<string | undefined>(undefined);
+		useGeneratePolicySnapshot({ dryRun, models, path: filePath });
 
 	// Handle Error and lifecycle completion.
 	useEffect(() => {
@@ -44,8 +43,8 @@ export function GeneratePolicySnapshot({
 				</Text>
 			)}
 			{dryRun && <Text>Dry run mode!</Text>}
-			{state === 'done' && path && <Text>Config saved to {path}</Text>}
-			{state === 'done' && !path && (
+			{state === 'done' && filePath && <Text>Config saved to {filePath}</Text>}
+			{state === 'done' && !filePath && (
 				<Text>
 					{' '}
 					{JSON.stringify(
@@ -56,12 +55,14 @@ export function GeneratePolicySnapshot({
 				</Text>
 			)}
 			{state === 'done' && snippet && (
-				<CodeSampleComponent
-					framework={snippet}
-					configPath={path ?? 'authz-test.json'}
-					path={snippetPath}
-					pdpUrl={'http://localhost:7766'}
-				/>
+				<>
+					<Newline />
+					<CodeSampleComponent
+						framework={snippet}
+						configPath={filePath}
+						pdpUrl={'http://localhost:7766'}
+					/>
+				</>
 			)}
 			{error && <Text>{error}</Text>}
 		</>

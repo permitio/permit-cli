@@ -53,15 +53,6 @@ export const options = zod.object({
 					'Test code sample that iterates the config file and asserts the results.',
 			}),
 		),
-
-	snippetPath: zod
-		.string()
-		.optional()
-		.describe(
-			option({
-				description: 'Optional: Path to the json file to save the code sample',
-			}),
-		),
 });
 
 type Props = {
@@ -69,7 +60,7 @@ type Props = {
 };
 
 export default function E2e({
-	options: { dryRun, models, path, apiKey, snippet, snippetPath },
+	options: { dryRun, models, path, apiKey, snippet },
 }: Props) {
 	return (
 		<AuthProvider scope={'environment'} permit_key={apiKey}>
@@ -78,7 +69,6 @@ export default function E2e({
 				models={models}
 				path={path}
 				snippet={snippet}
-				snippetPath={snippetPath}
 			/>
 		</AuthProvider>
 	);

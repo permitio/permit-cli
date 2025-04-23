@@ -9,7 +9,6 @@ import delay from 'delay';
 import { GeneratePolicySnapshot } from '../../source/components/test/GeneratePolicySnapshot.js';
 import * as keytar from 'keytar';
 
-
 vi.mock('../../source/hooks/useRolesApi.js', () => ({
 	useRolesApi: vi.fn(),
 }));
