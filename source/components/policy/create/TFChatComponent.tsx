@@ -38,7 +38,7 @@ export const TFChatComponent = () => {
 			setTerraformSuccess(false);
 
 			// Create a temporary file with the terraform content
-			const tempDir = path.join(process.cwd(), 'source', 'templates');
+			const tempDir = path.join(process.cwd(), 'dist', 'templates');
 			if (!fs.existsSync(tempDir)) {
 				fs.mkdirSync(tempDir, { recursive: true });
 			}
