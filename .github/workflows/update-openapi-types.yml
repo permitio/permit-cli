@@ -6,7 +6,7 @@ on:
     - cron: '0 0 * * 1'
   push:
     branches:
-      - feat/auto-update-openapi-types  # testing branch will remove later...
+      - feat/auto-update-openapi-types # testing branch will remove later...
   workflow_dispatch:
     # Allow manual triggering
 
@@ -54,7 +54,7 @@ jobs:
           title: 'Update OpenAPI Type Definitions'
           body: |
             This PR updates the OpenAPI type definitions to match the latest Permit.io API.
-            
+
             Changes were generated automatically by the "Update OpenAPI Types" GitHub Action.
           branch: update-openapi-types
           delete-branch: true
