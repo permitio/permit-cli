@@ -1,0 +1,63 @@
+name: Update OpenAPI Types
+
+on:
+  schedule:
+    # Run once a week on Monday at 00:00 UTC
+    - cron: '0 0 * * 1'
+  push:
+    branches:
+      - feat/auto-update-openapi-types  # testing branch will remove later...
+  workflow_dispatch:
+    # Allow manual triggering
+
+jobs:
+  update-openapi-types:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install openapi-typescript
+        run: npm install -g openapi-typescript
+
+      - name: Download OpenAPI spec
+        run: curl -o openapi.json https://api.permit.io/v2/openapi.json
+
+      - name: Generate TypeScript definitions
+        run: openapi-typescript openapi.json -o ./src/lib/api/v1.d.ts
+
+      - name: Download PDP OpenAPI spec
+        run: curl -o pdp-openapi.json https://pdp-api.permit.io/openapi.json
+
+      - name: Generate PDP TypeScript definitions
+        run: openapi-typescript pdp-openapi.json -o ./src/lib/api/pdp-v1.d.ts
+
+      - name: Check for changes
+        id: git-check
+        run: |
+          git diff --exit-code || echo "changes=true" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        if: steps.git-check.outputs.changes == 'true'
+        uses: peter-evans/create-pull-request@v4
+        with:
+          commit-message: 'chore: update OpenAPI type definitions'
+          title: 'Update OpenAPI Type Definitions'
+          body: |
+            This PR updates the OpenAPI type definitions to match the latest Permit.io API.
+            
+            Changes were generated automatically by the "Update OpenAPI Types" GitHub Action.
+          branch: update-openapi-types
+          delete-branch: true
+          labels: |
+            automated-pr
+            dependencies
