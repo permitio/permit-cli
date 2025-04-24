@@ -450,7 +450,7 @@ export default function APICreateProxyComponent({
 			case 'mapping_action':
 				return (
 					<>
-						<Text color="yellow">Action (optional):</Text>
+						<Text color="yellow">Action (optional) ,default(''):</Text>
 						<TextInput
 							value={currentRule.action || ''}
 							onChange={val =>
@@ -466,7 +466,7 @@ export default function APICreateProxyComponent({
 			case 'mapping_priority':
 				return (
 					<>
-						<Text color="yellow">Priority (number, optional):</Text>
+						<Text color="yellow">Priority (number, optional) ,default(''):</Text>
 						<TextInput
 							value={currentRule.priority?.toString() || ''}
 							onChange={val =>
