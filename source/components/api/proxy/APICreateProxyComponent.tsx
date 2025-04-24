@@ -26,6 +26,7 @@ type Field =
 	| 'key'
 	| 'secret'
 	| 'name'
+	| 'authMechanism'
 	| 'mapping_start'
 	| 'mapping_url'
 	| 'mapping_url_type'
@@ -43,6 +44,12 @@ const yesNoOptions = [
 	{ label: 'Yes', value: 'y', key: 'yes' },
 	{ label: 'No', value: 'n', key: 'no' },
 ] as SelectItem<'y' | 'n'>[];
+
+const authMechanismOptions = [
+	{ label: 'Bearer', value: 'Bearer' },
+	{ label: 'Basic', value: 'Basic' },
+	{ label: 'Headers', value: 'Headers' },
+];
 
 export default function APICreateProxyComponent({
 	options,
@@ -64,6 +71,7 @@ export default function APICreateProxyComponent({
 		key: initialKey = '',
 		secret: initialSecret = '',
 		name: initialName = '',
+		authMechanism: initialAuthMechanism = '',
 	} = options;
 
 	const {
@@ -76,6 +84,7 @@ export default function APICreateProxyComponent({
 	const [proxyKey, setProxyKey] = useState(initialKey);
 	const [proxySecret, setProxySecret] = useState(initialSecret);
 	const [proxyName, setProxyName] = useState(initialName);
+	const [authMechanism, setAuthMechanism] = useState(initialAuthMechanism);
 
 	// Mapping rules state
 	const [mappingRules, setMappingRules] = useState<MappingRule[]>(
@@ -102,7 +111,7 @@ export default function APICreateProxyComponent({
 	const [mappingConfirmInput, setMappingConfirmInput] = useState('');
 
 	// Sequence control
-	const [currentField, setCurrentField] = useState<Field>('secret');
+	const [currentField, setCurrentField] = useState<Field>('authMechanism');
 
 	//  Prepare to create when we reach “done”
 	const triggerCreate = useCallback(() => {
@@ -110,7 +119,8 @@ export default function APICreateProxyComponent({
 			key: proxyKey,
 			secret: proxySecret,
 			name: proxyName,
-			auth_mechanism: payload.auth_mechanism || 'Bearer',
+			auth_mechanism:
+				(authMechanism as 'Bearer' | 'Basic' | 'Headers') || 'Bearer',
 			mapping_rules: mappingRules,
 		}).catch(err => {
 			setErrorMessage(err instanceof Error ? err.message : String(err));
@@ -119,6 +129,7 @@ export default function APICreateProxyComponent({
 	}, [
 		createProxy,
 		proxyKey,
+		authMechanism,
 		proxySecret,
 		proxyName,
 		mappingRules,
@@ -142,7 +153,10 @@ export default function APICreateProxyComponent({
 		hasMountedRef.current = true;
 		setStatus('input');
 
-		if (initialKey && initialSecret && initialName) {
+		// Ensure authMechanism is the first field to be filled
+		if (!authMechanism) {
+			setCurrentField('authMechanism');
+		} else if (initialKey && initialSecret && initialName) {
 			if (hasMappingFlags) {
 				// jump to the first missing bit of that individual rule:
 				if (!initialMappingUrl) setCurrentField('mapping_url');
@@ -163,6 +177,7 @@ export default function APICreateProxyComponent({
 		initialKey,
 		initialSecret,
 		initialName,
+		authMechanism,
 		hasMappingFlags,
 		initialMappingUrl,
 		initialMappingMethod,
@@ -183,6 +198,11 @@ export default function APICreateProxyComponent({
 		(value: string) => {
 			const val = value.trim();
 			switch (currentField) {
+				case 'authMechanism':
+					if (!val) return;
+					setAuthMechanism(val as typeof authMechanism);
+					setCurrentField('secret');
+					break;
 				case 'secret':
 					if (!val) return;
 					setProxySecret(val);
@@ -289,6 +309,16 @@ export default function APICreateProxyComponent({
 	// Render phases
 	if (status === 'input') {
 		switch (currentField) {
+			case 'authMechanism':
+				return (
+					<>
+						<Text color="yellow">Select Authentication Mechanism:</Text>
+						<SelectInput
+							items={authMechanismOptions}
+							onSelect={({ value }) => handleSubmit(value)}
+						/>
+					</>
+				);
 			case 'secret':
 				return (
 					<>

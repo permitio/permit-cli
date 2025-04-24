@@ -54,6 +54,7 @@ export function useCreateProxy() {
 
 			setStatus('processing');
 			try {
+				console.log('Creating proxy with payload:', payload);
 				const result = await authenticatedApiClient().POST(
 					'/v2/facts/{proj_id}/{env_id}/proxy_configs',
 					{},
