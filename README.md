@@ -809,6 +809,7 @@ This command allows you to create RBAC policies using natural language. It uses 
 - `--api-key <string>` (Optional) - Your Permit.io API key. If not provided, the command will use your stored credentials.
 
 #### Example
+
 **Example:**
 
 ```bash
