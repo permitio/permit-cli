@@ -137,8 +137,16 @@ export function validateProxyConfig(options: ProxyConfigOptions) {
 						`Validation Error: ${base}.url_type must be 'regex' if provided`,
 					);
 				}
-				if (rule.priority !== undefined && typeof rule.priority !== 'number') {
-					errors.push(`Validation Error: ${base}.priority must be a number`);
+				if (rule.priority !== undefined) {
+					if (
+						typeof rule.priority !== 'number' ||
+						!Number.isInteger(rule.priority) ||
+						!Number.isFinite(rule.priority)
+					) {
+						errors.push(
+							`Validation Error: ${base}.priority must be an integer`,
+						);
+					}
 				}
 			});
 		}

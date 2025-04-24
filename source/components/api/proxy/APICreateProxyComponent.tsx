@@ -396,10 +396,18 @@ export default function APICreateProxyComponent({
 								{ label: 'Regex', value: 'regex' },
 							]}
 							onSelect={({ value }) => {
-								setCurrentRule(r => ({
-									...r,
-									url_type: value as MappingRule['url_type'],
-								}));
+								setCurrentRule(r => {
+									// clone the rule...
+									const copy = { ...r };
+									if (value) {
+										// only set url_type if it’s non-empty
+										copy.url_type = value as MappingRule['url_type'];
+									} else {
+										// otherwise drop any existing url_type
+										delete copy.url_type;
+									}
+									return copy;
+								});
 								handleSubmit(value);
 							}}
 						/>
@@ -491,12 +499,19 @@ export default function APICreateProxyComponent({
 						</Text>
 						<TextInput
 							value={currentRule.priority?.toString() || ''}
-							onChange={val =>
-								setCurrentRule(r => ({
-									...r,
-									priority: Number(val),
-								}))
-							}
+							onChange={val => {
+								// only update if this is a valid integer string
+								if (/^\d+$/.test(val)) {
+									setCurrentRule(r => ({ ...r, priority: Number(val) }));
+								} else if (val === '') {
+									// allow clearing the field
+									setCurrentRule(r => {
+										const { priority, ...rest } = r;
+										return rest;
+									});
+								}
+								// otherwise ignore the keystroke entirely
+							}}
 							onSubmit={handleSubmit}
 						/>
 					</>
