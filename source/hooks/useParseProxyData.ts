@@ -97,7 +97,6 @@ type IndividualMappingRuleFlags = {
 	mappingRuleUrlType?: string;
 };
 
-// Update the function signature to use the new type
 export function useParseProxyData(
 	options: CreateProxyOptions & IndividualMappingRuleFlags,
 ): {
