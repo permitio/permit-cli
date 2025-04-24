@@ -12,7 +12,8 @@ import {
 import { option } from 'pastel';
 import CreateProxyConfigComponent from '../../../components/api/proxy/APICreateProxyComponent.js';
 
-export const description = 'Creates a new URL mapping configuration in Permit';
+export const description =
+	'Creates a new URL mapping configuration >  Permit api create proxy --api-key abc --key valid-key --name name --auth-mechanism bearer --secret your-secret --mapping-rules "get|https://api.example.com|users|getUsers|10|{Authorization:Bearer abc,X-Custom:v7}|regex" / --mapping-rule-url valid-url ...';
 
 export const options = object({
 	apiKey: string()
