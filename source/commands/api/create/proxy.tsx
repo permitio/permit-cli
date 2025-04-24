@@ -91,17 +91,19 @@ export const options = object({
 		.optional()
 		.describe(
 			option({
-				description: 'HTTP method for a single mapping rule.',
+				description:
+					'HTTP method for a single mapping rule (ignored if the mapping-rules arguments present).',
 				alias: 'mapping-rule-method',
 			}),
 		),
 
 	mappingRuleUrl: string()
-		.url({ message: 'Must be a valid URL (e.g. https://api.example.com).' })
+		.url({ message: 'Must be a valid URL (e.g. https://api.example.com) .' })
 		.optional()
 		.describe(
 			option({
-				description: 'Target URL for a single mapping rule.',
+				description:
+					'Target URL for a single mapping rule (ignored if the mapping-rules arguments present).',
 				alias: 'mapping-rule-url',
 			}),
 		),
@@ -114,7 +116,7 @@ export const options = object({
 		.describe(
 			option({
 				description:
-					'Resource to match against the request (no leading slash).',
+					'Resource to match against the request (no leading slash) (ignored if the mapping-rules arguments present).',
 				alias: 'mapping-rule-resource',
 			}),
 		),
@@ -123,7 +125,8 @@ export const options = object({
 		.optional()
 		.describe(
 			option({
-				description: 'Optional action name for the mapping rule.',
+				description:
+					'Optional action name for the mapping rule (ignored if the mapping-rules arguments present).',
 				alias: 'mapping-rule-action',
 			}),
 		),
@@ -135,7 +138,7 @@ export const options = object({
 		.describe(
 			option({
 				description:
-					'Optional priority (positive integer) for the mapping rule.',
+					'Optional priority (positive integer) for the mapping rule (ignored if the mapping-rules arguments present).',
 				alias: 'mapping-rule-priority',
 			}),
 		),
@@ -148,7 +151,8 @@ export const options = object({
 		.optional()
 		.describe(
 			option({
-				description: 'Optional list of headers, each as "Key:Value".',
+				description:
+					'Optional list of headers, each as "Key:Value" (ignored if the mapping-rules arguments present).',
 				alias: 'mapping-rule-headers',
 			}),
 		),
@@ -157,7 +161,8 @@ export const options = object({
 		.optional()
 		.describe(
 			option({
-				description: 'How to interpret the URL: "regex" or "none".',
+				description:
+					'How to interpret the URL: "regex" or "none" (ignored if the mapping-rules arguments present).',
 				alias: 'mapping-rule-url-type',
 			}),
 		),
