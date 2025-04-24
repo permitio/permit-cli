@@ -466,7 +466,9 @@ export default function APICreateProxyComponent({
 			case 'mapping_priority':
 				return (
 					<>
-						<Text color="yellow">Priority (number, optional) ,default(''):</Text>
+						<Text color="yellow">
+							Priority (number, optional) ,default(''):
+						</Text>
 						<TextInput
 							value={currentRule.priority?.toString() || ''}
 							onChange={val =>
