@@ -6,7 +6,6 @@ import { useGeneratePolicySnapshot } from './hooks/usePolicySnapshot.js';
 export type GeneratePolicySnapshotProps = {
 	dryRun: boolean;
 	models: string[];
-	codeSample?: 'jest' | 'pytest';
 	path?: string;
 	isTestTenant?: boolean;
 };
@@ -43,7 +42,9 @@ export function GeneratePolicySnapshot({
 				<Text>
 					{' '}
 					{JSON.stringify(
-						dryRun ? { users: dryUsers, config: finalConfig } : finalConfig,
+						dryRun
+							? { users: dryUsers, config: finalConfig }
+							: { config: finalConfig },
 					)}{' '}
 				</Text>
 			)}

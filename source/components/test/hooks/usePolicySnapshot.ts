@@ -10,10 +10,9 @@ import {
 } from '../../../hooks/useResourcesApi.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import randomName from '@scaleway/random-name';
-import pathModule from 'node:path';
-import fs from 'node:fs/promises';
 import { GeneratePolicySnapshotProps } from '../GeneratePolicySnapshot.js';
 import { useUserApi } from '../../../hooks/useUserApi.js';
+import { saveFile } from '../../../utils/fileSaver.js';
 
 type RBACResource = {
 	type: string;
@@ -254,24 +253,20 @@ export const useGeneratePolicySnapshot = ({
 	}, [buildUserInfoFromUsername, tenantId]);
 
 	const saveConfigToPath = useCallback(async () => {
-		try {
-			const dir = pathModule.dirname(path ?? '');
-
-			// Ensure the directory exists
-			await fs.mkdir(dir, { recursive: true });
-
-			// Write config as pretty JSON
-			const json = JSON.stringify(
-				dryRun ? { users: dryUsers, config: finalConfig } : finalConfig,
-				null,
-				2,
-			);
-			await fs.writeFile(path ?? '', json, 'utf8');
-			setState('done');
-		} catch (err) {
-			setError(err instanceof Error ? err.message : '');
+		// Write config as pretty JSON
+		const json = JSON.stringify(
+			dryRun
+				? { users: dryUsers, config: finalConfig }
+				: { config: finalConfig },
+			null,
+			2,
+		);
+		const { error } = await saveFile(path ?? '', json);
+		if (error) {
+			setError(error);
 			return;
 		}
+		setState('done');
 	}, [dryRun, dryUsers, finalConfig, path]);
 
 	const generateUsersAndRoleMapping = useCallback(() => {
