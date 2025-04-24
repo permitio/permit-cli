@@ -145,7 +145,9 @@ The `login` command will take you to the browser to perform user authentication 
 $ permit login
 ```
 
-`permit logout`
+---
+
+#### `permit logout`
 
 This command will log you out of your Permit account and remove the stored key from your workspace.
 
