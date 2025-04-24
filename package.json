@@ -25,6 +25,7 @@
 		"dist"
 	],
 	"dependencies": {
+		"@apidevtools/swagger-parser": "^10.1.1",
 		"@ai-sdk/openai": "^1.3.16",
 		"@scaleway/random-name": "^5.1.1",
 		"ai": "^4.3.9",

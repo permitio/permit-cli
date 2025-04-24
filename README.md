@@ -420,6 +420,395 @@ This command allows you to create RBAC policies using natural language. It uses 
 
 - `--api-key <string>` - Your [Permit.io](http://permit.io/) API key. If not provided, the command will use your stored credentials.
 
+### `env template apply`
+
+Use this command to apply a policy template to your current environment. This is useful for quickly setting up new environments with predefined configurations.
+The command is using the Terraform provider to apply the template, but it's not required to have Terraform installed.
+
+#### Options
+
+- `--api-key <string>` (Optional) - API Key to be used for the environment to apply the policy template
+- `--local` (Optional) - to run the Terraform command locally instead of the server (will fail if Terraform is not installed)
+- `--template <string>` (Optional) - skips the template choice and applies the given template. It will fail if the template does not exist
+
+#### Example
+
+```bash
+$ permit env template apply --template my-template
+```
+
+### `env apply openapi`
+
+This command creates a full policy schema in Permit by reading an OpenAPI spec file and using `-x-permit` extensions to define resources, actions, roles, relations, and more. This enables developers to use their OpenAPI schema as a configuration source for their authorization policy.
+
+#### Options
+
+- `--api-key <string>` (Optional) - API key for Permit authentication
+- `--spec-file <string>` (Optional) - Path to the OpenAPI file to read from. It could be a local path or an HTTP endpoint.
+
+#### Example
+
+```bash
+# Run with spec file locally:
+$ permit env apply openapi --spec-file ./api-spec.json
+
+# Run With API key:
+$ permit env apply openapi --key permit_key_... --spec-file https://raw.githubusercontent.com/daveads/openapispec/main/blog-api.json
+```
+
+#### OpenAPI Extensions
+
+The command uses the following `-x-permit` extensions in your OpenAPI spec to map elements to the Permit policy:
+
+##### Path or Endpoint Level Extensions
+
+- `x-permit-resource` - The resource name to map the path to. This field is **REQUIRED** for a path to be mapped.
+
+##### Operation Level Extensions (HTTP Method Level)
+
+- `x-permit-action` - Name of an action to map the HTTP method to. If not provided, the HTTP method name (get, post, etc.) will be used as the action.
+- `x-permit-role` - Name of a top-level role that is ALLOWED for this particular operation.
+- `x-permit-resource-role` - Name of a resource-level role that is ALLOWED for this particular operation.
+- `x-permit-relation` - A JSON object defining a relation between resources.
+- `x-permit-derived-role` - A JSON object defining role derivation rules.
+
+#### Example OpenAPI Spec with Permit Extensions
+
+```yaml
+openapi: 3.0.3
+info:
+  title: 'Blog API with Permit Extensions'
+  version: '1.0.0'
+paths:
+  /posts:
+    x-permit-resource: blog_post
+    get:
+      summary: List all posts
+      x-permit-action: list
+      x-permit-role: viewer
+      # ...
+    post:
+      summary: Create a new post
+      x-permit-action: create
+      x-permit-role: editor
+      x-permit-resource-role: post_creator
+      # ...
+  /posts/{postId}:
+    x-permit-resource: blog_post
+    get:
+      summary: Get a post by ID
+      x-permit-action: read
+      x-permit-role: viewer
+      # ...
+    put:
+      summary: Update a post
+      x-permit-action: update
+      x-permit-role: editor
+      # ...
+    delete:
+      summary: Delete a post
+      x-permit-action: delete
+      x-permit-role: admin
+      # ...
+  /posts/{postId}/comments:
+    x-permit-resource: blog_comment
+    get:
+      summary: Get comments for a post
+      x-permit-action: list
+      x-permit-role: viewer
+      x-permit-relation:
+        subject_resource: blog_comment
+        object_resource: blog_post
+        key: belongs_to_post
+        name: Belongs To Post
+      # ...
+    post:
+      summary: Add a comment to a post
+      x-permit-action: create
+      x-permit-role: commenter
+      x-permit-derived-role:
+        key: post_commenter
+        name: Post Commenter
+        base_role: viewer
+        derived_role: commenter
+      # ...
+```
+
+Check this repo for a good [example](https://github.com/daveads/openapispec)
+
+#### Complex Extension Objects
+
+For the more complex extensions that accept objects instead of strings, here's the expected structure:
+
+##### `x-permit-relation` Object Structure
+
+```json
+{
+	"subject_resource": "string", // Required: The source resource in the relation
+	"object_resource": "string", // Required: The target resource in the relation
+	"key": "string", // Optional: Unique identifier for the relation (generated if not provided)
+	"name": "string" // Optional: Human-readable name (generated if not provided)
+}
+```
+
+##### `x-permit-derived-role` Object Structure
+
+```json
+{
+	"key": "string", // Optional: Unique identifier for the derived role
+	"name": "string", // Optional: Human-readable name for the derived role
+	"base_role": "string", // Required: The role that grants the derived role
+	"derived_role": "string", // Required: The role to be derived
+	"resource": "string" // Optional: The resource that the derived role applies to (defaults to the path's resource)
+}
+```
+
+#### URL Mapping
+
+After creating the policy elements based on the `-x-permit` extensions, the command will automatically create URL mappings in Permit. These mappings connect API endpoints to the appropriate resources and actions for runtime authorization checks.
+
+For each endpoint with the required extensions, a mapping rule will be created with:
+
+- URL path from the OpenAPI spec
+- HTTP method
+- Resource from `x-permit-resource`
+- Action from `x-permit-action` or the HTTP method
+
+This enables Permit to perform authorization checks directly against your API endpoints.
+
+---
+
+### `opa`
+
+This collection of commands aims to create new experiences for developers working with Open Policy Agent (OPA) in their projects.
+
+### `opa policy`
+
+This command will print the available policies of an active OPA instance. This is useful when you want to see the policies in your OPA instance without fetching them from the OPA server.
+
+#### Options
+
+- `--server-url <string>` (Optional) - the URL of the OPA server to fetch the policies from (default: `http://localhost:8181`)
+- `--api-key <string>` (Optional) - the API key to authenticate the operation
+
+#### Example
+
+```bash
+$ permit opa policy --server-url http://localhost:8181 --api-key permit_key_..........
+```
+
+---
+
+### `api sync user`
+
+This command will Replace User / Sync User in the system. If the user already exits, it will update the user with the new data. If the user does not exist, it will create a new user with the provided data.
+
+#### options:
+
+- `api_key <string>`(optional) : a Permit API key to authenticate the operation. If not provided, the command will take the one you logged in with.
+
+- `key <string>` : A unique id by which Permit will identify the user for permission checks. If not given in the argument the interactive CLI is open to retrive the `key`. It has the alias as `user-id`.
+
+- `email <string>`: The email of the user. If synced, will be unique inside the environment.
+
+- `first_name <string>` : First name of the user.
+- `last_name <string>` : Last name of the user.
+- `attributes <object>` : Arbitrary user attributes that will be used to enforce attribute-based access control policies.
+- `roles` : roles of the user. Given in 3 different formats.
+  1. Only role the default tenant is assigned.
+  2. Both the role and the tenant
+  3. The resource Instance along with the role.
+
+### Example
+
+```bash
+$ permit api sync user
+  --apiKey "YOUR_API_KEY" \
+  --key "892179821739812389327" \
+  --email "jane@coolcompany.com" \
+  --firstName "Jane" \
+  --lastName "Doe" \
+  --attributes  "age:30" \
+  --attributes "location:NY" \
+  --roles "admin:stripe-inc" \
+  --roles "developer" \
+  --roles "project:123#developer"
+```
+
+---
+
+### `gitops create github`
+
+This command will configure your Permit environment to use the GitOps flow with GitHub. This is useful when you want to manage your policies in your own Git repository and extend them with custom policy code.
+
+#### Options
+
+- `--key <string>` (Optional) - a Permit API key to authenticate the operation. If not provided, the command will take the one you logged in with.
+- `--inactive <boolean>` (Optional) - set the environment to inactive after configuring GitOps (default: `false`)
+
+---
+
+### `gitops env clone`
+
+This clones the environment or the complete project from the active gitops repository.
+
+#### options
+
+- `--api-key <string>` (Optional) - The API key to select the project. The API Key is of the scope `Project`.
+- `--dry-run` (Optional) - Instead of executing the code it just displays the command to be executed.
+- `--project` (Optional) - Instead of selecting an environment branch to clone it does the standard clone operation.
+
+---
+
+### `api`
+
+This collection of commands provides direct access to Permit.io's API functionality.
+
+### `api users`
+
+This collection of commands helps you manage users in your Permit.io account.
+
+### `api users list`
+
+Use this command to list all users in your Permit.io account.
+
+#### Options
+
+- `--api-key <string>` (Optional) - your Permit.io API key
+- `--project-id <string>` (Optional) - Permit.io Project ID
+- `--env-id <string>` (Optional) - Permit.io Environment ID
+- `--expand-key` (Optional) - show full key values instead of truncated (default: false)
+- `--page <number>` (Optional) - page number for pagination (default: 1)
+- `--per-page <number>` (Optional) - number of items per page (default: 50)
+- `--role <string>` (Optional) - filter users by role
+- `--tenant <string>` (Optional) - filter users by tenant
+- `--all` (Optional) - fetch all pages of users (default: false)
+
+#### Example
+
+```bash
+$ permit api users list
+```
+
+### `api users assign`
+
+Use this command to assign a user to a specific role in your Permit.io account.
+
+#### Options
+
+- `--api-key <string>` (Optional) - your Permit.io API key
+- `--project-id <string>` (Optional) - Permit.io Project ID
+- `--env-id <string>` (Optional) - Permit.io Environment ID
+- `--user <string>` (Required) - user ID to assign role to
+- `--role <string>` (Required) - role key to assign
+- `--tenant <string>` (Required) - tenant key for the role assignment
+
+#### Example
+
+```bash
+$ permit api users assign --user user@example.com --role admin --tenant default
+```
+
+### `api users unassign`
+
+Use this command to remove a role assignment from a user in your Permit.io account.
+
+#### Options
+
+- `--api-key <string>` (Optional) - your Permit.io API key
+- `--project-id <string>` (Optional) - Permit.io Project ID
+- `--env-id <string>` (Optional) - Permit.io Environment ID
+- `--user <string>` (Required) - user ID to unassign role from
+- `--role <string>` (Required) - role key to unassign
+- `--tenant <string>` (Required) - tenant key for the role unassignment
+
+#### Example
+
+```bash
+$ permit api users unassign --user user@example.com --role admin --tenant default
+```
+
+---
+
+### `policy create simple`
+
+A simple policy table creation wizard with the resources, actions and roles.
+You can provide resources, actions, and roles as arguments or enter them interactively.
+
+#### Options
+
+- `api-key <string> ` Optional: The Permit API key of the environment.
+
+- `resources <string[]>` (Optional) : Array of resources in the format: "key:name@attribute1,attribute2"
+  - `key`: Resource Key
+  - `name`: Resource display Name
+  - `@attribute1,attribute2` : comma-seperated list of attributes.
+- `actions <string[]>` (Optional) : Array of actions in the format: "key:description@attribute1,attribute2"
+  - `key` : Action Key
+  - `description` : Action description
+  - `@attribute1,attribute2`: Comma-sperated list of attributes.
+- `roles <string[]>` (Optional) : Array of roles in the format: "role|resource:action|resource:action" or "role|resource"
+
+  - `role`: Role key
+  - `resource:action`: The resource and the action to declare the permissions.
+
+```bash
+$ permit policy create simple \
+  --api-key permit_key_abc123
+  --resources users:Users@department,role --resources posts:Posts@category \
+  --actions create:Create --actions read:Read \
+  --roles admin|users:create|posts:read --roles editor|posts
+```
+
+---
+
+### `test`
+
+This collection of commands helps you test and validate your authorization policies.
+
+### `test run audit`
+
+This command reads your recent authorization decision logs from Permit API and runs the same checks against a PDP instance to verify consistency between environments.
+
+The command is particularly useful for validating that policy changes don't break existing authorization behavior and for testing a new PDP instance against production decisions.
+
+#### Options
+
+- `--pdp-url <string>` (Optional) - URL of the PDP to verify against (default: `http://localhost:7766`)
+- `--time-frame <number>` (Optional) - Number of hours to fetch audit logs for (between 6 to 72, default: 24)
+- `--source-pdp <string>` (Optional) - ID of the PDP to filter audit logs from
+- `--users <string[]>` (Optional) - Filter logs by specific users (can provide multiple)
+- `--resources <string[]>` (Optional) - Filter logs by specific resources (can provide multiple)
+- `--tenant <string>` (Optional) - Filter logs by specific tenant
+- `--action <string>` (Optional) - Filter logs by specific action
+- `--decision <allow | deny>` (Optional) - Filter logs by decision outcome
+- `--max-logs <number>` (Optional) - Maximum number of logs to process (useful for limiting large audit operations)
+
+#### Example
+
+```bash
+# Basic test against local PDP using last 24 hours of audit logs
+$ permit test run audit
+$ permit test run audit --pdp-url http://localhost:7766
+# Test against custom PDP URL with filters
+$ permit test run audit --pdpUrl http://my-pdp.example.com:7766 --timeFrame 48 --action read --decision allow
+
+# Test with multiple users and resources
+$ permit test run audit --users john@example.com alice@example.com --resources document:123 folder:456
+
+# Limit the number of logs processed
+$ permit test run audit --max-logs 500
+```
+
+### `policy create ai`
+
+This command allows you to create RBAC policies using natural language. It uses AI to convert your descriptions into structured Role-Based Access Control policies that can be applied to your Permit.io environment.
+
+#### Options
+
+- `--api-key <string>` (Optional) - Your Permit.io API key. If not provided, the command will use your stored credentials.
+
+#### Example
 **Example:**
 
 ```bash
