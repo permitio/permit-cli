@@ -1,6 +1,6 @@
 {
 	"name": "@permitio/cli",
-	"version": "0.2.3",
+	"version": "0.2.4",
 	"license": "MIT",
 	"bin": {
 		"permit": "dist/cli.js"
@@ -19,7 +19,7 @@
 		"test": "prettier --check ./source && vitest run --coverage",
 		"simple-check": "npx tsx ./source/cli.tsx pdp check -u filip@permit.io -a create -r task",
 		"test:ts": "tsc --noEmit",
-		"pack:local": "rm -rf dist && npm run build && npm pack && npm uninstall -g @permitio/cli && PACKAGE_NAME=$(ls *.tgz) && npm install -g $PACKAGE_NAME"
+		"pack:local": "rimraf dist && npm run build && npm pack && npm uninstall -g @permitio/cli && PACKAGE_NAME=$(ls *.tgz) && npm install -g $PACKAGE_NAME"
 	},
 	"files": [
 		"dist"
