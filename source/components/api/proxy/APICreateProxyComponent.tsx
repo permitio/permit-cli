@@ -472,7 +472,23 @@ export default function APICreateProxyComponent({
 			case 'mapping_confirm':
 				return (
 					<>
-						<Text color="green">Mapping rule recorded.</Text>
+						<Text color="green">Mapping rule recorded:</Text>
+						<Text color="cyan">
+							URL: {currentRule.url || 'N/A'}, Method:{' '}
+							{currentRule.http_method || 'N/A'}, Resource:{' '}
+							{currentRule.resource || 'N/A'}
+						</Text>
+						{currentRule.headers && (
+							<Text color="cyan">
+								Headers: {JSON.stringify(currentRule.headers)}
+							</Text>
+						)}
+						{currentRule.action && (
+							<Text color="cyan">Action: {currentRule.action}</Text>
+						)}
+						{currentRule.priority !== undefined && (
+							<Text color="cyan">Priority: {currentRule.priority}</Text>
+						)}
 						<Text color="yellow">Press enter to continue.</Text>
 						<TextInput
 							value={mappingConfirmInput}
