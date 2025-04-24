@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Text } from 'ink';
 import TextInput from 'ink-text-input';
 import Spinner from 'ink-spinner';
+import SelectInput from 'ink-select-input';
 import { type infer as zType } from 'zod';
 import { useAuth } from '../../AuthProvider.js';
 import { useCreateProxy } from '../../../hooks/useCreateProxy.js';
@@ -9,6 +10,8 @@ import { useParseProxyData } from '../../../hooks/useParseProxyData.js';
 import { options as originalOptions } from '../../../commands/api/create/proxy.js';
 
 type ExtendedOptions = zType<typeof originalOptions>;
+
+type SelectItem<T> = { label: string; value: T; key?: string };
 
 type MappingRule = {
 	url: string;
@@ -36,6 +39,11 @@ type Field =
 	| 'mapping_confirm'
 	| 'mapping_repeat'
 	| 'done';
+
+const yesNoOptions = [
+	{ label: 'Yes', value: 'y', key: 'yes' },
+	{ label: 'No', value: 'n', key: 'no' },
+] as SelectItem<'y' | 'n'>[];
 
 export default function APICreateProxyComponent({
 	options,
@@ -94,7 +102,6 @@ export default function APICreateProxyComponent({
 	// “y/n” inputs
 	const [mappingStartInput, setMappingStartInput] = useState('');
 	const [mappingConfirmInput, setMappingConfirmInput] = useState('');
-	const [mappingRepeatInput, setMappingRepeatInput] = useState('');
 
 	// Sequence control
 	const [currentField, setCurrentField] = useState<Field>('key');
@@ -256,11 +263,7 @@ export default function APICreateProxyComponent({
 					break;
 
 				case 'mapping_headers_repeat':
-					if (val.toLowerCase() === 'n') {
-						setCurrentField('mapping_action');
-					} else {
-						setCurrentField('mapping_headers');
-					}
+					setCurrentField(val === 'n' ? 'mapping_action' : 'mapping_headers');
 					break;
 				case 'mapping_action':
 					if (val) {
@@ -438,13 +441,9 @@ export default function APICreateProxyComponent({
 				return (
 					<>
 						<Text color="yellow">Add another header? (y/n):</Text>
-						<TextInput
-							value={headersInput}
-							onChange={setHeadersInput}
-							onSubmit={v => {
-								handleSubmit(v);
-								setHeadersInput('');
-							}}
+						<SelectInput
+							items={yesNoOptions}
+							onSelect={({ value }) => handleSubmit(value)}
 						/>
 					</>
 				);
@@ -498,14 +497,10 @@ export default function APICreateProxyComponent({
 			case 'mapping_repeat':
 				return (
 					<>
-						<Text color="yellow">Add another mapping rule? (y/n):</Text>
-						<TextInput
-							value={mappingRepeatInput}
-							onChange={setMappingRepeatInput}
-							onSubmit={v => {
-								handleSubmit(v);
-								setMappingRepeatInput('');
-							}}
+						<Text color="yellow">Add another mapping rule?</Text>
+						<SelectInput
+							items={yesNoOptions}
+							onSelect={({ value }) => handleSubmit(value)}
 						/>
 					</>
 				);
