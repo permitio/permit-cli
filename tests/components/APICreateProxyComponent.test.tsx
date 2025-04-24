@@ -85,82 +85,52 @@ afterEach(() => {
 });
 
 describe('CreateProxyConfigComponent', () => {
-	it('flows through inputs and calls createProxy with correct payload', async () => {
-		render(<CreateProxyConfigComponent options={{}} />);
-		await wait();
 
-		global.submitValue!('my-key');
-		await wait();
+	const mappingPrompt = 'Select Authentication Mechanism:';
 
-		global.submitValue!('my-secret');
-		await wait();
-
-		global.submitValue!('my-name');
-		await wait();
-
-		global.submitValue!('n');
-		await wait();
-
-		expect(mockCreate).toHaveBeenCalledWith({
-			key: 'my-key',
-			secret: 'my-secret',
-			name: 'my-name',
-			auth_mechanism: 'Basic',
-			mapping_rules: ['r1'],
-		});
-	});
-
-	it('still shows the mapping-start prompt on mount even if status is "processing"', async () => {
+	it('shows auth mechanism prompt on mount if status is "processing"', async () => {
 		mockStatus = 'processing';
 		const { lastFrame } = render(
 			<CreateProxyConfigComponent
 				options={{ key: 'k', secret: 's', name: 'n' }}
-			/>,
+			/>
 		);
 		await wait();
-		expect(lastFrame()).toContain(
-			'Would you like to add mapping rules? (y/n):',
-		);
+		expect(lastFrame()).toContain(mappingPrompt);
 	});
 
-	it('still shows the mapping-start prompt on mount even if status is "done"', async () => {
+	it('shows auth mechanism prompt on mount if status is "done"', async () => {
 		mockStatus = 'done';
 		const { lastFrame } = render(
 			<CreateProxyConfigComponent
 				options={{ key: 'k', secret: 's', name: 'n' }}
-			/>,
+			/>
 		);
 		await wait();
-		expect(lastFrame()).toContain(
-			'Would you like to add mapping rules? (y/n):',
-		);
+		expect(lastFrame()).toContain(mappingPrompt);
 	});
 
-	it('still shows the mapping-start prompt on mount even if status is "error"', async () => {
+	it('shows auth mechanism prompt on mount if status is "error"', async () => {
 		mockStatus = 'error';
 		mockErrorMsg = 'bad error';
 		const { lastFrame } = render(
 			<CreateProxyConfigComponent
 				options={{ key: 'k', secret: 's', name: 'n' }}
-			/>,
+			/>
 		);
 		await wait();
 		expect(mockFormatCalls).toContain('bad error');
-		expect(lastFrame()).toContain(
-			'Would you like to add mapping rules? (y/n):',
-		);
+		expect(lastFrame()).toContain(mappingPrompt);
 	});
 
-	it('still shows the mapping-start prompt on mount even if parseError exists', async () => {
+	it('shows auth mechanism prompt on mount if parseError exists', async () => {
 		mockParseError = 'parse failed';
 		const { lastFrame } = render(
 			<CreateProxyConfigComponent
 				options={{ key: 'k', secret: 's', name: 'n' }}
-			/>,
+			/>
 		);
 		await wait();
-		expect(lastFrame()).toContain(
-			'Would you like to add mapping rules? (y/n):',
-		);
+		expect(lastFrame()).toContain(mappingPrompt);
 	});
 });

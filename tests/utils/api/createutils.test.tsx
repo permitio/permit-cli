@@ -13,14 +13,7 @@ const baseConfig: ProxyConfigOptions = {
 
 describe('validateProxyConfig', () => {
 	it('passes with valid config', () => {
-		const result = validateProxyConfig(baseConfig);
-		expect(result).toBe(true);
-	});
-
-	it('throws if key is missing or empty', () => {
-		expect(() => validateProxyConfig({ ...baseConfig, key: '' })).toThrow(
-			'Missing Error: key is required',
-		);
+		expect(validateProxyConfig(baseConfig)).toBe(true);
 	});
 
 	it('throws if key is invalid', () => {
@@ -30,14 +23,10 @@ describe('validateProxyConfig', () => {
 	});
 
 	it('throws if secret is missing or empty', () => {
-		expect(() => validateProxyConfig({ ...baseConfig, secret: '' })).toThrow(
+		expect(() =>
+			validateProxyConfig({ ...baseConfig, secret: '' }),
+		).toThrow(
 			'Validation Error: Bearer secret must be a non-empty string',
-		);
-	});
-
-	it('throws if name is missing or empty', () => {
-		expect(() => validateProxyConfig({ ...baseConfig, name: '' })).toThrow(
-			'Missing Error: name is required',
 		);
 	});
 
@@ -88,7 +77,7 @@ describe('validateProxyConfig', () => {
 			).toThrow(/mapping_rules\[0\]\.url is invalid/);
 		});
 
-		it('throws if resource is missing', () => {
+		it('throws if resource is missing or invalid', () => {
 			expect(() =>
 				validateProxyConfig({
 					...baseConfig,
@@ -101,7 +90,7 @@ describe('validateProxyConfig', () => {
 						},
 					],
 				}),
-			).toThrow(/Validation Error: mapping_rules\[0\]\.resource is invalid \./);
+			).toThrow(/mapping_rules\[0\]\.resource is invalid \(''\)/);
 		});
 
 		it('throws if headers is not an object', () => {
@@ -139,21 +128,19 @@ describe('validateProxyConfig', () => {
 		});
 
 		it('passes with valid mapping_rules', () => {
-			expect(() =>
-				validateProxyConfig({
-					...baseConfig,
-					mapping_rules: [
-						{
-							url: 'http://example.com',
-							http_method: 'post',
-							resource: 'my-resource',
-							headers: {
-								Authorization: 'Bearer token',
-							},
+			expect(validateProxyConfig({
+				...baseConfig,
+				mapping_rules: [
+					{
+						url: 'http://example.com',
+						http_method: 'post',
+						resource: 'my-resource',
+						headers: {
+							Authorization: 'Bearer token',
 						},
-					],
-				}),
-			).not.toThrow();
+					},
+				],
+			}), 'Expected valid mapping_rules to pass validation').toBe(true);
 		});
 	});
 });

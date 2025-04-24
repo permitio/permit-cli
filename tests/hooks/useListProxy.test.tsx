@@ -22,13 +22,10 @@ vi.mock('../../source/hooks/useClient.js', () => ({
 
 // ——— test helper ———
 function createTestComponent(
-	projectId?: string,
-	environmentId?: string,
-	apiKey?: string,
 ) {
 	let hookValues: any = {};
 	const Test = () => {
-		hookValues = useListProxy(projectId, environmentId, apiKey);
+		hookValues = useListProxy();
 		return React.createElement(Text, null, '');
 	};
 	return {
@@ -44,25 +41,11 @@ describe('useListProxy', () => {
 	});
 
 	it('has initial state: processing + no error + empty list', () => {
-		const { TestComponent, getHook } = createTestComponent('p', 'e');
+		const { TestComponent, getHook } = createTestComponent();
 		render(React.createElement(TestComponent, null));
 		const h = getHook();
 		expect(h.status).toBe('processing');
 		expect(h.errorMessage).toBeNull();
-		expect(h.proxies).toEqual([]);
-		expect(h.totalCount).toBe(0);
-	});
-
-	it('errors when projectId/envId missing', async () => {
-		const { TestComponent, getHook } = createTestComponent(undefined, 'e');
-		render(React.createElement(TestComponent, null));
-
-		await getHook().listProxies();
-		await delay(20);
-
-		const h = getHook();
-		expect(h.status).toBe('error');
-		expect(h.errorMessage).toBe('Project ID or Environment ID is missing');
 		expect(h.proxies).toEqual([]);
 		expect(h.totalCount).toBe(0);
 	});
@@ -83,7 +66,7 @@ describe('useListProxy', () => {
 			error: null,
 		});
 
-		const { TestComponent, getHook } = createTestComponent('p', 'e');
+		const { TestComponent, getHook } = createTestComponent();
 		render(React.createElement(TestComponent, null));
 
 		await getHook().listProxies();
@@ -120,7 +103,7 @@ describe('useListProxy', () => {
 			error: { message: 'API bad' },
 		});
 
-		const { TestComponent, getHook } = createTestComponent('p', 'e');
+		const { TestComponent, getHook } = createTestComponent();
 		render(React.createElement(TestComponent, null));
 
 		await getHook().listProxies();
@@ -137,7 +120,7 @@ describe('useListProxy', () => {
 			error: null,
 		});
 
-		const { TestComponent, getHook } = createTestComponent('p', 'e');
+		const { TestComponent, getHook } = createTestComponent();
 		render(React.createElement(TestComponent, null));
 
 		await getHook().listProxies();
@@ -152,7 +135,7 @@ describe('useListProxy', () => {
 			throw new Error('Network fail');
 		});
 
-		const { TestComponent, getHook } = createTestComponent('p', 'e');
+		const { TestComponent, getHook } = createTestComponent();
 		render(React.createElement(TestComponent, null));
 
 		await getHook().listProxies();
@@ -162,37 +145,6 @@ describe('useListProxy', () => {
 		expect(getHook().errorMessage).toBe('Network fail');
 	});
 
-	it('uses authenticated client when no apiKey', async () => {
-		mockGet.mockResolvedValue({
-			response: { status: 200 },
-			data: [],
-			error: null,
-		});
-		const { TestComponent, getHook } = createTestComponent('p', 'e');
-		render(React.createElement(TestComponent, null));
-
-		await getHook().listProxies();
-		await delay(20);
-
-		expect(mockAuthClient).toHaveBeenCalled();
-		expect(mockUnAuthClient).not.toHaveBeenCalled();
-	});
-
-	it('uses unauthenticated client when apiKey provided', async () => {
-		mockGet.mockResolvedValue({
-			response: { status: 200 },
-			data: [],
-			error: null,
-		});
-		const { TestComponent, getHook } = createTestComponent('p', 'e', 'my-key');
-		render(React.createElement(TestComponent, null));
-
-		await getHook().listProxies();
-		await delay(20);
-
-		expect(mockUnAuthClient).toHaveBeenCalledWith('my-key');
-		expect(mockAuthClient).not.toHaveBeenCalled();
-	});
 
 	it('respects page parameter when fetching', async () => {
 		mockGet.mockResolvedValue({
@@ -200,7 +152,7 @@ describe('useListProxy', () => {
 			data: [],
 			error: null,
 		});
-		const { TestComponent, getHook } = createTestComponent('p', 'e');
+		const { TestComponent, getHook } = createTestComponent();
 		render(React.createElement(TestComponent, null));
 
 		// bump to page 2
@@ -210,7 +162,7 @@ describe('useListProxy', () => {
 
 		expect(mockGet).toHaveBeenCalledWith(
 			'/v2/facts/{proj_id}/{env_id}/proxy_configs',
-			{ proj_id: 'p', env_id: 'e' },
+			{ },
 			undefined,
 			{ page: 2, per_page: 30 },
 		);
