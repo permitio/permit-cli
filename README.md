@@ -189,6 +189,8 @@ Run the PDP with a specific API key:
 $ permit pdp run --api-key your_api_key
 ```
 
+---
+
 `permit pdp check`
 
 Use this command to perform an authorization check against the PDP. The command will take the user, action, and resource (and some other enrichment arguments) as options and return the decision.
@@ -211,6 +213,8 @@ Use this command to perform an authorization check against the PDP. The command 
 ```bash
 $ permit  pdp check --user eventHandler --action update --resource Widget:dashboard-1-widget
 ```
+
+---
 
 `permit pdp stats`
 
@@ -262,6 +266,8 @@ $ permit env create --api-key permit_key --name "Staging" --description "Staging
 $ permit env create --api-key permit_key --name "Development" --envKey "dev" --description "Dev environment" --customBranchName "dev-branch" --jwks '{"ttl": 3600}' --settings '{"debug": true}'
 ```
 
+---
+
 `permit env copy`
 
 Developers and CI pipelines can use this command to enable secure blue-green deployment in the Software Development Lifecycle (SDLC). The command will get the source and destination environments as options and copy the policies from one to another. 
@@ -285,6 +291,8 @@ This will let you run your tests again in a non-production environment and safel
 ```bash
 $ permit env copy --api-key permit_key --from staging --to production --conflict-strategy overwrite
 ```
+
+---
 
 `permit env delete`
 
@@ -314,6 +322,8 @@ $ permit env delete --api-key permit_key --environmentId env_456 --force
 > Note: If you've authenticated via Permit’s login, the commands will use your current project context automatically.
 > 
 
+---
+
 `permit env member`
 
 This command will assign members to an environment with the roles you specify. This is useful for managing the access control of your team members in the [Permit.io](http://permit.io/) environment.
@@ -336,6 +346,8 @@ This command can run in the CI after creating a new environment for development 
 ```bash
 $ permit env member --api-key permit_key --environment staging --project my-project --email gabriel@permit.io --role Owner
 ```
+
+---
 
 `permit env select`
 
@@ -441,6 +453,8 @@ Example:
 $ permit init --api-key permit_key
 ```
 
+---
+
 `permit policy create simple`
 
 A simple policy table creation wizard with the resources, actions, and roles.
@@ -543,6 +557,8 @@ $ permit api sync user
   --roles "project:123#developer"
 ```
 
+---
+
 `permit api users list`
 
 Use this command to list all users in Permit.
@@ -591,6 +607,8 @@ Use this command to assign a user to a specific role in Permit.
 ```bash
 $ permit api users assign --user user@example.com --role admin --tenant default
 ```
+
+---
 
 `permit api users unassign`
 
@@ -740,6 +758,8 @@ This command will configure your Permit environment to use the GitOps flow with 
 ```
 gitops create github --inactive true
 ```
+
+---
 
 `permit gitops env clone`
 
