@@ -106,8 +106,6 @@ export default function APICreateProxyComponent({
 		useState<Partial<MappingRule>>(initialSingleRule);
 	const [headersInput, setHeadersInput] = useState('');
 
-	// “y/n” inputs
-	const [mappingStartInput, setMappingStartInput] = useState('');
 	const [mappingConfirmInput, setMappingConfirmInput] = useState('');
 
 	// Sequence control
@@ -367,13 +365,9 @@ export default function APICreateProxyComponent({
 						<Text color="yellow">
 							Would you like to add mapping rules? (y/n):
 						</Text>
-						<TextInput
-							value={mappingStartInput}
-							onChange={setMappingStartInput}
-							onSubmit={v => {
-								handleSubmit(v);
-								setMappingStartInput('');
-							}}
+						<SelectInput
+							items={yesNoOptions}
+							onSelect={({ value }) => handleSubmit(value)}
 						/>
 					</>
 				);
