@@ -21,8 +21,7 @@ vi.mock('../../source/hooks/useClient.js', () => ({
 }));
 
 // ——— test helper ———
-function createTestComponent(
-) {
+function createTestComponent() {
 	let hookValues: any = {};
 	const Test = () => {
 		hookValues = useListProxy();
@@ -145,7 +144,6 @@ describe('useListProxy', () => {
 		expect(getHook().errorMessage).toBe('Network fail');
 	});
 
-
 	it('respects page parameter when fetching', async () => {
 		mockGet.mockResolvedValue({
 			response: { status: 200 },
@@ -162,7 +160,7 @@ describe('useListProxy', () => {
 
 		expect(mockGet).toHaveBeenCalledWith(
 			'/v2/facts/{proj_id}/{env_id}/proxy_configs',
-			{ },
+			{},
 			undefined,
 			{ page: 2, per_page: 30 },
 		);

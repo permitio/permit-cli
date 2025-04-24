@@ -23,9 +23,7 @@ describe('validateProxyConfig', () => {
 	});
 
 	it('throws if secret is missing or empty', () => {
-		expect(() =>
-			validateProxyConfig({ ...baseConfig, secret: '' }),
-		).toThrow(
+		expect(() => validateProxyConfig({ ...baseConfig, secret: '' })).toThrow(
 			'Validation Error: Bearer secret must be a non-empty string',
 		);
 	});
@@ -128,19 +126,22 @@ describe('validateProxyConfig', () => {
 		});
 
 		it('passes with valid mapping_rules', () => {
-			expect(validateProxyConfig({
-				...baseConfig,
-				mapping_rules: [
-					{
-						url: 'http://example.com',
-						http_method: 'post',
-						resource: 'my-resource',
-						headers: {
-							Authorization: 'Bearer token',
+			expect(
+				validateProxyConfig({
+					...baseConfig,
+					mapping_rules: [
+						{
+							url: 'http://example.com',
+							http_method: 'post',
+							resource: 'my-resource',
+							headers: {
+								Authorization: 'Bearer token',
+							},
 						},
-					},
-				],
-			}), 'Expected valid mapping_rules to pass validation').toBe(true);
+					],
+				}),
+				'Expected valid mapping_rules to pass validation',
+			).toBe(true);
 		});
 	});
 });

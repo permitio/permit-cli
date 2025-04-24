@@ -85,7 +85,6 @@ afterEach(() => {
 });
 
 describe('CreateProxyConfigComponent', () => {
-
 	const mappingPrompt = 'Select Authentication Mechanism:';
 
 	it('shows auth mechanism prompt on mount if status is "processing"', async () => {
@@ -93,7 +92,7 @@ describe('CreateProxyConfigComponent', () => {
 		const { lastFrame } = render(
 			<CreateProxyConfigComponent
 				options={{ key: 'k', secret: 's', name: 'n' }}
-			/>
+			/>,
 		);
 		await wait();
 		expect(lastFrame()).toContain(mappingPrompt);
@@ -104,7 +103,7 @@ describe('CreateProxyConfigComponent', () => {
 		const { lastFrame } = render(
 			<CreateProxyConfigComponent
 				options={{ key: 'k', secret: 's', name: 'n' }}
-			/>
+			/>,
 		);
 		await wait();
 		expect(lastFrame()).toContain(mappingPrompt);
@@ -116,7 +115,7 @@ describe('CreateProxyConfigComponent', () => {
 		const { lastFrame } = render(
 			<CreateProxyConfigComponent
 				options={{ key: 'k', secret: 's', name: 'n' }}
-			/>
+			/>,
 		);
 		await wait();
 		expect(mockFormatCalls).toContain('bad error');
@@ -128,7 +127,7 @@ describe('CreateProxyConfigComponent', () => {
 		const { lastFrame } = render(
 			<CreateProxyConfigComponent
 				options={{ key: 'k', secret: 's', name: 'n' }}
-			/>
+			/>,
 		);
 		await wait();
 		expect(lastFrame()).toContain(mappingPrompt);
