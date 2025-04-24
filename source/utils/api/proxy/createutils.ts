@@ -37,16 +37,14 @@ export function validateProxyConfig(options: ProxyConfigOptions) {
 	const keyRegex = /^[A-Za-z0-9\-_]+$/;
 	const allowedAuth = ['Bearer', 'Basic', 'Headers'];
 
-	// Validate key
-	if (!options.key?.trim()) {
-		errors.push('Missing Error: key is required');
-	} else if (!keyRegex.test(options.key)) {
-		errors.push('Validation Error: Invalid key');
-	}
-
 	// Validate name
 	if (!options.name?.trim()) {
 		errors.push('Missing Error: name is required');
+	}
+
+	// Validate key (optional)
+	if (options.key && !keyRegex.test(options.key)) {
+		errors.push('Validation Error: Invalid key');
 	}
 
 	// Validate auth_mechanism

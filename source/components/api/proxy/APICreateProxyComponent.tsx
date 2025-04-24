@@ -102,7 +102,7 @@ export default function APICreateProxyComponent({
 	const [mappingConfirmInput, setMappingConfirmInput] = useState('');
 
 	// Sequence control
-	const [currentField, setCurrentField] = useState<Field>('key');
+	const [currentField, setCurrentField] = useState<Field>('secret');
 
 	//  Prepare to create when we reach “done”
 	const triggerCreate = useCallback(() => {
@@ -152,12 +152,12 @@ export default function APICreateProxyComponent({
 			} else {
 				setCurrentField('mapping_start');
 			}
-		} else if (!initialKey) {
-			setCurrentField('key');
 		} else if (!initialSecret) {
 			setCurrentField('secret');
-		} else {
+		} else if (!initialName) {
 			setCurrentField('name');
+		} else {
+			setCurrentField('key');
 		}
 	}, [
 		initialKey,
@@ -183,11 +183,6 @@ export default function APICreateProxyComponent({
 		(value: string) => {
 			const val = value.trim();
 			switch (currentField) {
-				case 'key':
-					if (!val) return;
-					setProxyKey(val);
-					setCurrentField('secret');
-					break;
 				case 'secret':
 					if (!val) return;
 					setProxySecret(val);
@@ -196,6 +191,13 @@ export default function APICreateProxyComponent({
 				case 'name':
 					if (!val) return;
 					setProxyName(val);
+					setCurrentField('key');
+					// Automatically set a default proxy key based on the name
+					if (!proxyKey) {
+						setProxyKey(val.toLowerCase().replace(/\s+/g, '-'));
+					}
+					break;
+				case 'key':
 					setCurrentField('mapping_start');
 					break;
 				case 'mapping_start':
@@ -287,17 +289,6 @@ export default function APICreateProxyComponent({
 	// Render phases
 	if (status === 'input') {
 		switch (currentField) {
-			case 'key':
-				return (
-					<>
-						<Text color="yellow">Proxy Key is required. Please enter it:</Text>
-						<TextInput
-							value={proxyKey}
-							onChange={setProxyKey}
-							onSubmit={handleSubmit}
-						/>
-					</>
-				);
 			case 'secret':
 				return (
 					<>
@@ -318,6 +309,25 @@ export default function APICreateProxyComponent({
 						<TextInput
 							value={proxyName}
 							onChange={setProxyName}
+							onSubmit={value => {
+								handleSubmit(value);
+								// Automatically set a default proxy key based on the name
+								if (!proxyKey) {
+									setProxyKey(value.toLowerCase().replace(/\s+/g, '-'));
+								}
+							}}
+						/>
+					</>
+				);
+			case 'key':
+				return (
+					<>
+						<Text color="yellow">
+							Proxy Key (optional, default: {proxyKey || 'name-based key'}):
+						</Text>
+						<TextInput
+							value={proxyKey}
+							onChange={setProxyKey}
 							onSubmit={handleSubmit}
 						/>
 					</>
