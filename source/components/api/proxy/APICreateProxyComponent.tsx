@@ -14,7 +14,7 @@ type SelectItem<T> = { label: string; value: T; key?: string };
 
 type MappingRule = {
 	url: string;
-	url_type?: 'regex';
+	url_type?: 'regex' | 'none';
 	http_method: 'get' | 'put' | 'post' | 'delete' | 'options' | 'head' | 'patch';
 	resource: string;
 	headers?: Record<string, string>;
@@ -386,9 +386,12 @@ export default function APICreateProxyComponent({
 			case 'mapping_url_type':
 				return (
 					<>
-						<Text color="yellow">URL type? (default: &apos;regex&apos;):</Text>
+						<Text color="yellow">URL type? (default: none):</Text>
 						<SelectInput
-							items={[{ label: 'regex', value: 'regex' }]}
+							items={[
+								{ label: 'None', value: '' },
+								{ label: 'Regex', value: 'regex' },
+							]}
 							onSelect={({ value }) => {
 								setCurrentRule(r => ({
 									...r,

@@ -8,7 +8,7 @@ export type ProxyConfigOptions = {
 	 */
 	mapping_rules?: Array<{
 		url: string;
-		url_type?: 'regex';
+		url_type?: 'regex' | 'none';
 		http_method:
 			| 'get'
 			| 'put'
