@@ -55,52 +55,52 @@ Below is a categorized overview of all available Permit CLI commands:
 
 ### [Authentication](#basic-commands-authentication)
 
-- `permit login` – Log in to your [Permit.io](https://www.permit.io/) account and authenticate your session.
-- `permit logout` – Log out and clear stored credentials.
+- [`permit login`](#permit-login) – Log in to your [Permit.io](https://www.permit.io/) account and authenticate your session.
+- [`permit logout`](#permit-logout) – Log out and clear stored credentials.
 
 ### [PDP (Policy Decision Point) Operations](#basic-commands-policy-decision-point-pdp-operations)
 
-- `permit pdp run` – Start a Permit PDP container using Docker.
-- `permit pdp check` – Perform real-time authorization checks against the PDP.
-- `permit pdp stats` – View performance metrics and audit statistics from your PDP instance.
+- [`permit pdp run`](#permit-pdp-run) – Start a Permit PDP container using Docker.
+- [`permit pdp check`](#permit-pdp-check) – Perform real-time authorization checks against the PDP.
+- [`permit pdp stats`](#permit-pdp-stats) – View performance metrics and audit statistics from your PDP instance.
 
 ### [SDLC](#sdlc)
 
 - [Automate environment creation and management](#automate-environment-creation-and-management)
-    - `permit env create` – Create a new environment.
-    - `permit env copy` – Copy policies between environments.
-    - `permit env delete` – Delete an environment.
-    - `permit env member` – Add members to an environment and assign roles.
-    - `permit env select` – Switch active environment context.
+    - [`permit env create`](#permit-env-create) – Create a new environment.
+    - [`permit env copy`](#permit-env-copy) – Copy policies between environments.
+    - [`permit env delete`](#permit-env-delete) – Delete an environment.
+    - [`permit env member`](#permit-env-member) – Add members to an environment and assign roles.
+    - [`permit env select`](#permit-env-select) – Switch active environment context.
 
 - [Terraform and IaC](#terraform-and-iac)
-    - `permit env export terraform`
+    - [`permit env export terraform`](#permit-env-export-terraform)
 
 ### [Fine-Grained Authorization Configuration](#fine-grained-authorization-configuration-1)
 
 - [AI-Powered Policy Generation](#ai-powered-policy-generation)
-    - `permit policy create ai` - Use natural language to generate and apply structured RBAC policies using AI.
+    - [`permit policy create ai`](#permit-policy-create-ai) - Use natural language to generate and apply structured RBAC policies using AI.
 
 - [Interactive Policy Wizard](#interactive-policy-wizard)
-    - `permit init`
-    - `permit policy create simple` **-** Use a table-style wizard or command-line arguments to define a policy with resources, actions, and roles.
+    - [`permit init`](#permit-init) - Initialize the policy creation wizard.
+    - [`permit policy create simple`](#permit-policy-create-simple) - Use a table-style wizard or command-line arguments to define a policy with resources, actions, and roles.
 
 - [Permissions Templates](#template-based-policy-setup)
-    - `permit env template list` – List available policy templates to apply.
-    - `permit env template apply` – Apply a policy template to your current environment.
+    - [`permit env template list`](#permit-env-template-list) – List available policy templates to apply.
+    - [`permit env template apply`](#permit-env-template-apply) – Apply a policy template to your current environment.
 
 - [API Commands](#api-commands)
-    - `permit api sync user` - Create or update a user with attributes and role assignments.
-    - `permit api users list` - List all users in your Permit.io account.
-    - `permit api users assign` - Assign a role to a user within a specified tenant.
-    - `permit api users unassign` - Remove a role assignment from a user.
+    - [`permit api sync user`](#permit-api-sync-user) - Create or update a user with attributes and role assignments.
+    - [`permit api users list`](#permit-api-users-list) - List all users in your Permit.io account.
+    - [`permit api users assign`](#permit-api-users-assign) - Assign a role to a user within a specified tenant.
+    - [`permit api users unassign`](#permit-api-users-unassign) - Remove a role assignment from a user.
 
 ### [Policy Testing](#policy-testing-1)
 
-- `permit test run audit` – Audit your policy decisions against recent logs.
+- [`permit test run audit`](#permit-test-run-audit) – Audit your policy decisions against recent logs.
 
 - [E2E Tests](#execute-e2e-tests)
-    - `permit test generate e2e` – Generate end-to-end policy test configurations and (optionally) test data.
+    - [`permit test generate e2e`](#permit-test-generate-e2e) – Generate end-to-end policy test configurations and (optionally) test data.
 
 ### [API-First Authorization](#api-first-authorization-1)
 
@@ -110,11 +110,11 @@ Below is a categorized overview of all available Permit CLI commands:
 ### [Custom Rego (OPA) and GitOps](#custom-rego-opa-and-gitops-1)
 
 - [Sync policies to Git Repositories](#sync-policies-to-git-repositories)
-    - `permit gitops create github` - Set up GitOps integration for a Permit environment using a GitHub repository.
-    - `permit gitops env clone` - Clone an environment or an entire project from a GitOps repository.
+    - [`permit gitops create github`](#permit-gitops-create-github) - Set up GitOps integration for a Permit environment using a GitHub repository.
+    - [`permit gitops env clone`](#permit-gitops-env-clone) - Clone an environment or an entire project from a GitOps repository.
 
 - [Extend Predefined Policies with Custom Rego (Open Policy Agent)](#extend-predefined-policies-with-custom-rego-open-policy-agent)
-    - `permit opa policy` - Print policies from a running OPA (Open Policy Agent) instance.
+    - [`permit opa policy`](#permit-opa-policy) - Print policies from a running OPA (Open Policy Agent) instance.
 
 ---
 
@@ -122,7 +122,7 @@ Below is a categorized overview of all available Permit CLI commands:
 
 ## Basic Commands: Authentication
 
-`permit login`
+#### `permit login`
 
 You must log in to your [Permit.io](http://permit.io/) account to run commands. 
 
@@ -153,7 +153,7 @@ $ permit logout
 
 This collection of commands aims to improve the experience of working with the PDPs (Permit PDP or Open Policy Agent).
 
-`permit pdp run`
+#### `permit pdp run`
 
 Use this command to run a Permit PDP Docker container configured with your [Permit.io](http://permit.io/) account details. The command will start the container in detached mode and display the container ID and name.
 
@@ -191,7 +191,7 @@ $ permit pdp run --api-key your_api_key
 
 ---
 
-`permit pdp check`
+#### `permit pdp check`
 
 Use this command to perform an authorization check against the PDP. The command will take the user, action, and resource (and some other enrichment arguments) as options and return the decision.
 
@@ -216,7 +216,7 @@ $ permit  pdp check --user eventHandler --action update --resource Widget:dashbo
 
 ---
 
-`permit pdp stats`
+#### `permit pdp stats`
 
 Use this command to view statistics about your PDP's performance and usage. This is useful for monitoring and debugging your PDP instance.
 
@@ -240,7 +240,7 @@ $ permit pdp stats
 
 Use CLI commands to create, copy, and manage environments
 
-`permit env create`
+#### `permit env create`
 
 This command creates a new environment in a specified project. This is useful for setting up new environments for development, testing, or production.
 
@@ -268,7 +268,7 @@ $ permit env create --api-key permit_key --name "Development" --envKey "dev" --d
 
 ---
 
-`permit env copy`
+#### `permit env copy`
 
 Developers and CI pipelines can use this command to enable secure blue-green deployment in the Software Development Lifecycle (SDLC). The command will get the source and destination environments as options and copy the policies from one to another. 
 
@@ -294,7 +294,7 @@ $ permit env copy --api-key permit_key --from staging --to production --conflict
 
 ---
 
-`permit env delete`
+#### `permit env delete`
 
 This command deletes an existing environment. 
 
@@ -324,7 +324,7 @@ $ permit env delete --api-key permit_key --environmentId env_456 --force
 
 ---
 
-`permit env member`
+#### `permit env member`
 
 This command will assign members to an environment with the roles you specify. This is useful for managing the access control of your team members in the [Permit.io](http://permit.io/) environment.
 
@@ -349,7 +349,7 @@ $ permit env member --api-key permit_key --environment staging --project my-proj
 
 ---
 
-`permit env select`
+#### `permit env select`
 
 This command lets you select a different active [Permit.io](http://permit.io/) environment. This is useful when you have multiple environments in your account and want to switch between them without logging out and logging in again.
 
@@ -367,7 +367,7 @@ $ permit env select --api-key permit_key
 
 Define and enforce policies programmatically within DevOps pipelines
 
-`permit env export terraform`
+#### `permit env export terraform`
 
 This command exports your Permit environment configuration as a Terraform HCL file. 
 
@@ -406,7 +406,7 @@ Use natural language commands with AI to instantly set up and enforce fine-grain
 
 Generate customized, ready-to-use policy structures using natural language
 
-`permit policy create ai`
+#### `permit policy create ai`
 
 This command allows you to create RBAC policies using natural language. It uses AI to convert your descriptions into structured Role-Based Access Control policies that can be applied to your [Permit.io](http://permit.io/) environment.
 
@@ -439,7 +439,7 @@ If you approve the policy, the CLI will apply the policy to your [Permit.io](htt
 
 Define resources, generate test users, and assign roles through a simple step-by-step flow.
 
-`permit init`
+#### `permit init`
 
 This command is a wizard command that should take the users through all the steps, from configuring policy to enforcing it in the application
 
@@ -455,7 +455,7 @@ $ permit init --api-key permit_key
 
 ---
 
-`permit policy create simple`
+#### `permit policy create simple`
 
 A simple policy table creation wizard with the resources, actions, and roles.
 You can provide resources, actions, and roles as arguments or enter them interactively.
@@ -488,7 +488,7 @@ $ permit policy create simple \\
 
 Use pre-built policy templates to automate rule creation for different industries.
 
-`permit env template list`
+#### `permit env template list`
 
 Use this command to list all the available policy templates to apply to your environment.
 
@@ -502,7 +502,9 @@ Use this command to list all the available policy templates to apply to your env
 $ permit env template list
 ```
 
-`permit env template apply`
+---
+
+#### `permit env template apply`
 
 This command applies a policy template to your current environment, which is useful for quickly setting up new environments with predefined configurations.
 
@@ -525,7 +527,7 @@ $ permit env template apply --template mesa-verde-banking-dem
 
 Simplifies the usage of Permit’s API, allowing you to perform most API actions directly through the CLI. 
 
-`permit api sync user`
+#### `permit api sync user`
 
 This command will replace User / Sync User in Permit. If the user already exists, it will update the user with the new data. If the user does not exist, it will create a new user with the provided data.
 
@@ -559,7 +561,7 @@ $ permit api sync user
 
 ---
 
-`permit api users list`
+#### `permit api users list`
 
 Use this command to list all users in Permit.
 
@@ -586,7 +588,9 @@ $ permit api users list
 
 In the example above, we fetch a list of all users with the admin role in the default tenant.
 
-`permit api users assign`
+---
+
+#### `permit api users assign`
 
 Use this command to assign a user to a specific role in Permit.
 
@@ -610,7 +614,7 @@ $ permit api users assign --user user@example.com --role admin --tenant default
 
 ---
 
-`permit api users unassign`
+#### `permit api users unassign`
 
 Use this command to remove a role assignment from a user in Permit.
 
@@ -636,7 +640,7 @@ $ permit api users unassign --user user@example.com --role admin --tenant defaul
 
 This collection of commands helps you test and validate your authorization policies.
 
-`permit test run audit`
+#### `permit test run audit`
 
 This command reads your recent authorization decision logs from the Permit API and runs the same checks against a PDP instance to verify consistency between environments.
 
@@ -685,7 +689,7 @@ $ permit test run audit --max-logs 500
 
 Simulate real-world user interactions and business flows to see how policies affect overall application behavior.
 
-`permit test generate e2e`
+#### `permit test generate e2e`
 
 Generate end‑to‑end test configurations (and optionally test data) for your policy.
 
@@ -745,7 +749,7 @@ Extend and customize authorization policies with GitOps flows and custom Rego lo
 
 Export, version, and manage authorization policies as code: all through CLI commands
 
-`permit gitops create github`
+#### `permit gitops create github`
 
 This command will configure your Permit environment to use the GitOps flow with GitHub. This is useful when you want to manage your policies in your own Git repository and extend them with custom policy code.
 
@@ -761,7 +765,7 @@ gitops create github --inactive true
 
 ---
 
-`permit gitops env clone`
+#### `permit gitops env clone`
 
 This clones the environment or the complete project from the active GitOps repository.
 
@@ -775,7 +779,9 @@ This clones the environment or the complete project from the active GitOps repos
 
 Use the CLI to modify and fine-tune Open Policy Agent (OPA) Rego policies while maintaining system stability
 
-`permit opa policy`
+---
+
+#### `permit opa policy`
 
 This command will print the available policies of an active OPA instance. This is useful when you want to see the policies in your OPA instance without fetching them from the OPA server.
 
