@@ -77,7 +77,7 @@ export const options = object({
 		.describe(
 			option({
 				description:
-					'Mapping rules to route requests. Format: "method|url|resource|[action]|[priority]|[{Key:Value,...}]|[url_type]".',
+					'Mapping rules to route requests. Format: "method|url|resource|[action]|[priority]|[{Key:Value,...}]|[url_type]". In case mapping rules argument(s) are provided, all the singe mapping rule arguments will get ignored',
 				alias: 'mapping-rules',
 			}),
 		),
