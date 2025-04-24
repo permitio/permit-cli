@@ -12,13 +12,7 @@ type Props = { options: zInfer<typeof apiOptions> };
 export default function APIListProxyTableComponent({ options }: Props) {
 	const { scope } = useAuth();
 	const { status, errorMessage, proxies, totalCount, listProxies } =
-		useListProxy(
-			scope.project_id,
-			scope.environment_id,
-			options.apiKey,
-			options.page,
-			options.perPage,
-		);
+		useListProxy(options.apiKey, options.page, options.perPage);
 
 	// Fetch proxies on mount & dependency changes
 	useEffect(() => {

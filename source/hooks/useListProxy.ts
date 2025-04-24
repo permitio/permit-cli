@@ -23,8 +23,6 @@ interface RawProxyConfig {
 }
 
 export function useListProxy(
-	projectId: string | undefined,
-	environmentId: string | undefined,
 	apiKey?: string,
 	initialPage: number = 1,
 	perPage: number = 30,
@@ -38,16 +36,9 @@ export function useListProxy(
 
 	const listProxies = useCallback(
 		async (fetchAll: boolean = false) => {
-			if (!projectId || !environmentId) {
-				setErrorMessage('Project ID or Environment ID is missing');
-				setStatus('error');
-				return;
-			}
 			setStatus('processing');
 			try {
-				const apiClient = apiKey
-					? unAuthenticatedApiClient(apiKey)
-					: authenticatedApiClient();
+				const apiClient = authenticatedApiClient();
 
 				let allProxies: RawProxyConfig[] = [];
 				let currentPage = page;
@@ -55,7 +46,7 @@ export function useListProxy(
 				do {
 					const result = await apiClient.GET(
 						'/v2/facts/{proj_id}/{env_id}/proxy_configs',
-						{ proj_id: projectId, env_id: environmentId },
+						{},
 						undefined,
 						{ page: currentPage, per_page: perPage },
 					);
@@ -121,15 +112,7 @@ export function useListProxy(
 				setStatus('error');
 			}
 		},
-		[
-			apiKey,
-			authenticatedApiClient,
-			environmentId,
-			page,
-			perPage,
-			projectId,
-			unAuthenticatedApiClient,
-		],
+		[apiKey, authenticatedApiClient, page, perPage, unAuthenticatedApiClient],
 	);
 
 	return { status, errorMessage, proxies, totalCount, listProxies, setPage };
