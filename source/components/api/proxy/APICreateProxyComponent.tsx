@@ -4,7 +4,6 @@ import TextInput from 'ink-text-input';
 import Spinner from 'ink-spinner';
 import SelectInput from 'ink-select-input';
 import { type infer as zType } from 'zod';
-import { useAuth } from '../../AuthProvider.js';
 import { useCreateProxy } from '../../../hooks/useCreateProxy.js';
 import { useParseProxyData } from '../../../hooks/useParseProxyData.js';
 import { options as originalOptions } from '../../../commands/api/create/proxy.js';
@@ -50,7 +49,6 @@ export default function APICreateProxyComponent({
 }: {
 	options: ExtendedOptions;
 }) {
-	const { scope } = useAuth();
 	const { payload, parseError } = useParseProxyData(options);
 	const {
 		status,
@@ -105,16 +103,6 @@ export default function APICreateProxyComponent({
 
 	// Sequence control
 	const [currentField, setCurrentField] = useState<Field>('key');
-
-	//  Check that scope is present
-	useEffect(() => {
-		if (!scope.project_id || !scope.environment_id) {
-			setErrorMessage(
-				'Error: scope.project_id and scope.environment_id are required.',
-			);
-			setStatus('error');
-		}
-	}, [scope.project_id, scope.environment_id, setErrorMessage, setStatus]);
 
 	//  Prepare to create when we reach “done”
 	const triggerCreate = useCallback(() => {
@@ -373,7 +361,7 @@ export default function APICreateProxyComponent({
 				return (
 					<>
 						<Text color="yellow">
-							URL type? (type &apos;regex&apos; or press enter for default):
+							URL type? (type &apos;regex&apos; ,default('regex')):
 						</Text>
 						<TextInput
 							value={currentRule.url_type || ''}
