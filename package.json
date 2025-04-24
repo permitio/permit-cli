@@ -1,6 +1,6 @@
 {
 	"name": "@permitio/cli",
-	"version": "0.2.4",
+	"version": "0.2.5",
 	"license": "MIT",
 	"bin": {
 		"permit": "dist/cli.js"
