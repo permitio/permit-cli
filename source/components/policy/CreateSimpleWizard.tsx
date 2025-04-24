@@ -14,12 +14,16 @@ interface CreateSimpleWizardProps {
 	presentResources?: string[];
 	presentActions?: string[];
 	presentRoles?: string[];
+	onComplete?: (resource: string, action: string) => void;
+	onError?: (error: string) => void;
 }
 
 export default function CreateSimpleWizard({
 	presentResources,
 	presentActions,
 	presentRoles,
+	onComplete,
+	onError,
 }: CreateSimpleWizardProps) {
 	// Parse preset values
 	const parsedResources = useParseResources(presentResources);
@@ -55,10 +59,22 @@ export default function CreateSimpleWizard({
 
 	// Handle completion or error states
 	useEffect(() => {
-		if (status === 'error' || status === 'success') {
-			process.exit(status === 'error' ? 1 : 0);
+		if (status === 'error') {
+			if (onError) {
+				onError(error || 'An unknown error occurred');
+			} else {
+				process.exit(1);
+			}
 		}
-	}, [status]);
+
+		if (status === 'success') {
+			if (onComplete) {
+				onComplete(resources[0]?.key || '', Object.keys(actions)[0] || '');
+			} else {
+				process.exit(0);
+			}
+		}
+	}, [status, error, resources, actions, onComplete, onError]);
 
 	const handleError = useCallback((error: string) => {
 		setError(error);
@@ -146,7 +162,7 @@ export default function CreateSimpleWizard({
 		<Box flexDirection="column" padding={1}>
 			{status === 'processing' && <Text>Processing your request...</Text>}
 
-			{status === 'error' && (
+			{status === 'error' && !onError && (
 				<Box flexDirection="column">
 					<Text color="red">[Error] {error}</Text>
 				</Box>
