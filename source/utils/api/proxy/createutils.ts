@@ -30,28 +30,28 @@ export type ProxyConfigOptions = {
 
 /**
  * Validates the proxy config options.
- * Throws an error if validation fails.
+ * Collects all errors and throws a combined error if any validations fail.
  */
 export function validateProxyConfig(options: ProxyConfigOptions) {
+	const errors: string[] = [];
 	const keyRegex = /^[A-Za-z0-9\-_]+$/;
+	const allowedAuth = ['Bearer', 'Basic', 'Headers'];
 
 	// Validate key
 	if (!options.key?.trim()) {
-		throw new Error('Missing Error: key is required');
-	}
-	if (!keyRegex.test(options.key)) {
-		throw new Error('Validation Error: Invalid key');
+		errors.push('Missing Error: key is required');
+	} else if (!keyRegex.test(options.key)) {
+		errors.push('Validation Error: Invalid key');
 	}
 
 	// Validate name
 	if (!options.name?.trim()) {
-		throw new Error('Missing Error: name is required');
+		errors.push('Missing Error: name is required');
 	}
 
 	// Validate auth_mechanism
-	const allowedAuth = ['Bearer', 'Basic', 'Headers'];
 	if (!allowedAuth.includes(options.auth_mechanism)) {
-		throw new Error(
+		errors.push(
 			'Validation Error: auth_mechanism must be one of Bearer, Basic, or Headers',
 		);
 	}
@@ -60,7 +60,7 @@ export function validateProxyConfig(options: ProxyConfigOptions) {
 	switch (options.auth_mechanism) {
 		case 'Bearer':
 			if (typeof options.secret !== 'string' || !options.secret.trim()) {
-				throw new Error(
+				errors.push(
 					'Validation Error: Bearer secret must be a non-empty string',
 				);
 			}
@@ -71,7 +71,7 @@ export function validateProxyConfig(options: ProxyConfigOptions) {
 				!options.secret.trim() ||
 				!/.+:.+/.test(options.secret)
 			) {
-				throw new Error(
+				errors.push(
 					'Validation Error: Basic secret must be a string of the form "username:password"',
 				);
 			}
@@ -82,81 +82,73 @@ export function validateProxyConfig(options: ProxyConfigOptions) {
 				options.secret === null ||
 				Array.isArray(options.secret)
 			) {
-				throw new Error(
+				errors.push(
 					'Validation Error: Headers secret must be an object of headers',
 				);
-			}
-			Object.entries(options.secret).forEach(([key, value]) => {
-				if (typeof value !== 'string') {
-					throw new Error(
-						`Validation Error: secret header '${key}' must be a string`,
-					);
-				}
-			});
-			break;
-	}
-
-	// Validate mapping_rules
-	if (options.mapping_rules) {
-		if (!Array.isArray(options.mapping_rules)) {
-			throw new Error('Validation Error: mapping_rules must be an array');
-		}
-
-		options.mapping_rules.forEach((rule, index) => {
-			if (!rule.url?.trim()) {
-				throw new Error(
-					`Missing Error: mapping_rules[${index}].url is required`,
-				);
-			}
-			try {
-				new URL(rule.url);
-			} catch {
-				throw new Error(
-					`Validation Error: mapping_rules[${index}].url is invalid`,
-				);
-			}
-
-			if (!rule.http_method) {
-				throw new Error(
-					`Missing Error: mapping_rules[${index}].http_method is required`,
-				);
-			}
-
-			if (!rule.resource?.trim() || !keyRegex.test(rule.resource)) {
-				throw new Error(
-					`Validation Error: mapping_rules[${index}].resource is invalid ${rule.resource}.`,
-				);
-			}
-
-			if (rule.headers) {
-				if (typeof rule.headers !== 'object' || Array.isArray(rule.headers)) {
-					throw new Error(
-						`Validation Error: mapping_rules[${index}].headers must be an object`,
-					);
-				}
-				Object.entries(rule.headers).forEach(([headerKey, headerValue]) => {
-					if (typeof headerValue !== 'string') {
-						throw new Error(
-							`Validation Error: mapping_rules[${index}].headers['${headerKey}'] must be a string`,
+			} else {
+				Object.entries(options.secret).forEach(([hdr, val]) => {
+					if (typeof val !== 'string') {
+						errors.push(
+							`Validation Error: secret header '${hdr}' must be a string`,
 						);
 					}
 				});
 			}
-
-			// Optional validations
-			if (rule.url_type && rule.url_type !== 'regex') {
-				throw new Error(
-					`Validation Error: mapping_rules[${index}].url_type must be 'regex' if provided`,
-				);
-			}
-
-			if (rule.priority !== undefined && typeof rule.priority !== 'number') {
-				throw new Error(
-					`Validation Error: mapping_rules[${index}].priority must be a number`,
-				);
-			}
-		});
+			break;
 	}
 
+	// Validate mapping_rules
+	if (options.mapping_rules !== undefined) {
+		if (!Array.isArray(options.mapping_rules)) {
+			errors.push('Validation Error: mapping_rules must be an array');
+		} else {
+			options.mapping_rules.forEach((rule, idx) => {
+				const base = `mapping_rules[${idx}]`;
+				if (!rule.url?.trim()) {
+					errors.push(`Missing Error: ${base}.url is required`);
+				} else {
+					try {
+						new URL(rule.url);
+					} catch {
+						errors.push(`Validation Error: ${base}.url is invalid`);
+					}
+				}
+				if (!rule.http_method) {
+					errors.push(`Missing Error: ${base}.http_method is required`);
+				}
+				if (!rule.resource?.trim() || !keyRegex.test(rule.resource)) {
+					errors.push(
+						`Validation Error: ${base}.resource is invalid ('${rule.resource}')`,
+					);
+				}
+				if (rule.headers !== undefined) {
+					if (typeof rule.headers !== 'object' || Array.isArray(rule.headers)) {
+						errors.push(`Validation Error: ${base}.headers must be an object`);
+					} else {
+						Object.entries(rule.headers).forEach(([hk, hv]) => {
+							if (typeof hv !== 'string') {
+								errors.push(
+									`Validation Error: ${base}.headers['${hk}'] must be a string`,
+								);
+							}
+						});
+					}
+				}
+				if (rule.url_type && rule.url_type !== 'regex') {
+					errors.push(
+						`Validation Error: ${base}.url_type must be 'regex' if provided`,
+					);
+				}
+				if (rule.priority !== undefined && typeof rule.priority !== 'number') {
+					errors.push(`Validation Error: ${base}.priority must be a number`);
+				}
+			});
+		}
+	}
+
+	// Throw aggregated error or return success
+	if (errors.length) {
+		throw new Error(`Configuration errors:\n${errors.join('\n')}`);
+	}
 	return true;
 }
