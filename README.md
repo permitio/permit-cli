@@ -96,6 +96,8 @@ Below is a categorized overview of all available Permit CLI commands:
 
 - [API Commands](#api-commands)
   - [`permit api sync user`](#permit-api-sync-user) - Create or update a user with attributes and role assignments.
+  - [`permit api create proxy`](#permit-api-create-proxy) - Creates a new proxy config inside the Permit.io system.
+  - [`permit api list proxy`](#permit-api-list-proxy) - Lists all the proxy configs defined within an environment.
   - [`permit api users list`](#permit-api-users-list) - List all users in your Permit.io account.
   - [`permit api users assign`](#permit-api-users-assign) - Assign a role to a user within a specified tenant.
   - [`permit api users unassign`](#permit-api-users-unassign) - Remove a role assignment from a user.
