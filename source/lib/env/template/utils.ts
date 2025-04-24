@@ -8,13 +8,17 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+export function getDirectory(): string {
+	return path.join(__dirname, '..', '..', '..', '..', 'dist', 'templates');
+}
+
 export function getFiles(): string[] {
-	const directory = path.join(process.cwd(), 'dist', 'templates');
+	const directory = getDirectory();
 	return fs.readdirSync(directory).map(file => path.parse(file).name);
 }
 
 function getFileContent(fileName: string): string {
-	const directory = path.join(process.cwd(), 'dist', 'templates');
+	const directory = getDirectory();
 	const filePath = path.join(directory, fileName + '.tf');
 	return fs.readFileSync(filePath, 'utf-8');
 }

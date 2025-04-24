@@ -5,7 +5,10 @@ import Spinner from 'ink-spinner';
 import { useAuth } from '../../AuthProvider.js';
 import fs from 'fs';
 import path from 'path';
-import { ApplyTemplate } from '../../../lib/env/template/utils.js';
+import {
+	ApplyTemplate,
+	getDirectory,
+} from '../../../lib/env/template/utils.js';
 import { PolicyTables } from './PolicyTables.js';
 import { generateTerraform } from './TerraformGenerator.js';
 import { PolicyData } from './types.js';
@@ -38,7 +41,7 @@ export const TFChatComponent = () => {
 			setTerraformSuccess(false);
 
 			// Create a temporary file with the terraform content
-			const tempDir = path.join(process.cwd(), 'dist', 'templates');
+			const tempDir = getDirectory();
 			if (!fs.existsSync(tempDir)) {
 				fs.mkdirSync(tempDir, { recursive: true });
 			}
