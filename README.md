@@ -968,16 +968,16 @@ This command will Creates a new proxy config inside the Permit.io system.
 - `--key <string>` - a unique ID by which Permit will identify the user for permission checks..
 - `--name <string>` - The name of the proxy config, for example(e.g., Stripe API).
 - `--auth-mechanism <string>` - Authentication mechanism used to inject the secret. One of: Bearer, Basic, Headers. Defaults to Bearer.
-- `--mapping-rules` -  Mapping rule must start with a valid HTTP method, then a URL, then a resource (e.g. "get|https://api.example.com|users"), then optionally: "|action|priority|{headers}|url_type".
+- `--mapping-rules` - Mapping rule must start with a valid HTTP method, then a URL, then a resource (e.g. "get|https://api.example.com|users"), then optionally: "|action|priority|{headers}|url_type".
 
 - mappping rules can also be provided as individual Arguments (Optional)
--  `--mapping-rule-method <string>` - Must be a valid HTTP method (get|put|post|delete|options|head|patch)  (ignored if the mapping-rules arguments present).
--  `--mapping-rule-url <string>` - Must be a valid URL (e.g. https://api.example.com)  (ignored if the mapping-rules arguments present).
--  `--mapping-rule-resource <string>` - Resource to match against the request (no leading slash)  (ignored if the mapping-rules arguments present).
--  `--mapping-rule-action <string>` - Optional action name for the mapping rule (ignored if the mapping-rules arguments present).
--  `--mapping-rule-headers <array>` - Optional list of headers, each as "Key:Value" (ignored if the mapping-rules arguments present).
--  `--mapping-rule-priority <integer>` - Optional priority (positive integer) for the mapping rule (ignored if the mapping-rules arguments present).
--  `--mapping-rule-url-type <string>` - How to interpret the URL: "regex" or "none" (ignored if the mapping-rules arguments present).
+- `--mapping-rule-method <string>` - Must be a valid HTTP method (get|put|post|delete|options|head|patch) (ignored if the mapping-rules arguments present).
+- `--mapping-rule-url <string>` - Must be a valid URL (e.g. https://api.example.com) (ignored if the mapping-rules arguments present).
+- `--mapping-rule-resource <string>` - Resource to match against the request (no leading slash) (ignored if the mapping-rules arguments present).
+- `--mapping-rule-action <string>` - Optional action name for the mapping rule (ignored if the mapping-rules arguments present).
+- `--mapping-rule-headers <array>` - Optional list of headers, each as "Key:Value" (ignored if the mapping-rules arguments present).
+- `--mapping-rule-priority <integer>` - Optional priority (positive integer) for the mapping rule (ignored if the mapping-rules arguments present).
+- `--mapping-rule-url-type <string>` - How to interpret the URL: "regex" or "none" (ignored if the mapping-rules arguments present).
 
 **Example:**
 
@@ -988,8 +988,9 @@ $ permit api create proxy
   --key "KEY" \\
   --name "jhon" \\
   --auth-mechanism  "Bearer" \\
-  --mapping-rules "get|https://api.example.com|users|getUsers|10|{Authorization:Bearer abc,X-Custom:v7}|regex" 
+  --mapping-rules "get|https://api.example.com|users|getUsers|10|{Authorization:Bearer abc,X-Custom:v7}|regex"
 ```
+
 **individual mapping rules example**
 
 ```bash
