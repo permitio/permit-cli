@@ -22,12 +22,8 @@ interface RawProxyConfig {
 	auth_mechanism: 'Bearer' | 'Basic' | 'Headers';
 }
 
-export function useListProxy(
-	apiKey?: string,
-	initialPage: number = 1,
-	perPage: number = 30,
-) {
-	const { authenticatedApiClient, unAuthenticatedApiClient } = useClient();
+export function useListProxy(initialPage: number = 1, perPage: number = 30) {
+	const { authenticatedApiClient } = useClient();
 	const [status, setStatus] = useState<ListStatus>('processing');
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const [proxies, setProxies] = useState<ProxyConfigOptions[]>([]);
@@ -112,7 +108,7 @@ export function useListProxy(
 				setStatus('error');
 			}
 		},
-		[apiKey, authenticatedApiClient, page, perPage, unAuthenticatedApiClient],
+		[authenticatedApiClient, page, perPage],
 	);
 
 	return { status, errorMessage, proxies, totalCount, listProxies, setPage };

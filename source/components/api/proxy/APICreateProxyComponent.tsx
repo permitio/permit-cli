@@ -131,7 +131,6 @@ export default function APICreateProxyComponent({
 		proxySecret,
 		proxyName,
 		mappingRules,
-		payload.auth_mechanism,
 		setErrorMessage,
 		setStatus,
 	]);
@@ -299,7 +298,7 @@ export default function APICreateProxyComponent({
 					break;
 			}
 		},
-		[currentField, currentRule],
+		[currentField, currentRule, proxyKey],
 	);
 
 	// Render phases
@@ -387,7 +386,7 @@ export default function APICreateProxyComponent({
 			case 'mapping_url_type':
 				return (
 					<>
-						<Text color="yellow">URL type? (default: 'regex'):</Text>
+						<Text color="yellow">URL type? (default: &apos;regex&apos;):</Text>
 						<SelectInput
 							items={[{ label: 'regex', value: 'regex' }]}
 							onSelect={({ value }) => {
@@ -463,7 +462,9 @@ export default function APICreateProxyComponent({
 			case 'mapping_action':
 				return (
 					<>
-						<Text color="yellow">Action (optional) ,default(''):</Text>
+						<Text color="yellow">
+							Action (optional) ,default(&apos; &apos;):
+						</Text>
 						<TextInput
 							value={currentRule.action || ''}
 							onChange={val =>
@@ -480,7 +481,7 @@ export default function APICreateProxyComponent({
 				return (
 					<>
 						<Text color="yellow">
-							Priority (number, optional) ,default(''):
+							Priority (number, optional) ,default(&apos; &apos;):
 						</Text>
 						<TextInput
 							value={currentRule.priority?.toString() || ''}
