@@ -255,12 +255,15 @@ export default function APICreateProxyComponent({
 							}
 						} catch {
 							// ignoring invalid JSON
+							// ignoring invalid JSON
 						}
+						setHeadersInput('');
+						setCurrentField('mapping_headers_repeat');
+					} else {
+						setHeadersInput('');
+						setCurrentField('mapping_action'); // Skip to the next field if no header is provided
 					}
-					setHeadersInput('');
-					setCurrentField('mapping_headers_repeat');
 					break;
-
 				case 'mapping_headers_repeat':
 					setCurrentField(val === 'n' ? 'mapping_action' : 'mapping_headers');
 					break;
