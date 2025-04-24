@@ -211,12 +211,6 @@ export default function APICreateProxyComponent({
 					setCurrentField('mapping_url_type');
 					break;
 				case 'mapping_url_type':
-					if (val === 'regex') {
-						setCurrentRule(r => ({
-							...r,
-							url_type: 'regex',
-						}));
-					}
 					setCurrentField('mapping_http_method');
 					break;
 				case 'mapping_http_method':
@@ -360,18 +354,16 @@ export default function APICreateProxyComponent({
 			case 'mapping_url_type':
 				return (
 					<>
-						<Text color="yellow">
-							URL type? (type &apos;regex&apos; ,default('regex')):
-						</Text>
-						<TextInput
-							value={currentRule.url_type || ''}
-							onChange={val =>
+						<Text color="yellow">URL type? (default: 'regex'):</Text>
+						<SelectInput
+							items={[{ label: 'regex', value: 'regex' }]}
+							onSelect={({ value }) => {
 								setCurrentRule(r => ({
 									...r,
-									url_type: val as MappingRule['url_type'],
-								}))
-							}
-							onSubmit={handleSubmit}
+									url_type: value as MappingRule['url_type'],
+								}));
+								handleSubmit(value);
+							}}
 						/>
 					</>
 				);
