@@ -1011,6 +1011,33 @@ $ permit api create proxy
 
 ---
 
+#### `permit api list proxy`
+
+Use this command to Lists all the proxy configs defined within an environment.
+
+**Arguments (Optional):**
+
+- `--api-key <string>` - your Permit API key
+- `--expand-key` - show full key values instead of truncated (`default: false`)
+- `--page <number>` - page number for pagination (`default: 1`)
+- `--per-page <number>` - number of items per page (`default: 30`)
+- `--all` - fetch all pages of users (`default: false`)
+
+**Example:**
+
+```bash
+$ permit api list proxy
+        --api-key "YOUR_API_KEY" \\
+        --expand-key
+	--page 2
+	--per-page 50
+	--all
+```
+
+In the example above, we fetch a list of all proxy in the default environment.
+
+---
+
 #### `permit api users list`
 
 Use this command to list all users in Permit.
