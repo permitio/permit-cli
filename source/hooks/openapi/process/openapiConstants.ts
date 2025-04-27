@@ -56,4 +56,4 @@ export interface ProcessorProps {
 // Add this to your existing type definitions
 export interface UpdateResourceRoleFunction {
 	(resource: string, role: string, permission: string | string[]): Promise<any>;
-  }
+}
