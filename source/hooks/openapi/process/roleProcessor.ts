@@ -70,9 +70,6 @@ async function updateExistingRole(
 		// Add the new permission if it doesn't already exist
 		if (permissionStr && !permissions.includes(permissionStr)) {
 			permissions = [...permissions, permissionStr];
-
-			// Log the permission being added for debugging
-			console.log(`Adding permission ${permissionStr} to role ${role}`);
 		}
 
 		// Update the role with the new permissions
@@ -110,7 +107,6 @@ export async function processRoles(
 			// Create/update role if specified and not already processed
 			const role = operation[PERMIT_EXTENSIONS.ROLE];
 			if (role && typeof role === 'string' && !roles.has(role)) {
-				// Capitalize role name for display consistency
 				const displayName = capitalizeFirstLetter(role);
 
 				// Check if role already exists
@@ -133,7 +129,6 @@ export async function processRoles(
 				// Handle array of roles
 				for (const singleRole of role) {
 					if (typeof singleRole === 'string' && !roles.has(singleRole)) {
-						// Capitalize role name for display consistency
 						const displayName = capitalizeFirstLetter(singleRole);
 
 						// Check if role already exists
@@ -218,7 +213,7 @@ export async function processRoles(
 	return context;
 }
 
-// Updated to ensure consistent permissions handling
+// Helper function to update resource role permissions
 async function updateResourceRolePermission(
 	resource: string,
 	roleKey: string,
@@ -233,24 +228,13 @@ async function updateResourceRolePermission(
 			? permissionStr
 			: [permissionStr];
 
-		// Process each permission
-		const processedPermissions = permissionsArray.map(perm => {
-			// Check if the permission already has the resource prefix
-			// to avoid creating duplicate prefixes like "resource:resource:action"
-			return perm.startsWith(`${resource}:`) ? perm : `${resource}:${perm}`;
-		});
-
-		// Log for debugging
-		console.log(
-			`Adding permissions [${processedPermissions.join(', ')}] to resource role ${roleKey}`,
-		);
-
-		// Call the update function with all processed permissions
+		// Call the update function with all permissions
 		const result = await updateResourceRole(
 			resource,
 			roleKey,
-			processedPermissions,
+			permissionsArray,
 		);
+
 		if (result.error) {
 			warnings.push(
 				`Failed to update resource role ${roleKey}: ${JSON.stringify(result.error)}`,
@@ -269,143 +253,118 @@ export async function processResourceRoles(
 ) {
 	const { resourceRoles, errors, warnings } = context;
 
-	// First, identify all resources and their roles
-	const resourceRoleMap = new Map<string, Set<string>>();
-	const resourceActionMap = new Map<string, Set<string>>();
+	// Map to track which actions are assigned to which resource-role pairs
+	const roleActionMap = new Map<string, Set<string>>();
 
-	// Pre-process to collect all resource roles and their actions
+	// Collect all resource roles and their specific actions
 	for (const [, pathItem] of Object.entries(pathItems || {})) {
 		if (!pathItem || typeof pathItem !== 'object') continue;
 
-		const typedPathItem = pathItem as PathItem;
-		const rawResource = typedPathItem[PERMIT_EXTENSIONS.RESOURCE];
+		const rawResource = pathItem[PERMIT_EXTENSIONS.RESOURCE];
 		if (!rawResource) continue;
 
 		const resource = sanitizeKey(rawResource as string);
 
-		// Initialize resource sets if not already done
-		if (!resourceRoleMap.has(resource)) {
-			resourceRoleMap.set(resource, new Set<string>());
-		}
-		if (!resourceActionMap.has(resource)) {
-			resourceActionMap.set(resource, new Set<string>());
-		}
-
 		// Process HTTP methods
 		for (const method of HTTP_METHODS) {
-			const operation = typedPathItem[method] as Operation | undefined;
+			const operation = pathItem[method] as Operation | undefined;
 			if (!operation) continue;
 
-			// Add action to resource actions
+			// Get action for this operation
 			const action = operation[PERMIT_EXTENSIONS.ACTION] || method;
-			resourceActionMap.get(resource)?.add(action.toString());
 
-			// Collect resource roles
+			// Get resource role for this operation
 			const resourceRole = operation[PERMIT_EXTENSIONS.RESOURCE_ROLE];
-			if (resourceRole) {
-				resourceRoleMap.get(resource)?.add(resourceRole.toString());
+			if (resourceRole && typeof resourceRole === 'string') {
+				// Create a unique key for this resource-role pair
+				const mapKey = `${resource}:${resourceRole}`;
+
+				// Initialize action set if needed
+				if (!roleActionMap.has(mapKey)) {
+					roleActionMap.set(mapKey, new Set<string>());
+				}
+
+				// Add this action to the role's action set
+				roleActionMap.get(mapKey)?.add(action.toString());
 			}
 		}
 	}
 
-	// Now create and assign permissions to all resource roles
-	for (const [, pathItem] of Object.entries(pathItems || {})) {
-		if (!pathItem || typeof pathItem !== 'object') continue;
+	//Create each resource role with its specific actions
+	for (const [mapKey, actionSet] of roleActionMap.entries()) {
+		// Skip if already processed
+		if (resourceRoles.has(mapKey)) {
+			continue;
+		}
 
-		const typedPathItem = pathItem as PathItem;
-		const rawResource = typedPathItem[PERMIT_EXTENSIONS.RESOURCE];
-		if (!rawResource) continue;
+		const parts = mapKey.split(':');
+		if (parts.length !== 2) {
+			warnings.push(`Invalid resource role key: ${mapKey}`);
+			continue;
+		}
 
-		// Store original resource name and sanitized key
-		const originalResourceName = rawResource as string;
-		const resource = sanitizeKey(originalResourceName);
+		const resourceKey = parts[0];
+		const roleKey = parts[1];
 
-		// Process HTTP methods to find resource roles
-		for (const method of HTTP_METHODS) {
-			const operation = typedPathItem[method] as Operation | undefined;
-			if (!operation) continue;
+		if (!resourceKey || !roleKey) {
+			warnings.push(`Invalid resource or role in key: ${mapKey}`);
+			continue;
+		}
 
-			// Process resource roles
-			const resourceRole = operation[PERMIT_EXTENSIONS.RESOURCE_ROLE];
-			if (!resourceRole) continue;
+		const actions = Array.from(actionSet);
 
-			// Properly format the role names
-			const roleBaseName = resourceRole.toString();
+		if (actions.length === 0) {
+			warnings.push(`No actions defined for role ${resourceKey}:${roleKey}`);
+			continue;
+		}
 
-			// Consistent capitalization for both resource and role
-			const displayResource = capitalizeFirstLetter(originalResourceName);
-			const displayRole = capitalizeFirstLetter(roleBaseName);
+		// Find original resource name, use resourceKey as fallback
+		let originalResourceName = resourceKey;
+		for (const [, item] of Object.entries(pathItems)) {
+			if (
+				item &&
+				typeof item === 'object' &&
+				item[PERMIT_EXTENSIONS.RESOURCE] &&
+				sanitizeKey(item[PERMIT_EXTENSIONS.RESOURCE] as string) === resourceKey
+			) {
+				originalResourceName = item[PERMIT_EXTENSIONS.RESOURCE] as string;
+				break;
+			}
+		}
 
-			// Create display name with proper format "Resource#Role"
-			const roleDisplayName = `${displayResource}#${displayRole}`;
+		// Properly capitalized display name
+		const displayName = `${capitalizeFirstLetter(originalResourceName)}#${capitalizeFirstLetter(roleKey)}`;
 
-			// Use a consistent tracking key
-			const roleMapKey = `${resource}:${roleBaseName}`;
+		try {
+			const result = await createResourceRole(
+				resourceKey,
+				roleKey,
+				displayName,
+				actions, // Only the actions explicitly assigned to this role
+			);
 
-			// Only process each role once
-			if (!resourceRoles.has(roleMapKey)) {
-				try {
-					// Get all actions for this resource
-					const resourceActions = Array.from(
-						resourceActionMap.get(resource) || [],
-					);
-
-					// Get current action for this operation
-					const currentAction = operation[PERMIT_EXTENSIONS.ACTION] || method;
-
-					// For initial creation, use the current action
-					// For comprehensive permissions, we'll update with all actions after creation
-					const initialPermission = currentAction.toString();
-
-					// Create the resource role with proper naming
-					const result = await createResourceRole(
-						resource,
-						roleBaseName, // Key for API operations
-						roleDisplayName, // Display name for UI
-						initialPermission,
-					);
-
-					if (result.error) {
-						if (!isDuplicateError(result.error)) {
-							errors.push(
-								`${ERROR_CREATING_RESOURCE_ROLE} ${roleDisplayName}: ${JSON.stringify(result.error)}`,
-							);
-						} else {
-							warnings.push(
-								`Resource role ${roleDisplayName} already exists, updating permissions...`,
-							);
-
-							// Add all resource actions to this role
-							if (resourceActions.length > 0) {
-								await updateResourceRolePermission(
-									resource,
-									roleBaseName,
-									resourceActions,
-									context,
-									updateResourceRole,
-								);
-							}
-						}
-					} else {
-						// Role created successfully, now add all actions if there are more than one
-						if (resourceActions.length > 1) {
-							await updateResourceRolePermission(
-								resource,
-								roleBaseName,
-								resourceActions,
-								context,
-								updateResourceRole,
-							);
-						}
-					}
-
-					resourceRoles.set(roleMapKey, true);
-				} catch (resourceRoleError) {
+			if (result.error) {
+				if (!isDuplicateError(result.error)) {
 					errors.push(
-						`Error creating resource role ${roleDisplayName}: ${resourceRoleError}`,
+						`${ERROR_CREATING_RESOURCE_ROLE} ${displayName}: ${JSON.stringify(result.error)}`,
+					);
+				} else {
+					// Role exists, update with only this role's permissions
+					await updateResourceRolePermission(
+						resourceKey,
+						roleKey,
+						actions,
+						context,
+						updateResourceRole,
 					);
 				}
 			}
+
+			resourceRoles.set(mapKey, true);
+		} catch (error) {
+			errors.push(
+				`Error creating/updating resource role ${displayName}: ${error}`,
+			);
 		}
 	}
 

@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import useClient from '../../hooks/useClient.js';
+import useClient from '../useClient.js';
 
 /**
  * Hook for role-related Permit API operations
@@ -84,7 +84,7 @@ export const usePermitRoleApi = () => {
 			}
 
 			// Ensure no duplicate permissions
-			permissions = [...new Set(permissions)];
+			const uniquePermissions = [...new Set(permissions)];
 
 			return await authenticatedApiClient().POST(
 				'/v2/schema/{proj_id}/{env_id}/resources/{resource_id}/roles',
@@ -93,7 +93,7 @@ export const usePermitRoleApi = () => {
 					key: roleKey,
 					name: roleName,
 					description: `${OPENAPI_DESCRIPTION} for ${resourceKey}`,
-					permissions: permissions,
+					permissions: uniquePermissions,
 				},
 			);
 		},
@@ -101,7 +101,7 @@ export const usePermitRoleApi = () => {
 	);
 
 	/**
-	 * Update a resource-specific role with additional permissions
+	 * Update a resource-specific role with all specified permissions
 	 */
 	const updateResourceRole = useCallback(
 		async (
@@ -109,37 +109,32 @@ export const usePermitRoleApi = () => {
 			roleKey: string,
 			permissionString: string | string[],
 		) => {
-			// First get existing role permissions
+			// Prepare permissions to set
+			let permissions: string[];
+			if (typeof permissionString === 'string') {
+				permissions = [permissionString];
+			} else if (Array.isArray(permissionString)) {
+				permissions = permissionString;
+			} else {
+				permissions = [];
+			}
+
+			// Ensure no duplicate permissions
+			const uniquePermissions = [...new Set(permissions)];
+
+			// Get the existing role to preserve extends and other properties
 			const { data: roleData } = await authenticatedApiClient().GET(
 				'/v2/schema/{proj_id}/{env_id}/resources/{resource_id}/roles/{role_id}',
 				{ resource_id: resourceKey, role_id: roleKey },
 			);
 
-			// Extract existing permissions
-			const existingPermissions = roleData?.permissions || [];
-
-			// Prepare permissions to add
-			let newPermissions: string[];
-			if (typeof permissionString === 'string') {
-				newPermissions = [permissionString];
-			} else if (Array.isArray(permissionString)) {
-				newPermissions = permissionString;
-			} else {
-				newPermissions = [];
-			}
-
-			// Merge permissions (deduplicate)
-			const allPermissions = [
-				...new Set([...existingPermissions, ...newPermissions]),
-			];
-
-			// Update the role
+			// Update the role with ALL the specified permissions (no extracting)
 			return await authenticatedApiClient().PATCH(
 				'/v2/schema/{proj_id}/{env_id}/resources/{resource_id}/roles/{role_id}',
 				{ resource_id: resourceKey, role_id: roleKey },
 				{
-					permissions: allPermissions,
-					extends: [],
+					permissions: uniquePermissions,
+					extends: roleData?.extends || [],
 				},
 			);
 		},

@@ -1,9 +1,3 @@
-// Define constants for repeated error messages
-export const ERROR_CREATING_RESOURCE = 'Failed to create resource';
-export const ERROR_CREATING_ROLE = 'Failed to create role';
-export const ERROR_UPDATING_ROLE = 'Failed to update role';
-export const ERROR_CREATING_RESOURCE_ROLE = 'Failed to create resource role';
-
 // Define all x-permit extensions as object properties
 export const PERMIT_EXTENSIONS = {
 	RESOURCE: 'x-permit-resource',
@@ -30,7 +24,6 @@ export interface UrlMapping {
 	resource: string;
 	action: string;
 }
-
 export interface ProcessorContext {
 	resources: Set<string>;
 	actions: Map<string, Set<string>>;
@@ -44,7 +37,6 @@ export interface ProcessorContext {
 	existingRoles: RoleKey[];
 	baseUrl: string;
 }
-
 export interface ProcessorProps {
 	inputPath: string;
 	setProgress: (message: string) => void;
@@ -53,7 +45,16 @@ export interface ProcessorProps {
 	setProcessingDone: (done: boolean) => void;
 }
 
-// Add this to your existing type definitions
 export interface UpdateResourceRoleFunction {
-	(resource: string, role: string, permission: string | string[]): Promise<any>;
+	(
+		resource: string,
+		role: string,
+		permission: string | string[],
+	): Promise<unknown>;
 }
+
+// Define constants for repeated error messages
+export const ERROR_CREATING_RESOURCE = 'Failed to create resource';
+export const ERROR_CREATING_ROLE = 'Failed to create role';
+export const ERROR_UPDATING_ROLE = 'Failed to update role';
+export const ERROR_CREATING_RESOURCE_ROLE = 'Failed to create resource role';
