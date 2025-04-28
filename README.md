@@ -112,12 +112,12 @@ Below is a categorized overview of all available Permit CLI commands:
 ### [API-First Authorization](#api-first-authorization-1)
 
 - [URL-based Permissions](#url-based-permissions)
-  
-	- [`permit pdp check-url`](#permit-pdp-check-url) - Check if a user has permission to access a specific URL. The command verifies URL-based permissions against the PDP using the Permit.io URL authorization API.
+
+  - [`permit pdp check-url`](#permit-pdp-check-url) - Check if a user has permission to access a specific URL. The command verifies URL-based permissions against the PDP using the Permit.io URL authorization API.
 
 - [OpenAPI -x Extensions for Policy Configuration](#openapi--x-permit-extensions-for-policy-configuration)
-  
-	- [`permit env apply openapi`](#permit-env-apply-openapi) - Create a full policy schema in Permit by reading an OpenAPI spec file and using `-x-permit` extensions, enabling the use of OpenAPI schema as a source of authorization policy configuration.
+
+  - [`permit env apply openapi`](#permit-env-apply-openapi) - Create a full policy schema in Permit by reading an OpenAPI spec file and using `-x-permit` extensions, enabling the use of OpenAPI schema as a source of authorization policy configuration.
 
 ### [Custom Rego (OPA) and GitOps](#custom-rego-opa-and-gitops-1)
 
@@ -709,6 +709,7 @@ $ permit api create proxy
 List all the proxy configs defined within an environment.
 
 **Arguments (Optional):**
+
 - `--api-key <string>` - your Permit API key
 - `--expand-key` - show full key values instead of truncated (`default: false`)
 - `--page <number>` - page number for pagination (`default: 1`)
@@ -880,17 +881,20 @@ Define access control rules directly within OpenAPI specifications.
 Creates a full policy schema in Permit by reading an OpenAPI spec file and using `-x-permit` extensions to define resources, actions, roles, relations, and more. This enables developers to use their OpenAPI schema as a configuration source for their authorization policy.
 
 **Arguments (Optional):**
+
 - `--api-key <string>` - API key for Permit authentication
 - `--spec-file <string>` - Path to the OpenAPI file to read from. It could be a local path or an HTTP endpoint.
 
 **Example:**
 
 Run with spec file locally:
+
 ```
 $ permit env apply openapi --spec-file ./api-spec.json
 ```
 
 Run with API key:
+
 ```
 $ permit env apply openapi --key permit_key --spec-file https://raw.githubusercontent.com/daveads/openapispec/main/blog-api.json
 ```
@@ -977,7 +981,7 @@ A more detailed example [is available here](https://github.com/daveads/openapisp
 
 For the more complex extensions that accept objects instead of strings, here's the expected structure:
 
-- Object Structure: `x-permit-relation` 
+- Object Structure: `x-permit-relation`
 
 ```
 {
