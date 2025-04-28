@@ -109,8 +109,10 @@ Below is a categorized overview of all available Permit CLI commands:
 
 ### [API-First Authorization](#api-first-authorization-1)
 
-- [OpenAPI -x Extensions for Policy Configuration - TBD](#openapi--x-permit-extensions-for-policy-configuration---tbd)
-- [URL-based Permissions - TBD](#url-based-permissions---tbd)
+- [URL-based Permissions](#url-based-permissions-1)
+	- [`permit opa policy`](#permit-opa-policy)
+- [OpenAPI -x Extensions for Policy Configuration](#openapi--x-permit-extensions-for-policy-configuration)
+	- [`permit env apply openapi`](#permit-env-apply-openapi)
 
 ### [Custom Rego (OPA) and GitOps](#custom-rego-opa-and-gitops-1)
 
@@ -736,13 +738,153 @@ Generate and apply tests for the RBAC model with default settings. Runs end‑to
 
 Define and enforce API authorization policies using OpenAPI specifications for a smooth API integration.
 
-### OpenAPI `-x-permit` Extensions for Policy Configuration - TBD
-
-Define access control rules directly within OpenAPI specifications
-
-### URL-based Permissions - TBD
+### URL-based Permissions
 
 Map API endpoints to policies using simple configurations and FastAPI decorators
+
+#### `permit opa policy`
+
+This command will print the available policies of an active OPA instance. This is useful when you want to see the policies in your OPA instance without fetching them from the OPA server.
+
+After creating the policy elements based on the `-x-permit` extensions, the command will automatically create URL mappings in Permit. These mappings connect API endpoints to the appropriate resources and actions for runtime authorization checks.
+
+For each endpoint with the required extensions, a mapping rule will be created with:
+
+- URL path from the OpenAPI spec
+- HTTP method
+- Resource from `x-permit-resource`
+- Action from `x-permit-action` or the HTTP method
+
+This enables Permit to perform authorization checks directly against your API endpoints.
+
+### OpenAPI `-x-permit` Extensions for Policy Configuration
+
+Define access control rules directly within OpenAPI specifications.
+
+#### `permit env apply openapi`
+
+This command creates a full policy schema in Permit by reading an OpenAPI spec file and using `-x-permit` extensions to define resources, actions, roles, relations, and more. This enables developers to use their OpenAPI schema as a configuration source for their authorization policy.
+
+**Arguments (Optional):**
+- `--api-key <string>` - API key for Permit authentication
+- `--spec-file <string>` - Path to the OpenAPI file to read from. It could be a local path or an HTTP endpoint.
+
+**Example:**
+
+Run with spec file locally:
+```
+$ permit env apply openapi --spec-file ./api-spec.json
+```
+
+Run with API key:
+```
+$ permit env apply openapi --key permit_key --spec-file https://raw.githubusercontent.com/daveads/openapispec/main/blog-api.json
+```
+
+**OpenAPI Extensions:**
+
+The command uses the following `-x-permit` extensions in your OpenAPI spec to map elements to the Permit policy:
+
+**Path or Endpoint Level Extensions (Required):**
+
+- `x-permit-resource` - The name of the resource to which you want to map the path.
+
+**Operation Level Extensions (HTTP Method Level):**
+
+- `x-permit-action` - Name of an action to map the HTTP method to. If not provided, the HTTP method name (get, post, etc.) will be used as the action.
+- `x-permit-role` - Name of a top-level role that is ALLOWED for this particular operation.
+- `x-permit-resource-role` - Name of a resource-level role that is ALLOWED for this particular operation.
+- `x-permit-relation` - A JSON object defining a relation between resources.
+- `x-permit-derived-role` - A JSON object defining role derivation rules.
+
+**Example: OpenAPI Spec with Permit Extensions**
+
+```yaml
+openapi: 3.0.3
+info:
+  title: 'Blog API with Permit Extensions'
+  version: '1.0.0'
+paths:
+  /posts:
+    x-permit-resource: blog_post
+    get:
+      summary: List all posts
+      x-permit-action: list
+      x-permit-role: viewer
+      # ...
+    post:
+      summary: Create a new post
+      x-permit-action: create
+      x-permit-role: editor
+      x-permit-resource-role: post_creator
+      # ...
+  /posts/{postId}:
+    x-permit-resource: blog_post
+    get:
+      summary: Get a post by ID
+      x-permit-action: read
+      x-permit-role: viewer
+      # ...
+    put:
+      summary: Update a post
+      x-permit-action: update
+      x-permit-role: editor
+      # ...
+    delete:
+      summary: Delete a post
+      x-permit-action: delete
+      x-permit-role: admin
+      # ...
+  /posts/{postId}/comments:
+    x-permit-resource: blog_comment
+    get:
+      summary: Get comments for a post
+      x-permit-action: list
+      x-permit-role: viewer
+      x-permit-relation:
+        subject_resource: blog_comment
+        object_resource: blog_post
+        key: belongs_to_post
+        name: Belongs To Post
+      # ...
+    post:
+      summary: Add a comment to a post
+      x-permit-action: create
+      x-permit-role: commenter
+      x-permit-derived-role:
+        key: post_commenter
+        name: Post Commenter
+        base_role: viewer
+        derived_role: commenter
+      # ...
+```
+
+A more detailed example [is available here](https://github.com/daveads/openapispec)
+
+For the more complex extensions that accept objects instead of strings, here's the expected structure:
+
+- Object Structure: `x-permit-relation` 
+
+```
+{
+	"subject_resource": "string", // Required: The source resource in the relation
+	"object_resource": "string", // Required: The target resource in the relation
+	"key": "string", // Optional: Unique identifier for the relation (generated if not provided)
+	"name": "string" // Optional: Human-readable name (generated if not provided)
+}
+```
+
+- Object Structure: `x-permit-derived-role`
+
+```
+{
+	"key": "string", // Optional: Unique identifier for the derived role
+	"name": "string", // Optional: Human-readable name for the derived role
+	"base_role": "string", // Required: The role that grants the derived role
+	"derived_role": "string", // Required: The role to be derived
+	"resource": "string" // Optional: The resource that the derived role applies to (defaults to the path's resource)
+}
+```
 
 ## Custom Rego (OPA) and GitOps
 
@@ -780,7 +922,7 @@ This clones the environment or the complete project from the active GitOps repos
 
 ### Extend Predefined Policies with Custom Rego (Open Policy Agent)
 
-Use the CLI to modify and fine-tune Open Policy Agent (OPA) Rego policies while maintaining system stability
+Use the CLI to modify and fine-tune Open Policy Agent (OPA) Rego policies while maintaining system stability.
 
 ---
 
