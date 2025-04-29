@@ -99,6 +99,8 @@ Below is a categorized overview of all available Permit CLI commands:
   - [`permit api users list`](#permit-api-users-list) - List all users in your Permit.io account.
   - [`permit api users assign`](#permit-api-users-assign) - Assign a role to a user within a specified tenant.
   - [`permit api users unassign`](#permit-api-users-unassign) - Remove a role assignment from a user.
+  - [`permit api create proxy`](#permit-api-create-proxy) - Create a new proxy config inside the Permit.io system.
+  - [`permit api list proxy`](#permit-api-list-proxy) - List all the proxy configs defined within an environment.
 
 ### [Policy Testing](#policy-testing-1)
 
@@ -109,8 +111,13 @@ Below is a categorized overview of all available Permit CLI commands:
 
 ### [API-First Authorization](#api-first-authorization-1)
 
-- [OpenAPI -x Extensions for Policy Configuration - TBD](#openapi--x-permit-extensions-for-policy-configuration---tbd)
-- [URL-based Permissions - TBD](#url-based-permissions---tbd)
+- [URL-based Permissions](#url-based-permissions)
+
+  - [`permit pdp check-url`](#permit-pdp-check-url) - Check if a user has permission to access a specific URL. The command verifies URL-based permissions against the PDP using the Permit.io URL authorization API.
+
+- [OpenAPI -x Extensions for Policy Configuration](#openapi--x-permit-extensions-for-policy-configuration)
+
+  - [`permit env apply openapi`](#permit-env-apply-openapi) - Create a full policy schema in Permit by reading an OpenAPI spec file and using `-x-permit` extensions, enabling the use of OpenAPI schema as a source of authorization policy configuration.
 
 ### [Custom Rego (OPA) and GitOps](#custom-rego-opa-and-gitops-1)
 
@@ -371,11 +378,11 @@ $ permit env select --api-key permit_key
 
 ### Terraform and IaC
 
-Define and enforce policies programmatically within DevOps pipelines
+Define and enforce policies programmatically within DevOps pipelines.
 
 #### `permit env export terraform`
 
-This command exports your Permit environment configuration as a Terraform HCL file.
+Export your Permit environment configuration as a Terraform HCL file.
 
 This is useful for users who want to start working with Terraform after configuring their Permit settings through the UI or API. The command exports all environment content (resources, roles, user sets, resource sets, condition sets) in the Permit Terraform provider format.
 
@@ -414,7 +421,7 @@ Generate customized, ready-to-use policy structures using natural language
 
 #### `permit policy create ai`
 
-This command allows you to create RBAC policies using natural language. It uses AI to convert your descriptions into structured Role-Based Access Control policies that can be applied to your [Permit.io](http://permit.io/) environment.
+Allows you to create RBAC policies using natural language. Your descriptions will be converted using AI into structured Role-Based Access Control policies that can be applied to your [Permit.io](http://permit.io/) environment.
 
 **Arguments (Optional):**
 
@@ -837,7 +844,7 @@ Define resources, generate test users, and assign roles through a simple step-by
 
 #### `permit init`
 
-This command is a wizard command that should take the users through all the steps, from configuring policy to enforcing it in the application
+Initialize the Permit policy wizard, which takes you through all the steps from configuring a policy to enforcing it in the application.
 
 **Arguments (Optional):**
 
@@ -885,7 +892,7 @@ Use pre-built policy templates to automate rule creation for different industrie
 
 #### `permit env template list`
 
-Use this command to list all the available policy templates to apply to your environment.
+List all the available policy templates to apply to your environment.
 
 **Arguments (Optional)**
 
@@ -901,7 +908,7 @@ $ permit env template list
 
 #### `permit env template apply`
 
-This command applies a policy template to your current environment, which is useful for quickly setting up new environments with predefined configurations.
+Applies a policy template to your current environment, which is useful for quickly setting up new environments with predefined configurations.
 
 > Note: The command uses the Terraform provider to apply the template, but a Terraform installation is not required.
 
@@ -957,7 +964,7 @@ $ permit api sync user
 
 #### `permit api users list`
 
-Use this command to list all users in Permit.
+List all users in Permit.
 
 **Arguments (Optional):**
 
@@ -986,7 +993,7 @@ In the example above, we fetch a list of all users with the admin role in the de
 
 #### `permit api users assign`
 
-Use this command to assign a user to a specific role in Permit.
+Assign a user to a specific role in Permit.
 
 **Arguments (Required):**
 
@@ -1010,7 +1017,7 @@ $ permit api users assign --user user@example.com --role admin --tenant default
 
 #### `permit api users unassign`
 
-Use this command to remove a role assignment from a user in Permit.
+Remove a role assignment from a user in Permit.
 
 **Arguments (Required):**
 
@@ -1029,6 +1036,88 @@ Use this command to remove a role assignment from a user in Permit.
 ```bash
 $ permit api users unassign --user user@example.com --role admin --tenant default
 ```
+
+---
+
+#### `permit api create proxy`
+
+Create a new proxy config inside the Permit.io system.
+
+**Arguments (Optional):**
+
+- `--api-Key <string>` - your Permit API key.
+- `--secret <string>`- Proxy config secret is set to enable the Permit Proxy to make proxied requests to the backend service.
+- `--key <string>` - a unique ID by which Permit will identify the user for permission checks..
+- `--name <string>` - The name of the proxy config, for example(e.g., Stripe API).
+- `--auth-mechanism <string>` - Authentication mechanism used to inject the secret. One of: Bearer, Basic, Headers. Defaults to Bearer.
+- `--mapping-rules` - Mapping rule must start with a valid HTTP method, then a URL, then a resource (e.g. "get|https://api.example.com|users"), then optionally: "|action|priority|{headers}|url_type".
+
+**Mapping rules can also be provided as individual Arguments (Optional - (Ignored if the mapping-rule arguments are present):**
+
+- `--mapping-rule-method <string>` - Must be a valid HTTP method (get|put|post|delete|options|head|patch).
+- `--mapping-rule-url <string>` - Must be a valid URL (e.g. https://api.example.com).
+- `--mapping-rule-resource <string>` - Resource to match against the request (no leading slash).
+- `--mapping-rule-action <string>` - Optional action name for the mapping rule.
+- `--mapping-rule-headers <array>` - Optional list of headers, each as "Key:Value".
+- `--mapping-rule-priority <integer>` - Optional priority (positive integer) for the mapping rule.
+- `--mapping-rule-url-type <string>` - How to interpret the URL: "regex" or "none".
+
+**Examples:**
+
+```bash
+$ permit api create proxy
+  --api-key "YOUR_API_KEY" \\
+  --secret "YOUR_SECRET" \\
+  --key "KEY" \\
+  --name "jhon" \\
+  --auth-mechanism  "Bearer" \\
+  --mapping-rules "get|https://api.example.com|users|getUsers|10|{Authorization:Bearer abc,X-Custom:v7}|regex"
+```
+
+**Individual mapping rules:**
+
+```bash
+$ permit api create proxy
+  --api-key "YOUR_API_KEY" \\
+  --secret "YOUR_SECRET" \\
+  --key "KEY" \\
+  --name "jhon" \\
+  --auth-mechanism  "Bearer" \\
+  --mapping-rule-url https://foo.com \\
+  --mapping-rule-method post \\
+  --mapping-rule-resource myresource \\
+  --mapping-rule-headers "k1:v1" \\
+  --mapping-rule-action create \\
+  --mapping-rule-priority 10 \\
+  --mapping-rule-url-type regex
+```
+
+---
+
+#### `permit api list proxy`
+
+List all the proxy configs defined within an environment.
+
+**Arguments (Optional):**
+
+- `--api-key <string>` - your Permit API key
+- `--expand-key` - show full key values instead of truncated (`default: false`)
+- `--page <number>` - page number for pagination (`default: 1`)
+- `--per-page <number>` - number of items per page (`default: 30`)
+- `--all` - fetch all pages of users (`default: false`)
+
+**Example:**
+
+```bash
+$ permit api list proxy
+        --api-key "YOUR_API_KEY" \\
+        --expand-key
+	--page 2
+	--per-page 50
+	--all
+```
+
+In the example above, we fetch a list of all proxies in the default environment.
 
 ## Policy Testing
 
@@ -1126,13 +1215,184 @@ Generate and apply tests for the RBAC model with default settings. Runs end‑to
 
 Define and enforce API authorization policies using OpenAPI specifications for a smooth API integration.
 
-### OpenAPI `-x-permit` Extensions for Policy Configuration - TBD
-
-Define access control rules directly within OpenAPI specifications
-
-### URL-based Permissions - TBD
+### URL-based Permissions
 
 Map API endpoints to policies using simple configurations and FastAPI decorators
+
+#### `permit pdp check-url`
+
+Check if a user has permission to access a specific URL. The command verifies URL-based permissions against the PDP using the Permit.io URL authorization API.
+
+**Arguments (Required):**
+
+- `--user <string>` - the user id to check permissions for (Required)
+- `--url <string>` - the URL to check permissions for (Required)
+
+**Arguments (Optional):**
+
+- `--method <string>` - the HTTP method to check permissions for (default: `GET`)
+- `--tenant <string>` - the tenant to check permissions for (default: `default`)
+- `--user-attributes <string>` - additional user attributes to enrich the authorization check in the format `key1:value1,key2:value2`. Can be specified multiple times.
+- `--pdp-url <string>` - the PDP URL to check authorization against (default: Cloud PDP)
+- `--api-key <string>` - the API key for the Permit env, project or Workspace
+
+**Examples:**
+
+Basic URL permission check:
+
+```bash
+$ permit pdp check-url --user john@example.com --url https://api.example.com/orders
+```
+
+Check with specific HTTP method and tenant:
+
+```
+$ permit pdp check-url --user john@example.com --url https://api.example.com/orders --method POST --tenant acme-corp
+```
+
+Check with user attributes:
+
+```
+$ permit pdp check-url --user john@example.com --url https://api.example.com/orders --user-attributes role:admin --user-attributes department:sales
+```
+
+Check against local PDP:
+
+```
+$ permit pdp check-url --user john@example.com --url https://api.example.com/orders --pdp-url http://localhost:7766
+```
+
+### OpenAPI `-x-permit` Extensions for Policy Configuration
+
+Define access control rules directly within OpenAPI specifications.
+
+#### `permit env apply openapi`
+
+Creates a full policy schema in Permit by reading an OpenAPI spec file and using `-x-permit` extensions to define resources, actions, roles, relations, and more. This enables developers to use their OpenAPI schema as a configuration source for their authorization policy.
+
+**Arguments (Optional):**
+
+- `--api-key <string>` - API key for Permit authentication
+- `--spec-file <string>` - Path to the OpenAPI file to read from. It could be a local path or an HTTP endpoint.
+
+**Example:**
+
+Run with spec file locally:
+
+```
+$ permit env apply openapi --spec-file ./api-spec.json
+```
+
+Run with API key:
+
+```
+$ permit env apply openapi --key permit_key --spec-file https://raw.githubusercontent.com/daveads/openapispec/main/blog-api.json
+```
+
+**OpenAPI Extensions:**
+
+The command uses the following `-x-permit` extensions in your OpenAPI spec to map elements to the Permit policy:
+
+**Path or Endpoint Level Extensions (Required):**
+
+- `x-permit-resource` - The name of the resource to which you want to map the path.
+
+**Operation Level Extensions (HTTP Method Level):**
+
+- `x-permit-action` - Name of an action to map the HTTP method to. If not provided, the HTTP method name (get, post, etc.) will be used as the action.
+- `x-permit-role` - Name of a top-level role that is ALLOWED for this particular operation.
+- `x-permit-resource-role` - Name of a resource-level role that is ALLOWED for this particular operation.
+- `x-permit-relation` - A JSON object defining a relation between resources.
+- `x-permit-derived-role` - A JSON object defining role derivation rules.
+
+**Example: OpenAPI Spec with Permit Extensions**
+
+```yaml
+openapi: 3.0.3
+info:
+  title: 'Blog API with Permit Extensions'
+  version: '1.0.0'
+paths:
+  /posts:
+    x-permit-resource: blog_post
+    get:
+      summary: List all posts
+      x-permit-action: list
+      x-permit-role: viewer
+      # ...
+    post:
+      summary: Create a new post
+      x-permit-action: create
+      x-permit-role: editor
+      x-permit-resource-role: post_creator
+      # ...
+  /posts/{postId}:
+    x-permit-resource: blog_post
+    get:
+      summary: Get a post by ID
+      x-permit-action: read
+      x-permit-role: viewer
+      # ...
+    put:
+      summary: Update a post
+      x-permit-action: update
+      x-permit-role: editor
+      # ...
+    delete:
+      summary: Delete a post
+      x-permit-action: delete
+      x-permit-role: admin
+      # ...
+  /posts/{postId}/comments:
+    x-permit-resource: blog_comment
+    get:
+      summary: Get comments for a post
+      x-permit-action: list
+      x-permit-role: viewer
+      x-permit-relation:
+        subject_resource: blog_comment
+        object_resource: blog_post
+        key: belongs_to_post
+        name: Belongs To Post
+      # ...
+    post:
+      summary: Add a comment to a post
+      x-permit-action: create
+      x-permit-role: commenter
+      x-permit-derived-role:
+        key: post_commenter
+        name: Post Commenter
+        base_role: viewer
+        derived_role: commenter
+      # ...
+```
+
+A more detailed example [is available here](https://github.com/daveads/openapispec)
+
+For the more complex extensions that accept objects instead of strings, here's the expected structure:
+
+- Object Structure: `x-permit-relation`
+
+```
+{
+	"subject_resource": "string", // Required: The source resource in the relation
+	"object_resource": "string", // Required: The target resource in the relation
+	"key": "string", // Optional: Unique identifier for the relation (generated if not provided)
+	"name": "string" // Optional: Human-readable name (generated if not provided)
+}
+```
+
+- Object Structure: `x-permit-derived-role`
+
+```
+{
+	"key": "string", // Optional: Unique identifier for the derived role
+	"name": "string", // Optional: Human-readable name for the derived role
+	"base_role": "string", // Required: The role that grants the derived role
+	"derived_role": "string", // Required: The role to be derived
+	"resource": "string" // Optional: The resource that the derived role applies to (defaults to the path's resource)
+}
+```
 
 ## Custom Rego (OPA) and GitOps
 
@@ -1170,13 +1430,24 @@ This clones the environment or the complete project from the active GitOps repos
 
 ### Extend Predefined Policies with Custom Rego (Open Policy Agent)
 
-Use the CLI to modify and fine-tune Open Policy Agent (OPA) Rego policies while maintaining system stability
+Use the CLI to modify and fine-tune Open Policy Agent (OPA) Rego policies while maintaining system stability.
 
 ---
 
 #### `permit opa policy`
 
 This command will print the available policies of an active OPA instance. This is useful when you want to see the policies in your OPA instance without fetching them from the OPA server.
+
+After creating the policy elements based on the `-x-permit` extensions, the command will automatically create URL mappings in Permit. These mappings connect API endpoints to the appropriate resources and actions for runtime authorization checks.
+
+For each endpoint with the required extensions, a mapping rule will be created with:
+
+- URL path from the OpenAPI spec
+- HTTP method
+- Resource from `x-permit-resource`
+- Action from `x-permit-action` or the HTTP method
+
+This enables Permit to perform authorization checks directly against your API endpoints.
 
 **Arguments (Optional)**
 
