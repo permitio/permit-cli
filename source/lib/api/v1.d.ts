@@ -134,7 +134,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List OrganizationReadWithAPIKey Members
+         * List Organization Members
          * @description Lists all the account members that current active account has access to, optionally filtering by project or environment.
          *     The active account/organization is determined by the API Key used or by the authenticated session id.
          */
@@ -167,7 +167,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get OrganizationReadWithAPIKey Member
+         * Get Organization Member
          * @description Gets a single account member by its id or email address. matching the given member,
          *     if no such member exists under the current active account (organization), returns 404.
          */
@@ -312,7 +312,7 @@ export interface paths {
         get: operations["list_organizations"];
         put?: never;
         /**
-         * Create OrganizationReadWithAPIKey
+         * Create Organization
          * @description If you want to create org via API, reach out to us and we will add the permission to your API token
          */
         post: operations["create_organization"];
@@ -330,7 +330,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get OrganizationReadWithAPIKey
+         * Get Organization
          * @description Gets a single organization (Permit.io account) matching the given org_id,
          *     if such org exists and can be accessed by the authenticated actor.
          */
@@ -338,14 +338,14 @@ export interface paths {
         put?: never;
         post?: never;
         /**
-         * Delete OrganizationReadWithAPIKey
+         * Delete Organization
          * @description Deletes an organization (Permit.io account) and all its related data.
          */
         delete: operations["delete_organization"];
         options?: never;
         head?: never;
         /**
-         * Update OrganizationReadWithAPIKey
+         * Update Organization
          * @description Updates the organization's profile.
          */
         patch: operations["update_organization"];
@@ -359,7 +359,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get Active OrganizationReadWithAPIKey
+         * Get Active Organization
          * @description Gets a single organization (Permit.io account) matching the given org_id,
          *     if such org exists and can be accessed by the authenticated actor.
          */
@@ -379,7 +379,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Stats OrganizationReadWithAPIKey */
+        /** Stats Organization */
         get: operations["stats_organization"];
         put?: never;
         post?: never;
@@ -397,13 +397,13 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List OrganizationReadWithAPIKey Invites
+         * List Organization Invites
          * @description Lists pending organization invites
          */
         get: operations["list_organization_invites"];
         put?: never;
         /**
-         * Invite Members To OrganizationReadWithAPIKey
+         * Invite Members To Organization
          * @description Invite new members into the organization.
          */
         post: operations["invite_members_to_organization"];
@@ -2241,6 +2241,109 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v2/facts/{proj_id}/{env_id}/access_requests/{elements_config_id}/user/{user_id}/tenant/{tenant_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Access Requests */
+        get: operations["list_access_requests"];
+        put?: never;
+        /** Create Access Request */
+        post: operations["create_access_request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/facts/{proj_id}/{env_id}/access_requests/{elements_config_id}/user/{user_id}/tenant/{tenant_id}/{access_request_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Access Request */
+        get: operations["get_access_request"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/facts/{proj_id}/{env_id}/access_requests/{elements_config_id}/user/{user_id}/tenant/{tenant_id}/{access_request_id}/reviewer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Access Request Reviewer */
+        patch: operations["update_access_request_reviewer"];
+        trace?: never;
+    };
+    "/v2/facts/{proj_id}/{env_id}/access_requests/{elements_config_id}/user/{user_id}/tenant/{tenant_id}/{access_request_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Approve Access Request */
+        put: operations["approve_access_request"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/facts/{proj_id}/{env_id}/access_requests/{elements_config_id}/user/{user_id}/tenant/{tenant_id}/{access_request_id}/deny": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Deny Access Request */
+        put: operations["deny_access_request"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/facts/{proj_id}/{env_id}/access_requests/{elements_config_id}/user/{user_id}/tenant/{tenant_id}/{access_request_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Cancel Access Request */
+        put: operations["cancel_access_request"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v2/pdps/{proj_id}/{env_id}/configs": {
         parameters: {
             query?: never;
@@ -2748,10 +2851,10 @@ export interface paths {
             cookie?: never;
         };
         /** List Access Requests */
-        get: operations["list_access_requests"];
+        get: operations["list_access_requests_v2_elements__proj_id___env_id__config__elements_config_id__access_requests_get"];
         put?: never;
         /** Create Access Request */
-        post: operations["create_access_request"];
+        post: operations["create_access_request_v2_elements__proj_id___env_id__config__elements_config_id__access_requests_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2766,7 +2869,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get Access Request */
-        get: operations["get_access_request"];
+        get: operations["get_access_request_v2_elements__proj_id___env_id__config__elements_config_id__access_requests__access_request_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2789,7 +2892,7 @@ export interface paths {
         options?: never;
         head?: never;
         /** Update Access Request Reviewer */
-        patch: operations["update_access_request_reviewer"];
+        patch: operations["update_access_request_reviewer_v2_elements__proj_id___env_id__config__elements_config_id__access_requests__access_request_id__reviewer_patch"];
         trace?: never;
     };
     "/v2/elements/{proj_id}/{env_id}/config/{elements_config_id}/access_requests/{access_request_id}/approve": {
@@ -2801,7 +2904,7 @@ export interface paths {
         };
         get?: never;
         /** Approve Access Request */
-        put: operations["approve_access_request"];
+        put: operations["approve_access_request_v2_elements__proj_id___env_id__config__elements_config_id__access_requests__access_request_id__approve_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -2818,7 +2921,7 @@ export interface paths {
         };
         get?: never;
         /** Deny Access Request */
-        put: operations["deny_access_request"];
+        put: operations["deny_access_request_v2_elements__proj_id___env_id__config__elements_config_id__access_requests__access_request_id__deny_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -2835,7 +2938,7 @@ export interface paths {
         };
         get?: never;
         /** Cancel Access Request */
-        put: operations["cancel_access_request"];
+        put: operations["cancel_access_request_v2_elements__proj_id___env_id__config__elements_config_id__access_requests__access_request_id__cancel_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -3321,6 +3424,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v2/audit-log-replay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run the audit log replay
+         * @description Run the audit log replay with the given parameters. This will replay PDP requests based on audit logs.
+         */
+        post: operations["run_audit_log_replay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3460,7 +3583,7 @@ export interface components {
         /** APIKeyCreate */
         APIKeyCreate: {
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              */
             organization_id: string;
@@ -3492,7 +3615,7 @@ export interface components {
         /** APIKeyRead */
         APIKeyRead: {
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              */
             organization_id: string;
@@ -3537,7 +3660,7 @@ export interface components {
         /** APIKeyScopeRead */
         APIKeyScopeRead: {
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the api_key belongs to.
              */
@@ -3623,7 +3746,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the access request belongs to.
              */
@@ -3718,7 +3841,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the access request belongs to.
              */
@@ -3839,7 +3962,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the access request belongs to.
              */
@@ -3913,6 +4036,11 @@ export interface components {
              * @description role id or key that the user is requesting access to
              */
             role: string;
+            /**
+             * Element Config Id
+             * @description element config id or key that the user is requesting access request from
+             */
+            element_config_id?: string;
         };
         /**
          * AccessRequestRead
@@ -3955,7 +4083,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the access request belongs to.
              */
@@ -4357,7 +4485,7 @@ export interface components {
              * Format: uuid
              */
             id?: string;
-            /** OrganizationReadWithAPIKey Object */
+            /** Organization Object */
             organization_object?: components["schemas"]["OrganizationObj"] | Record<string, never>;
             /** Project Object */
             project_object?: components["schemas"]["ProjectObj"] | Record<string, never>;
@@ -4376,6 +4504,54 @@ export interface components {
             created_at?: string;
         };
         /**
+         * AuditLogReplayRequest
+         * @description Request model for audit log replay
+         */
+        AuditLogReplayRequest: {
+            /**
+             * Pdp Url
+             * @description URL of the PDP to test against
+             * @example http://mydomain.com:7766
+             */
+            pdp_url: string;
+            /**
+             * Start Time
+             * @description Start time for the query (in seconds since epoch). Defaults to 24 hours ago.
+             * @example 1616432400
+             */
+            start_time?: number;
+            /**
+             * End Time
+             * @description End time for the query (in seconds since epoch). Defaults to current time.
+             * @example 1616518800
+             */
+            end_time?: number;
+            /**
+             * Concurrency Limit
+             * @description Concurrency limit for processing documents (max: 5)
+             * @default 10
+             * @example 10
+             */
+            concurrency_limit: number;
+            /**
+             * Graceful Shutdown S
+             * @description Graceful shutdown time in seconds
+             * @default 60
+             * @example 60
+             */
+            graceful_shutdown_s: number;
+        };
+        /**
+         * AuditLogReplayResponse
+         * @description Response model for audit log replay
+         */
+        AuditLogReplayResponse: {
+            /** Message */
+            message: string;
+            /** Document Count */
+            document_count: number;
+        };
+        /**
          * AuditLogSortKey
          * @description An enumeration.
          * @enum {string}
@@ -4392,7 +4568,7 @@ export interface components {
          * @description An enumeration.
          * @enum {string}
          */
-        BillingTierType: "free" | "startup" | "pro" | "enterprise" | "internal";
+        BillingTierType: "free" | "startup" | "pro" | "enterprise" | "internal" | "trial";
         /** BulkRoleAssignmentReport */
         BulkRoleAssignmentReport: {
             /**
@@ -4577,7 +4753,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the condition set belongs to.
              */
@@ -4709,7 +4885,7 @@ export interface components {
              */
             resource_set: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the condition set rule belongs to.
              */
@@ -4938,15 +5114,15 @@ export interface components {
         /**
          * DerivedRoleBlockRead
          * @example {
-         *       "id": "34821f4a-8191-491d-b550-864580f86ece",
+         *       "id": "4301a511-8222-4fb3-9eba-3426cf35b83d",
          *       "users_with_role": [
          *         {
          *           "role": "Admin",
          *           "on_resource": "organization",
          *           "linked_by_relation": "owner",
-         *           "role_id": "e985caaa-7712-4515-befd-e29336f6c954",
-         *           "resource_id": "485c3c3b-edb3-4ef0-9d9b-ffd87a947236",
-         *           "relation_id": "e1a09e35-5ff8-4beb-bc8e-847a16842a34"
+         *           "role_id": "4c7b15b4-f37d-4d0f-a1f3-b842534970c7",
+         *           "resource_id": "20ead6a5-fa37-412c-8895-791af02cddcb",
+         *           "relation_id": "0ac35ce0-c664-49da-8421-6cf2866799e1"
          *         }
          *       ]
          *     }
@@ -5071,9 +5247,9 @@ export interface components {
          *       "role": "Admin",
          *       "on_resource": "organization",
          *       "linked_by_relation": "owner",
-         *       "role_id": "e985caaa-7712-4515-befd-e29336f6c954",
-         *       "resource_id": "485c3c3b-edb3-4ef0-9d9b-ffd87a947236",
-         *       "relation_id": "e1a09e35-5ff8-4beb-bc8e-847a16842a34"
+         *       "role_id": "4c7b15b4-f37d-4d0f-a1f3-b842534970c7",
+         *       "resource_id": "20ead6a5-fa37-412c-8895-791af02cddcb",
+         *       "relation_id": "0ac35ce0-c664-49da-8421-6cf2866799e1"
          *     }
          */
         DerivedRoleRuleRead: {
@@ -5246,7 +5422,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the elements_config belongs to.
              */
@@ -5502,7 +5678,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the elements_user_invite belongs to.
              */
@@ -5662,7 +5838,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the EmailTemplate belongs to.
              */
@@ -5940,7 +6116,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the environment belongs to.
              */
@@ -6005,7 +6181,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the environment belongs to.
              */
@@ -6094,7 +6270,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the environment belongs to.
              */
@@ -6181,7 +6357,7 @@ export interface components {
          * @description An enumeration.
          * @enum {string}
          */
-        ErrorCode: "INVALID_INPUT" | "INVALID_JWKS_CONFIGURATION" | "UNEXPECTED_ERROR" | "NOT_FOUND" | "DUPLICATE_ENTITY" | "EMPTY_DECISION_LOGS" | "MISSING_REQUEST_ATTRIBUTE" | "FORBIDDEN_ACCESS" | "INVALID_PERMISSION_FORMAT" | "MISSING_PERMISSIONS" | "UNSUPPORTED_ATTRIBUTE_TYPE" | "MISSING_RESOURCE_ATTRIBUTE" | "MISMATCH_ATTRIBUTES_TYPES" | "INVALID_POLICY_REPO_STATUS" | "INVALID_SMTP_CONFIGURATION" | "MISMATCH_RESOURCE_INSTANCES_TENANTS" | "PAGINATION_SIZE_OVERREACHED" | "MISMATCH_RELATION_TYPE" | "CONCURRENT_OPERATION_DISALLOWED";
+        ErrorCode: "INVALID_INPUT" | "INVALID_JWKS_CONFIGURATION" | "UNEXPECTED_ERROR" | "NOT_FOUND" | "DUPLICATE_ENTITY" | "EMPTY_DECISION_LOGS" | "MISSING_REQUEST_ATTRIBUTE" | "FORBIDDEN_ACCESS" | "INVALID_PERMISSION_FORMAT" | "MISSING_PERMISSIONS" | "UNSUPPORTED_ATTRIBUTE_TYPE" | "MISSING_RESOURCE_ATTRIBUTE" | "MISMATCH_ATTRIBUTES_TYPES" | "INVALID_POLICY_REPO_STATUS" | "INVALID_SMTP_CONFIGURATION" | "MISMATCH_RESOURCE_INSTANCES_TENANTS" | "PAGINATION_SIZE_OVERREACHED" | "MISMATCH_RELATION_TYPE" | "CONCURRENT_OPERATION_DISALLOWED" | "UNAUTHORIZED";
         /** ErrorDetails */
         ErrorDetails: {
             /** Id */
@@ -6756,7 +6932,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the invite belongs to.
              */
@@ -6955,7 +7131,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the email_configuration belongs to.
              */
@@ -6977,10 +7153,15 @@ export interface components {
         MappingRule: {
             /**
              * Url
-             * Format: uri
              * @description The URL to match against the request URL
              */
             url: string;
+            /**
+             * Url Type
+             * @description The URL type to match against the request URL can be, 'regex' or none
+             * @enum {string}
+             */
+            url_type?: "regex";
             /** @description The HTTP method to match against the request method */
             http_method: components["schemas"]["Methods"];
             /**
@@ -7243,7 +7424,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the operation approval  belongs to.
              */
@@ -7337,7 +7518,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the operation approval  belongs to.
              */
@@ -7452,7 +7633,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the operation approval  belongs to.
              */
@@ -7572,7 +7753,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the operation approval  belongs to.
              */
@@ -7694,7 +7875,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the operation approval  belongs to.
              */
@@ -8366,7 +8547,7 @@ export interface components {
             /** Name */
             name?: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the pdp_config belongs to.
              */
@@ -8773,7 +8954,7 @@ export interface components {
         /** Permission */
         Permission: {
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              */
             organization_id: string;
@@ -8789,13 +8970,13 @@ export interface components {
             environment_id?: string;
             object_type: components["schemas"]["MemberAccessObj"];
             access_level: components["schemas"]["MemberAccessLevel"];
-            /** OrganizationReadWithAPIKey Key */
+            /** Organization Key */
             organization_key?: string;
             /** Project Key */
             project_key?: string;
             /** Environment Key */
             environment_key?: string;
-            /** OrganizationReadWithAPIKey Name */
+            /** Organization Name */
             organization_name?: string;
             /** Project Name */
             project_name?: string;
@@ -8962,7 +9143,7 @@ export interface components {
              */
             scope_id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the ScopeConfig belongs to.
              */
@@ -9049,7 +9230,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the ScopeConfig belongs to.
              */
@@ -9214,7 +9395,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the project belongs to.
              */
@@ -9285,8 +9466,9 @@ export interface components {
          *       "mapping_rules": [
          *         {
          *           "url": "https://api.stripe.com/v1/customers",
-         *           "method": "post",
+         *           "http_method": "post",
          *           "resource": "customers",
+         *           "action": "create",
          *           "headers": {
          *             "required_header": "strict"
          *           }
@@ -9343,8 +9525,9 @@ export interface components {
          *       "mapping_rules": [
          *         {
          *           "url": "https://api.stripe.com/v1/customers",
-         *           "method": "post",
+         *           "http_method": "post",
          *           "resource": "customers",
+         *           "action": "create",
          *           "headers": {
          *             "required_header": "strict"
          *           }
@@ -9365,7 +9548,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the proxy config belongs to.
              */
@@ -9428,8 +9611,9 @@ export interface components {
          *       "mapping_rules": [
          *         {
          *           "url": "https://api.stripe.com/v1/customers",
-         *           "method": "post",
+         *           "http_method": "post",
          *           "resource": "customers",
+         *           "action": "create",
          *           "headers": {
          *             "required_header": "strict"
          *           }
@@ -9469,7 +9653,7 @@ export interface components {
         /**
          * RelationBlockRead
          * @example {
-         *       "resource_id": "759bae5c-c7c2-4cdf-bb8a-2de6425ad339",
+         *       "resource_id": "d31d5e91-5d50-4c20-a89c-adcb6467f0fe",
          *       "relation_name": "parent",
          *       "resource": "parent-resource"
          *     }
@@ -9573,7 +9757,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the relation belongs to.
              */
@@ -9780,7 +9964,7 @@ export interface components {
              */
             tenant_id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the relationship tuple belongs to.
              */
@@ -9892,7 +10076,7 @@ export interface components {
              */
             tenant_id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the relationship tuple belongs to.
              */
@@ -10107,7 +10291,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the action group belongs to.
              */
@@ -10221,7 +10405,7 @@ export interface components {
              */
             permission_name: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the action belongs to.
              */
@@ -10356,7 +10540,7 @@ export interface components {
              */
             resource_key: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the attribute belongs to.
              */
@@ -10438,7 +10622,7 @@ export interface components {
          *         }
          *       },
          *       "relations": {
-         *         "parent": "OrganizationReadWithAPIKey"
+         *         "parent": "Organization"
          *       },
          *       "attributes": {
          *         "created": {
@@ -10697,7 +10881,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the resource instance belongs to.
              */
@@ -10793,7 +10977,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the resource instance belongs to.
              */
@@ -10901,15 +11085,15 @@ export interface components {
          *           ],
          *           "resource": "repo",
          *           "granted_to": {
-         *             "id": "34821f4a-8191-491d-b550-864580f86ece",
+         *             "id": "4301a511-8222-4fb3-9eba-3426cf35b83d",
          *             "users_with_role": [
          *               {
          *                 "role": "Admin",
          *                 "on_resource": "organization",
          *                 "linked_by_relation": "owner",
-         *                 "role_id": "e985caaa-7712-4515-befd-e29336f6c954",
-         *                 "resource_id": "485c3c3b-edb3-4ef0-9d9b-ffd87a947236",
-         *                 "relation_id": "e1a09e35-5ff8-4beb-bc8e-847a16842a34"
+         *                 "role_id": "4c7b15b4-f37d-4d0f-a1f3-b842534970c7",
+         *                 "resource_id": "20ead6a5-fa37-412c-8895-791af02cddcb",
+         *                 "relation_id": "0ac35ce0-c664-49da-8421-6cf2866799e1"
          *               }
          *             ]
          *           },
@@ -10923,7 +11107,7 @@ export interface components {
          *       },
          *       "relations": {
          *         "parent": {
-         *           "resource_id": "759bae5c-c7c2-4cdf-bb8a-2de6425ad339",
+         *           "resource_id": "d31d5e91-5d50-4c20-a89c-adcb6467f0fe",
          *           "relation_name": "parent",
          *           "resource": "parent-resource"
          *         }
@@ -10955,7 +11139,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the resource belongs to.
              */
@@ -11198,15 +11382,15 @@ export interface components {
          *       ],
          *       "resource": "repo",
          *       "granted_to": {
-         *         "id": "34821f4a-8191-491d-b550-864580f86ece",
+         *         "id": "4301a511-8222-4fb3-9eba-3426cf35b83d",
          *         "users_with_role": [
          *           {
          *             "role": "Admin",
          *             "on_resource": "organization",
          *             "linked_by_relation": "owner",
-         *             "role_id": "e985caaa-7712-4515-befd-e29336f6c954",
-         *             "resource_id": "485c3c3b-edb3-4ef0-9d9b-ffd87a947236",
-         *             "relation_id": "e1a09e35-5ff8-4beb-bc8e-847a16842a34"
+         *             "role_id": "4c7b15b4-f37d-4d0f-a1f3-b842534970c7",
+         *             "resource_id": "20ead6a5-fa37-412c-8895-791af02cddcb",
+         *             "relation_id": "0ac35ce0-c664-49da-8421-6cf2866799e1"
          *           }
          *         ]
          *       },
@@ -11262,7 +11446,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the role belongs to.
              */
@@ -11503,7 +11687,7 @@ export interface components {
             tenant: components["schemas"]["RoleAssignmentTenant"];
             resource_instance?: components["schemas"]["RoleAssignmentResourceInstance"];
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the role assignment belongs to.
              */
@@ -11595,7 +11779,7 @@ export interface components {
              */
             tenant_id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the role assignment belongs to.
              */
@@ -11968,7 +12152,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the role belongs to.
              */
@@ -12117,7 +12301,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the email_configuration belongs to.
              */
@@ -12193,7 +12377,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the ScopeConfig belongs to.
              */
@@ -12478,7 +12662,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the tenant belongs to.
              */
@@ -12808,7 +12992,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the user belongs to.
              */
@@ -13026,7 +13210,7 @@ export interface components {
              */
             id: string;
             /**
-             * OrganizationReadWithAPIKey Id
+             * Organization Id
              * Format: uuid
              * @description Unique id of the organization that the webhook belongs to.
              */
@@ -13931,7 +14115,9 @@ export interface operations {
             query?: never;
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                page_full_url?: string;
+            };
         };
         requestBody: {
             content: {
@@ -21013,6 +21199,445 @@ export interface operations {
             };
         };
     };
+    list_access_requests: {
+        parameters: {
+            query?: {
+                /** @description Optional status filter, will only return access requests with this status. */
+                status?: components["schemas"]["RequestStatus"];
+                /** @description Optional role filter, will only return access request granted with that role. */
+                role?: string;
+                /** @description Optional resource filter, will only return access request granted in that resource. */
+                resource?: string;
+                /** @description Page number of the results to fetch, starting at 1. */
+                page?: number;
+                /** @description The number of results per page (max 100). */
+                per_page?: number;
+                /** @description For ReBAC Elements, the resource instance ID or key to work on */
+                resource_instance_id?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Either the unique id of the tenant, or the URL-friendly key of the tenant (i.e: the "slug").
+                 * @example my_tenant
+                 */
+                tenant_id: string;
+                /**
+                 * @description Either the unique id of the user, or the URL-friendly key of the user (i.e: the "slug").
+                 * @example my_user
+                 */
+                user_id: string;
+                /**
+                 * @description Either the unique id of the elements_config, or the URL-friendly key of the elements_config (i.e: the "slug").
+                 * @example my_elements_config
+                 */
+                elements_config_id: string;
+                /**
+                 * @description Either the unique id of the project, or the URL-friendly key of the project (i.e: the "slug").
+                 * @example my_project
+                 */
+                proj_id: string;
+                /**
+                 * @description Either the unique id of the environment, or the URL-friendly key of the environment (i.e: the "slug").
+                 * @example my_environment
+                 */
+                env_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedResult_AccessRequestRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_access_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Either the unique id of the tenant, or the URL-friendly key of the tenant (i.e: the "slug").
+                 * @example my_tenant
+                 */
+                tenant_id: string;
+                /**
+                 * @description Either the unique id of the user, or the URL-friendly key of the user (i.e: the "slug").
+                 * @example my_user
+                 */
+                user_id: string;
+                /**
+                 * @description Either the unique id of the project, or the URL-friendly key of the project (i.e: the "slug").
+                 * @example my_project
+                 */
+                proj_id: string;
+                /**
+                 * @description Either the unique id of the environment, or the URL-friendly key of the environment (i.e: the "slug").
+                 * @example my_environment
+                 */
+                env_id: string;
+                /**
+                 * @description Either the unique id of the elements_config, or the URL-friendly key of the elements_config (i.e: the "slug").
+                 * @example my_elements_config
+                 */
+                elements_config_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessRequestUserCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessRequestRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_access_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Either the unique id of the access_request, or the URL-friendly key of the access_request (i.e: the "slug").
+                 * @example 42f0e113-219b-4bb9-ba90-c2c904761be1
+                 */
+                access_request_id: string;
+                /**
+                 * @description Either the unique id of the tenant, or the URL-friendly key of the tenant (i.e: the "slug").
+                 * @example my_tenant
+                 */
+                tenant_id: string;
+                /**
+                 * @description Either the unique id of the user, or the URL-friendly key of the user (i.e: the "slug").
+                 * @example my_user
+                 */
+                user_id: string;
+                /**
+                 * @description Either the unique id of the project, or the URL-friendly key of the project (i.e: the "slug").
+                 * @example my_project
+                 */
+                proj_id: string;
+                /**
+                 * @description Either the unique id of the environment, or the URL-friendly key of the environment (i.e: the "slug").
+                 * @example my_environment
+                 */
+                env_id: string;
+                /**
+                 * @description Either the unique id of the elements_config, or the URL-friendly key of the elements_config (i.e: the "slug").
+                 * @example my_elements_config
+                 */
+                elements_config_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessRequestRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_access_request_reviewer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Either the unique id of the access_request, or the URL-friendly key of the access_request (i.e: the "slug").
+                 * @example 42f0e113-219b-4bb9-ba90-c2c904761be1
+                 */
+                access_request_id: string;
+                /**
+                 * @description Either the unique id of the tenant, or the URL-friendly key of the tenant (i.e: the "slug").
+                 * @example my_tenant
+                 */
+                tenant_id: string;
+                /**
+                 * @description Either the unique id of the user, or the URL-friendly key of the user (i.e: the "slug").
+                 * @example my_user
+                 */
+                user_id: string;
+                /**
+                 * @description Either the unique id of the project, or the URL-friendly key of the project (i.e: the "slug").
+                 * @example my_project
+                 */
+                proj_id: string;
+                /**
+                 * @description Either the unique id of the environment, or the URL-friendly key of the environment (i.e: the "slug").
+                 * @example my_environment
+                 */
+                env_id: string;
+                /**
+                 * @description Either the unique id of the elements_config, or the URL-friendly key of the elements_config (i.e: the "slug").
+                 * @example my_elements_config
+                 */
+                elements_config_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessRequestReview"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessRequestRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_access_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Either the unique id of the access_request, or the URL-friendly key of the access_request (i.e: the "slug").
+                 * @example 42f0e113-219b-4bb9-ba90-c2c904761be1
+                 */
+                access_request_id: string;
+                /**
+                 * @description Either the unique id of the tenant, or the URL-friendly key of the tenant (i.e: the "slug").
+                 * @example my_tenant
+                 */
+                tenant_id: string;
+                /**
+                 * @description Either the unique id of the user, or the URL-friendly key of the user (i.e: the "slug").
+                 * @example my_user
+                 */
+                user_id: string;
+                /**
+                 * @description Either the unique id of the project, or the URL-friendly key of the project (i.e: the "slug").
+                 * @example my_project
+                 */
+                proj_id: string;
+                /**
+                 * @description Either the unique id of the environment, or the URL-friendly key of the environment (i.e: the "slug").
+                 * @example my_environment
+                 */
+                env_id: string;
+                /**
+                 * @description Either the unique id of the elements_config, or the URL-friendly key of the elements_config (i.e: the "slug").
+                 * @example my_elements_config
+                 */
+                elements_config_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessRequestReview"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessRequestApproved"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deny_access_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Either the unique id of the access_request, or the URL-friendly key of the access_request (i.e: the "slug").
+                 * @example 42f0e113-219b-4bb9-ba90-c2c904761be1
+                 */
+                access_request_id: string;
+                /**
+                 * @description Either the unique id of the tenant, or the URL-friendly key of the tenant (i.e: the "slug").
+                 * @example my_tenant
+                 */
+                tenant_id: string;
+                /**
+                 * @description Either the unique id of the user, or the URL-friendly key of the user (i.e: the "slug").
+                 * @example my_user
+                 */
+                user_id: string;
+                /**
+                 * @description Either the unique id of the project, or the URL-friendly key of the project (i.e: the "slug").
+                 * @example my_project
+                 */
+                proj_id: string;
+                /**
+                 * @description Either the unique id of the environment, or the URL-friendly key of the environment (i.e: the "slug").
+                 * @example my_environment
+                 */
+                env_id: string;
+                /**
+                 * @description Either the unique id of the elements_config, or the URL-friendly key of the elements_config (i.e: the "slug").
+                 * @example my_elements_config
+                 */
+                elements_config_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessRequestReviewDeny"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessRequestDenied"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_access_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Either the unique id of the access_request, or the URL-friendly key of the access_request (i.e: the "slug").
+                 * @example 42f0e113-219b-4bb9-ba90-c2c904761be1
+                 */
+                access_request_id: string;
+                /**
+                 * @description Either the unique id of the tenant, or the URL-friendly key of the tenant (i.e: the "slug").
+                 * @example my_tenant
+                 */
+                tenant_id: string;
+                /**
+                 * @description Either the unique id of the user, or the URL-friendly key of the user (i.e: the "slug").
+                 * @example my_user
+                 */
+                user_id: string;
+                /**
+                 * @description Either the unique id of the project, or the URL-friendly key of the project (i.e: the "slug").
+                 * @example my_project
+                 */
+                proj_id: string;
+                /**
+                 * @description Either the unique id of the environment, or the URL-friendly key of the environment (i.e: the "slug").
+                 * @example my_environment
+                 */
+                env_id: string;
+                /**
+                 * @description Either the unique id of the elements_config, or the URL-friendly key of the elements_config (i.e: the "slug").
+                 * @example my_elements_config
+                 */
+                elements_config_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessRequestCanceled"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_pdp_configs: {
         parameters: {
             query?: {
@@ -22358,7 +22983,7 @@ export interface operations {
             };
         };
     };
-    list_access_requests: {
+    list_access_requests_v2_elements__proj_id___env_id__config__elements_config_id__access_requests_get: {
         parameters: {
             query?: {
                 /** @description Optional status filter, will only return access requests with this status. */
@@ -22418,7 +23043,7 @@ export interface operations {
             };
         };
     };
-    create_access_request: {
+    create_access_request_v2_elements__proj_id___env_id__config__elements_config_id__access_requests_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -22467,7 +23092,7 @@ export interface operations {
             };
         };
     };
-    get_access_request: {
+    get_access_request_v2_elements__proj_id___env_id__config__elements_config_id__access_requests__access_request_id__get: {
         parameters: {
             query?: {
                 /** @description Page number of the results to fetch, starting at 1. */
@@ -22522,7 +23147,7 @@ export interface operations {
             };
         };
     };
-    update_access_request_reviewer: {
+    update_access_request_reviewer_v2_elements__proj_id___env_id__config__elements_config_id__access_requests__access_request_id__reviewer_patch: {
         parameters: {
             query?: never;
             header?: never;
@@ -22576,7 +23201,7 @@ export interface operations {
             };
         };
     };
-    approve_access_request: {
+    approve_access_request_v2_elements__proj_id___env_id__config__elements_config_id__access_requests__access_request_id__approve_put: {
         parameters: {
             query?: never;
             header?: never;
@@ -22630,7 +23255,7 @@ export interface operations {
             };
         };
     };
-    deny_access_request: {
+    deny_access_request_v2_elements__proj_id___env_id__config__elements_config_id__access_requests__access_request_id__deny_put: {
         parameters: {
             query?: never;
             header?: never;
@@ -22684,7 +23309,7 @@ export interface operations {
             };
         };
     };
-    cancel_access_request: {
+    cancel_access_request_v2_elements__proj_id___env_id__config__elements_config_id__access_requests__access_request_id__cancel_put: {
         parameters: {
             query?: never;
             header?: never;
@@ -24005,6 +24630,39 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_audit_log_replay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AuditLogReplayRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditLogReplayResponse"];
+                };
             };
             /** @description Validation Error */
             422: {
