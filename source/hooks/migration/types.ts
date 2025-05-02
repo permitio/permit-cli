@@ -19,8 +19,8 @@ export interface Resource {
 	key: string;
 	name?: string;
 	description?: string;
-	actions?: Record<string, any>;
-	attributes?: Record<string, any>;
+	actions?: Record<string, ResourceAction>;
+	attributes?: Record<string, ResourceAttribute>;
 }
 
 export interface User {
@@ -28,21 +28,21 @@ export interface User {
 	email?: string;
 	first_name?: string;
 	last_name?: string;
-	attributes?: Record<string, any>;
+	attributes?: Record<string, unknown>;
 }
 
 export interface Role {
 	key: string;
-	name?: string;
+	name: string;
 	description?: string;
 	permissions?: string[];
 	resource?: string;
 }
 
 export interface RoleAssignment {
-	user: string | { key: string; [key: string]: any };
-	role: string | { key: string; [key: string]: any };
-	tenant?: string | { key: string; [key: string]: any };
+	user: string | { key: string; [key: string]: unknown };
+	role: string | { key: string; [key: string]: unknown };
+	tenant?: string | { key: string; [key: string]: unknown };
 	resource_instance?: string;
 }
 

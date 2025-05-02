@@ -1,9 +1,19 @@
-// hooks/migration/useMigrateRoleAssignments.ts
 import { useCallback } from 'react';
 import useClient from '../useClient.js';
 import { useAuth } from '../../components/AuthProvider.js';
-import { MigrationStats, RoleAssignment, ConflictStrategy } from './types.js';
+import { MigrationStats, ConflictStrategy } from './types.js';
 import useMigrateRoles from './useMigrateRoles.js';
+
+const ERROR_ROLE_DOES_NOT_EXIST = 'role does not exist';
+const ERROR_FAILED_TO_ASSIGN = 'Failed to assign role ';
+const ERROR_ROLE_ASSIGNMENT = 'Role assignment migration error: ';
+const ERROR_CREATING_ASSIGNMENT = 'Error creating assignment: ';
+const ERROR_PROCESSING_ASSIGNMENT = 'Error processing assignment: ';
+const ERROR_NO_ROLE_ASSIGNMENTS =
+	'No role assignments found in source environment';
+const ERROR_NO_PROJECT_ID = 'Project ID is not available in the current scope';
+const ERROR_GETTING_ASSIGNMENTS = 'Error getting role assignments: ';
+const UNKNOWN_ERROR = 'Unknown error';
 
 const useMigrateRoleAssignments = () => {
 	const { authenticatedApiClient } = useClient();
@@ -25,7 +35,7 @@ const useMigrateRoleAssignments = () => {
 
 			try {
 				if (!scope.project_id) {
-					throw new Error('Project ID is not available in the current scope');
+					throw new Error(ERROR_NO_PROJECT_ID);
 				}
 
 				// Get role assignments
@@ -33,7 +43,6 @@ const useMigrateRoleAssignments = () => {
 					await authenticatedApiClient().GET(
 						`/v2/facts/{proj_id}/{env_id}/role_assignments`,
 						{
-							proj_id: scope.project_id,
 							env_id: sourceEnvId,
 						},
 						undefined,
@@ -42,15 +51,13 @@ const useMigrateRoleAssignments = () => {
 
 				if (roleAssignmentsError) {
 					stats.details?.push(
-						`Error getting role assignments: ${roleAssignmentsError}`,
+						`${ERROR_GETTING_ASSIGNMENTS}${roleAssignmentsError}`,
 					);
 					return stats;
 				}
 
 				if (!roleAssignmentsResponse) {
-					stats.details?.push(
-						'No role assignments found in source environment',
-					);
+					stats.details?.push(ERROR_NO_ROLE_ASSIGNMENTS);
 					return stats;
 				}
 
@@ -95,6 +102,16 @@ const useMigrateRoleAssignments = () => {
 								? assignment.role.key
 								: String(assignment.role);
 
+						const userKey =
+							typeof assignment.user === 'object'
+								? assignment.user.key
+								: String(assignment.user);
+
+						const tenantKey =
+							assignment.tenant && typeof assignment.tenant === 'object'
+								? assignment.tenant.key
+								: String(assignment.tenant || 'default');
+
 						// Check if role exists in target environment
 						if (!validRoleKeys.has(roleKey)) {
 							// Try to create the role on-the-fly as a fallback
@@ -102,7 +119,6 @@ const useMigrateRoleAssignments = () => {
 								const createRoleResult = await authenticatedApiClient().POST(
 									`/v2/schema/{proj_id}/{env_id}/roles`,
 									{
-										proj_id: scope.project_id,
 										env_id: targetEnvId,
 									},
 									{
@@ -110,39 +126,30 @@ const useMigrateRoleAssignments = () => {
 										name: roleKey,
 										description: `Auto-created role during migration`,
 									},
-									undefined,
 								);
 
 								if (!createRoleResult.error) {
 									validRoleKeys.add(roleKey);
 								}
-							} catch (error) {
+							} catch {
 								// Continue with assignment attempt even if role creation fails
 							}
 						}
 
 						// Create assignment object with proper typing
-						const assignmentData: Record<string, any> = {
-							user:
-								typeof assignment.user === 'object'
-									? assignment.user.key
-									: String(assignment.user),
+						const assignmentData = {
+							user: userKey,
 							role: roleKey,
-							tenant:
-								typeof assignment.tenant === 'object'
-									? assignment.tenant.key
-									: String(assignment.tenant || 'default'),
+							tenant: tenantKey,
 						};
 
 						try {
 							const createResult = await authenticatedApiClient().POST(
 								`/v2/facts/{proj_id}/{env_id}/role_assignments`,
 								{
-									proj_id: scope.project_id,
 									env_id: targetEnvId,
 								},
 								assignmentData,
-								undefined,
 							);
 
 							if (createResult.error) {
@@ -150,11 +157,11 @@ const useMigrateRoleAssignments = () => {
 								if (
 									createResult.error.includes &&
 									(createResult.error.includes("could not find 'Role'") ||
-										createResult.error.includes('role does not exist'))
+										createResult.error.includes(ERROR_ROLE_DOES_NOT_EXIST))
 								) {
 									stats.failed++;
 									stats.details?.push(
-										`Failed to assign role ${roleKey}: role does not exist`,
+										`${ERROR_FAILED_TO_ASSIGN}${roleKey}: ${ERROR_ROLE_DOES_NOT_EXIST}`,
 									);
 								} else if (
 									createResult.error.includes &&
@@ -166,22 +173,22 @@ const useMigrateRoleAssignments = () => {
 								} else {
 									stats.failed++;
 									stats.details?.push(
-										`Failed to assign role ${roleKey}: ${createResult.error}`,
+										`${ERROR_FAILED_TO_ASSIGN}${roleKey}: ${createResult.error}`,
 									);
 								}
 							} else {
 								stats.success++;
 							}
-						} catch (error) {
+						} catch (createError) {
 							stats.failed++;
 							stats.details?.push(
-								`Error creating assignment: ${error instanceof Error ? error.message : 'Unknown error'}`,
+								`${ERROR_CREATING_ASSIGNMENT}${createError instanceof Error ? createError.message : UNKNOWN_ERROR}`,
 							);
 						}
 					} catch (assignmentError) {
 						stats.failed++;
 						stats.details?.push(
-							`Error processing assignment: ${assignmentError instanceof Error ? assignmentError.message : 'Unknown error'}`,
+							`${ERROR_PROCESSING_ASSIGNMENT}${assignmentError instanceof Error ? assignmentError.message : UNKNOWN_ERROR}`,
 						);
 					}
 				}
@@ -189,7 +196,7 @@ const useMigrateRoleAssignments = () => {
 				return stats;
 			} catch (err) {
 				stats.details?.push(
-					`Role assignment migration error: ${err instanceof Error ? err.message : 'Unknown error'}`,
+					`${ERROR_ROLE_ASSIGNMENT}${err instanceof Error ? err.message : UNKNOWN_ERROR}`,
 				);
 				return stats;
 			}

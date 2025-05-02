@@ -1,7 +1,16 @@
 import { useCallback } from 'react';
 import useClient from '../useClient.js';
 import { useAuth } from '../../components/AuthProvider.js';
-import { MigrationStats, User, ConflictStrategy } from './types.js';
+import { MigrationStats, ConflictStrategy } from './types.js';
+import { components } from '../../lib/api/v1.js';
+
+// Define a type for the API response
+interface ApiResponse<T> {
+	data?: T;
+	error: string | null;
+	response?: Response;
+	status?: number;
+}
 
 const useMigrateUsers = () => {
 	const { authenticatedApiClient } = useClient();
@@ -19,53 +28,56 @@ const useMigrateUsers = () => {
 				failed: 0,
 				details: [],
 			};
-
 			try {
-				if (!scope.project_id) {
-					throw new Error('Project ID is not available in the current scope');
-				}
+				if (!scope.project_id) throw new Error('Project ID missing');
 
-				// Get all users in one call
 				const { data: sourceUsersResponse } =
 					await authenticatedApiClient().GET(
 						`/v2/facts/{proj_id}/{env_id}/users`,
-						{
-							proj_id: scope.project_id,
-							env_id: sourceEnvId,
-						},
+						{ env_id: sourceEnvId },
 						undefined,
 						{ per_page: 100 },
 					);
 
 				if (!sourceUsersResponse) {
-					stats.details?.push('No users found in source environment');
+					stats.details?.push('No source users');
 					return stats;
 				}
 
-				// Handle different response formats
-				const users = Array.isArray(sourceUsersResponse)
-					? sourceUsersResponse
-					: sourceUsersResponse &&
-						  typeof sourceUsersResponse === 'object' &&
-						  'data' in sourceUsersResponse &&
-						  Array.isArray(sourceUsersResponse.data)
-						? sourceUsersResponse.data
-						: [];
+				const users: ReadonlyArray<components['schemas']['UserRead']> =
+					Array.isArray(sourceUsersResponse)
+						? sourceUsersResponse
+						: sourceUsersResponse.data || [];
 
 				stats.total = users.length;
 
-				// Process each user
+				// Get the API client
+				const client = authenticatedApiClient();
+
+				const post = client.POST as (
+					path: string,
+					pathParams: Record<string, string>,
+					body: unknown,
+					queryParams?: Record<string, unknown>,
+				) => Promise<ApiResponse<unknown>>;
+
+				const put = client.PUT as (
+					path: string,
+					pathParams: Record<string, string>,
+					body: unknown,
+					queryParams?: Record<string, unknown>,
+				) => Promise<ApiResponse<unknown>>;
+
 				for (let i = 0; i < users.length; i++) {
 					const user = users[i];
-
 					try {
 						if (!user || !user.key) {
 							stats.failed++;
 							continue;
 						}
 
-						// Create a minimal user object with only required fields
-						const userData: User = {
+						// Construct payload matching UserCreate schema
+						const userData: components['schemas']['UserCreate'] = {
 							key: user.key,
 							email: user.email || undefined,
 							first_name: user.first_name || undefined,
@@ -73,48 +85,50 @@ const useMigrateUsers = () => {
 							attributes: user.attributes || {},
 						};
 
-						// Create the user in target
 						try {
-							const createResult = await authenticatedApiClient().POST(
+							const createResult = await post(
 								`/v2/facts/{proj_id}/{env_id}/users`,
-								{
-									proj_id: scope.project_id,
-									env_id: targetEnvId,
-								},
+								{ env_id: targetEnvId },
 								userData,
 								undefined,
 							);
 
 							if (createResult.error) {
+								const errorMessage =
+									typeof createResult.error === 'string'
+										? createResult.error
+										: JSON.stringify(createResult.error);
+
 								if (
-									createResult.error.includes &&
-									createResult.error.includes('already exists') &&
+									errorMessage.includes('already exists') &&
 									conflictStrategy === 'override'
 								) {
-									// Try to update instead
-									const updateResult = await authenticatedApiClient().PUT(
-										`/v2/facts/{proj_id}/{env_id}/users/{user_id}`,
-										{
-											proj_id: scope.project_id,
-											env_id: targetEnvId,
-											user_id: user.key,
-										},
-										userData,
-										undefined,
-									);
+									try {
+										const updateResult = await put(
+											`/v2/facts/{proj_id}/{env_id}/users/{user_id}`,
+											{ env_id: targetEnvId, user_id: user.key },
+											userData,
+											undefined,
+										);
 
-									if (updateResult.error) {
+										if (updateResult.error) {
+											stats.failed++;
+											stats.details?.push(
+												`Update user error ${user.key}: ${updateResult.error}`,
+											);
+										} else {
+											stats.success++;
+										}
+									} catch (error) {
 										stats.failed++;
 										stats.details?.push(
-											`Failed to update user ${user.key}: ${updateResult.error}`,
+											`Update user exception ${user.key}: ${error}`,
 										);
-									} else {
-										stats.success++;
 									}
 								} else {
 									stats.failed++;
 									stats.details?.push(
-										`Failed to create user ${user.key}: ${createResult.error}`,
+										`Create user error ${user.key}: ${errorMessage}`,
 									);
 								}
 							} else {
@@ -123,22 +137,20 @@ const useMigrateUsers = () => {
 						} catch (error) {
 							stats.failed++;
 							stats.details?.push(
-								`Error creating user ${user.key}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+								`Create/Update user exception ${user.key}: ${error instanceof Error ? error.message : 'Unknown error'}`,
 							);
 						}
 					} catch (userError) {
+						const userKey = user?.key || `unknown_user_at_index_${i}`;
 						stats.failed++;
 						stats.details?.push(
-							`Error processing user: ${userError instanceof Error ? userError.message : 'Unknown error'}`,
+							`Processing user error ${userKey}: ${userError instanceof Error ? userError.message : 'Unknown error'}`,
 						);
 					}
 				}
-
 				return stats;
 			} catch (err) {
-				stats.details?.push(
-					`User migration error: ${err instanceof Error ? err.message : 'Unknown error'}`,
-				);
+				stats.details?.push(`User migration error: ${err}`);
 				return stats;
 			}
 		},

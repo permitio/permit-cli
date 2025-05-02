@@ -17,6 +17,23 @@ type Props = {
 	onComplete?: () => void;
 };
 
+const MIGRATION_STATE = {
+	LOADING: 'loading',
+	SELECT_PROJECT: 'select-project',
+	SELECT_SOURCE: 'select-source',
+	SELECT_TARGET: 'select-target',
+	MIGRATING: 'migrating',
+	DONE: 'done',
+	ERROR: 'error',
+} as const;
+
+// Common UI labels and messages
+const WARNING_TEXT = 'Warning:';
+const UNKNOWN_ERROR = 'Unknown error';
+const SAME_ENV_ERROR = 'Source and target environments cannot be the same';
+
+type MigrationState = (typeof MIGRATION_STATE)[keyof typeof MIGRATION_STATE];
+
 const DataMigrationComponent: React.FC<Props> = ({
 	source,
 	target,
@@ -32,15 +49,7 @@ const DataMigrationComponent: React.FC<Props> = ({
 	const [environments, setEnvironments] = useState<ActiveState[]>([]);
 	const [projects, setProjects] = useState<ActiveState[]>([]);
 	const [activeProject, setActiveProject] = useState<string | null>(null);
-	const [state, setState] = useState<
-		| 'loading'
-		| 'select-project'
-		| 'select-source'
-		| 'select-target'
-		| 'migrating'
-		| 'done'
-		| 'error'
-	>('loading');
+	const [state, setState] = useState<MigrationState>(MIGRATION_STATE.LOADING);
 	const [error, setError] = useState<string | null>(null);
 	const [migrationStats, setMigrationStats] = useState<{
 		users: { total: number; success: number; failed: number };
@@ -49,29 +58,26 @@ const DataMigrationComponent: React.FC<Props> = ({
 
 	const { migrateUsers, migrateRoleAssignments } = useDataMigration();
 
-	// When migration is done and stats are set, call the onComplete callback and exit the process
+	// Handle completion & exit
 	useEffect(() => {
-		if (state === 'done' && migrationStats) {
-			// Print final summary to console for debug
+		if (state === MIGRATION_STATE.DONE && migrationStats) {
 			console.log('Migration completed. Final results:');
 			console.log(
-				`Users: ${migrationStats.users?.success || 0}/${migrationStats.users?.total || 0}`,
+				`Users: ${migrationStats.users.success}/${migrationStats.users.total}`,
 			);
 			console.log(
-				`Role Assignments: ${migrationStats.roleAssignments?.success || 0}/${migrationStats.roleAssignments?.total || 0}`,
+				`Role Assignments: ${migrationStats.roleAssignments.success}/${migrationStats.roleAssignments.total}`,
 			);
-
 			if (onComplete) {
 				onComplete();
 			} else {
-				// Ensure we exit after showing the completion message for 2 seconds
 				setTimeout(() => {
 					console.log('Exiting process...');
 					process.exit(0);
 				}, 2000);
 			}
-		} else if (state === 'error') {
-			// Exit with error code after a short delay
+		}
+		if (state === MIGRATION_STATE.ERROR) {
 			setTimeout(() => {
 				console.log('Exiting with error...');
 				process.exit(1);
@@ -79,53 +85,42 @@ const DataMigrationComponent: React.FC<Props> = ({
 		}
 	}, [state, migrationStats, onComplete]);
 
-	// Load projects if needed
+	// Load projects
 	useEffect(() => {
 		const fetchProjects = async () => {
-			// If project_id is already in scope, use it directly
 			if (scope.project_id) {
 				setActiveProject(scope.project_id);
-				setState('select-source');
+				setState(MIGRATION_STATE.SELECT_SOURCE);
 				return;
 			}
-
 			try {
 				const { data: projectsData, error: projectsError } =
 					await getProjects();
-
 				if (projectsError) {
 					setError(`Failed to load projects: ${projectsError}`);
-					setState('error');
+					setState(MIGRATION_STATE.ERROR);
 					return;
 				}
-
 				if (!projectsData || projectsData.length === 0) {
 					setError('No projects found');
-					setState('error');
+					setState(MIGRATION_STATE.ERROR);
 					return;
 				}
-
-				if (projectsData.length === 1 && projectsData[0]) {
-					setActiveProject(projectsData[0].id);
-					setState('select-source');
+				if (projectsData.length === 1) {
+					setActiveProject(projectsData[0]!.id);
+					setState(MIGRATION_STATE.SELECT_SOURCE);
 				} else {
-					setProjects(
-						projectsData.map(project => ({
-							label: project.name,
-							value: project.id,
-						})),
-					);
-					setState('select-project');
+					setProjects(projectsData.map(p => ({ label: p.name, value: p.id })));
+					setState(MIGRATION_STATE.SELECT_PROJECT);
 				}
-			} catch (err) {
+			} catch (e) {
 				setError(
 					'Error loading projects: ' +
-						(err instanceof Error ? err.message : 'Unknown error'),
+						(e instanceof Error ? e.message : UNKNOWN_ERROR),
 				);
-				setState('error');
+				setState(MIGRATION_STATE.ERROR);
 			}
 		};
-
 		fetchProjects();
 	}, [getProjects, scope.project_id]);
 
@@ -133,67 +128,57 @@ const DataMigrationComponent: React.FC<Props> = ({
 	useEffect(() => {
 		const fetchEnvironments = async () => {
 			if (!activeProject) return;
-
 			try {
-				const { data: environmentsData, error: environmentsError } =
+				const { data: envData, error: envError } =
 					await getEnvironments(activeProject);
-
-				if (environmentsError) {
-					setError(`Failed to load environments: ${environmentsError}`);
-					setState('error');
+				if (envError) {
+					setError(`Failed to load environments: ${envError}`);
+					setState(MIGRATION_STATE.ERROR);
 					return;
 				}
-
-				if (!environmentsData || environmentsData.length < 2) {
+				if (!envData || envData.length < 2) {
 					setError('You need at least two environments to perform migration');
-					setState('error');
+					setState(MIGRATION_STATE.ERROR);
 					return;
 				}
-
 				setEnvironments(
-					environmentsData.map(env => ({
-						label: env.name,
-						value: env.id,
-					})),
+					envData.map(env => ({ label: env.name, value: env.id })),
 				);
-
-				// If source is provided and valid, select it
 				if (source) {
-					const sourceEnvironment = environmentsData.find(
-						env => env.id === source || env.key === source,
-					);
-
-					if (sourceEnvironment) {
-						setSourceEnv(sourceEnvironment.id);
-						setState('select-target');
-					} else if (state === 'loading') {
-						setState('select-source');
+					const found = envData.find(e => e.id === source || e.key === source);
+					if (found) {
+						setSourceEnv(found.id);
+						setState(MIGRATION_STATE.SELECT_TARGET);
+					} else if (state === MIGRATION_STATE.LOADING) {
+						setState(MIGRATION_STATE.SELECT_SOURCE);
 					}
-				} else if (state === 'loading') {
-					setState('select-source');
+				} else if (state === MIGRATION_STATE.LOADING) {
+					setState(MIGRATION_STATE.SELECT_SOURCE);
 				}
-
-				// If target is provided and valid, select it
 				if (target && sourceEnv) {
-					const targetEnvironment = environmentsData.find(
-						env => env.id === target || env.key === target,
-					);
-
-					if (targetEnvironment && targetEnvironment.id !== sourceEnv) {
-						setTargetEnv(targetEnvironment.id);
-						setState('migrating');
+					const found = envData.find(e => e.id === target || e.key === target);
+					if (found && found.id !== sourceEnv) {
+						setTargetEnv(found.id);
+						setState(MIGRATION_STATE.MIGRATING);
 					}
 				}
-			} catch (err) {
+			} catch (e) {
 				setError(
 					'Error loading environments: ' +
-						(err instanceof Error ? err.message : 'Unknown error'),
+						(e instanceof Error ? e.message : UNKNOWN_ERROR),
 				);
-				setState('error');
+				setState(MIGRATION_STATE.ERROR);
 			}
 		};
-
-		if (activeProject && (state === 'select-source' || state === 'loading')) {
+		if (
+			activeProject &&
+			(
+				[
+					MIGRATION_STATE.SELECT_SOURCE,
+					MIGRATION_STATE.LOADING,
+				] as MigrationState[]
+			).includes(state)
+		) {
 			fetchEnvironments();
 		}
 	}, [activeProject, getEnvironments, source, state, target, sourceEnv]);
@@ -201,73 +186,55 @@ const DataMigrationComponent: React.FC<Props> = ({
 	// Perform migration
 	useEffect(() => {
 		const performMigration = async () => {
-			if (sourceEnv && targetEnv && state === 'migrating') {
+			if (state !== MIGRATION_STATE.MIGRATING || !sourceEnv || !targetEnv)
+				return;
+			try {
+				console.log(`DEBUG - Using project ID: ${scope.project_id}`);
+				console.log(
+					`DEBUG - Source env: ${sourceEnv}, Target env: ${targetEnv}`,
+				);
+				let userStats = { total: 0, success: 0, failed: 0 };
+				let assignmentStats = { total: 0, success: 0, failed: 0 };
 				try {
-					let userStats = { total: 0, success: 0, failed: 0 };
-					let roleAssignmentStats = { total: 0, success: 0, failed: 0 };
-
-					console.log(`DEBUG - Using project ID: ${scope.project_id}`);
-					console.log(
-						`DEBUG - Source env: ${sourceEnv}, Target env: ${targetEnv}`,
+					console.log('Migrating users...');
+					userStats = await migrateUsers(
+						sourceEnv,
+						targetEnv,
+						conflictStrategy,
 					);
-
-					// Migrate users first (these are required for role assignments)
-					try {
-						console.log('Migrating users...');
-						userStats = await migrateUsers(
-							sourceEnv,
-							targetEnv,
-							conflictStrategy,
-						);
-
-						// Add a small delay to ensure users are completely processed
-						console.log('Waiting for user data to settle...');
-						await new Promise(resolve => setTimeout(resolve, 1000));
-					} catch (userError) {
-						console.error(
-							'Error during user migration:',
-							userError instanceof Error ? userError.message : 'Unknown error',
-						);
-					}
-
-					// Migrate role assignments
-					try {
-						console.log('Migrating role assignments...');
-						roleAssignmentStats = await migrateRoleAssignments(
-							sourceEnv,
-							targetEnv,
-							conflictStrategy,
-						);
-					} catch (assignmentError) {
-						console.error(
-							'Error during role assignment migration:',
-							assignmentError instanceof Error
-								? assignmentError.message
-								: 'Unknown error',
-						);
-					}
-
-					setMigrationStats({
-						users: userStats,
-						roleAssignments: roleAssignmentStats,
-					});
-
-					setState('done');
-				} catch (err) {
-					setError(
-						'Migration failed: ' +
-							(err instanceof Error ? err.message : 'Unknown error'),
-					);
-					setState('error');
+					console.log('Waiting for user data to settle...');
+					await new Promise(r => setTimeout(r, 1000));
+				} catch (uErr) {
+					console.error(WARNING_TEXT, uErr);
 				}
+				try {
+					console.log('Migrating role assignments...');
+					assignmentStats = await migrateRoleAssignments(
+						sourceEnv,
+						targetEnv,
+						conflictStrategy,
+					);
+				} catch (aErr) {
+					console.error(WARNING_TEXT, aErr);
+				}
+				setMigrationStats({
+					users: userStats,
+					roleAssignments: assignmentStats,
+				});
+				setState(MIGRATION_STATE.DONE);
+			} catch (e) {
+				setError(
+					'Migration failed: ' +
+						(e instanceof Error ? e.message : UNKNOWN_ERROR),
+				);
+				setState(MIGRATION_STATE.ERROR);
 			}
 		};
-
 		performMigration();
 	}, [
+		state,
 		sourceEnv,
 		targetEnv,
-		state,
 		migrateUsers,
 		migrateRoleAssignments,
 		conflictStrategy,
@@ -276,22 +243,21 @@ const DataMigrationComponent: React.FC<Props> = ({
 
 	const handleProjectSelect = useCallback((item: { value: string }) => {
 		setActiveProject(item.value);
-		setState('select-source');
+		setState(MIGRATION_STATE.SELECT_SOURCE);
 	}, []);
 
 	const handleSourceSelect = useCallback((item: { value: string }) => {
 		setSourceEnv(item.value);
-		setState('select-target');
+		setState(MIGRATION_STATE.SELECT_TARGET);
 	}, []);
 
 	const handleTargetSelect = useCallback(
 		(item: { value: string }) => {
-			// Make sure target is different from source
-			if (item.value !== sourceEnv) {
-				setTargetEnv(item.value);
-				setState('migrating');
+			if (item.value === sourceEnv) {
+				setError(`${WARNING_TEXT} ${SAME_ENV_ERROR}`);
 			} else {
-				setError('Source and target environments cannot be the same');
+				setTargetEnv(item.value);
+				setState(MIGRATION_STATE.MIGRATING);
 			}
 		},
 		[sourceEnv],
@@ -299,37 +265,37 @@ const DataMigrationComponent: React.FC<Props> = ({
 
 	return (
 		<Box flexDirection="column">
-			{state === 'loading' && (
+			{state === MIGRATION_STATE.LOADING && (
 				<Text>
 					<Spinner type="dots" /> Loading...
 				</Text>
 			)}
 
-			{state === 'select-project' && (
+			{state === MIGRATION_STATE.SELECT_PROJECT && (
 				<>
 					<Text>Select project:</Text>
 					<SelectInput items={projects} onSelect={handleProjectSelect} />
 				</>
 			)}
 
-			{state === 'select-source' && (
+			{state === MIGRATION_STATE.SELECT_SOURCE && (
 				<>
 					<Text>Select source environment:</Text>
 					<SelectInput items={environments} onSelect={handleSourceSelect} />
 				</>
 			)}
 
-			{state === 'select-target' && sourceEnv && (
+			{state === MIGRATION_STATE.SELECT_TARGET && sourceEnv && (
 				<>
 					<Text>Select target environment:</Text>
 					<SelectInput
-						items={environments.filter(env => env.value !== sourceEnv)}
+						items={environments.filter(e => e.value !== sourceEnv)}
 						onSelect={handleTargetSelect}
 					/>
 				</>
 			)}
 
-			{state === 'migrating' && (
+			{state === MIGRATION_STATE.MIGRATING && (
 				<Text>
 					<Spinner type="dots" /> Migrating data from{' '}
 					{environments.find(e => e.value === sourceEnv)?.label} to{' '}
@@ -337,29 +303,28 @@ const DataMigrationComponent: React.FC<Props> = ({
 				</Text>
 			)}
 
-			{state === 'done' && migrationStats && (
+			{state === MIGRATION_STATE.DONE && migrationStats && (
 				<>
 					<Text>Migration completed successfully!</Text>
 					<Box marginTop={1} flexDirection="column">
 						<Text>Migration Summary:</Text>
 						<Text>
-							Users: {migrationStats.users?.success || 0}/
-							{migrationStats.users?.total || 0} migrated successfully
+							Users: {migrationStats.users.success}/{migrationStats.users.total}{' '}
+							migrated successfully
 						</Text>
 						<Text>
-							Role Assignments: {migrationStats.roleAssignments?.success || 0}/
-							{migrationStats.roleAssignments?.total || 0} migrated successfully
+							Role Assignments: {migrationStats.roleAssignments.success}/
+							{migrationStats.roleAssignments.total} migrated successfully
 						</Text>
-
-						{/* Warning messages */}
-						{(migrationStats.users?.failed || 0) > 0 && (
+						{migrationStats.users.failed > 0 && (
 							<Text color="yellow">
-								Warning: {migrationStats.users?.failed} users failed to migrate
+								{WARNING_TEXT} {migrationStats.users.failed} users failed to
+								migrate
 							</Text>
 						)}
-						{(migrationStats.roleAssignments?.failed || 0) > 0 && (
+						{migrationStats.roleAssignments.failed > 0 && (
 							<Text color="yellow">
-								Warning: {migrationStats.roleAssignments?.failed} role
+								{WARNING_TEXT} {migrationStats.roleAssignments.failed} role
 								assignments failed to migrate
 							</Text>
 						)}
@@ -367,7 +332,7 @@ const DataMigrationComponent: React.FC<Props> = ({
 				</>
 			)}
 
-			{state === 'error' && error && (
+			{state === MIGRATION_STATE.ERROR && error && (
 				<>
 					<Text color="red">Error: {error}</Text>
 					<Text>Process will exit in a few seconds...</Text>
