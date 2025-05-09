@@ -41,7 +41,6 @@ vi.mock('../../../source/hooks/useClient', () => ({
 	}),
 }));
 
-
 vi.useRealTimers();
 
 describe('usePermitRelationApi', () => {
@@ -62,7 +61,6 @@ describe('usePermitRelationApi', () => {
 					response: { status: 200 },
 				};
 			} else if (path.includes('roles/{role_id}')) {
-				
 				return {
 					data: null,
 					error: { detail: 'Not found' },
@@ -228,7 +226,6 @@ describe('usePermitRelationApi', () => {
 		expect(data).toHaveProperty('key', 'resourceRole');
 	});
 
-	
 	it('should create resource specific role', async () => {
 		// Ensure the role doesn't exist in checkResourceRoleExists
 		mockGetFn.mockImplementationOnce(() => ({
@@ -260,9 +257,8 @@ describe('usePermitRelationApi', () => {
 
 		expect(roleResult.data).toHaveProperty('key', 'resourceRole');
 		expect(roleResult.success).toBeTruthy();
-	}, 10000); 
+	}, 10000);
 
-	
 	it('should create a derived role', async () => {
 		const { createDerivedRole } = usePermitRelationApi();
 
@@ -327,7 +323,7 @@ describe('usePermitRelationApi', () => {
 		});
 
 		expect(derivedRoleResult.success).toBeFalsy();
-		
+
 		expect(derivedRoleResult.error).toContain(
 			'Could not determine valid relation',
 		);
