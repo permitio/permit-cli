@@ -1470,6 +1470,16 @@ Permit CLI is based on Pastel, a library for building CLI applications using Rea
 - Run `npm run dev`
 - Use the CLI with the following convention `node ./dist/cli.js command [options]`
 
+### Updating API Type Definitions
+
+The project uses TypeScript definitions generated from Permit.io's OpenAPI specs. These definitions are automatically updated weekly via GitHub Actions, but you can also update them locally:
+
+```bash
+npm run update-types
+```
+
+This will download the latest OpenAPI specifications from Permit.io's API endpoints and generate updated TypeScript definitions.
+
 ### Adding New Commands
 
 To add a new command, you need to create a new file in the `src/commands` directory with the command name. The project is using the Pastel library to create the CLI commands. You can find the documentation [here](https://github.com/vadimdemedes/pastel?tab=readme-ov-file#commands).
