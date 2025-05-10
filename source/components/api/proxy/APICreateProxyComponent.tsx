@@ -504,10 +504,10 @@ export default function APICreateProxyComponent({
 								if (/^\d+$/.test(val)) {
 									setCurrentRule(r => ({ ...r, priority: Number(val) }));
 								} else if (val === '') {
-									// allow clearing the field
 									setCurrentRule(r => {
-										const { priority, ...rest } = r;
-										return rest;
+										const newRule = { ...r };
+										delete newRule.priority;
+										return newRule;
 									});
 								}
 								// otherwise ignore the keystroke entirely
