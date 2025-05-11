@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import useClient from '../../hooks/useClient.js';
+import useClient from '../useClient.js';
 
 /**
  * Hook for role-related Permit API operations
@@ -16,7 +16,7 @@ export const usePermitRoleApi = () => {
 	 */
 	const listRoles = useCallback(async () => {
 		return await authenticatedApiClient().GET(ROLES_ENDPOINT);
-	}, [authenticatedApiClient, ROLES_ENDPOINT]);
+	}, [authenticatedApiClient]);
 
 	/**
 	 * Get a specific role by key
@@ -27,7 +27,7 @@ export const usePermitRoleApi = () => {
 				role_id: roleKey,
 			});
 		},
-		[authenticatedApiClient, ROLES_ENDPOINT],
+		[authenticatedApiClient],
 	);
 
 	/**
@@ -42,7 +42,7 @@ export const usePermitRoleApi = () => {
 				permissions: [],
 			});
 		},
-		[authenticatedApiClient, ROLES_ENDPOINT, OPENAPI_DESCRIPTION],
+		[authenticatedApiClient],
 	);
 
 	/**
@@ -60,29 +60,88 @@ export const usePermitRoleApi = () => {
 				},
 			);
 		},
-		[authenticatedApiClient, ROLES_ENDPOINT, OPENAPI_DESCRIPTION],
+		[authenticatedApiClient],
 	);
 
 	/**
-	 * Creates a resource-specific role
+	 * Creates a resource-specific role with permissions
 	 */
 	const createResourceRole = useCallback(
 		async (
 			resourceKey: string,
 			roleKey: string,
 			roleName: string,
-			permissionString: string,
+			permissionString: string | string[],
 		) => {
-			return await authenticatedApiClient().POST(ROLES_ENDPOINT, undefined, {
-				key: roleKey,
-				name: roleName,
-				description: `${OPENAPI_DESCRIPTION} for ${resourceKey}`,
-				permissions: [permissionString],
-			});
+			// Handle both single permission and array of permissions
+			let permissions: string[];
+			if (typeof permissionString === 'string') {
+				permissions = [permissionString];
+			} else if (Array.isArray(permissionString)) {
+				permissions = permissionString;
+			} else {
+				permissions = [];
+			}
+
+			// Ensure no duplicate permissions
+			const uniquePermissions = [...new Set(permissions)];
+
+			return await authenticatedApiClient().POST(
+				'/v2/schema/{proj_id}/{env_id}/resources/{resource_id}/roles',
+				{ resource_id: resourceKey },
+				{
+					key: roleKey,
+					name: roleName,
+					description: `${OPENAPI_DESCRIPTION} for ${resourceKey}`,
+					permissions: uniquePermissions,
+				},
+			);
 		},
-		[authenticatedApiClient, ROLES_ENDPOINT, OPENAPI_DESCRIPTION],
+		[authenticatedApiClient],
 	);
 
+	/**
+	 * Update a resource-specific role with all specified permissions
+	 */
+	const updateResourceRole = useCallback(
+		async (
+			resourceKey: string,
+			roleKey: string,
+			permissionString: string | string[],
+		) => {
+			// Prepare permissions to set
+			let permissions: string[];
+			if (typeof permissionString === 'string') {
+				permissions = [permissionString];
+			} else if (Array.isArray(permissionString)) {
+				permissions = permissionString;
+			} else {
+				permissions = [];
+			}
+
+			// Ensure no duplicate permissions
+			const uniquePermissions = [...new Set(permissions)];
+
+			// Get the existing role to preserve extends and other properties
+			const { data: roleData } = await authenticatedApiClient().GET(
+				'/v2/schema/{proj_id}/{env_id}/resources/{resource_id}/roles/{role_id}',
+				{ resource_id: resourceKey, role_id: roleKey },
+			);
+
+			// Update the role with ALL the specified permissions (no extracting)
+			return await authenticatedApiClient().PATCH(
+				'/v2/schema/{proj_id}/{env_id}/resources/{resource_id}/roles/{role_id}',
+				{ resource_id: resourceKey, role_id: roleKey },
+				{
+					permissions: uniquePermissions,
+					extends: roleData?.extends || [],
+				},
+			);
+		},
+		[authenticatedApiClient],
+	);
+
+	// Return all role-related functions
 	return useMemo(
 		() => ({
 			listRoles,
@@ -90,7 +149,15 @@ export const usePermitRoleApi = () => {
 			createRole,
 			updateRole,
 			createResourceRole,
+			updateResourceRole,
 		}),
-		[listRoles, getRole, createRole, updateRole, createResourceRole],
+		[
+			listRoles,
+			getRole,
+			createRole,
+			updateRole,
+			createResourceRole,
+			updateResourceRole,
+		],
 	);
 };

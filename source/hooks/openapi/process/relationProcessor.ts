@@ -36,6 +36,91 @@ interface RelationData {
 	name?: string;
 }
 
+// Helper function to process a single relation
+async function processRelation(
+	relationData: RelationData,
+	resources: Set<string>,
+	relations: Map<string, string>,
+	errors: string[],
+	warnings: string[],
+	createResource: CreateResourceFunction,
+	createRelation: CreateRelationFunction,
+	setProgress: SetProgressFunction,
+	path: string = 'unknown',
+): Promise<boolean> {
+	try {
+		// Store original resource names for display and properly capitalized names
+		const originalSubjectResource = relationData.subject_resource;
+		const originalObjectResource = relationData.object_resource;
+
+		// Sanitize keys for API operations
+		const subjectResourceKey = sanitizeKey(originalSubjectResource);
+		const objectResourceKey = sanitizeKey(originalObjectResource);
+
+		// Prepare relation with proper naming
+		const relationKey = relationData.key || 'parent';
+		const relationName = relationData.name || 'parent';
+
+		const sanitizedRelation: RelationRequest = {
+			subject_resource: objectResourceKey,
+			object_resource: subjectResourceKey,
+			key: relationKey,
+			name: relationName,
+			description: `${originalSubjectResource} ${relationName} ${originalObjectResource}`,
+		};
+
+		// First, check if both resources exist, create if they don't
+		if (!resources.has(subjectResourceKey)) {
+			await createResource(subjectResourceKey, originalSubjectResource);
+			resources.add(subjectResourceKey);
+		}
+
+		if (!resources.has(objectResourceKey)) {
+			await createResource(objectResourceKey, originalObjectResource);
+			resources.add(objectResourceKey);
+		}
+
+		setProgress(
+			`Creating relation between ${originalSubjectResource} and ${originalObjectResource}...`,
+		);
+
+		// Add a small delay to allow resources to be registered
+		await new Promise(resolve => setTimeout(resolve, 500));
+
+		// Create the relation - with swapped subject/object
+		const relationResult = await createRelation(sanitizedRelation);
+
+		if (relationResult.error) {
+			if (!isDuplicateError(relationResult.error)) {
+				const errorMsg = `Failed to create relation at ${path}: ${JSON.stringify(relationResult.error)}`;
+				errors.push(errorMsg);
+				return false;
+			} else {
+				const warningMsg = `Relation already exists, skipping creation`;
+				warnings.push(warningMsg);
+			}
+		}
+
+		const relationMapKey = `${subjectResourceKey}:${relationKey}:${objectResourceKey}`;
+		relations.set(
+			relationMapKey,
+			JSON.stringify({
+				subject_resource: subjectResourceKey,
+				object_resource: objectResourceKey,
+				key: relationKey,
+				name: relationName,
+				description: `${originalSubjectResource} ${relationName} ${originalObjectResource}`,
+			}),
+		);
+
+		return true;
+	} catch (relationError) {
+		const errorMsg = `Error creating relation at ${path}: ${relationError}`;
+		errors.push(errorMsg);
+		return false;
+	}
+}
+
 export async function processRelations(
 	context: ProcessorContext,
 	pathItems: Record<string, PathItem>,
@@ -53,7 +138,22 @@ export async function processRelations(
 		const rawResource = typedPathItem[PERMIT_EXTENSIONS.RESOURCE];
 		if (!rawResource) continue;
 
-		// Process HTTP methods
+		const pathLevelRelation = typedPathItem[PERMIT_EXTENSIONS.RELATION];
+		if (pathLevelRelation && typeof pathLevelRelation === 'object') {
+			await processRelation(
+				pathLevelRelation as RelationData,
+				resources,
+				relations,
+				errors,
+				warnings,
+				createResource,
+				createRelation,
+				setProgress,
+				'path-level',
+			);
+		}
+
+		// Then check operations for relations (existing behavior)
 		for (const method of HTTP_METHODS) {
 			const operation = typedPathItem[method] as Operation | undefined;
 			if (!operation) continue;
@@ -61,65 +161,17 @@ export async function processRelations(
 			// Process relation
 			const relation = operation[PERMIT_EXTENSIONS.RELATION];
 			if (relation && typeof relation === 'object') {
-				try {
-					const relationData = relation as RelationData;
-
-					const sanitizedRelation: RelationRequest = {
-						subject_resource: sanitizeKey(relationData.subject_resource),
-						object_resource: sanitizeKey(relationData.object_resource),
-						key:
-							relationData.key ||
-							`${sanitizeKey(relationData.subject_resource)}_${sanitizeKey(relationData.object_resource)}`,
-						name:
-							relationData.name ||
-							`${relationData.subject_resource} to ${relationData.object_resource}`,
-					};
-
-					// First, check if both resources exist, create if they don't
-					if (!resources.has(sanitizedRelation.subject_resource)) {
-						await createResource(
-							sanitizedRelation.subject_resource,
-							relationData.subject_resource,
-						);
-						resources.add(sanitizedRelation.subject_resource);
-					}
-
-					if (!resources.has(sanitizedRelation.object_resource)) {
-						await createResource(
-							sanitizedRelation.object_resource,
-							relationData.object_resource,
-						);
-						resources.add(sanitizedRelation.object_resource);
-					}
-
-					setProgress(
-						`Creating relation between ${sanitizedRelation.subject_resource} and ${sanitizedRelation.object_resource}...`,
-					);
-
-					// Add a small delay to allow resources to be registered
-					await new Promise(resolve => setTimeout(resolve, 300));
-
-					// Create the relation
-					const relationResult = await createRelation(sanitizedRelation);
-
-					if (relationResult.error) {
-						if (!isDuplicateError(relationResult.error)) {
-							errors.push(
-								`Failed to create relation: ${JSON.stringify(relationResult.error)}`,
-							);
-						} else {
-							warnings.push(`Relation already exists, skipping creation`);
-						}
-					}
-
-					// Store the relation for use in role derivation
-					relations.set(
-						sanitizedRelation.key,
-						JSON.stringify(sanitizedRelation),
-					);
-				} catch (relationError) {
-					errors.push(`Error creating relation: ${relationError}`);
-				}
+				await processRelation(
+					relation as RelationData,
+					resources,
+					relations,
+					errors,
+					warnings,
+					createResource,
+					createRelation,
+					setProgress,
+					`operation-level [${method}]`,
+				);
 			}
 		}
 	}
@@ -158,36 +210,39 @@ export async function processDerivedRoles(
 					const derivedRoleData = derivedRole as DerivedRoleData;
 
 					// Use the resource from the path if not specified
-					const resourceKey = sanitizeKey(
+					const rawResource =
 						derivedRoleData.resource ||
-							(typedPathItem[PERMIT_EXTENSIONS.RESOURCE] as string) ||
-							'',
-					);
+						(typedPathItem[PERMIT_EXTENSIONS.RESOURCE] as string) ||
+						'';
+
+					const resourceKey = sanitizeKey(rawResource);
+
+					// Default relation if not specified
+					const relationKey = derivedRoleData.relation || 'parent';
 
 					try {
-						// Create the derived role
+						// Create the derived role with the relation
 						const derivedRoleRequest: DerivedRoleRequest = {
-							...derivedRoleData,
+							base_role: derivedRoleData.base_role,
+							derived_role: derivedRoleData.derived_role,
 							resource: resourceKey,
+							relation: relationKey,
 						};
 
 						const derivedRoleResult =
 							await createDerivedRole(derivedRoleRequest);
 
 						if (derivedRoleResult.error) {
-							warnings.push(
-								`Could not create role derivation automatically: ${JSON.stringify(derivedRoleResult.error)}`,
-							);
+							const warningMsg = `Could not create role derivation automatically: ${JSON.stringify(derivedRoleResult.error)}`;
+							warnings.push(warningMsg);
 						}
 					} catch (innerError) {
-						warnings.push(
-							`Could not create role derivation automatically: ${innerError}`,
-						);
+						const warningMsg = `Could not create role derivation automatically: ${innerError}`;
+						warnings.push(warningMsg);
 					}
 				} catch (derivedRoleError) {
-					warnings.push(
-						`Could not set up role derivation: ${derivedRoleError}`,
-					);
+					const warningMsg = `Could not set up role derivation: ${derivedRoleError}`;
+					warnings.push(warningMsg);
 				}
 			}
 		}

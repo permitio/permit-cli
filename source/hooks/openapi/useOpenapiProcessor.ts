@@ -6,8 +6,6 @@ import { OpenApiDocument, ApiResponse } from '../../utils/openapiUtils.js';
 import {
 	ProcessorProps,
 	ProcessorContext,
-	ResourceKey,
-	RoleKey,
 	RoleWithPermissions,
 	ResourceResponse,
 	ActionResponse,
@@ -48,6 +46,7 @@ export const useOpenapiProcessor = ({
 		createRole,
 		updateRole,
 		createResourceRole,
+		updateResourceRole,
 		createRelation,
 		createDerivedRole,
 		deleteUrlMappings,
@@ -102,24 +101,44 @@ export const useOpenapiProcessor = ({
 
 			// List existing resources and roles to avoid conflicts
 			try {
-				const { data: resourcesArray } = (await listResources()) as ApiResponse<
-					ResourceKey[]
-				>;
-				if (resourcesArray) {
-					context.existingResources = resourcesArray;
+				const response = await listResources();
+				if (response && response.data) {
+					if (Array.isArray(response.data)) {
+						context.existingResources = response.data;
+					}
+					// If data has a nested data property that's an array, use that
+					else if (
+						response.data &&
+						typeof response.data === 'object' &&
+						'data' in response.data &&
+						Array.isArray(response.data.data)
+					) {
+						context.existingResources = response.data.data;
+					}
 				}
-			} catch {
+			} catch (error) {
+				console.log('Error fetching resources:', error);
 				// Continue with empty resources array if fetching fails
 			}
 
 			try {
-				const { data: rolesArray } = (await listRoles()) as ApiResponse<
-					RoleKey[]
-				>;
-				if (rolesArray) {
-					context.existingRoles = rolesArray;
+				const response = await listRoles();
+				if (response && response.data) {
+					if (Array.isArray(response.data)) {
+						context.existingRoles = response.data;
+					}
+					// If data has a nested data property that's an array, use that
+					else if (
+						response.data &&
+						typeof response.data === 'object' &&
+						'data' in response.data &&
+						Array.isArray(response.data.data)
+					) {
+						context.existingRoles = response.data.data;
+					}
 				}
-			} catch {
+			} catch (error) {
+				console.log('Error fetching roles:', error);
 				// Continue with empty roles array if fetching fails
 			}
 
@@ -181,7 +200,12 @@ export const useOpenapiProcessor = ({
 					resource: string,
 					role: string,
 					name: string,
-					permission: string,
+					permission: string | string[],
+				) => Promise<ApiResponse<RoleResponse>>,
+				updateResourceRole as (
+					resource: string,
+					role: string,
+					permission: string | string[],
 				) => Promise<ApiResponse<RoleResponse>>,
 			);
 
@@ -259,8 +283,6 @@ export const useOpenapiProcessor = ({
 						// Add optional properties if they exist
 						if (mapping.action) result.action = mapping.action;
 
-						// Only set url_type if the source mapping has a urlType property
-						// AND it's specifically the value "regex"
 						if ('urlType' in mapping && mapping.urlType === 'regex') {
 							result.url_type = 'regex';
 						}
@@ -311,6 +333,7 @@ export const useOpenapiProcessor = ({
 		listRoles,
 		updateResource,
 		updateRole,
+		updateResourceRole,
 	]);
 
 	return { processSpec };
