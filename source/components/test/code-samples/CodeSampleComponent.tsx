@@ -47,7 +47,7 @@ export function CodeSampleComponent({
 		}
 	}, [auth, framework, configPath, path, pdpUrl, state]);
 
-	const saveCodeTOPath = useCallback(async () => {
+	const saveCodeToPath = useCallback(async () => {
 		const { error } = await saveFile(path ?? '', code ?? '');
 		if (error) {
 			setError(error);
@@ -57,11 +57,11 @@ export function CodeSampleComponent({
 
 	useEffect(() => {
 		if (code && path) {
-			saveCodeTOPath();
+			saveCodeToPath();
 		} else if (code) {
 			setState('done');
 		}
-	}, [code, path, saveCodeTOPath]);
+	}, [code, path, saveCodeToPath]);
 
 	return (
 		<>
