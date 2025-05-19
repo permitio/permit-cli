@@ -10,64 +10,27 @@ import {
 } from '../../../hooks/useResourcesApi.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import randomName from '@scaleway/random-name';
-import { GeneratePolicySnapshotProps } from '../GeneratePolicySnapshot.js';
+import {
+	DryUser,
+	GeneratePolicySnapshotProps,
+} from '../GeneratePolicySnapshot.js';
 import { useUserApi } from '../../../hooks/useUserApi.js';
-import { saveFile } from '../../../utils/fileSaver.js';
 
 type RBACResource = {
 	type: string;
 	tenant: string;
 };
 
-type RBACConfig = {
+export type RBACConfig = {
 	user: string;
 	action: string;
 	resource: RBACResource;
 	result: boolean;
 };
 
-type ABACUser = {
-	key: string;
-	attributes: {
-		[key: string]: string;
-	};
-};
-
-type ABACResource = {
-	key: string;
-	attributes: {
-		[key: string]: string;
-	};
-};
-
-type ABACConfig = {
-	user: ABACUser;
-	action: string;
-	resource: ABACResource;
-	result: boolean;
-};
-
-type ReBACConfig = {
-	user: string;
-	action: string;
-	resource: string;
-	result: boolean;
-};
-
-type AccessControlConfig = RBACConfig | ABACConfig | ReBACConfig;
-
-type DryUser = {
-	key: string;
-	email: string;
-	firstName: string;
-	lastName: string;
-	roles: string[];
-};
-
-export const useGeneratePolicySnapshot = ({
+export const useGeneratePolicyRBACSnapshot = ({
 	dryRun,
 	models,
-	path,
 	isTestTenant = true,
 }: GeneratePolicySnapshotProps) => {
 	const { getRoles } = useRolesApi();
@@ -75,7 +38,6 @@ export const useGeneratePolicySnapshot = ({
 	const { getResources } = useResourcesApi();
 	const { createUser } = useUserApi();
 
-	const [roles, setRoles] = useState<RoleRead[]>([]);
 	const [error, setError] = useState<null | string>(null);
 	const [state, setState] = useState<
 		| 'roles'
@@ -85,11 +47,13 @@ export const useGeneratePolicySnapshot = ({
 		| 'resources'
 		| 'done'
 	>('roles');
-	const [tenantId, setTenantId] = useState<string | undefined>(undefined);
-	const [modelsGenerated, setModelsGenerated] = useState<number>(0);
-	const [finalConfig, setFinalConfig] = useState<AccessControlConfig[]>([]);
-	const resourcesRef = useRef<ResourceRead[]>([]);
 	const [dryUsers, setDryUsers] = useState<DryUser[]>([]);
+	const [finalConfig, setFinalConfig] = useState<RBACConfig[]>([]);
+
+	const [tenantId, setTenantId] = useState<string | undefined>(undefined);
+	const tenantIdRef = useRef<string | undefined>(undefined);
+	const rolesRef = useRef<RoleRead[]>([]);
+	const resourcesRef = useRef<ResourceRead[]>([]);
 	const generatedUsersRBACRef = useRef<string[]>([]);
 	const userRoleMappingRBACRef = useRef<Record<string, RoleRead[]>>({});
 	const [createdUsers, setCreatedUsers] = useState<DryUser[]>([]);
@@ -103,33 +67,13 @@ export const useGeneratePolicySnapshot = ({
 		};
 	}, []);
 
-	const createDryUsers = useCallback(
-		(usernames: string[], userRoleMappings: Record<string, RoleRead[]>) => {
-			const result: DryUser[] = [];
-			for (const user of usernames) {
-				const { key, email, firstName, lastName } =
-					buildUserInfoFromUsername(user);
-				const dryUser: DryUser = {
-					key: key,
-					firstName: firstName,
-					lastName: lastName,
-					email: email,
-					roles: userRoleMappings[user]?.map(role => role.key) ?? [],
-				};
-				result.push(dryUser);
-			}
-			setDryUsers(result);
-			// eslint-disable-next-line sonarjs/no-duplicate-string
-			setState('rbac-generate');
-		},
-		[buildUserInfoFromUsername],
-	);
 	const createUserAndAttachRoles = useCallback(
 		async (
 			usernames: string[],
 			userRoleMappings: Record<string, RoleRead[]>,
 		) => {
 			if (usernames.length === 0) {
+				// eslint-disable-next-line sonarjs/no-duplicate-string
 				setState('rbac-generate');
 				return;
 			}
@@ -149,9 +93,24 @@ export const useGeneratePolicySnapshot = ({
 						attributes: {},
 						role_assignments: roles.map(role => ({
 							role: role.key,
-							tenant: tenantId || 'default',
+							tenant: tenantIdRef.current || 'default',
 						})),
 					};
+
+					if (dryRun) {
+						setDryUsers(prev => [
+							...prev,
+							{
+								key: body.key,
+								email: body.email ?? '',
+								firstName: body.first_name ?? ' ',
+								lastName: body.last_name ?? ' ',
+								roles: body.role_assignments?.map(role => role.role) ?? [],
+							},
+						]);
+						setState('rbac-generate');
+						return;
+					}
 
 					const result = await createUser(body);
 
@@ -159,6 +118,7 @@ export const useGeneratePolicySnapshot = ({
 						setError(result.error);
 						return;
 					}
+
 					setCreatedUsers(prev => [
 						...prev,
 						{
@@ -175,7 +135,7 @@ export const useGeneratePolicySnapshot = ({
 				setError(err instanceof Error ? err.message : String(err));
 			}
 		},
-		[buildUserInfoFromUsername, createUser, tenantId],
+		[buildUserInfoFromUsername, createUser, dryRun],
 	);
 
 	const fetchRoles = useCallback(async () => {
@@ -189,7 +149,7 @@ export const useGeneratePolicySnapshot = ({
 			setError('Environment has no Roles present');
 			return;
 		}
-		setRoles(data as RoleRead[]);
+		rolesRef.current = data as RoleRead[];
 		setState('rbac-tenant');
 	}, [getRoles]);
 
@@ -205,13 +165,18 @@ export const useGeneratePolicySnapshot = ({
 
 	const createNewTenant = useCallback(async () => {
 		if (!isTestTenant) {
+			tenantIdRef.current = 'default';
 			setTenantId('default');
 			setState('resources');
 			return;
 		}
 		const name = 'test-tenant-' + randomName('', '');
-
+		tenantIdRef.current = name;
 		setTenantId(name);
+		if (dryRun) {
+			setState('resources');
+			return;
+		}
 		const body: CreateTenantBody = {
 			key: name,
 			name: name,
@@ -225,7 +190,7 @@ export const useGeneratePolicySnapshot = ({
 			return;
 		}
 		setState('resources');
-	}, [createTenant, isTestTenant]);
+	}, [createTenant, dryRun, isTestTenant]);
 
 	const generateRBACConfig = useCallback(() => {
 		const config: RBACConfig[] = generatedUsersRBACRef.current.flatMap(user =>
@@ -241,7 +206,7 @@ export const useGeneratePolicySnapshot = ({
 					return {
 						user: key,
 						action: action.key ?? '',
-						resource: { type: resource.key, tenant: tenantId ?? '' },
+						resource: { type: resource.key, tenant: tenantIdRef.current ?? '' },
 						result: result,
 					};
 				}),
@@ -249,25 +214,8 @@ export const useGeneratePolicySnapshot = ({
 		);
 
 		setFinalConfig(prev => [...prev, ...config]);
-		setModelsGenerated(prev => prev + 1);
-	}, [buildUserInfoFromUsername, tenantId]);
-
-	const saveConfigToPath = useCallback(async () => {
-		// Write config as pretty JSON
-		const json = JSON.stringify(
-			dryRun
-				? { users: dryUsers, config: finalConfig }
-				: { config: finalConfig },
-			null,
-			2,
-		);
-		const { error } = await saveFile(path ?? '', json);
-		if (error) {
-			setError(error);
-			return;
-		}
 		setState('done');
-	}, [dryRun, dryUsers, finalConfig, path]);
+	}, [buildUserInfoFromUsername]);
 
 	const generateUsersAndRoleMapping = useCallback(() => {
 		let generatedUsers: string[] = [];
@@ -275,7 +223,7 @@ export const useGeneratePolicySnapshot = ({
 		const userNoAccess = randomName('', ' ');
 		generatedUsers.push(userNoAccess);
 		userRoleMappingRBAC[userNoAccess] = [];
-		roles.forEach(role => {
+		rolesRef.current.forEach(role => {
 			const userAllAccess = randomName('', ' ');
 			generatedUsers.push(userAllAccess);
 			userRoleMappingRBAC[userAllAccess] = [role];
@@ -286,68 +234,43 @@ export const useGeneratePolicySnapshot = ({
 		];
 		userRoleMappingRBACRef.current = userRoleMappingRBAC;
 		return { generatedUsers, userRoleMappingRBAC };
-	}, [roles]);
-
-	// Check if we have generated all config.
-	useEffect(() => {
-		if (modelsGenerated === models.length) {
-			if (!path) {
-				setTimeout(() => {
-					setState('done');
-				}, 1000);
-			} else {
-				saveConfigToPath();
-			}
-		}
-	}, [models, modelsGenerated, path, saveConfigToPath]);
+	}, []);
 
 	// Step 1 : Get all roles and resources
 
 	useEffect(() => {
 		if (!models.includes('RBAC')) return;
 
-		if (roles.length === 0 && state === 'roles') {
+		if (state === 'roles') {
 			fetchRoles();
-		} else if (tenantId === undefined && state === 'rbac-tenant') {
+		} else if (state === 'rbac-tenant') {
 			createNewTenant();
-		} else if (resourcesRef.current.length === 0 && state === 'resources') {
+		} else if (state === 'resources') {
 			fetchResources();
-		} else if (
-			generatedUsersRBACRef.current.length === 0 &&
-			state === 'rbac-users'
-		) {
+		} else if (state === 'rbac-users') {
 			const { generatedUsers, userRoleMappingRBAC } =
 				generateUsersAndRoleMapping();
-			if (dryRun) {
-				createDryUsers(generatedUsers, userRoleMappingRBAC);
-			} else {
-				createUserAndAttachRoles(generatedUsers, userRoleMappingRBAC);
-			}
+			createUserAndAttachRoles(generatedUsers, userRoleMappingRBAC);
 		} else if (state === 'rbac-generate') {
 			generateRBACConfig();
 		}
 	}, [
 		createNewTenant,
-		createDryUsers,
 		createUserAndAttachRoles,
-		dryRun,
 		fetchResources,
 		fetchRoles,
 		generateRBACConfig,
 		generateUsersAndRoleMapping,
 		models,
-		roles.length,
 		state,
-		tenantId,
 	]);
 
 	return {
 		state,
 		error,
-		roles,
-		tenantId,
 		finalConfig,
 		dryUsers,
+		tenantId,
 		createdUsers,
 	};
 };

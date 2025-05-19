@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, cleanup } from 'ink-testing-library';
 import GenerateUsersComponent from '../../../source/components/init/GenerateUsersComponent.js';
-import { useGeneratePolicySnapshot } from '../../../source/components/test/hooks/usePolicySnapshot.js';
+import { useGeneratePolicyRBACSnapshot } from '../../../source/components/test/hooks/usePolicyRBACSnapshot.js';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { type Mock } from 'vitest';
 
@@ -33,7 +33,7 @@ vi.mock('../../../source/components/test/hooks/usePolicySnapshot.js', () => ({
 describe('GenerateUsersComponent', () => {
 	const mockOnComplete = vi.fn();
 	const mockOnError = vi.fn();
-	const mockUseGeneratePolicySnapshot = useGeneratePolicySnapshot as Mock;
+	const mockUseGeneratePolicySnapshot = useGeneratePolicyRBACSnapshot as Mock;
 
 	beforeEach(() => {
 		vi.resetAllMocks();
