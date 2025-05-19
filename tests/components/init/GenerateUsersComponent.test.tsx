@@ -25,10 +25,13 @@ vi.mock('ink-select-input', () => ({
 	},
 }));
 
-// Mock the usePolicySnapshot hook
-vi.mock('../../../source/components/test/hooks/usePolicySnapshot.js', () => ({
-	useGeneratePolicySnapshot: vi.fn(),
-}));
+// Mock the useRBACPolicySnapshot hook
+vi.mock(
+	'../../../source/components/test/hooks/usePolicyRBACSnapshot.js',
+	() => ({
+		useGeneratePolicySnapshot: vi.fn(),
+	}),
+);
 
 describe('GenerateUsersComponent', () => {
 	const mockOnComplete = vi.fn();
@@ -314,7 +317,7 @@ describe('GenerateUsersComponent', () => {
 		expect(mockOnComplete).toHaveBeenCalledTimes(1);
 	});
 
-	it('passes correct snapshot options to usePolicySnapshot', () => {
+	it('passes correct snapshot options to useRBACPolicySnapshot', () => {
 		render(
 			<GenerateUsersComponent
 				onComplete={mockOnComplete}
