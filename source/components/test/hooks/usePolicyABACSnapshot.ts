@@ -10,7 +10,7 @@ import {
 import {
 	ConditionSetRuleRead,
 	useSetPermissionsApi,
-} from '../../../hooks/useSetPermissions.js';
+} from '../../../hooks/useSetPermissionsApi.js';
 import randomName from '@scaleway/random-name';
 import {
 	CreateTenantBody,

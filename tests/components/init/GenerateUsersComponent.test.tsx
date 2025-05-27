@@ -29,7 +29,7 @@ vi.mock('ink-select-input', () => ({
 vi.mock(
 	'../../../source/components/test/hooks/usePolicyRBACSnapshot.js',
 	() => ({
-		useGeneratePolicySnapshot: vi.fn(),
+		useGeneratePolicyRBACSnapshot: vi.fn(),
 	}),
 );
 
