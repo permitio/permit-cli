@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, cleanup } from 'ink-testing-library';
 import GenerateUsersComponent from '../../../source/components/init/GenerateUsersComponent.js';
-import { useGeneratePolicySnapshot } from '../../../source/components/test/hooks/usePolicySnapshot.js';
+import { useGeneratePolicyRBACSnapshot } from '../../../source/components/test/hooks/usePolicyRBACSnapshot.js';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { type Mock } from 'vitest';
 
@@ -25,15 +25,18 @@ vi.mock('ink-select-input', () => ({
 	},
 }));
 
-// Mock the usePolicySnapshot hook
-vi.mock('../../../source/components/test/hooks/usePolicySnapshot.js', () => ({
-	useGeneratePolicySnapshot: vi.fn(),
-}));
+// Mock the useRBACPolicySnapshot hook
+vi.mock(
+	'../../../source/components/test/hooks/usePolicyRBACSnapshot.js',
+	() => ({
+		useGeneratePolicyRBACSnapshot: vi.fn(),
+	}),
+);
 
 describe('GenerateUsersComponent', () => {
 	const mockOnComplete = vi.fn();
 	const mockOnError = vi.fn();
-	const mockUseGeneratePolicySnapshot = useGeneratePolicySnapshot as Mock;
+	const mockUseGeneratePolicySnapshot = useGeneratePolicyRBACSnapshot as Mock;
 
 	beforeEach(() => {
 		vi.resetAllMocks();
@@ -314,7 +317,7 @@ describe('GenerateUsersComponent', () => {
 		expect(mockOnComplete).toHaveBeenCalledTimes(1);
 	});
 
-	it('passes correct snapshot options to usePolicySnapshot', () => {
+	it('passes correct snapshot options to useRBACPolicySnapshot', () => {
 		render(
 			<GenerateUsersComponent
 				onComplete={mockOnComplete}

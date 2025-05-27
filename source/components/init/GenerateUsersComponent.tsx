@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useMemo, useState } from 'react';
-import { useGeneratePolicySnapshot } from '../test/hooks/usePolicySnapshot.js';
+import { useGeneratePolicyRBACSnapshot } from '../test/hooks/usePolicyRBACSnapshot.js';
 import { Text, Box } from 'ink';
 import Spinner from 'ink-spinner';
 import SelectInput from 'ink-select-input';
@@ -38,7 +38,7 @@ export default function GeneratedUsersComponent({
 	);
 
 	const { state, error, createdUsers, tenantId } =
-		useGeneratePolicySnapshot(snapshotOptions);
+		useGeneratePolicyRBACSnapshot(snapshotOptions);
 
 	// Handle errors
 	useEffect(() => {
