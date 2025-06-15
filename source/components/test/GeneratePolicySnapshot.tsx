@@ -87,7 +87,6 @@ export function GeneratePolicySnapshot({
 	);
 
 	useEffect(() => {
-		// console.log('IM MAIN', [RBACState, ABACState], models);
 		const configsGenerated = [RBACState, ABACState].filter(
 			state => state === 'done',
 		);
