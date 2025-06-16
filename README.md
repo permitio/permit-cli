@@ -107,7 +107,7 @@ Below is a categorized overview of all available Permit CLI commands:
 - [`permit test run audit`](#permit-test-run-audit) – Audit your policy decisions against recent logs.
 
 - [E2E Tests](#execute-e2e-tests)
-  - [`permit test generate e2e`](#permit-test-generate-e2e) – Generate end-to-end policy test configurations and (optionally) test data.
+  - [`permit test generate e2e`](#permit-test-generate-e2e) – Generate end-to-end policy test configurations, and (optionally) test data & test-snippets.
 
 ### [API-First Authorization](#api-first-authorization-1)
 
@@ -1180,8 +1180,10 @@ Generate end‑to‑end test configurations (and optionally test data) for your 
 
 - `--api-key <string>` - API Key to be used for test generation.
 - `--dry-run <boolean>` - If set, generates test cases and mock data **without** making any changes in Permit.
-- `--models <string_array>` - List of model names to generate tests for. `default: RBAC`.
+- `--models <string_array>` - List of model names to generate tests for. `default: RBAC` `Allowed values: ("RBAC", "ABAC")[]`.
 - `--path <string>` - Filesystem path where the generated JSON config should be saved (recommended).
+- `--snippet <string>` - If set, generates a code snippet for the test. The snippet will be printed to the terminal. `Allowed values: 'pytest' | 'jest', 'vitest'`
+- `--snippet-path <string>` - If set, saves the generated code snippet to the specified file path.
 
 > Note: All flags are optional. If you omit `--models`, only the default RBAC model will be processed. If you omit `--dry-run`, real data and users will be created in Permit.
 
@@ -1191,6 +1193,12 @@ Generate tests for the default RBAC model, and save the config to disk. Creates 
 
 ```bash
   $ permit test generate e2e --models=RBAC --path=logb.json
+```
+
+Generate tests for both RBAC and ABAC models, and save the config to disk. Creates end‑to‑end tests for the `RBAC` & `ABAC` model and writes the generated JSON config to `logb.json`
+
+```bash
+  $ permit test generate e2e --models=RBAC --models=ABAC --path=logb.json
 ```
 
 Generate tests for RBAC, save the config, but don't apply changes (dry run). This is the same as above, but in dry‑run mode, so no changes are made in Permit.
@@ -1209,6 +1217,12 @@ Generate and apply tests for the RBAC model with default settings. Runs end‑to
 
 ```bash
   $ permit test generate e2e --models=RBAC
+```
+
+Generate tests for the default RBAC model, and save the config to disk. Creates end‑to‑end tests for the `RBAC` model and writes the generated JSON config to `logb.json`. Also generates a code snippet for the test in `pytest` format and saves it to `test_policy.py`.
+
+```bash
+  $ permit test generate e2e --models=RBAC --path=logb.json --snippet=pytest --snippet-path=test_policy.py
 ```
 
 ## API-First Authorization
