@@ -1231,35 +1231,35 @@ Generate tests for the default RBAC model, and save the config to disk. Creates 
 
 ```json
 {
-  "config": [
-    {
-      "user": "dreamyshannon",
-      "action": "read",
-      "resource": {
-        "type": "Document2",
-        "tenant": "test-tenant-modestritchie"
-      },
-      "result": false
-    },
-    {
-      "user": "dreamyshannon",
-      "action": "create",
-      "resource": {
-        "type": "Document2",
-        "tenant": "test-tenant-modestritchie"
-      },
-      "result": false
-    }
-  ],
-  "users": [
-    {
-      "key": "dreamyshannon",
-      "email": "dreamyshannon@gmail.com",
-      "firstName": "dreamy",
-      "lastName": "shannon",
-      "roles": []
-    }
-  ]
+	"config": [
+		{
+			"user": "dreamyshannon",
+			"action": "read",
+			"resource": {
+				"type": "Document2",
+				"tenant": "test-tenant-modestritchie"
+			},
+			"result": false
+		},
+		{
+			"user": "dreamyshannon",
+			"action": "create",
+			"resource": {
+				"type": "Document2",
+				"tenant": "test-tenant-modestritchie"
+			},
+			"result": false
+		}
+	],
+	"users": [
+		{
+			"key": "dreamyshannon",
+			"email": "dreamyshannon@gmail.com",
+			"firstName": "dreamy",
+			"lastName": "shannon",
+			"roles": []
+		}
+	]
 }
 ```
 
@@ -1267,38 +1267,38 @@ Generate tests for the default RBAC model, and save the config to disk. Creates 
 
 ```json
 {
-  "config": [
-    {
-      "user": {
-        "key": "angrygoodall",
-        "attributes": {
-          "department": "Engineering",
-          "training_status": "certified",
-          "key": "c65e70d8-d50b-4ac2-8f0c-ad14ae695d0f",
-          "email": "c65e70d8-d50b-4ac2-8f0c-ad14ae695d0f"
-        }
-      },
-      "resource": {
-        "type": "Document2",
-        "attributes": {
-          "document_type": "classified",
-          "priority_level": "high"
-        },
-        "tenant": "test-tenant-hardcorebose"
-      },
-      "action": "query",
-      "result": true
-    }
-  ],
-  "users": [
-    {
-      "key": "angrygoodall",
-      "email": "angrygoodall@gmail.com",
-      "firstName": "angry",
-      "lastName": "goodall",
-      "roles": []
-    }
-  ]
+	"config": [
+		{
+			"user": {
+				"key": "angrygoodall",
+				"attributes": {
+					"department": "Engineering",
+					"training_status": "certified",
+					"key": "c65e70d8-d50b-4ac2-8f0c-ad14ae695d0f",
+					"email": "c65e70d8-d50b-4ac2-8f0c-ad14ae695d0f"
+				}
+			},
+			"resource": {
+				"type": "Document2",
+				"attributes": {
+					"document_type": "classified",
+					"priority_level": "high"
+				},
+				"tenant": "test-tenant-hardcorebose"
+			},
+			"action": "query",
+			"result": true
+		}
+	],
+	"users": [
+		{
+			"key": "angrygoodall",
+			"email": "angrygoodall@gmail.com",
+			"firstName": "angry",
+			"lastName": "goodall",
+			"roles": []
+		}
+	]
 }
 ```
 
@@ -1306,54 +1306,54 @@ Generate tests for the default RBAC model, and save the config to disk. Creates 
 
 ```json
 {
-  "config": [
-    {
-      "user": {
-        "key": "angrygoodall",
-        "attributes": {
-          "department": "Engineering",
-          "training_status": "certified",
-          "key": "c65e70d8-d50b-4ac2-8f0c-ad14ae695d0f",
-          "email": "c65e70d8-d50b-4ac2-8f0c-ad14ae695d0f"
-        }
-      },
-      "resource": {
-        "type": "Document2",
-        "attributes": {
-          "document_type": "classified",
-          "priority_level": "high"
-        },
-        "tenant": "test-tenant-hardcorebose"
-      },
-      "action": "query",
-      "result": true
-    },
-    {
-      "user": "dreamyshannon",
-      "action": "read",
-      "resource": {
-        "type": "Document2",
-        "tenant": "test-tenant-modestritchie"
-      },
-      "result": false
-    }
-  ],
-  "users": [
-    {
-      "key": "angrygoodall",
-      "email": "angrygoodall@gmail.com",
-      "firstName": "angry",
-      "lastName": "goodall",
-      "roles": []
-    },
-    {
-      "key": "dreamyshannon",
-      "email": "dreamyshannon@gmail.com",
-      "firstName": "dreamy",
-      "lastName": "shannon",
-      "roles": []
-    }
-  ]
+	"config": [
+		{
+			"user": {
+				"key": "angrygoodall",
+				"attributes": {
+					"department": "Engineering",
+					"training_status": "certified",
+					"key": "c65e70d8-d50b-4ac2-8f0c-ad14ae695d0f",
+					"email": "c65e70d8-d50b-4ac2-8f0c-ad14ae695d0f"
+				}
+			},
+			"resource": {
+				"type": "Document2",
+				"attributes": {
+					"document_type": "classified",
+					"priority_level": "high"
+				},
+				"tenant": "test-tenant-hardcorebose"
+			},
+			"action": "query",
+			"result": true
+		},
+		{
+			"user": "dreamyshannon",
+			"action": "read",
+			"resource": {
+				"type": "Document2",
+				"tenant": "test-tenant-modestritchie"
+			},
+			"result": false
+		}
+	],
+	"users": [
+		{
+			"key": "angrygoodall",
+			"email": "angrygoodall@gmail.com",
+			"firstName": "angry",
+			"lastName": "goodall",
+			"roles": []
+		},
+		{
+			"key": "dreamyshannon",
+			"email": "dreamyshannon@gmail.com",
+			"firstName": "dreamy",
+			"lastName": "shannon",
+			"roles": []
+		}
+	]
 }
 ```
 
