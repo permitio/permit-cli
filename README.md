@@ -107,7 +107,7 @@ Below is a categorized overview of all available Permit CLI commands:
 - [`permit test run audit`](#permit-test-run-audit) – Audit your policy decisions against recent logs.
 
 - [E2E Tests](#execute-e2e-tests)
-  - [`permit test generate e2e`](#permit-test-generate-e2e) – Generate end-to-end policy test configurations and (optionally) test data.
+  - [`permit test generate e2e`](#permit-test-generate-e2e) – Generate end-to-end policy test configurations, and (optionally) test data & test-snippets.
 
 ### [API-First Authorization](#api-first-authorization-1)
 
@@ -1180,8 +1180,10 @@ Generate end‑to‑end test configurations (and optionally test data) for your 
 
 - `--api-key <string>` - API Key to be used for test generation.
 - `--dry-run <boolean>` - If set, generates test cases and mock data **without** making any changes in Permit.
-- `--models <string_array>` - List of model names to generate tests for. `default: RBAC`.
+- `--models <string_array>` - List of model names to generate tests for. `default: RBAC` `Allowed values: ("RBAC", "ABAC")[]`.
 - `--path <string>` - Filesystem path where the generated JSON config should be saved (recommended).
+- `--snippet <string>` - If set, generates a code snippet for the test. The snippet will be printed to the terminal. `Allowed values: 'pytest' | 'jest', 'vitest'`
+- `--snippet-path <string>` - If set, saves the generated code snippet to the specified file path.
 
 > Note: All flags are optional. If you omit `--models`, only the default RBAC model will be processed. If you omit `--dry-run`, real data and users will be created in Permit.
 
@@ -1191,6 +1193,12 @@ Generate tests for the default RBAC model, and save the config to disk. Creates 
 
 ```bash
   $ permit test generate e2e --models=RBAC --path=logb.json
+```
+
+Generate tests for both RBAC and ABAC models, and save the config to disk. Creates end‑to‑end tests for the `RBAC` & `ABAC` model and writes the generated JSON config to `logb.json`
+
+```bash
+  $ permit test generate e2e --models=RBAC --models=ABAC --path=logb.json
 ```
 
 Generate tests for RBAC, save the config, but don't apply changes (dry run). This is the same as above, but in dry‑run mode, so no changes are made in Permit.
@@ -1211,37 +1219,142 @@ Generate and apply tests for the RBAC model with default settings. Runs end‑to
   $ permit test generate e2e --models=RBAC
 ```
 
-## API-First Authorization
-
-Define and enforce API authorization policies using OpenAPI specifications for a smooth API integration.
-
-### URL-based Permissions
-
-Map API endpoints to policies using simple configurations and FastAPI decorators
-
-#### `permit pdp check-url`
-
-Check if a user has permission to access a specific URL. The command verifies URL-based permissions against the PDP using the Permit.io URL authorization API.
-
-**Arguments (Required):**
-
-- `--user <string>` - the user id to check permissions for (Required)
-- `--url <string>` - the URL to check permissions for (Required)
-
-**Arguments (Optional):**
-
-- `--method <string>` - the HTTP method to check permissions for (default: `GET`)
-- `--tenant <string>` - the tenant to check permissions for (default: `default`)
-- `--user-attributes <string>` - additional user attributes to enrich the authorization check in the format `key1:value1,key2:value2`. Can be specified multiple times.
-- `--pdp-url <string>` - the PDP URL to check authorization against (default: Cloud PDP)
-- `--api-key <string>` - the API key for the Permit env, project or Workspace
-
-**Examples:**
-
-Basic URL permission check:
+Generate tests for the default RBAC model, and save the config to disk. Creates end‑to‑end tests for the `RBAC` model and writes the generated JSON config to `logb.json`. Also generates a code snippet for the test in `pytest` format and saves it to `test_policy.py`.
 
 ```bash
-$ permit pdp check-url --user john@example.com --url https://api.example.com/orders
+  $ permit test generate e2e --models=RBAC --path=logb.json --snippet=pytest --snippet-path=test_policy.py
+```
+
+### Example outputs:
+
+#### For RBAC, the generated JSON config might look like this:
+
+```json
+{
+	"config": [
+		{
+			"user": "dreamyshannon",
+			"action": "read",
+			"resource": {
+				"type": "Document2",
+				"tenant": "test-tenant-modestritchie"
+			},
+			"result": false
+		},
+		{
+			"user": "dreamyshannon",
+			"action": "create",
+			"resource": {
+				"type": "Document2",
+				"tenant": "test-tenant-modestritchie"
+			},
+			"result": false
+		}
+	],
+	"users": [
+		{
+			"key": "dreamyshannon",
+			"email": "dreamyshannon@gmail.com",
+			"firstName": "dreamy",
+			"lastName": "shannon",
+			"roles": []
+		}
+	]
+}
+```
+
+#### For ABAC, the generated JSON config might look like this:
+
+```json
+{
+	"config": [
+		{
+			"user": {
+				"key": "angrygoodall",
+				"attributes": {
+					"department": "Engineering",
+					"training_status": "certified",
+					"key": "c65e70d8-d50b-4ac2-8f0c-ad14ae695d0f",
+					"email": "c65e70d8-d50b-4ac2-8f0c-ad14ae695d0f"
+				}
+			},
+			"resource": {
+				"type": "Document2",
+				"attributes": {
+					"document_type": "classified",
+					"priority_level": "high"
+				},
+				"tenant": "test-tenant-hardcorebose"
+			},
+			"action": "query",
+			"result": true
+		}
+	],
+	"users": [
+		{
+			"key": "angrygoodall",
+			"email": "angrygoodall@gmail.com",
+			"firstName": "angry",
+			"lastName": "goodall",
+			"roles": []
+		}
+	]
+}
+```
+
+#### For combined (both RBAC and ABAC), the generated JSON config might look like this:
+
+```json
+{
+	"config": [
+		{
+			"user": {
+				"key": "angrygoodall",
+				"attributes": {
+					"department": "Engineering",
+					"training_status": "certified",
+					"key": "c65e70d8-d50b-4ac2-8f0c-ad14ae695d0f",
+					"email": "c65e70d8-d50b-4ac2-8f0c-ad14ae695d0f"
+				}
+			},
+			"resource": {
+				"type": "Document2",
+				"attributes": {
+					"document_type": "classified",
+					"priority_level": "high"
+				},
+				"tenant": "test-tenant-hardcorebose"
+			},
+			"action": "query",
+			"result": true
+		},
+		{
+			"user": "dreamyshannon",
+			"action": "read",
+			"resource": {
+				"type": "Document2",
+				"tenant": "test-tenant-modestritchie"
+			},
+			"result": false
+		}
+	],
+	"users": [
+		{
+			"key": "angrygoodall",
+			"email": "angrygoodall@gmail.com",
+			"firstName": "angry",
+			"lastName": "goodall",
+			"roles": []
+		},
+		{
+			"key": "dreamyshannon",
+			"email": "dreamyshannon@gmail.com",
+			"firstName": "dreamy",
+			"lastName": "shannon",
+			"roles": []
+		}
+	]
+}
 ```
 
 Check with specific HTTP method and tenant:
