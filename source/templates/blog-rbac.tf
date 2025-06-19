@@ -54,17 +54,56 @@ resource "permitio_role" "reader" {
   depends_on  = [permitio_resource.blog]
 }
 
+# Condition Set Rules
+resource "permitio_condition_set_rule" "free_premium_premium_blog_read" {
+  user_set     = permitio_user_set.free_premium.key
+  permission   = "blog:read"
+  resource_set = permitio_resource_set.premium.key
+  depends_on   = [
+    permitio_resource_set.premium,
+    permitio_user_set.free_premium
+  ]
+}
+
+# Resource Sets
+resource "permitio_resource_set" "premium" {
+  name        = "premium"
+  key         = "premium"
+  resource    = permitio_resource.blog.key
+  conditions  = jsonencode({
+  "allOf": [
+    {
+      "allOf": [
+        {
+          "resource.premium": {
+            "equals": "true"
+          }
+        }
+      ]
+    }
+  ]
+})
+  depends_on  = [
+    permitio_resource.blog
+  ]
+}
+
 # User Sets
-resource "permitio_user_set" "permit_employee" {
-  key = "permit_employee"
-  name = "permit-employee"
+resource "permitio_user_set" "free_premium" {
+  key = "free_premium"
+  name = "free-premium"
   conditions = jsonencode({
   allOf = [
     {
       allOf = [
         {
           "user.email" = {
-            contains = "permit.io"
+            equals = "un.org"
+          }
+        },
+        {
+          "user.email" = {
+            equals = "who.org"
           }
         }
       ]
@@ -72,3 +111,4 @@ resource "permitio_user_set" "permit_employee" {
   ]
 })
 }
+
