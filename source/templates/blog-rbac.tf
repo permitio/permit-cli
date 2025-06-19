@@ -38,5 +38,37 @@ resource "permitio_resource" "blog" {
     }
   }
   attributes = {
+    "premium" = {
+      name = "Premium"
+      type = "string"
+    }
   }
+}
+
+# Roles
+resource "permitio_role" "reader" {
+  key         = "reader"
+  name        = "reader"
+  permissions = ["blog:read"]
+
+  depends_on  = [permitio_resource.blog]
+}
+
+# User Sets
+resource "permitio_user_set" "permit_employee" {
+  key = "permit_employee"
+  name = "permit-employee"
+  conditions = jsonencode({
+  allOf = [
+    {
+      allOf = [
+        {
+          "user.email" = {
+            contains = "permit.io"
+          }
+        }
+      ]
+    }
+  ]
+})
 }
