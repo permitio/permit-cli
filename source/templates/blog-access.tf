@@ -20,7 +20,7 @@ provider "permitio" {
 # Resources
 resource "permitio_resource" "blog" {
   name        = "blog"
-  description = ""
+  description = "resource representing a blog entity and its access actions" 
   key         = "blog"
 
   actions = {
@@ -46,7 +46,7 @@ resource "permitio_resource" "blog" {
 }
 resource "permitio_resource" "comment" {
   name        = "comment"
-  description = ""
+  description = "resource for managing access to blog comments"
   key         = "comment"
 
   actions = {
