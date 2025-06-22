@@ -27,14 +27,14 @@ resource "permitio_resource" "blog" {
     "create" = {
       name = "create"
     },
-    "delete" = {
-      name = "delete"
-    },
     "update" = {
       name = "update"
     },
     "read" = {
       name = "read"
+    },
+    "delete" = {
+      name = "delete"
     }
   }
   attributes = {
@@ -50,14 +50,14 @@ resource "permitio_resource" "comment" {
   key         = "comment"
 
   actions = {
+    "delete" = {
+      name = "delete"
+    },
     "read" = {
       name = "read"
     },
     "create" = {
       name = "create"
-    },
-    "delete" = {
-      name = "delete"
     },
     "update" = {
       name = "update"
@@ -72,7 +72,7 @@ resource "permitio_role" "blog__admin" {
   key         = "admin"
   name        = "admin"
   resource    = permitio_resource.blog.key
-  permissions = ["update", "delete", "create", "read"]
+  permissions = ["delete"]
 
   depends_on  = [permitio_resource.blog]
 }
@@ -80,7 +80,7 @@ resource "permitio_role" "blog__editor" {
   key         = "editor"
   name        = "editor"
   resource    = permitio_resource.blog.key
-  permissions = ["read", "create", "update"]
+  permissions = ["update", "read", "create"]
 
   depends_on  = [permitio_resource.blog]
 }
@@ -96,7 +96,15 @@ resource "permitio_role" "comment__editor" {
   key         = "editor"
   name        = "editor"
   resource    = permitio_resource.comment.key
-  permissions = ["read"]
+  permissions = ["update", "create", "read"]
+
+  depends_on  = [permitio_resource.comment]
+}
+resource "permitio_role" "comment__reader" {
+  key         = "reader"
+  name        = "reader"
+  resource    = permitio_resource.comment.key
+  permissions = ["read", "create"]
 
   depends_on  = [permitio_resource.comment]
 }
@@ -125,17 +133,6 @@ resource "permitio_relation" "blog_comment" {
   depends_on = [
     permitio_resource.comment,
     permitio_resource.blog,
-  ]
-}
-
-# Condition Set Rules
-resource "permitio_condition_set_rule" "free_premium_premium_blog_read" {
-  user_set     = permitio_user_set.free_premium.key
-  permission   = "blog:read"
-  resource_set = permitio_resource_set.premium.key
-  depends_on   = [
-    permitio_resource_set.premium,
-    permitio_user_set.free_premium
   ]
 }
 
