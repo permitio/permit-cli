@@ -67,7 +67,7 @@ resource "permitio_role" "post__admin" {
   key         = "admin"
   name        = "admin"
   resource    = permitio_resource.post.key
-  permissions = ["delete"]
+  permissions = ["update", "delete", "create", "read"]
 
   depends_on  = [permitio_resource.post]
 }
@@ -84,22 +84,6 @@ resource "permitio_role" "comment__editor" {
   name        = "editor"
   resource    = permitio_resource.comment.key
   permissions = ["update", "create", "read"]
-
-  depends_on  = [permitio_resource.comment]
-}
-resource "permitio_role" "comment__reader" {
-  key         = "reader"
-  name        = "reader"
-  resource    = permitio_resource.comment.key
-  permissions = ["read", "create"]
-
-  depends_on  = [permitio_resource.comment]
-}
-resource "permitio_role" "comment__admin" {
-  key         = "admin"
-  name        = "admin"
-  resource    = permitio_resource.comment.key
-  permissions = ["read", "update", "create", "delete"]
 
   depends_on  = [permitio_resource.comment]
 }
@@ -147,16 +131,16 @@ resource "permitio_resource_set" "premium" {
 }
 
 # Role Derivations
-resource "permitio_role_derivation" "post_admin_to_comment_admin" {
-  role        = permitio_role.post__admin.key
+resource "permitio_role_derivation" "post_editor_to_comment_editor" {
+  role        = permitio_role.post__editor.key
   on_resource = permitio_resource.post.key
-  to_role     = permitio_role.comment__admin.key
+  to_role     = permitio_role.comment__editor.key
   resource    = permitio_resource.comment.key
   linked_by   = permitio_relation.post_comment.key
   depends_on = [
-    permitio_role.post__admin,
+    permitio_role.post__editor,
     permitio_resource.post,
-    permitio_role.comment__admin,
+    permitio_role.comment__editor,
     permitio_resource.comment,
     permitio_relation.post_comment
   ]
