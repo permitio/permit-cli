@@ -13,10 +13,10 @@ provider "permitio" {
 }
 
 # Resources
-resource "permitio_resource" "post" {
-  name        = "post"
-  description = "resource representing a post entity and its access actions" 
-  key         = "post"
+resource "permitio_resource" "comment" {
+  name        = "comment"
+  description = "resource for managing access to post comments"
+  key         = "comment"
 
   actions = {
     "create" = {
@@ -25,11 +25,33 @@ resource "permitio_resource" "post" {
     "update" = {
       name = "update"
     },
-    "read" = {
-      name = "read"
-    },
     "delete" = {
       name = "delete"
+    },
+    "read" = {
+      name = "read"
+    }
+  }
+  attributes = {
+  }
+}
+resource "permitio_resource" "post" {
+  name        = "post"
+  description = "resource representing a post entity and its access actions" 
+  key         = "post"
+
+  actions = {
+    "delete" = {
+      name = "delete"
+    },
+    "create" = {
+      name = "create"
+    },
+    "update" = {
+      name = "update"
+    },
+    "read" = {
+      name = "read"
     }
   }
   attributes = {
@@ -39,30 +61,16 @@ resource "permitio_resource" "post" {
     }
   }
 }
-resource "permitio_resource" "comment" {
-  name        = "comment"
-  description = "resource for managing access to post comments"
-  key         = "comment"
-
-  actions = {
-    "delete" = {
-      name = "delete"
-    },
-    "read" = {
-      name = "read"
-    },
-    "create" = {
-      name = "create"
-    },
-    "update" = {
-      name = "update"
-    }
-  }
-  attributes = {
-  }
-}
 
 # Roles
+resource "permitio_role" "comment__editor" {
+  key         = "editor"
+  name        = "editor"
+  resource    = permitio_resource.comment.key
+  permissions = ["update", "create", "read"]
+
+  depends_on  = [permitio_resource.comment]
+}
 resource "permitio_role" "post__admin" {
   key         = "admin"
   name        = "admin"
@@ -75,17 +83,9 @@ resource "permitio_role" "post__editor" {
   key         = "editor"
   name        = "editor"
   resource    = permitio_resource.post.key
-  permissions = ["update", "read", "create"]
+  permissions = ["create", "read", "update"]
 
   depends_on  = [permitio_resource.post]
-}
-resource "permitio_role" "comment__editor" {
-  key         = "editor"
-  name        = "editor"
-  resource    = permitio_resource.comment.key
-  permissions = ["update", "create", "read"]
-
-  depends_on  = [permitio_resource.comment]
 }
 resource "permitio_role" "reader" {
   key         = "reader"
