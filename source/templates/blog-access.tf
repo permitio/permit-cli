@@ -18,31 +18,15 @@ provider "permitio" {
 }
 
 # Resources
-resource "permitio_resource" "docs" {
-  name        = "docs"
-  description = ""
-  key         = "docs"
-
-  actions = {
-    "delete" = {
-      name = "delete"
-    },
-    "update" = {
-      name = "update"
-    },
-    "create" = {
-      name = "create"
-    }
-  }
-  attributes = {
-  }
-}
 resource "permitio_resource" "blog" {
   name        = "blog"
   description = ""
   key         = "blog"
 
   actions = {
+    "create" = {
+      name = "create"
+    },
     "delete" = {
       name = "delete"
     },
@@ -51,9 +35,6 @@ resource "permitio_resource" "blog" {
     },
     "read" = {
       name = "read"
-    },
-    "create" = {
-      name = "create"
     }
   }
   attributes = {
@@ -61,6 +42,28 @@ resource "permitio_resource" "blog" {
       name = "Premium"
       type = "string"
     }
+  }
+}
+resource "permitio_resource" "comment" {
+  name        = "comment"
+  description = ""
+  key         = "comment"
+
+  actions = {
+    "read" = {
+      name = "read"
+    },
+    "create" = {
+      name = "create"
+    },
+    "delete" = {
+      name = "delete"
+    },
+    "update" = {
+      name = "update"
+    }
+  }
+  attributes = {
   }
 }
 
@@ -89,13 +92,21 @@ resource "permitio_role" "blog__reader" {
 
   depends_on  = [permitio_resource.blog]
 }
-resource "permitio_role" "docs__editor" {
+resource "permitio_role" "comment__editor" {
   key         = "editor"
   name        = "editor"
-  resource    = permitio_resource.docs.key
-  permissions = ["update", "delete", "create"]
+  resource    = permitio_resource.comment.key
+  permissions = ["read"]
 
-  depends_on  = [permitio_resource.docs]
+  depends_on  = [permitio_resource.comment]
+}
+resource "permitio_role" "comment__admin" {
+  key         = "admin"
+  name        = "admin"
+  resource    = permitio_resource.comment.key
+  permissions = ["read", "update", "create", "delete"]
+
+  depends_on  = [permitio_resource.comment]
 }
 resource "permitio_role" "reader" {
   key         = "reader"
@@ -106,13 +117,13 @@ resource "permitio_role" "reader" {
 }
 
 # Relations
-resource "permitio_relation" "blog_docs" {
+resource "permitio_relation" "blog_comment" {
   key              = "parent"
   name             = "parent"
   subject_resource = permitio_resource.blog.key
-  object_resource  = permitio_resource.docs.key
+  object_resource  = permitio_resource.comment.key
   depends_on = [
-    permitio_resource.docs,
+    permitio_resource.comment,
     permitio_resource.blog,
   ]
 }
@@ -176,16 +187,17 @@ resource "permitio_user_set" "free_premium" {
 }
 
 # Role Derivations
-resource "permitio_role_derivation" "blog_editor_to_docs_editor" {
-  role        = permitio_role.blog__editor.key
+resource "permitio_role_derivation" "blog_admin_to_comment_admin" {
+  role        = permitio_role.blog__admin.key
   on_resource = permitio_resource.blog.key
-  to_role     = permitio_role.docs__editor.key
-  resource    = permitio_resource.docs.key
-  linked_by   = permitio_relation.blog_docs.key
+  to_role     = permitio_role.comment__admin.key
+  resource    = permitio_resource.comment.key
+  linked_by   = permitio_relation.blog_comment.key
   depends_on = [
-    permitio_role.blog__editor,
+    permitio_role.blog__admin,
     permitio_resource.blog,
-    permitio_role.docs__editor,
-    permitio_resource.docs,
-    permitio_relation.blog_docs
+    permitio_role.comment__admin,
+    permitio_resource.comment,
+    permitio_relation.blog_comment
   ]
+}
