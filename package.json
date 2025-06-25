@@ -1,6 +1,6 @@
 {
 	"name": "@permitio/cli",
-	"version": "0.2.6",
+	"version": "0.2.7",
 	"description": "Permit CLI is an open-source command-line tool that empowers developers to manage, test, and automate fine-grained access control across applications.",
 	"license": "MIT",
 	"bin": {
