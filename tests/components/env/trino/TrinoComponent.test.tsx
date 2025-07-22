@@ -9,6 +9,13 @@ vi.mock('../../../../source/hooks/trino/useTrinoProcessor.js', () => ({
 	useTrinoProcessor: vi.fn(),
 }));
 
+// Mock the dynamic import of trinoUtils
+vi.mock('../../../../source/utils/trinoUtils.js', () => ({
+	connectToTrino: vi.fn(() => ({})),
+	fetchTrinoSchema: vi.fn(() => ({})),
+	mapTrinoSchemaToPermitResources: vi.fn(() => []),
+}));
+
 import { useTrinoProcessor } from '../../../../source/hooks/trino/useTrinoProcessor.js';
 
 describe('TrinoComponent', () => {
@@ -18,7 +25,6 @@ describe('TrinoComponent', () => {
 		password: 'testpass',
 		catalog: 'postgresql',
 		schema: 'public',
-		insecure: false,
 	};
 
 	beforeEach(() => {

@@ -101,6 +101,9 @@ describe('useResourceApi', () => {
 		expect(lastFrame()).toContain('Result: users,posts');
 		expect(mockGetFn).toHaveBeenCalledWith(
 			'/v2/schema/{proj_id}/{env_id}/resources',
+			undefined,
+			undefined,
+			{ page: 1, per_page: 100 },
 		);
 	});
 
