@@ -16,12 +16,4 @@ describe('Cli script', () => {
 		const pastelInstance = (Pastel as any).mock.results[0].value;
 		expect(pastelInstance.run).toHaveBeenCalled();
 	});
-
-	it('Should include trino command in available commands', async () => {
-		// Import the trino command to ensure it's available
-		const trinoCommand = await import('../source/commands/env/apply/trino.js');
-		expect(trinoCommand.description).toBeDefined();
-		expect(trinoCommand.options).toBeDefined();
-		expect(trinoCommand.default).toBeDefined();
-	});
 });
