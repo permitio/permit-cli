@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: testdb
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./sample_data/postgres_init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U testuser -d testdb']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MySQL database
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: testuser
+      MYSQL_PASSWORD: testpass
+    ports:
+      - '3306:3306'
+    volumes:
+      - ./sample_data/mysql_init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'mysqladmin',
+          'ping',
+          '-h',
+          'localhost',
+          '-u',
+          'testuser',
+          '-ptestpass',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Trino server
+  trino:
+    image: trinodb/trino:latest
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./trino_config:/etc/trino
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8080/v1/info']
+      interval: 10s
+      timeout: 5s
+      retries: 5
