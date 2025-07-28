@@ -12,7 +12,7 @@ coverage
 !templates/
 !templates/*.tf
 !source/templates/*.tf
-
+!source/templates/lms-app
 
 # .tfstate files
 *.tfstate
@@ -132,6 +132,7 @@ web_modules/
 .env.local
 
 terraform_server/.env
+
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
