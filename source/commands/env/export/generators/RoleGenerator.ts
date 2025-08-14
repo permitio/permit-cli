@@ -71,6 +71,7 @@ export class RoleGenerator implements HCLGenerator {
 	constructor(
 		private permit: Permit,
 		private warningCollector: WarningCollector,
+		private includeDefaultRoles: boolean = false,
 	) {
 		// Register Handlebars helpers
 		this.registerHandlebarsHelpers();
@@ -300,8 +301,11 @@ export class RoleGenerator implements HCLGenerator {
 		const validRoles: RoleData[] = [];
 
 		for (const role of roles) {
-			// Skip default global roles that already exist in the system
-			if (DEFAULT_GLOBAL_ROLES.includes(role.key)) {
+			// Skip default global roles that already exist in the system unless includeDefaultRoles is true
+			if (
+				DEFAULT_GLOBAL_ROLES.includes(role.key) &&
+				!this.includeDefaultRoles
+			) {
 				// Still add to the ID map for role derivations
 				this.roleIdMap.set(role.key, role.key);
 				continue;
