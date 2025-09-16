@@ -43,7 +43,7 @@ export default function PDPCheckComponent({ options }: PDPCheckProps) {
 							? options.resource.split(':')[1]
 							: '',
 						tenant: options.tenant,
-						...resourceAttrs,
+						attributes: resourceAttrs,
 					},
 					action: options.action,
 				};
