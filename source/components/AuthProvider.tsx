@@ -13,7 +13,7 @@ import React, {
 	useState,
 } from 'react';
 import { Text, Newline } from 'ink';
-import { loadAuthToken } from '../lib/auth.js';
+import { loadAuthToken, loadRegion } from '../lib/auth.js';
 import Login from '../commands/login.js';
 import {
 	ApiKeyCreate,
@@ -125,6 +125,11 @@ export function AuthProvider({
 
 	// Step: 1, This useEffect is the heart of AuthProvider, it decides which flow to choose based on the props passed.
 	useEffect(() => {
+		// Load region from storage on initialization
+		loadRegion().catch(() => {
+			// Ignore errors - will default to 'us'
+		});
+
 		// Loads the token stored on our system if any, if no token is found or if the scope of the token is not right,
 		// we redirect user to login.
 		const fetchAuthToken = async (

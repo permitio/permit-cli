@@ -8,7 +8,7 @@ terraform {
 }
 
 provider "permitio" {
-  api_url = "https://api.permit.io"
+  api_url = {{API_URL}}
   api_key = {{API_KEY}}
 }
 

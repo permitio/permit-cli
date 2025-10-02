@@ -1,4 +1,4 @@
-import { PERMIT_API_URL, PERMIT_ORIGIN_URL } from '../config.js';
+import { getPermitApiUrl, getPermitOriginUrl } from '../config.js';
 
 type ApiResponse<T> = {
 	headers: Headers;
@@ -26,7 +26,7 @@ export const apiCall = async <T = any>(
 		method,
 		headers: {
 			Accept: '*/*',
-			Origin: PERMIT_ORIGIN_URL,
+			Origin: getPermitOriginUrl(),
 			Authorization: `Bearer ${token}`,
 			Cookie: cookie ?? '',
 			'Content-Type': 'application/json',
@@ -38,7 +38,7 @@ export const apiCall = async <T = any>(
 	}
 
 	try {
-		const res = await fetch(`${PERMIT_API_URL}/${endpoint}`, options);
+		const res = await fetch(`${getPermitApiUrl()}/${endpoint}`, options);
 
 		if (!res.ok) {
 			const errorText = await res.json();

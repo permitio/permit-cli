@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { TERRAFORM_PERMIT_URL } from '../../../config.js';
+import { TERRAFORM_PERMIT_URL, getPermitApiUrl } from '../../../config.js';
 import { exec } from 'child_process';
 import { fileURLToPath } from 'url';
 
@@ -60,10 +60,9 @@ export async function ApplyTemplateLocally(
 	const tempDirPath = path.join(__dirname, tempDir);
 
 	try {
-		const tfContent = getFileContent(fileName).replace(
-			'{{API_KEY}}',
-			'"' + apiKey + '"',
-		);
+		const tfContent = getFileContent(fileName)
+			.replace('{{API_KEY}}', '"' + apiKey + '"')
+			.replace('{{API_URL}}', '"' + getPermitApiUrl() + '"');
 		const dirPath = path.dirname(TF_File);
 		if (!fs.existsSync(dirPath)) {
 			fs.mkdirSync(dirPath, { recursive: true });

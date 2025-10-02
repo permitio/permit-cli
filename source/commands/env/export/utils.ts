@@ -1,4 +1,5 @@
 import { WarningCollector } from './types.js';
+import { getPermitApiUrl } from '../../../config.js';
 
 export function createSafeId(...parts: string[]): string {
 	return parts
@@ -36,7 +37,7 @@ variable "PERMIT_API_KEY" {
 }
 
 provider "permitio" {
-  api_url = "https://api.permit.io"
+  api_url = "${getPermitApiUrl()}"
   api_key = var.PERMIT_API_KEY
 }
 `;

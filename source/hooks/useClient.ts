@@ -1,5 +1,5 @@
 import type { paths } from '../lib/api/v1.js';
-import { CLOUD_PDP_URL, PERMIT_API_URL, PERMIT_ORIGIN_URL } from '../config.js';
+import { getCloudPdpUrl, getPermitApiUrl, getPermitOriginUrl } from '../config.js';
 import type { paths as PdpPaths } from '../lib/api/pdp-v1.js';
 
 import createClient, {
@@ -308,10 +308,10 @@ const useClient = () => {
 
 	const authenticatedApiClient = useCallback(() => {
 		const client = createClient<paths>({
-			baseUrl: PERMIT_API_URL,
+			baseUrl: getPermitApiUrl(),
 			headers: {
 				Accept: '*/*',
-				Origin: PERMIT_ORIGIN_URL,
+				Origin: getPermitOriginUrl(),
 				'Content-Type': 'application/json',
 				Authorization: `Bearer ${globalTokenGetterSetter.tokenGetter()}`,
 			},
@@ -321,7 +321,7 @@ const useClient = () => {
 
 	const authenticatedPdpClient = useCallback((pdp_url?: string) => {
 		const client = createClient<PdpPaths>({
-			baseUrl: pdp_url ?? CLOUD_PDP_URL,
+			baseUrl: pdp_url ?? getCloudPdpUrl(),
 			headers: {
 				Accept: '*/*',
 				'Content-Type': 'application/json',
@@ -503,10 +503,10 @@ const useClient = () => {
 		cookie?: string | null,
 	) => {
 		const client = createClient<paths>({
-			baseUrl: PERMIT_API_URL,
+			baseUrl: getPermitApiUrl(),
 			headers: {
 				Accept: '*/*',
-				Origin: PERMIT_ORIGIN_URL,
+				Origin: getPermitOriginUrl(),
 				'Content-Type': 'application/json',
 				Authorization: `Bearer ${accessToken}`,
 				Cookie: cookie,

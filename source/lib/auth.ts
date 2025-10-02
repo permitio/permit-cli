@@ -3,14 +3,17 @@ import * as http from 'node:http';
 import open from 'open';
 import * as pkg from 'keytar';
 import {
-	AUTH_API_URL,
-	AUTH_PERMIT_DOMAIN,
 	AUTH_REDIRECT_HOST,
 	AUTH_REDIRECT_PORT,
 	AUTH_REDIRECT_URI,
 	DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
 	KEYSTORE_PERMIT_SERVICE_NAME,
 	AUTH_PERMIT_URL,
+	REGION_KEYSTORE_ACCOUNT,
+	type PermitRegion,
+	setRegion,
+	getAuthApiUrl,
+	getAuthPermitDomain,
 } from '../config.js';
 import { URL, URLSearchParams } from 'url';
 import { setTimeout } from 'timers';
@@ -74,6 +77,22 @@ export const cleanAuthToken = async () => {
 		KEYSTORE_PERMIT_SERVICE_NAME,
 		DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
 	);
+	await deletePassword(KEYSTORE_PERMIT_SERVICE_NAME, REGION_KEYSTORE_ACCOUNT);
+};
+
+export const saveRegion = async (region: PermitRegion): Promise<void> => {
+	await setPassword(KEYSTORE_PERMIT_SERVICE_NAME, REGION_KEYSTORE_ACCOUNT, region);
+	setRegion(region);
+};
+
+export const loadRegion = async (): Promise<PermitRegion> => {
+	const region = await getPassword(
+		KEYSTORE_PERMIT_SERVICE_NAME,
+		REGION_KEYSTORE_ACCOUNT,
+	);
+	const permitRegion = (region as PermitRegion) || 'us';
+	setRegion(permitRegion);
+	return permitRegion;
 };
 
 export const authCallbackServer = async (verifier: string): Promise<string> => {
@@ -139,14 +158,16 @@ export const browserAuth = async (): Promise<string> => {
 	}
 
 	const challenge = base64UrlEncode(sha256(verifier));
+	const authApiUrl = getAuthApiUrl();
+	const authPermitDomain = getAuthPermitDomain();
 	const parameters = new URLSearchParams({
-		audience: AUTH_API_URL,
-		screen_hint: AUTH_PERMIT_DOMAIN,
-		domain: AUTH_PERMIT_DOMAIN,
+		audience: authApiUrl,
+		screen_hint: authPermitDomain,
+		domain: authPermitDomain,
 		auth0Client: 'eyJuYW1lIjoiYXV0aDAtcmVhY3QiLCJ2ZXJzaW9uIjoiMS4xMC4yIn0=',
 		isEAP: 'false',
 		response_type: 'code',
-		fragment: `domain=${AUTH_PERMIT_DOMAIN}`,
+		fragment: `domain=${authPermitDomain}`,
 		code_challenge: challenge,
 		code_challenge_method: 'S256',
 		client_id: 'Pt7rWJ4BYlpELNIdLg6Ciz7KQ2C068C1',

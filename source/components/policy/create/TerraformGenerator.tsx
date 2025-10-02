@@ -1,4 +1,5 @@
 import { PolicyData } from './types.js';
+import { getPermitApiUrl } from '../../../config.js';
 
 interface TerraformGeneratorProps {
 	tableData: PolicyData;
@@ -37,7 +38,7 @@ export const generateTerraform = ({
 }
 
 provider "permitio" {
-  api_url = "https://api.permit.io"
+  api_url = "${getPermitApiUrl()}"
   api_key = "${authToken}"
 }
 
