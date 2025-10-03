@@ -1,5 +1,9 @@
 import type { paths } from '../lib/api/v1.js';
-import { getCloudPdpUrl, getPermitApiUrl, getPermitOriginUrl } from '../config.js';
+import {
+	getCloudPdpUrl,
+	getPermitApiUrl,
+	getPermitOriginUrl,
+} from '../config.js';
 import type { paths as PdpPaths } from '../lib/api/pdp-v1.js';
 
 import createClient, {

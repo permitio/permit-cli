@@ -81,7 +81,11 @@ export const cleanAuthToken = async () => {
 };
 
 export const saveRegion = async (region: PermitRegion): Promise<void> => {
-	await setPassword(KEYSTORE_PERMIT_SERVICE_NAME, REGION_KEYSTORE_ACCOUNT, region);
+	await setPassword(
+		KEYSTORE_PERMIT_SERVICE_NAME,
+		REGION_KEYSTORE_ACCOUNT,
+		region,
+	);
 	setRegion(region);
 };
 

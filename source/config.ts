@@ -7,7 +7,8 @@ export const REGION_KEYSTORE_ACCOUNT = 'PERMIT_REGION';
 export type PermitRegion = 'us' | 'eu';
 
 // Get region from environment variable or default to 'us'
-let currentRegion: PermitRegion = (process.env['PERMIT_REGION'] as PermitRegion) || 'us';
+let currentRegion: PermitRegion =
+	(process.env['PERMIT_REGION'] as PermitRegion) || 'us';
 
 // Function to set the current region
 export const setRegion = (region: PermitRegion) => {
