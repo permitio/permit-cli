@@ -86,6 +86,7 @@ export const AUTH_REDIRECT_PORT = 62419;
 export const AUTH_REDIRECT_URI = `http://${AUTH_REDIRECT_HOST}:${AUTH_REDIRECT_PORT}`;
 // auth.permit.io is common for both regions
 export const AUTH_PERMIT_URL = 'https://auth.permit.io';
+export const AUTH0_AUDIENCE = 'https://api.permit.io/v1/'; // Auth0 audience is shared across all regions
 
 export const TERRAFORM_PERMIT_URL =
 	'https://permit-cli-terraform.up.railway.app';

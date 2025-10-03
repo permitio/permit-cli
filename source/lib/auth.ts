@@ -9,10 +9,10 @@ import {
 	DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
 	KEYSTORE_PERMIT_SERVICE_NAME,
 	AUTH_PERMIT_URL,
+	AUTH0_AUDIENCE,
 	REGION_KEYSTORE_ACCOUNT,
 	type PermitRegion,
 	setRegion,
-	getAuthApiUrl,
 	getAuthPermitDomain,
 } from '../config.js';
 import { URL, URLSearchParams } from 'url';
@@ -158,10 +158,9 @@ export const browserAuth = async (): Promise<string> => {
 	}
 
 	const challenge = base64UrlEncode(sha256(verifier));
-	const authApiUrl = getAuthApiUrl();
 	const authPermitDomain = getAuthPermitDomain();
 	const parameters = new URLSearchParams({
-		audience: authApiUrl,
+		audience: AUTH0_AUDIENCE,
 		screen_hint: authPermitDomain,
 		domain: authPermitDomain,
 		auth0Client: 'eyJuYW1lIjoiYXV0aDAtcmVhY3QiLCJ2ZXJzaW9uIjoiMS4xMC4yIn0=',
