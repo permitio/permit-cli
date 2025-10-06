@@ -1,5 +1,6 @@
 import { Permit } from 'permitio';
 import React from 'react';
+import { getPermitApiUrl } from '../../config.js';
 
 export const usePermitSDK = (
 	token: string,
@@ -10,6 +11,7 @@ export const usePermitSDK = (
 			new Permit({
 				token,
 				pdp: pdpUrl,
+				apiUrl: getPermitApiUrl(),
 			}),
 		[token, pdpUrl],
 	);

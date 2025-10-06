@@ -75,6 +75,7 @@ vi.mock('../source/components/EnvironmentSelection.js', () => ({
 
 vi.mock('../source/lib/auth.js', () => ({
 	saveAuthToken: vi.fn(),
+	loadRegion: vi.fn(() => Promise.resolve()),
 }));
 
 beforeEach(() => {

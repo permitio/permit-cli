@@ -14,6 +14,7 @@ vi.mock('../source/lib/auth.js', () => ({
 	browserAuth: vi.fn(),
 	authCallbackServer: vi.fn(),
 	tokenType: vi.fn(),
+	loadRegion: vi.fn(() => Promise.resolve()),
 	TokenType: {
 		APIToken: 'APIToken',
 		Invalid: 'Invalid',

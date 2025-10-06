@@ -125,17 +125,17 @@ export function AuthProvider({
 
 	// Step: 1, This useEffect is the heart of AuthProvider, it decides which flow to choose based on the props passed.
 	useEffect(() => {
-		// Load region from storage on initialization
-		loadRegion().catch(() => {
-			// Ignore errors - will default to 'us'
-		});
-
 		// Loads the token stored on our system if any, if no token is found or if the scope of the token is not right,
 		// we redirect user to login.
 		const fetchAuthToken = async (
 			redirect_scope: 'organization' | 'project' | 'login',
 		) => {
 			try {
+				// Load region from storage BEFORE validating API key
+				await loadRegion().catch(() => {
+					// Ignore errors - will default to 'us'
+				});
+
 				const token = await loadAuthToken();
 				const {
 					valid,
@@ -193,6 +193,11 @@ export function AuthProvider({
 	useEffect(() => {
 		if (state === 'validate') {
 			(async () => {
+				// Load region from storage BEFORE validating API key
+				await loadRegion().catch(() => {
+					// Ignore errors - will default to 'us'
+				});
+
 				const {
 					valid,
 					scope: keyScope,
