@@ -421,6 +421,8 @@ Export your Permit environment configuration as a Terraform HCL file.
 
 This is useful for users who want to start working with Terraform after configuring their Permit settings through the UI or API. The command exports all environment content (resources, roles, user sets, resource sets, condition sets) in the Permit Terraform provider format.
 
+**Note:** The export includes all roles, including default roles (admin, editor, viewer) with their actual permissions. This allows you to manage role permissions consistently across environments using Infrastructure as Code. The Terraform provider will update existing roles or create them if they don't exist.
+
 **Arguments (Optional)**
 
 - `--api-key <string>` - a Permit API key to authenticate the operation. If not provided, the command will use the AuthProvider to get the API key you logged in with.

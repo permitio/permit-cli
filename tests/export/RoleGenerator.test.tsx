@@ -107,7 +107,7 @@ describe('RoleGenerator', () => {
 		);
 	});
 
-	it('filters out default roles', async () => {
+	it('exports default roles', async () => {
 		const defaultRolesMockPermit = createMockPermit({
 			resources: [
 				{
@@ -120,9 +120,17 @@ describe('RoleGenerator', () => {
 				},
 			],
 			roles: [
-				{ key: 'admin', name: 'Admin' },
-				{ key: 'editor', name: 'Editor' },
-				{ key: 'viewer', name: 'Viewer' },
+				{
+					key: 'admin',
+					name: 'Admin',
+					permissions: ['document:read', 'document:write', 'document:delete'],
+				},
+				{
+					key: 'editor',
+					name: 'Editor',
+					permissions: ['document:read', 'document:write'],
+				},
+				{ key: 'viewer', name: 'Viewer', permissions: ['document:read'] },
 				{ key: 'custom', name: 'Custom Role' },
 			],
 		});
@@ -133,10 +141,15 @@ describe('RoleGenerator', () => {
 		);
 
 		const hcl = await generator.generateHCL();
-		expect(hcl).not.toContain('resource "permitio_role" "viewer"');
-		expect(hcl).not.toContain('resource "permitio_role" "editor"');
-		expect(hcl).not.toContain('resource "permitio_role" "admin"');
+		// Verify default roles are exported
+		expect(hcl).toContain('resource "permitio_role" "viewer"');
+		expect(hcl).toContain('resource "permitio_role" "editor"');
+		expect(hcl).toContain('resource "permitio_role" "admin"');
 		expect(hcl).toContain('resource "permitio_role" "custom"');
+
+		// Verify default roles include their actual permissions (they can differ from defaults)
+		expect(hcl).toContain('document:delete'); // admin has delete permission
+		expect(hcl).toContain('document:write'); // editor has write permission
 	});
 
 	it('handles role dependencies correctly', async () => {
