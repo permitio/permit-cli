@@ -172,11 +172,13 @@ $ permit login --api-key permit_key_abc123 --region eu
 **Region Support:**
 
 Permit.io operates in multiple regions. When you log in with a specific region, the CLI will:
+
 - Store your region preference in your system keychain
 - Use the appropriate regional endpoints for all subsequent commands
 - Generate Terraform configurations with the correct regional API URLs
 
 Available regions:
+
 - `us` (default) - United States region (`https://api.permit.io`)
 - `eu` - European Union region (`https://api.eu.permit.io`)
 
@@ -456,6 +458,7 @@ The generated Terraform configuration will automatically use the correct API URL
 - **EU region**: `api_url = "https://api.eu.permit.io"`
 
 The region is determined by:
+
 1. The `PERMIT_REGION` environment variable (if set)
 2. The region stored from your last `permit login --region <region>` command
 3. Defaults to `us` if no region is specified
