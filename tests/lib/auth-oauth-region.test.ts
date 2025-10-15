@@ -1,8 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import * as auth from '../../source/lib/auth.js';
 import open from 'open';
 
 // Mock dependencies
+vi.mock('keytar', () => ({
+	default: {
+		getPassword: vi.fn(),
+		setPassword: vi.fn(),
+		deletePassword: vi.fn(),
+	},
+}));
+
 vi.mock('open', () => ({
 	default: vi.fn(),
 }));
@@ -21,6 +28,8 @@ vi.mock('http', () => ({
 		close: vi.fn(),
 	}),
 }));
+
+import * as auth from '../../source/lib/auth.js';
 
 describe('Auth OAuth - Region Support', () => {
 	beforeEach(() => {

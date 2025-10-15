@@ -1,12 +1,10 @@
 import { describe, vi, it, expect } from 'vitest';
-import * as auth from '../../source/lib/auth';
 import * as http from 'http';
 import {
 	KEYSTORE_PERMIT_SERVICE_NAME,
 	DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
 } from '../../source/config';
 import open from 'open';
-import * as pkg from 'keytar';
 
 // Mock dependencies
 vi.mock('http', () => ({
@@ -36,6 +34,9 @@ vi.mock('keytar', () => {
 	};
 	return { ...keytar, default: keytar };
 });
+
+import * as auth from '../../source/lib/auth';
+import * as pkg from 'keytar';
 
 describe('Token Type', () => {
 	it('Should return correct token type', async () => {
