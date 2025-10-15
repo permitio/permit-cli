@@ -1,12 +1,10 @@
 import { describe, vi, it, expect } from 'vitest';
-import * as auth from '../../source/lib/auth';
 import * as http from 'http';
 import {
 	KEYSTORE_PERMIT_SERVICE_NAME,
 	DEFAULT_PERMIT_KEYSTORE_ACCOUNT,
 } from '../../source/config';
 import open from 'open';
-import * as pkg from 'keytar';
 
 // Mock dependencies
 vi.mock('http', () => ({
@@ -36,6 +34,9 @@ vi.mock('keytar', () => {
 	};
 	return { ...keytar, default: keytar };
 });
+
+import * as auth from '../../source/lib/auth';
+import * as pkg from 'keytar';
 
 describe('Token Type', () => {
 	it('Should return correct token type', async () => {
@@ -121,5 +122,38 @@ describe('Browser Auth', () => {
 	it('Should open browser', async () => {
 		await auth.browserAuth();
 		expect(open).toHaveBeenCalled(); // Ensure the browser opens
+	});
+});
+
+describe('Region Support in Auth', () => {
+	it('Should save region to keystore', async () => {
+		const { setPassword } = pkg;
+		await auth.saveRegion('eu');
+		expect(setPassword).toHaveBeenCalledWith(
+			'Permit.io',
+			'PERMIT_REGION',
+			'eu',
+		);
+	});
+
+	it('Should load region from keystore', async () => {
+		const { getPassword } = pkg;
+		(getPassword as any).mockResolvedValueOnce('eu');
+		const region = await auth.loadRegion();
+		expect(region).toBe('eu');
+		expect(getPassword).toHaveBeenCalledWith('Permit.io', 'PERMIT_REGION');
+	});
+
+	it('Should default to us region when no region is stored', async () => {
+		const { getPassword } = pkg;
+		(getPassword as any).mockResolvedValueOnce(null);
+		const region = await auth.loadRegion();
+		expect(region).toBe('us');
+	});
+
+	it('Should clean region when cleaning auth token', async () => {
+		const { deletePassword } = pkg;
+		await auth.cleanAuthToken();
+		expect(deletePassword).toHaveBeenCalledWith('Permit.io', 'PERMIT_REGION');
 	});
 });

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { components } from '../lib/api/v1.js';
 
 /**
@@ -9,52 +10,56 @@ export function useParseRoles(
 	roleStrings?: string[],
 	availableActions?: string[],
 ): components['schemas']['RoleCreate'][] {
-	if (!roleStrings || roleStrings.length === 0) return [];
+	return useMemo(() => {
+		if (!roleStrings || roleStrings.length === 0) return [];
 
-	try {
-		return roleStrings.map(roleStr => {
-			const trimmed = roleStr.trim();
-			if (!trimmed) throw new Error('Invalid role format');
+		try {
+			return roleStrings.map(roleStr => {
+				const trimmed = roleStr.trim();
+				if (!trimmed) throw new Error('Invalid role format');
 
-			const [roleKey, ...permParts] = trimmed.split('|').map(s => s.trim());
-			if (!roleKey || !/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(roleKey)) {
-				throw new Error(`Invalid role key in: ${roleStr}`);
-			}
-			if (permParts.length === 0) {
-				throw new Error(
-					`Role must have at least one resource or resource:action in: ${roleStr}`,
-				);
-			}
-
-			const permissions: string[] = [];
-			for (const perm of permParts) {
-				if (!perm) continue;
-				const [resource, action] = perm.split(':').map(s => s.trim());
-				if (!resource)
-					throw new Error(`Invalid resource in permission: ${perm}`);
-				if (!action) {
-					// Expand to all actions if availableActions is provided
-					if (availableActions && availableActions.length > 0) {
-						permissions.push(...availableActions.map(a => `${resource}:${a}`));
-					} else {
-						permissions.push(resource); // fallback: just resource
-					}
-				} else {
-					permissions.push(`${resource}:${action}`);
+				const [roleKey, ...permParts] = trimmed.split('|').map(s => s.trim());
+				if (!roleKey || !/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(roleKey)) {
+					throw new Error(`Invalid role key in: ${roleStr}`);
 				}
-			}
+				if (permParts.length === 0) {
+					throw new Error(
+						`Role must have at least one resource or resource:action in: ${roleStr}`,
+					);
+				}
 
-			return {
-				key: roleKey,
-				name: roleKey,
-				permissions,
-			};
-		});
-	} catch (err) {
-		throw new Error(
-			`Invalid role format. Expected ["role|resource:action|resource:action"], got ${JSON.stringify(
-				roleStrings,
-			)}. ${err instanceof Error ? err.message : err}`,
-		);
-	}
+				const permissions: string[] = [];
+				for (const perm of permParts) {
+					if (!perm) continue;
+					const [resource, action] = perm.split(':').map(s => s.trim());
+					if (!resource)
+						throw new Error(`Invalid resource in permission: ${perm}`);
+					if (!action) {
+						// Expand to all actions if availableActions is provided
+						if (availableActions && availableActions.length > 0) {
+							permissions.push(
+								...availableActions.map(a => `${resource}:${a}`),
+							);
+						} else {
+							permissions.push(resource); // fallback: just resource
+						}
+					} else {
+						permissions.push(`${resource}:${action}`);
+					}
+				}
+
+				return {
+					key: roleKey,
+					name: roleKey,
+					permissions,
+				};
+			});
+		} catch (err) {
+			throw new Error(
+				`Invalid role format. Expected ["role|resource:action|resource:action"], got ${JSON.stringify(
+					roleStrings,
+				)}. ${err instanceof Error ? err.message : err}`,
+			);
+		}
+	}, [roleStrings, availableActions]);
 }

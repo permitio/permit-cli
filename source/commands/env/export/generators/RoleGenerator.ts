@@ -8,10 +8,6 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Define default global roles that should be excluded from creation
-// These roles already exist in Permit by default
-const DEFAULT_GLOBAL_ROLES = ['admin', 'editor', 'viewer'];
-
 interface RoleData {
 	key: string;
 	terraformId: string;
@@ -183,10 +179,8 @@ export class RoleGenerator implements HCLGenerator {
 	): string {
 		let terraformId = roleKey;
 
-		const isDefaultRole = DEFAULT_GLOBAL_ROLES.includes(roleKey);
-
-		// For duplicate roles or default roles, use resource__role format
-		if (isDuplicate || isDefaultRole || this.usedTerraformIds.has(roleKey)) {
+		// For duplicate roles, use resource__role format
+		if (isDuplicate || this.usedTerraformIds.has(roleKey)) {
 			terraformId = resourceKey
 				? `${resourceKey}__${roleKey}`
 				: `global_${roleKey}`;
@@ -300,13 +294,6 @@ export class RoleGenerator implements HCLGenerator {
 		const validRoles: RoleData[] = [];
 
 		for (const role of roles) {
-			// Skip default global roles that already exist in the system
-			if (DEFAULT_GLOBAL_ROLES.includes(role.key)) {
-				// Still add to the ID map for role derivations
-				this.roleIdMap.set(role.key, role.key);
-				continue;
-			}
-
 			// Generate Terraform ID
 			const terraformId = this.generateTerraformId(role.key);
 

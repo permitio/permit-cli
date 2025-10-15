@@ -30,6 +30,10 @@ export default function CreateSimpleWizard({
 	const parsedActions = useParseActions(presentActions);
 	const parsedRoles = useParseRoles(presentRoles);
 
+	// Track if preset data has been processed
+	const [hasProcessedPresetData, setHasProcessedPresetData] =
+		React.useState(false);
+
 	// Initialize step based on preset values
 	const getInitialStep = () => {
 		if (presentResources && presentActions && presentRoles) return 'complete';
@@ -109,10 +113,13 @@ export default function CreateSimpleWizard({
 	};
 
 	const handleRolesComplete = useCallback(
-		async (roles: components['schemas']['RoleCreate'][]) => {
+		async (
+			roles: components['schemas']['RoleCreate'][],
+			resourcesToCreate?: components['schemas']['ResourceCreate'][],
+		) => {
 			setStatus('processing');
 			try {
-				await createBulkResources(resources);
+				await createBulkResources(resourcesToCreate || resources);
 				await createBulkRoles(roles);
 				setStatus('success');
 				setResources([]);
@@ -125,6 +132,9 @@ export default function CreateSimpleWizard({
 	);
 
 	useEffect(() => {
+		// Only process preset data once
+		if (hasProcessedPresetData) return;
+
 		const processPresetData = async () => {
 			if (presentResources && presentActions && presentRoles) {
 				try {
@@ -133,7 +143,8 @@ export default function CreateSimpleWizard({
 						actions: parsedActions,
 					}));
 					setResources(resourcesWithActions);
-					await handleRolesComplete(parsedRoles);
+					setHasProcessedPresetData(true);
+					await handleRolesComplete(parsedRoles, resourcesWithActions);
 				} catch (err) {
 					handleError((err as Error).message);
 				}
@@ -143,10 +154,17 @@ export default function CreateSimpleWizard({
 					actions: parsedActions,
 				}));
 				setResources(resourcesWithActions);
+				setHasProcessedPresetData(true);
 			}
 		};
 
-		processPresetData();
+		if (
+			(presentResources && presentActions && presentRoles) ||
+			(presentResources && presentActions)
+		) {
+			processPresetData();
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		presentResources,
 		presentActions,
@@ -154,8 +172,6 @@ export default function CreateSimpleWizard({
 		parsedResources,
 		parsedActions,
 		parsedRoles,
-		handleRolesComplete,
-		handleError,
 	]);
 
 	return (

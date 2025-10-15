@@ -13,7 +13,7 @@ import React, {
 	useState,
 } from 'react';
 import { Text, Newline } from 'ink';
-import { loadAuthToken } from '../lib/auth.js';
+import { loadAuthToken, loadRegion } from '../lib/auth.js';
 import Login from '../commands/login.js';
 import {
 	ApiKeyCreate,
@@ -131,6 +131,11 @@ export function AuthProvider({
 			redirect_scope: 'organization' | 'project' | 'login',
 		) => {
 			try {
+				// Load region from storage BEFORE validating API key
+				await loadRegion().catch(() => {
+					// Ignore errors - will default to 'us'
+				});
+
 				const token = await loadAuthToken();
 				const {
 					valid,
@@ -188,6 +193,11 @@ export function AuthProvider({
 	useEffect(() => {
 		if (state === 'validate') {
 			(async () => {
+				// Load region from storage BEFORE validating API key
+				await loadRegion().catch(() => {
+					// Ignore errors - will default to 'us'
+				});
+
 				const {
 					valid,
 					scope: keyScope,
