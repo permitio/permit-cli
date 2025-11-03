@@ -105,20 +105,24 @@ export function trinoTypeToPermitType(
 
 /**
  * Map Trino schema data to Permit resources.
- * - Each catalog, schema, table, and column is a resource.
+ * - Each catalog, schema, table, and optionally column is a resource.
  * - Each table resource includes columns as attributes (with type/description).
+ * @param trino - The Trino schema data to map
+ * @param options - Configuration options
+ * @param options.createColumnResources - Whether to create individual column resources (default: false)
  */
 export function mapTrinoSchemaToPermitResources(
 	trino: TrinoSchemaData,
+	options: { createColumnResources?: boolean } = {},
 ): PermitResource[] {
 	const resources: PermitResource[] = [];
-	const SEP = '-';
+	const SEP = '_';
 
 	// Catalogs
 	for (const catalog of trino.catalogs) {
 		resources.push({
 			key: `trino${SEP}catalog${SEP}${catalog.name}`,
-			name: catalog.name,
+			name: `Catalog: ${catalog.name}`,
 			description: `Trino resource type: catalog. Trino catalog: ${catalog.name}`,
 			actions: [
 				'AccessCatalog',
@@ -133,7 +137,7 @@ export function mapTrinoSchemaToPermitResources(
 	for (const schema of trino.schemas) {
 		resources.push({
 			key: `trino${SEP}schema${SEP}${schema.catalog}${SEP}${schema.name}`,
-			name: `${schema.catalog}.${schema.name}`,
+			name: `Schema: ${schema.catalog}.${schema.name}`,
 			description: `Trino resource type: schema. Schema ${schema.name} in catalog ${schema.catalog}`,
 			actions: [
 				'CreateSchema',
@@ -175,7 +179,7 @@ export function mapTrinoSchemaToPermitResources(
 		const tableKey = `trino${SEP}table${SEP}${table.catalog}${SEP}${table.schema}${SEP}${table.name}`;
 		resources.push({
 			key: tableKey,
-			name: `${table.catalog}.${table.schema}.${table.name}`,
+			name: `Table: ${table.catalog}.${table.schema}.${table.name}`,
 			description: `Trino resource type: ${table.type.toLowerCase()}. ${table.type} ${table.name} in ${table.catalog}.${table.schema}`,
 			actions: TABLE_AND_COLUMN_ACTIONS,
 			attributes: table.columns.reduce(
@@ -202,29 +206,32 @@ export function mapTrinoSchemaToPermitResources(
 				},
 			),
 		});
-		// Columns as resources
-		for (const column of table.columns) {
-			resources.push({
-				key: `trino${SEP}column${SEP}${table.catalog}${SEP}${table.schema}${SEP}${table.name}${SEP}${column.name}`,
-				name: `${table.catalog}.${table.schema}.${table.name}.${column.name}`,
-				description: `Trino resource type: column. Column ${column.name} in ${table.catalog}.${table.schema}.${table.name}`,
-				actions: TABLE_AND_COLUMN_ACTIONS,
-				attributes: {
-					parent_table: {
-						type: 'string',
-						description: `${table.catalog}.${table.schema}.${table.name}`,
+
+		// Create column resources if requested
+		if (options.createColumnResources) {
+			for (const column of table.columns) {
+				resources.push({
+					key: `trino${SEP}column${SEP}${table.catalog}${SEP}${table.schema}${SEP}${table.name}${SEP}${column.name}`,
+					name: `Column: ${table.catalog}.${table.schema}.${table.name}.${column.name}`,
+					description: `Trino resource type: column. Column ${column.name} in ${table.catalog}.${table.schema}.${table.name}`,
+					actions: TABLE_AND_COLUMN_ACTIONS,
+					attributes: {
+						parent_table: {
+							type: 'string',
+							description: `${table.catalog}.${table.schema}.${table.name}`,
+						},
+						table_type: { type: 'string', description: table.type.toLowerCase() },
+						type: {
+							type: trinoTypeToPermitType(column.type),
+							description: column.type,
+						},
+						nullable: {
+							type: 'bool',
+							description: column.nullable ? 'nullable' : undefined,
+						},
 					},
-					table_type: { type: 'string', description: table.type.toLowerCase() },
-					type: {
-						type: trinoTypeToPermitType(column.type),
-						description: column.type,
-					},
-					nullable: {
-						type: 'bool',
-						description: column.nullable ? 'nullable' : undefined,
-					},
-				},
-			});
+				});
+			}
 		}
 	}
 
@@ -232,7 +239,7 @@ export function mapTrinoSchemaToPermitResources(
 	for (const view of trino.views) {
 		resources.push({
 			key: `trino${SEP}view${SEP}${view.catalog}${SEP}${view.schema}${SEP}${view.name}`,
-			name: `${view.catalog}.${view.schema}.${view.name}`,
+			name: `View: ${view.catalog}.${view.schema}.${view.name}`,
 			description: `Trino resource type: view. View ${view.name} in ${view.catalog}.${view.schema}`,
 			actions: [
 				'CreateView',
@@ -272,7 +279,7 @@ export function mapTrinoSchemaToPermitResources(
 	for (const mview of trino.materializedViews) {
 		resources.push({
 			key: `trino${SEP}materialized_view${SEP}${mview.catalog}${SEP}${mview.schema}${SEP}${mview.name}`,
-			name: `${mview.catalog}.${mview.schema}.${mview.name}`,
+			name: `Materialized View: ${mview.catalog}.${mview.schema}.${mview.name}`,
 			description: `Trino resource type: materialized view. Materialized view ${mview.name} in ${mview.catalog}.${mview.schema}`,
 			actions: [
 				'CreateMaterializedView',
@@ -311,7 +318,7 @@ export function mapTrinoSchemaToPermitResources(
 	for (const fn of trino.functions) {
 		resources.push({
 			key: `trino${SEP}function${SEP}${fn.catalog}${SEP}${fn.schema}${SEP}${fn.name}`,
-			name: `${fn.catalog}.${fn.schema}.${fn.name}`,
+			name: `Function: ${fn.catalog}.${fn.schema}.${fn.name}`,
 			description: `Trino resource type: function. Function ${fn.name} in ${fn.catalog}.${fn.schema}`,
 			actions: [
 				'ShowFunctions',
@@ -333,7 +340,7 @@ export function mapTrinoSchemaToPermitResources(
 	for (const proc of trino.procedures) {
 		resources.push({
 			key: `trino${SEP}procedure${SEP}${proc.catalog}${SEP}${proc.schema}${SEP}${proc.name}`,
-			name: `${proc.catalog}.${proc.schema}.${proc.name}`,
+			name: `Procedure: ${proc.catalog}.${proc.schema}.${proc.name}`,
 			description: `Trino resource type: procedure. Procedure ${proc.name} in ${proc.catalog}.${proc.schema}`,
 			actions: ['ExecuteProcedure', 'ExecuteTableProcedure'],
 			attributes: {
@@ -344,7 +351,7 @@ export function mapTrinoSchemaToPermitResources(
 
 	// Add Trino System resource
 	resources.push({
-		key: 'trino_sys',
+		key: 'trino.sys',
 		name: 'Trino System',
 		description: 'Trino system-level resource for system-wide actions.',
 		actions: [
@@ -426,20 +433,20 @@ export async function fetchTrinoFunctionsAndProceduresPassthrough(
 
 	if (catalog.toLowerCase() === 'postgresql') {
 		const passthrough = `SELECT * FROM TABLE(postgresql.system.query(query => '
-		SELECT p.proname as function_name, n.nspname as schema_name, 
-		pg_catalog.pg_get_function_result(p.oid) as return_type, 
-		pg_catalog.pg_get_function_arguments(p.oid) as arguments, 
-		CASE p.prokind 
-			WHEN ''f'' THEN ''FUNCTION'' 
-			WHEN ''p'' THEN ''PROCEDURE'' 
-			WHEN ''a'' THEN ''AGGREGATE'' 
-			WHEN ''w'' THEN ''WINDOW'' 
-			ELSE p.prokind::text 
-		END as kind 
-		FROM pg_catalog.pg_proc p 
-		LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace 
-		WHERE n.nspname = ''${schema}'' 
-		AND p.proname NOT LIKE ''pg_%'' 
+		SELECT p.proname as function_name, n.nspname as schema_name,
+		pg_catalog.pg_get_function_result(p.oid) as return_type,
+		pg_catalog.pg_get_function_arguments(p.oid) as arguments,
+		CASE p.prokind
+			WHEN ''f'' THEN ''FUNCTION''
+			WHEN ''p'' THEN ''PROCEDURE''
+			WHEN ''a'' THEN ''AGGREGATE''
+			WHEN ''w'' THEN ''WINDOW''
+			ELSE p.prokind::text
+		END as kind
+		FROM pg_catalog.pg_proc p
+		LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+		WHERE n.nspname = ''${schema}''
+		AND p.proname NOT LIKE ''pg_%''
 		ORDER BY p.proname
 		'))`;
 		try {
@@ -472,8 +479,8 @@ export async function fetchTrinoFunctionsAndProceduresPassthrough(
 		}
 	} else if (catalog.toLowerCase() === 'mysql') {
 		const passthrough = `SELECT * FROM TABLE(mysql.system.query(query => '
-		SELECT routine_name, routine_type, data_type, routine_definition 
-		FROM information_schema.routines 
+		SELECT routine_name, routine_type, data_type, routine_definition
+		FROM information_schema.routines
 		WHERE routine_schema = ''${schema}''
 		'))`;
 		try {
@@ -556,8 +563,8 @@ export async function fetchTrinoSchema(
 	const tableComments = new Map<string, string>();
 	try {
 		const commentsQuery = `
-			SELECT catalog_name, schema_name, table_name, comment 
-			FROM system.metadata.table_comments 
+			SELECT catalog_name, schema_name, table_name, comment
+			FROM system.metadata.table_comments
 			WHERE comment IS NOT NULL
 		`;
 		const commentRows = await executeTrinoQuery(client, commentsQuery);

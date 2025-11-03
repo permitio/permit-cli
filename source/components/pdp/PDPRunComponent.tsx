@@ -16,6 +16,7 @@ type Props = {
 	onComplete?: () => void;
 	onError?: (error: string) => void;
 	skipWaitScreen?: boolean; // New prop to control wait behavior
+	tag?: string;
 };
 
 export default function PDPRunComponent({
@@ -24,6 +25,7 @@ export default function PDPRunComponent({
 	onComplete,
 	onError,
 	skipWaitScreen = true, // Default to showing wait screen
+	tag = 'latest',
 }: Props) {
 	const { authToken } = useAuth();
 	const [loading, setLoading] = useState(true);
@@ -82,7 +84,7 @@ export default function PDPRunComponent({
 				// Generate the Docker command
 				const cmd = `docker run -d -p 7766:7000 ${
 					opa ? `-p ${opa}:8181` : ''
-				} -e PDP_API_KEY=${token} -e PDP_CONTROL_PLANE=${config.controlPlane || 'https://api.permit.io'} permitio/pdp-v2:latest`;
+				} -e PDP_API_KEY=${token} -e PDP_CONTROL_PLANE=${config.controlPlane || 'https://api.permit.io'} permitio/pdp-v2:${tag}`;
 
 				setDockerCommand(cmd);
 

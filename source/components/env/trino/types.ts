@@ -5,6 +5,7 @@ export type TrinoOptions = {
 	password?: string;
 	catalog?: string;
 	schema?: string;
+	createColumnResources?: boolean;
 };
 
 export interface PermitResource {
