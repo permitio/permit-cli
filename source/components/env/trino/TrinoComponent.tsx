@@ -21,7 +21,9 @@ export default function TrinoComponent(
 				catalog: props.catalog,
 				schema: props.schema,
 			});
-			const permitResources = mapTrinoSchemaToPermitResources(trinoSchema);
+			const permitResources = mapTrinoSchemaToPermitResources(trinoSchema, {
+				createColumnResources: props.createColumnResources,
+			});
 			setCreatedResources(permitResources);
 			await processTrinoSchema(props);
 		})();

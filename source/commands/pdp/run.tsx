@@ -28,16 +28,24 @@ export const options = object({
 				alias: 'k',
 			}),
 		),
+	tag: string()
+		.default('latest')
+		.describe(
+			option({
+				description: 'The tag of the PDP image to use',
+				alias: 't',
+			}),
+		),
 });
 
 type Props = {
 	options: zInfer<typeof options>;
 };
 
-export default function Run({ options: { opa, dryRun, apiKey } }: Props) {
+export default function Run({ options: { opa, dryRun, apiKey, tag } }: Props) {
 	return (
 		<AuthProvider permit_key={apiKey} scope={'environment'}>
-			<PDPRunComponent opa={opa} dryRun={dryRun} />
+			<PDPRunComponent opa={opa} dryRun={dryRun} tag={tag} />
 		</AuthProvider>
 	);
 }
