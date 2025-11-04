@@ -220,7 +220,10 @@ export function mapTrinoSchemaToPermitResources(
 							type: 'string',
 							description: `${table.catalog}.${table.schema}.${table.name}`,
 						},
-						table_type: { type: 'string', description: table.type.toLowerCase() },
+						table_type: {
+							type: 'string',
+							description: table.type.toLowerCase(),
+						},
 						type: {
 							type: trinoTypeToPermitType(column.type),
 							description: column.type,
