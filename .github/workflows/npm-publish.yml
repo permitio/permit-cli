@@ -34,6 +34,16 @@ jobs:
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org/
+      - name: Extract version from release tag
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          VERSION=${VERSION#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Publishing version: $VERSION"
+      - name: Update package.json version
+        run: |
+          sed -i 's/"version": "0.0.0-placeholder"/"version": "${{ steps.get_version.outputs.version }}"/' package.json
       - run: npm ci
       - name: Download build artifacts
         uses: actions/download-artifact@v4
