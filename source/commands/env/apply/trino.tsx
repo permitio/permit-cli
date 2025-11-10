@@ -56,6 +56,16 @@ export const options = zod.object({
 				alias: 's',
 			}),
 		),
+	createColumnResources: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			option({
+				description: 'Create individual column resources (default: false)',
+				alias: 'cols',
+			}),
+		),
 });
 
 export default function Trino({ options }: { options: TrinoOptions }) {

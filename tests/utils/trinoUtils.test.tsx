@@ -40,28 +40,30 @@ describe('mapTrinoSchemaToPermitResources', () => {
 			materializedViews: [],
 			procedures: [],
 		};
-		const resources = mapTrinoSchemaToPermitResources(schema);
+		const resources = mapTrinoSchemaToPermitResources(schema, {
+			createColumnResources: true,
+		});
 
 		// Check catalogs
-		const catalog = resources.find(r => r.key === 'trino-catalog-testcat');
+		const catalog = resources.find(r => r.key === 'trino_catalog_testcat');
 		expect(catalog).toBeDefined();
-		expect(catalog?.name).toBe('testcat');
+		expect(catalog?.name).toBe('Catalog: testcat');
 		expect(catalog?.actions).toContain('AccessCatalog');
 
 		// Check schemas
 		const schemaResource = resources.find(
-			r => r.key === 'trino-schema-testcat-public',
+			r => r.key === 'trino_schema_testcat_public',
 		);
 		expect(schemaResource).toBeDefined();
-		expect(schemaResource?.name).toBe('testcat.public');
+		expect(schemaResource?.name).toBe('Schema: testcat.public');
 		expect(schemaResource?.actions).toContain('CreateSchema');
 
 		// Check tables
 		const table = resources.find(
-			r => r.key === 'trino-table-testcat-public-users',
+			r => r.key === 'trino_table_testcat_public_users',
 		);
 		expect(table).toBeDefined();
-		expect(table?.name).toBe('testcat.public.users');
+		expect(table?.name).toBe('Table: testcat.public.users');
 		expect(table?.actions).toContain('CreateTable');
 		expect(table?.attributes).toBeDefined();
 		expect(table?.attributes?.id).toEqual({ type: 'number' });
@@ -69,10 +71,10 @@ describe('mapTrinoSchemaToPermitResources', () => {
 
 		// Check columns
 		const column = resources.find(
-			r => r.key === 'trino-column-testcat-public-users-id',
+			r => r.key === 'trino_column_testcat_public_users_id',
 		);
 		expect(column).toBeDefined();
-		expect(column?.name).toBe('testcat.public.users.id');
+		expect(column?.name).toBe('Column: testcat.public.users.id');
 		expect(column?.actions).toContain('SelectFromColumns');
 	});
 
@@ -123,10 +125,10 @@ describe('mapTrinoSchemaToPermitResources', () => {
 
 		// Check function
 		const func = resources.find(
-			r => r.key === 'trino-function-testcat-public-my_func',
+			r => r.key === 'trino_function_testcat_public_my_func',
 		);
 		expect(func).toBeDefined();
-		expect(func?.name).toBe('testcat.public.my_func');
+		expect(func?.name).toBe('Function: testcat.public.my_func');
 		expect(func?.actions).toContain('ExecuteFunction');
 		expect(func?.actions).toContain('ShowFunctions');
 		expect(func?.attributes?.returnType).toEqual({ type: 'number' });
@@ -134,10 +136,10 @@ describe('mapTrinoSchemaToPermitResources', () => {
 
 		// Check view
 		const view = resources.find(
-			r => r.key === 'trino-view-testcat-public-my_view',
+			r => r.key === 'trino_view_testcat_public_my_view',
 		);
 		expect(view).toBeDefined();
-		expect(view?.name).toBe('testcat.public.my_view');
+		expect(view?.name).toBe('View: testcat.public.my_view');
 		expect(view?.actions).toContain('CreateView');
 		expect(view?.actions).toContain('DropView');
 		expect(view?.attributes?.col1).toEqual({ type: 'string' });
@@ -148,20 +150,20 @@ describe('mapTrinoSchemaToPermitResources', () => {
 
 		// Check materialized view
 		const mview = resources.find(
-			r => r.key === 'trino-materialized_view-testcat-public-my_mview',
+			r => r.key === 'trino_materialized_view_testcat_public_my_mview',
 		);
 		expect(mview).toBeDefined();
-		expect(mview?.name).toBe('testcat.public.my_mview');
+		expect(mview?.name).toBe('Materialized View: testcat.public.my_mview');
 		expect(mview?.actions).toContain('CreateMaterializedView');
 		expect(mview?.actions).toContain('RefreshMaterializedView');
 		expect(mview?.attributes?.total).toEqual({ type: 'number' });
 
 		// Check procedure
 		const proc = resources.find(
-			r => r.key === 'trino-procedure-testcat-public-my_proc',
+			r => r.key === 'trino_procedure_testcat_public_my_proc',
 		);
 		expect(proc).toBeDefined();
-		expect(proc?.name).toBe('testcat.public.my_proc');
+		expect(proc?.name).toBe('Procedure: testcat.public.my_proc');
 		expect(proc?.actions).toContain('ExecuteProcedure');
 		expect(proc?.attributes?.argumentTypes).toEqual({ type: 'array' });
 	});
