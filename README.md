@@ -1065,6 +1065,34 @@ Applies a policy template to your current environment, which is useful for quick
 ```bash
 $ permit env template apply --template mesa-verde-banking-dem
 ```
+---
+
+#### Learning management system template example
+This Terraform configuration defines a role- and attribute-based access control (ABAC + RBAC) model using the Permit.io provider. It provisions resources, user attributes, user sets, and conditional access rules for a course management system.
+
+**Key components:**
+
+- Provider setup: Connects to Permit.io via api_url and api_key.
+
+- Resources: Defines a course resource with actions (enroll, read, create, delete) and attributes (department, studentIds, teacherId).
+
+- User attributes: Establishes user fields like department, id, and role.
+
+- User sets: Groups users into roles (admin, teacher, student) based on their attributes.
+
+- Resource sets: Creates logical collections of courses based on conditions such as department or enrollment.
+
+- Condition set rules: Links user sets and resource sets with permissions to control who can read, create, or enroll in courses.
+
+This configuration provides a structured example of how to model fine-grained permissions in an education-style domain using Terraform and Permit.io.
+
+**Usage**
+1. Install the Permit CLI: `npm install -g @permitio/cli`
+2. Apply the template:
+```bash
+$ permit env template apply --template lmsapp
+```
+3. Replace `{{API_KEY}}` in `lmsapp.tf` with your Permit API key.
 
 ### API Commands
 
