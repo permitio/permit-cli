@@ -162,6 +162,56 @@ describe('API Users List Command', () => {
 		await delay(100);
 		expect(lastFrame()?.toString()).toMatch(/Error/);
 	});
+
+	it('should include resource instance roles when option is set', async () => {
+		(fetch as any).mockResolvedValue({
+			ok: true,
+			json: async () => ({
+				success: true,
+				data: [
+					{
+						key: 'user1',
+						email: 'test@test.com',
+						first_name: 'Test',
+						last_name: 'User',
+						roles: [
+							{
+								role: 'admin',
+								tenant: 'tenant1',
+								resource_instance: {
+									type: 'project',
+									key: 'proj1',
+								},
+							},
+						],
+					},
+				],
+				total_count: 1,
+				page: 1,
+			}),
+		});
+
+		const options = {
+			apiKey: demoPermitKey,
+			page: 1,
+			perPage: 10,
+			all: false,
+			expandKey: false,
+			includeResourceInstanceRoles: true,
+		};
+
+		const { lastFrame } = render(<List options={options} />);
+		expect(lastFrame()?.toString()).toMatch(/Loading Token/);
+
+		await delay(100);
+		expect(lastFrame()).toMatch(/Showing 1 items/);
+
+		// Verify the API was called with the correct parameter
+		expect(fetch).toHaveBeenCalledWith(
+			expect.stringContaining('include_resource_instance_roles=true'),
+			expect.any(Object),
+		);
+	});
 });
 
 describe('API Users Commands', () => {
