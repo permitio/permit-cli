@@ -1,189 +1,255 @@
 terraform {
   required_providers {
     permitio = {
-      source  = "permitio/permit-io"
-      version = "~> 0.0.12"
+      source = "permitio/permit-io"
+      version = "~> 0.0.14"
     }
   }
 }
 
 provider "permitio" {
-  api_url = "https://api.permit.io"
-  api_key = "{{API_KEY}}"
+  api_url = {{API_URL}}
+  api_key = {{API_KEY}}
 }
 
 # Resources
-resource "permitio_resource" "Course" {
-  name        = "Course"
-  description = "A course in the Learning Management System"
-  key         = "Course"
+resource "permitio_resource" "course" {
+  name        = "course"
+  description = ""
+  key         = "course"
 
   actions = {
-    "create" = {
-      name = "create"
+    "enroll" = {
+      name = "enroll"
     },
     "read" = {
       name = "read"
     },
-    "update" = {
-      name = "update"
+    "create" = {
+      name = "create"
     },
     "delete" = {
       name = "delete"
-    },
-    "enroll" = {
-      name = "enroll"
     }
   }
   attributes = {
-    "enrolledStudents" = {
-      name = "Enrolled Students"
+    "department" = {
+      name = "Department"
+      type = "string"
+    },
+    "studentIds" = {
+      name = "Student Ids"
       type = "array"
     },
     "teacherId" = {
-      name = "Teacher ID"
+      name = "Teacher Id"
       type = "string"
     }
   }
 }
 
-resource "permitio_resource" "Enrollment" {
-  name        = "Enrollment"
-  description = "Student enrollment in a course"
-  key         = "Enrollment"
-
-  actions = {
-    "create" = {
-      name = "create"
-    },
-    "read" = {
-      name = "read"
-    },
-    "delete" = {
-      name = "delete"
-    }
-  }
-  attributes = {}
+# User Attributes
+resource "permitio_user_attribute" "user_department" {
+  key         = "department"
+  type        = "string"
+  description = ""
 }
-
-resource "permitio_resource" "Assignment" {
-  name        = "Assignment"
-  description = "An assignment linked to a course"
-  key         = "Assignment"
-
-  actions = {
-    "create" = {
-      name = "create"
-    },
-    "read" = {
-      name = "read"
-    },
-    "update" = {
-      name = "update"
-    },
-    "delete" = {
-      name = "delete"
-    },
-    "grade" = {
-      name = "grade"
-    }
-  }
-  attributes = {
-    "dueDate" = {
-      name = "Due Date"
-      type = "string"
-    }
-  }
+resource "permitio_user_attribute" "user_id" {
+  key         = "id"
+  type        = "string"
+  description = ""
+}
+resource "permitio_user_attribute" "user_role" {
+  key         = "role"
+  type        = "string"
+  description = "user role"
 }
 
 # Roles
-resource "permitio_role" "Student" {
-  key         = "student"
-  name        = "Student"
-  permissions = ["Course:read", "Enrollment:create", "Assignment:read", "Assignment:submit"]
 
-  depends_on = [permitio_resource.Course, permitio_resource.Enrollment, permitio_resource.Assignment]
-}
-
-resource "permitio_role" "Teacher" {
-  key         = "teacher"
-  name        = "Teacher"
-  permissions = ["Course:create", "Course:read", "Course:update", "Course:delete", "Assignment:read", "Assignment:grade"]
-
-  depends_on = [permitio_resource.Course, permitio_resource.Assignment]
-}
-
-resource "permitio_role" "Teaching_Assistant" {
-  key         = "teaching_assistant"
-  name        = "Teaching Assistant"
-  permissions = ["Course:read", "Course:update", "Assignment:read"]
-
-  depends_on = [permitio_resource.Course, permitio_resource.Assignment]
-}
-
-resource "permitio_role" "Admin" {
-  key         = "admin"
-  name        = "Admin"
-  permissions = [
-    "Course:create", "Course:read", "Course:update", "Course:delete",
-    "Enrollment:create", "Enrollment:read", "Enrollment:delete",
-    "Assignment:create", "Assignment:read", "Assignment:update", "Assignment:delete", "Assignment:grade"
+# Condition Set Rules
+resource "permitio_condition_set_rule" "student_Courses_Where_Student_is_Enrolled_and_Same_Department_course_read" {
+  user_set     = permitio_user_set.student.key
+  permission   = "course:read"
+  resource_set = permitio_resource_set.Courses_Where_Student_is_Enrolled_and_Same_Department.key
+  depends_on   = [
+    permitio_resource_set.Courses_Where_Student_is_Enrolled_and_Same_Department,
+    permitio_user_set.student
   ]
-
-  depends_on = [permitio_resource.Course, permitio_resource.Enrollment, permitio_resource.Assignment]
 }
-
-# Relations
-resource "permitio_relation" "Course_Teacher" {
-  key              = "assigned_to"
-  name             = "Assigned To"
-  subject_resource = permitio_resource.Course.key
-  object_resource  = permitio_resource.Teacher.key
-  depends_on = [
-    permitio_resource.Course,
-    permitio_resource.Teacher
+resource "permitio_condition_set_rule" "teacher_Courses_Matching_Teacher_Department_course_read" {
+  user_set     = permitio_user_set.teacher.key
+  permission   = "course:read"
+  resource_set = permitio_resource_set.Courses_Matching_Teacher_Department.key
+  depends_on   = [
+    permitio_resource_set.Courses_Matching_Teacher_Department,
+    permitio_user_set.teacher
+  ]
+}
+resource "permitio_condition_set_rule" "student_Courses_Matching_Teacher_Department_course_read" {
+  user_set     = permitio_user_set.student.key
+  permission   = "course:read"
+  resource_set = permitio_resource_set.Courses_Matching_Teacher_Department.key
+  depends_on   = [
+    permitio_resource_set.Courses_Matching_Teacher_Department,
+    permitio_user_set.student
+  ]
+}
+resource "permitio_condition_set_rule" "teacher_Courses_Matching_Teacher_Department_course_create" {
+  user_set     = permitio_user_set.teacher.key
+  permission   = "course:create"
+  resource_set = permitio_resource_set.Courses_Matching_Teacher_Department.key
+  depends_on   = [
+    permitio_resource_set.Courses_Matching_Teacher_Department,
+    permitio_user_set.teacher
+  ]
+}
+resource "permitio_condition_set_rule" "student_Courses_Where_Student_Can_Enroll_course_enroll" {
+  user_set     = permitio_user_set.student.key
+  permission   = "course:enroll"
+  resource_set = permitio_resource_set.Courses_Where_Student_Can_Enroll.key
+  depends_on   = [
+    permitio_resource_set.Courses_Where_Student_Can_Enroll,
+    permitio_user_set.student
   ]
 }
 
 # Resource Sets
-resource "permitio_resource_set" "Enrolled_Course" {
-  name        = "Enrolled Course"
-  key         = "Enrolled_Course"
-  resource    = permitio_resource.Course.key
+resource "permitio_resource_set" "Courses_Where_Student_Can_Enroll" {
+  name        = "Courses Where Student Can Enroll"
+  key         = "Courses_Where_Student_Can_Enroll"
+  resource    = permitio_resource.course.key
   conditions  = jsonencode({
-    "allOf": [
-      {
-        "allOf": [
-          {
-            "resource.enrolledStudents": {
-              "contains": "{{user_id}}"
+  "allOf": [
+    {
+      "allOf": [
+        {
+          "resource.department": {
+            "equals": {
+              "ref": "user.department"
             }
           }
-        ]
-      }
-    ]
-  })
-  depends_on = [permitio_resource.Course]
+        }
+      ]
+    }
+  ]
+})
+  depends_on  = [
+    permitio_resource.course
+  ]
 }
-
-# Role Derivations
-resource "permitio_role_derivation" "Teacher_to_Course" {
-  role        = permitio_role.Teacher.key
-  on_resource = permitio_resource.Course.key
-  to_role     = permitio_role.Teacher.key
-  resource    = permitio_resource.Course.key
-  linked_by   = permitio_relation.Course_Teacher.key
-  depends_on = [
-    permitio_role.Teacher,
-    permitio_resource.Course,
-    permitio_relation.Course_Teacher
+resource "permitio_resource_set" "Courses_Where_Student_is_Enrolled_and_Same_Department" {
+  name        = "Courses Where Student is Enrolled and Same Department"
+  key         = "Courses_Where_Student_is_Enrolled_and_Same_Department"
+  resource    = permitio_resource.course.key
+  conditions  = jsonencode({
+  "allOf": [
+    {
+      "allOf": [
+        {
+          "resource.department": {
+            "equals": {
+              "ref": "user.department"
+            }
+          }
+        },
+        {
+          "resource.studentIds": {
+            "array_contains": {
+              "ref": "user.id"
+            }
+          }
+        }
+      ]
+    }
+  ]
+})
+  depends_on  = [
+    permitio_resource.course
+  ]
+}
+resource "permitio_resource_set" "Courses_Matching_Teacher_Department" {
+  name        = "Courses Matching Teacher Department"
+  key         = "Courses_Matching_Teacher_Department"
+  resource    = permitio_resource.course.key
+  conditions  = jsonencode({
+  "allOf": [
+    {
+      "allOf": [
+        {
+          "resource.department": {
+            "equals": {
+              "ref": "user.department"
+            }
+          }
+        }
+      ]
+    }
+  ]
+})
+  depends_on  = [
+    permitio_resource.course
   ]
 }
 
-# Condition Set Rules
-resource "permitio_condition_set_rule" "student_read_enrolled_course" {
-  user_set     = "student"
-  resource_set = "Enrolled_Course"
-  permission   = "Course:read"
-  depends_on   = [permitio_role.Student, permitio_resource_set.Enrolled_Course]
+# User Sets
+resource "permitio_user_set" "admin" {
+  key = "admin"
+  name = "admin"
+  conditions = jsonencode({
+  allOf = [
+    {
+      allOf = [
+        {
+          "user.role" = {
+            equals = "admin"
+          }
+        }
+      ]
+    }
+  ]
+})
+  depends_on = [
+    permitio_user_attribute.user_role
+  ]
+}
+resource "permitio_user_set" "student" {
+  key = "student"
+  name = "student"
+  conditions = jsonencode({
+  allOf = [
+    {
+      allOf = [
+        {
+          "user.role" = {
+            equals = "student"
+          }
+        }
+      ]
+    }
+  ]
+})
+  depends_on = [
+    permitio_user_attribute.user_role
+  ]
+}
+resource "permitio_user_set" "teacher" {
+  key = "teacher"
+  name = "teacher"
+  conditions = jsonencode({
+  allOf = [
+    {
+      allOf = [
+        {
+          "user.role" = {
+            equals = "teacher"
+          }
+        }
+      ]
+    }
+  ]
+})
+  depends_on = [
+    permitio_user_attribute.user_role
+  ]
 }
