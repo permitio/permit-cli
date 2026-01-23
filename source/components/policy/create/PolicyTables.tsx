@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Text } from 'ink';
-import Table from 'cli-table';
+import Table from 'cli-table3'; // Using cli-table3 for better border support
 import chalk from 'chalk';
 import { PolicyData } from './types.js';
 
@@ -17,31 +17,27 @@ export const PolicyTables: React.FC<PolicyTablesProps> = ({
 
 	const { resources, roles } = tableData;
 
-	// Calculate column widths based on content
-	const roleColumnWidths = roles.map(r => Math.max(15, r.name.length + 2));
+	// 1. DYNAMIC WIDTH CALCULATION: Prevent border breakage
+	// We check the length of all resource names and actions to find the perfect fit.
+	const allLabels = resources.flatMap(res => [res.name, ...res.actions.map(a => `  ${a}`)]);
+	const longestLabel = Math.max(...allLabels.map(l => l.length));
+	const firstColWidth = Math.min(50, Math.max(25, longestLabel + 4));
+
+	// Calculate role column widths
+	const roleColumnWidths = roles.map(r => Math.max(12, r.name.length + 2));
 
 	const table = new Table({
 		head: [
-			'', // Empty header for resources/actions column
-			...roles.map(r => chalk.hex('#FFA500')(r.name)), // Orange color for role names
+			chalk.cyan('Resource / Action'), 
+			...roles.map(r => chalk.hex('#FFA500')(r.name)),
 		],
-		colWidths: [30, ...roleColumnWidths],
+		colWidths: [firstColWidth, ...roleColumnWidths],
+		wordWrap: true,
 		chars: {
-			top: '─',
-			'top-mid': '┬',
-			'top-left': '┌',
-			'top-right': '┐',
-			bottom: '─',
-			'bottom-mid': '┴',
-			'bottom-left': '└',
-			'bottom-right': '┘',
-			left: '│',
-			'left-mid': '├',
-			mid: '─',
-			'mid-mid': '┼',
-			right: '│',
-			'right-mid': '┤',
-			middle: '│',
+			top: '─', 'top-mid': '┬', 'top-left': '┌', 'top-right': '┐',
+			bottom: '─', 'bottom-mid': '┴', 'bottom-left': '└', 'bottom-right': '┘',
+			left: '│', 'left-mid': '├', mid: '─', 'mid-mid': '┼',
+			right: '│', 'right-mid': '┤', middle: '│',
 		},
 	});
 
@@ -58,18 +54,19 @@ export const PolicyTables: React.FC<PolicyTablesProps> = ({
 					const hasPermission = role.permissions.some(
 						p => p.resource === resource.name && p.actions.includes(action),
 					);
-					return hasPermission ? '✓' : '';
+					return hasPermission ? chalk.green('✓') : chalk.gray('·');
 				}),
 			];
 			table.push(row);
 		});
 	});
-
 	return (
-		<Box flexDirection="column">
+		<Box flexDirection="column" marginTop={1}>
 			<Text>{table.toString()}</Text>
 			{waitingForApproval && (
-				<Text color="yellow">Do you approve this policy? (yes/no)</Text>
+				<Box marginTop={1}>
+					<Text color="yellow">Do you approve this policy? (yes/no)</Text>
+				</Box>
 			)}
 		</Box>
 	);
