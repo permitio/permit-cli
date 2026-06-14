@@ -252,6 +252,50 @@ export const useGeneratePolicySnapshot = ({
 		setModelsGenerated(prev => prev + 1);
 	}, [buildUserInfoFromUsername, tenantId]);
 
+	const generateABACConfig = useCallback(() => {
+		const config: ABACConfig[] = resourcesRef.current.flatMap(resource =>
+			Object.entries(resource.actions).flatMap(([, action]) => {
+				// For ABAC, we generate a case with placeholder attributes
+				// In a real scenario, we might want to fetch Resource Attributes from the API
+				return {
+					user: {
+						key: 'generated_abac_user',
+						attributes: {
+							tier: 'premium',
+						},
+					},
+					action: action.key ?? '',
+					resource: {
+						key: resource.key,
+						attributes: {
+							owner: 'generated_abac_user',
+						},
+					},
+					result: true, // Placeholder result
+				};
+			}),
+		);
+
+		setFinalConfig(prev => [...prev, ...config]);
+		setModelsGenerated(prev => prev + 1);
+	}, []);
+
+	const generateReBACConfig = useCallback(() => {
+		const config: ReBACConfig[] = resourcesRef.current.flatMap(resource =>
+			Object.entries(resource.actions).flatMap(([, action]) => {
+				return {
+					user: 'generated_rebac_user',
+					action: action.key ?? '',
+					resource: `${resource.key}:generated_instance`,
+					result: true, // Placeholder result
+				};
+			}),
+		);
+
+		setFinalConfig(prev => [...prev, ...config]);
+		setModelsGenerated(prev => prev + 1);
+	}, []);
+
 	const saveConfigToPath = useCallback(async () => {
 		// Write config as pretty JSON
 		const json = JSON.stringify(
@@ -290,7 +334,7 @@ export const useGeneratePolicySnapshot = ({
 
 	// Check if we have generated all config.
 	useEffect(() => {
-		if (modelsGenerated === models.length) {
+		if (modelsGenerated === models.length && state !== 'done') {
 			if (!path) {
 				setTimeout(() => {
 					setState('done');
@@ -299,32 +343,39 @@ export const useGeneratePolicySnapshot = ({
 				saveConfigToPath();
 			}
 		}
-	}, [models, modelsGenerated, path, saveConfigToPath]);
+	}, [models, modelsGenerated, path, saveConfigToPath, state]);
 
 	// Step 1 : Get all roles and resources
 
 	useEffect(() => {
-		if (!models.includes('RBAC')) return;
-
 		if (roles.length === 0 && state === 'roles') {
 			fetchRoles();
 		} else if (tenantId === undefined && state === 'rbac-tenant') {
 			createNewTenant();
 		} else if (resourcesRef.current.length === 0 && state === 'resources') {
 			fetchResources();
-		} else if (
-			generatedUsersRBACRef.current.length === 0 &&
-			state === 'rbac-users'
-		) {
-			const { generatedUsers, userRoleMappingRBAC } =
-				generateUsersAndRoleMapping();
-			if (dryRun) {
-				createDryUsers(generatedUsers, userRoleMappingRBAC);
+		} else if (state === 'rbac-users') {
+			if (models.includes('RBAC')) {
+				const { generatedUsers, userRoleMappingRBAC } =
+					generateUsersAndRoleMapping();
+				if (dryRun) {
+					createDryUsers(generatedUsers, userRoleMappingRBAC);
+				} else {
+					createUserAndAttachRoles(generatedUsers, userRoleMappingRBAC);
+				}
 			} else {
-				createUserAndAttachRoles(generatedUsers, userRoleMappingRBAC);
+				setState('rbac-generate');
 			}
 		} else if (state === 'rbac-generate') {
-			generateRBACConfig();
+			if (models.includes('RBAC')) {
+				generateRBACConfig();
+			}
+			if (models.includes('ABAC')) {
+				generateABACConfig();
+			}
+			if (models.includes('ReBAC')) {
+				generateReBACConfig();
+			}
 		}
 	}, [
 		createNewTenant,
@@ -333,7 +384,9 @@ export const useGeneratePolicySnapshot = ({
 		dryRun,
 		fetchResources,
 		fetchRoles,
+		generateABACConfig,
 		generateRBACConfig,
+		generateReBACConfig,
 		generateUsersAndRoleMapping,
 		models,
 		roles.length,
