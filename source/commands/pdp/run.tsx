@@ -42,7 +42,7 @@ type Props = {
 	options: zInfer<typeof options>;
 };
 
-export default function Run({ options: { opa, dryRun, apiKey, tag } }: Props) {
+export default function Run({ options: { opa, dryRun, apiKey, tag,include_resource_instance_roles } }: Props) {
 	return (
 		<AuthProvider permit_key={apiKey} scope={'environment'}>
 			<PDPRunComponent opa={opa} dryRun={dryRun} tag={tag} />
