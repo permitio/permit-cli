@@ -72,13 +72,6 @@ export default function Login({
 	const [organization, setOrganization] = useState<string>('');
 	const [environment, setEnvironment] = useState<string>('');
 
-	// Save region to keystore after successful login
-	useEffect(() => {
-		if (region === 'us') {
-			saveRegion(region);
-		}
-	}, [region]);
-
 	useEffect(() => {
 		if (retiredRegion) {
 			setTimeout(() => {
@@ -97,6 +90,17 @@ export default function Login({
 			setOrganization(organisation.label);
 			setEnvironment(environment.label);
 			await saveAuthToken(secret);
+			// Save region to keystore after successful login. 'us' is the only
+			// region, so this also replaces a retired region (e.g. 'eu') left in
+			// the keychain by an earlier login.
+			try {
+				await saveRegion('us');
+			} catch (err) {
+				setError(
+					`Failed to save the region: ${err instanceof Error ? err.message : String(err)}`,
+				);
+				return;
+			}
 			if (loginSuccess) {
 				loginSuccess(organisation, project, environment, secret);
 				return;
