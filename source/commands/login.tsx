@@ -3,7 +3,11 @@ import { Text } from 'ink';
 import { type infer as zInfer, object, string } from 'zod';
 import { option } from 'pastel';
 import { saveAuthToken, saveRegion } from '../lib/auth.js';
-import { setRegion } from '../config.js';
+import {
+	isRetiredRegion,
+	setRegion,
+	EU_REGION_RETIRED_MESSAGE,
+} from '../config.js';
 import LoginFlow from '../components/LoginFlow.js';
 import EnvironmentSelection, {
 	ActiveState,
@@ -30,7 +34,7 @@ export const options = object({
 		.optional()
 		.describe(
 			option({
-				description: 'Permit region: us or eu (default: us)',
+				description: 'Permit region: us (default: us)',
 				alias: 'r',
 			}),
 		),
@@ -50,9 +54,12 @@ export default function Login({
 	options: { apiKey, workspace, region },
 	loginSuccess,
 }: Props) {
+	// A retired region (e.g. 'eu') is rejected before any request is made.
+	const retiredRegion = isRetiredRegion(region);
+
 	// Set region IMMEDIATELY before anything else (synchronously)
-	if (region && (region === 'us' || region === 'eu')) {
-		setRegion(region as 'us' | 'eu');
+	if (region === 'us') {
+		setRegion(region);
 	}
 
 	const [state, setState] = useState<'login' | 'signup' | 'env' | 'done'>(
@@ -67,10 +74,18 @@ export default function Login({
 
 	// Save region to keystore after successful login
 	useEffect(() => {
-		if (region && (region === 'us' || region === 'eu')) {
-			saveRegion(region as 'us' | 'eu');
+		if (region === 'us') {
+			saveRegion(region);
 		}
 	}, [region]);
+
+	useEffect(() => {
+		if (retiredRegion) {
+			setTimeout(() => {
+				process.exit(1);
+			}, 100);
+		}
+	}, [retiredRegion]);
 
 	const onEnvironmentSelectSuccess = useCallback(
 		async (
@@ -112,6 +127,10 @@ export default function Login({
 		setCookie(cookie);
 		setState('env');
 	}, []);
+
+	if (retiredRegion) {
+		return <Text>{EU_REGION_RETIRED_MESSAGE}</Text>;
+	}
 
 	return (
 		<>

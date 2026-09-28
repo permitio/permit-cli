@@ -3,7 +3,7 @@ import { Box, Newline, Text } from 'ink';
 import Spinner from 'ink-spinner';
 import { useAuth } from '../AuthProvider.js';
 import { PDPStatsProps } from '../../commands/pdp/stats.js';
-import { PERMIT_API_STATISTICS_URL } from '../../config.js';
+import { getPermitApiStatisticsUrl } from '../../config.js';
 import TableComponent from '../ui/Table.js';
 import { fetchUtil, MethodE } from '../../utils/fetchUtil.js';
 
@@ -22,7 +22,7 @@ export default function PDPStatComponent({ options }: PDPStatsProps) {
 	// State To Store Statistics URL
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [statisticsURL, _] = useState<string>(
-		`${options.statsUrl || PERMIT_API_STATISTICS_URL}/${auth.scope.project_id || options.projectKey}/${auth.scope.environment_id || options.environmentKey}/pdps`,
+		`${options.statsUrl || getPermitApiStatisticsUrl()}/${auth.scope.project_id || options.projectKey}/${auth.scope.environment_id || options.environmentKey}/pdps`,
 	);
 
 	// State to store API response data

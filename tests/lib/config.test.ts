@@ -1,5 +1,20 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
+const US_URLS = {
+	getPermitApiUrl: 'https://api.permit.io',
+	getPermitOriginUrl: 'https://app.permit.io',
+	getAuthPermitDomain: 'app.permit.io',
+	getCloudPdpUrl: 'https://cloudpdp.api.permit.io',
+	getPermitApiStatisticsUrl: 'https://pdp-statistics.api.permit.io/v2/stats',
+	getApiUrl: 'https://api.permit.io/v2/',
+	getFactsApiUrl: 'https://api.permit.io/v2/facts/',
+	getApiPdpsConfigUrl: 'https://api.permit.io/v2/pdps/me/config',
+	getAuthApiUrl: 'https://api.permit.io/v1/',
+} as const;
+
+type UrlGetter = keyof typeof US_URLS;
+const URL_GETTERS = Object.keys(US_URLS) as UrlGetter[];
+
 describe('Config - Region Support', () => {
 	// Reset modules before each test to ensure clean state
 	beforeEach(async () => {
@@ -7,16 +22,10 @@ describe('Config - Region Support', () => {
 		delete process.env.PERMIT_REGION;
 	});
 
-	describe('Region Configuration', () => {
+	describe('US region', () => {
 		it('should default to US region when no env var is set', async () => {
 			const config = await import('../../source/config.js');
 			expect(config.getRegion()).toBe('us');
-		});
-
-		it('should use EU region when PERMIT_REGION=eu is set', async () => {
-			process.env.PERMIT_REGION = 'eu';
-			const config = await import('../../source/config.js');
-			expect(config.getRegion()).toBe('eu');
 		});
 
 		it('should use US region when PERMIT_REGION=us is set', async () => {
@@ -25,188 +34,86 @@ describe('Config - Region Support', () => {
 			expect(config.getRegion()).toBe('us');
 		});
 
-		it('should allow setting region programmatically', async () => {
-			const config = await import('../../source/config.js');
-			config.setRegion('eu');
-			expect(config.getRegion()).toBe('eu');
-			config.setRegion('us');
-			expect(config.getRegion()).toBe('us');
-		});
-	});
-
-	describe('US Region URLs', () => {
-		it('should return correct US API URL', async () => {
+		it.each(URL_GETTERS)('%s returns the US URL', async getter => {
 			process.env.PERMIT_REGION = 'us';
 			const config = await import('../../source/config.js');
-			expect(config.getPermitApiUrl()).toBe('https://api.permit.io');
+			expect(config[getter]()).toBe(US_URLS[getter]);
 		});
 
-		it('should return correct US origin URL', async () => {
-			process.env.PERMIT_REGION = 'us';
-			const config = await import('../../source/config.js');
-			expect(config.getPermitOriginUrl()).toBe('https://app.permit.io');
-		});
+		it.each(URL_GETTERS)(
+			'%s returns the US URL when no region is set',
+			async getter => {
+				const config = await import('../../source/config.js');
+				expect(config[getter]()).toBe(US_URLS[getter]);
+			},
+		);
 
-		it('should return correct US auth domain', async () => {
-			process.env.PERMIT_REGION = 'us';
-			const config = await import('../../source/config.js');
-			expect(config.getAuthPermitDomain()).toBe('app.permit.io');
-		});
-
-		it('should return correct US PDP URL', async () => {
-			process.env.PERMIT_REGION = 'us';
-			const config = await import('../../source/config.js');
-			expect(config.getCloudPdpUrl()).toBe('https://cloudpdp.api.permit.io');
-		});
-
-		it('should return correct US statistics URL', async () => {
-			process.env.PERMIT_REGION = 'us';
-			const config = await import('../../source/config.js');
-			expect(config.getPermitApiStatisticsUrl()).toBe(
-				'https://pdp-statistics.api.permit.io/v2/stats',
-			);
-		});
-	});
-
-	describe('EU Region URLs', () => {
-		it('should return correct EU API URL', async () => {
-			process.env.PERMIT_REGION = 'eu';
-			const config = await import('../../source/config.js');
-			expect(config.getPermitApiUrl()).toBe('https://api.eu.permit.io');
-		});
-
-		it('should return correct EU origin URL', async () => {
-			process.env.PERMIT_REGION = 'eu';
-			const config = await import('../../source/config.js');
-			expect(config.getPermitOriginUrl()).toBe('https://app.eu.permit.io');
-		});
-
-		it('should return correct EU auth domain', async () => {
-			process.env.PERMIT_REGION = 'eu';
-			const config = await import('../../source/config.js');
-			expect(config.getAuthPermitDomain()).toBe('app.eu.permit.io');
-		});
-
-		it('should return correct EU PDP URL', async () => {
-			process.env.PERMIT_REGION = 'eu';
-			const config = await import('../../source/config.js');
-			expect(config.getCloudPdpUrl()).toBe(
-				'https://cloudpdp.api.eu-central-1.permit.io',
-			);
-		});
-
-		it('should return correct EU statistics URL', async () => {
-			process.env.PERMIT_REGION = 'eu';
-			const config = await import('../../source/config.js');
-			expect(config.getPermitApiStatisticsUrl()).toBe(
-				'https://pdp-statistics.api.eu-central-1.permit.io/v2/stats',
-			);
-		});
-	});
-
-	describe('Auth0 Configuration', () => {
-		it('should use same Auth0 audience for all regions', async () => {
-			// Test US
-			process.env.PERMIT_REGION = 'us';
-			const configUS = await import('../../source/config.js');
-			const usAudience = configUS.AUTH0_AUDIENCE;
-
-			vi.resetModules();
-			delete process.env.PERMIT_REGION;
-
-			// Test EU
-			process.env.PERMIT_REGION = 'eu';
-			const configEU = await import('../../source/config.js');
-			const euAudience = configEU.AUTH0_AUDIENCE;
-
-			expect(usAudience).toBe('https://api.permit.io/v1/');
-			expect(euAudience).toBe('https://api.permit.io/v1/');
-			expect(usAudience).toBe(euAudience);
-		});
-
-		it('should have correct Auth0 audience constant', async () => {
+		it('should have the shared Auth0 audience and auth URL', async () => {
 			const config = await import('../../source/config.js');
 			expect(config.AUTH0_AUDIENCE).toBe('https://api.permit.io/v1/');
-		});
-
-		it('should have shared auth.permit.io URL', async () => {
-			const config = await import('../../source/config.js');
 			expect(config.AUTH_PERMIT_URL).toBe('https://auth.permit.io');
 		});
 	});
 
-	describe('API URL Functions', () => {
-		it('should return correct API URL for default region', async () => {
-			const config = await import('../../source/config.js');
-			expect(config.getApiUrl()).toBe('https://api.permit.io/v2/');
-		});
+	describe('retired EU region', () => {
+		it.each(['eu', 'EU', ' eu '])(
+			'PERMIT_REGION=%j makes getRegion throw RetiredRegionError',
+			async value => {
+				process.env.PERMIT_REGION = value;
+				const config = await import('../../source/config.js');
+				expect(() => config.getRegion()).toThrow(config.RetiredRegionError);
+				expect(() => config.getRegion()).toThrow(
+					config.EU_REGION_RETIRED_MESSAGE,
+				);
+			},
+		);
 
-		it('should return correct API URL for EU region', async () => {
+		it('importing config with PERMIT_REGION=eu does not throw', async () => {
 			process.env.PERMIT_REGION = 'eu';
-			const config = await import('../../source/config.js');
-			expect(config.getApiUrl()).toBe('https://api.eu.permit.io/v2/');
+			await expect(import('../../source/config.js')).resolves.toBeDefined();
 		});
 
-		it('should return correct Facts API URL for US', async () => {
+		it.each(URL_GETTERS)(
+			'%s throws instead of falling back to US when PERMIT_REGION=eu',
+			async getter => {
+				process.env.PERMIT_REGION = 'eu';
+				const config = await import('../../source/config.js');
+				expect(() => config[getter]()).toThrow(config.RetiredRegionError);
+			},
+		);
+
+		it('adoptRegion("eu") throws and keeps every URL getter failing', async () => {
 			const config = await import('../../source/config.js');
-			expect(config.getFactsApiUrl()).toBe('https://api.permit.io/v2/facts/');
+			expect(() => config.adoptRegion('eu')).toThrow(config.RetiredRegionError);
+			for (const getter of URL_GETTERS) {
+				expect(() => config[getter]()).toThrow(config.RetiredRegionError);
+			}
 		});
 
-		it('should return correct Facts API URL for EU', async () => {
-			process.env.PERMIT_REGION = 'eu';
+		it('adoptRegion accepts us and empty values', async () => {
 			const config = await import('../../source/config.js');
-			expect(config.getFactsApiUrl()).toBe(
-				'https://api.eu.permit.io/v2/facts/',
-			);
-		});
-
-		it('should return correct Auth API URL for US', async () => {
-			const config = await import('../../source/config.js');
-			expect(config.getAuthApiUrl()).toBe('https://api.permit.io/v1/');
-		});
-
-		it('should return correct Auth API URL for EU', async () => {
-			process.env.PERMIT_REGION = 'eu';
-			const config = await import('../../source/config.js');
-			expect(config.getAuthApiUrl()).toBe('https://api.eu.permit.io/v1/');
-		});
-	});
-
-	describe('Region Switching', () => {
-		it('should update URLs when region is changed', async () => {
-			const config = await import('../../source/config.js');
-
-			// Start with US
-			expect(config.getRegion()).toBe('us');
+			expect(config.adoptRegion('us')).toBe('us');
+			expect(config.adoptRegion(null)).toBe('us');
+			expect(config.adoptRegion(undefined)).toBe('us');
 			expect(config.getPermitApiUrl()).toBe('https://api.permit.io');
-
-			// Switch to EU
-			config.setRegion('eu');
-			expect(config.getRegion()).toBe('eu');
-			expect(config.getPermitApiUrl()).toBe('https://api.eu.permit.io');
-			expect(config.getCloudPdpUrl()).toBe(
-				'https://cloudpdp.api.eu-central-1.permit.io',
-			);
-
-			// Switch back to US
-			config.setRegion('us');
-			expect(config.getRegion()).toBe('us');
-			expect(config.getPermitApiUrl()).toBe('https://api.permit.io');
-			expect(config.getCloudPdpUrl()).toBe('https://cloudpdp.api.permit.io');
 		});
 
-		it('should maintain Auth0 audience when switching regions', async () => {
+		it('setRegion("us") recovers from a retired region', async () => {
+			process.env.PERMIT_REGION = 'eu';
 			const config = await import('../../source/config.js');
-
-			const initialAudience = config.AUTH0_AUDIENCE;
-			config.setRegion('eu');
-			const euAudience = config.AUTH0_AUDIENCE;
+			expect(() => config.getPermitApiUrl()).toThrow();
 			config.setRegion('us');
-			const usAudience = config.AUTH0_AUDIENCE;
+			expect(config.getPermitApiUrl()).toBe('https://api.permit.io');
+		});
 
-			expect(initialAudience).toBe('https://api.permit.io/v1/');
-			expect(euAudience).toBe('https://api.permit.io/v1/');
-			expect(usAudience).toBe('https://api.permit.io/v1/');
+		it('the error message tells the user to use the US region and log in again', async () => {
+			const config = await import('../../source/config.js');
+			expect(config.EU_REGION_RETIRED_MESSAGE).toContain('EU region');
+			expect(config.EU_REGION_RETIRED_MESSAGE).toContain('US region');
+			expect(config.EU_REGION_RETIRED_MESSAGE).toContain('permit login');
+			expect(config.isRetiredRegion('eu')).toBe(true);
+			expect(config.isRetiredRegion('us')).toBe(false);
+			expect(config.isRetiredRegion(undefined)).toBe(false);
 		});
 	});
 });

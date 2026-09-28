@@ -23,7 +23,6 @@ Designed with developer experience in mind, the CLI makes it easy to integrate *
 - 🏗️ Automate policy operations in CI/CD with IaC and GitOps
 - ✨ Generate policies from natural language using AI
 - 🔐 Manage users, roles, and permissions directly from your terminal
-- 🌍 Multi-region support for US and EU deployments
 
 > :bulb: The CLI is fully open source and is built with Pastel, using TypeScript and a React-style architecture. Contributions welcome!
 
@@ -147,46 +146,26 @@ The `login` command will take you to the browser to perform user authentication 
 
 - `--api-key <string>` - store a Permit API key in your workstation keychain instead of running browser authentication
 - `--workspace <string>` - predefined workspace key to skip the workspace selection step
-- `--region <us | eu>` - specify the Permit region to use (`default: us`). The region determines which Permit.io API endpoints the CLI will communicate with.
+- `--region <us>` - specify the Permit region to use (`default: us`). `us` is the only supported region.
 
 **Examples:**
 
-Login with default US region:
+Login with the default region:
 
 ```bash
 $ permit login
 ```
 
-Login with EU region:
-
-```bash
-$ permit login --region eu
-```
-
-Login with API key and EU region:
-
-```bash
-$ permit login --api-key permit_key_abc123 --region eu
-```
-
 **Region Support:**
 
-Permit.io operates in multiple regions. When you log in with a specific region, the CLI will:
+All Permit.io accounts are served from the US region (`https://api.permit.io`).
 
-- Store your region preference in your system keychain
-- Use the appropriate regional endpoints for all subsequent commands
-- Generate Terraform configurations with the correct regional API URLs
-
-Available regions:
-
-- `us` (default) - United States region (`https://api.permit.io`)
-- `eu` - European Union region (`https://api.eu.permit.io`)
-
-You can also set the region using the `PERMIT_REGION` environment variable:
+The EU region (`eu`) was retired on 2026-09-28. If you previously logged in with `--region eu`, or have `PERMIT_REGION=eu` set, the CLI stops with an error before making any request. To fix it, unset `PERMIT_REGION` and log in again:
 
 ```bash
-export PERMIT_REGION=eu
-permit login
+$ unset PERMIT_REGION
+$ permit logout
+$ permit login
 ```
 
 ---
@@ -450,27 +429,7 @@ Print out the output to the console -
 $ permit env export terraform
 ```
 
-**Region Support:**
-
-The generated Terraform configuration will automatically use the correct API URL based on your configured region:
-
-- **US region**: `api_url = "https://api.permit.io"`
-- **EU region**: `api_url = "https://api.eu.permit.io"`
-
-The region is determined by:
-
-1. The `PERMIT_REGION` environment variable (if set)
-2. The region stored from your last `permit login --region <region>` command
-3. Defaults to `us` if no region is specified
-
-Example for EU region:
-
-```bash
-$ export PERMIT_REGION=eu
-$ permit env export terraform --file permit-eu-config.tf
-```
-
-This ensures that when you run `terraform apply`, the Terraform provider will communicate with the correct regional Permit.io API.
+The generated Terraform configuration uses `api_url = "https://api.permit.io"`.
 
 ## Fine-Grained Authorization Configuration
 

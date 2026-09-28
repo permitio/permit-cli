@@ -14,6 +14,7 @@ import React, {
 } from 'react';
 import { Text, Newline } from 'ink';
 import { loadAuthToken, loadRegion } from '../lib/auth.js';
+import { RetiredRegionError } from '../config.js';
 import Login from '../commands/login.js';
 import {
 	ApiKeyCreate,
@@ -29,6 +30,21 @@ import {
 	globalScopeGetterSetter,
 	globalTokenGetterSetter,
 } from '../hooks/useClient.js';
+
+// Loads the saved region. Keychain read failures still default to 'us' (as
+// before), but a retired region such as 'eu' is rethrown so the caller can
+// stop with a clear error instead of silently sending old-region credentials
+// to the US endpoints.
+const loadStoredRegion = async (): Promise<void> => {
+	try {
+		await loadRegion();
+	} catch (err) {
+		if (err instanceof RetiredRegionError) {
+			throw err;
+		}
+		// Ignore other errors - will default to 'us'
+	}
+};
 
 // Define the AuthContext type
 export type AuthContextType = {
@@ -132,10 +148,15 @@ export function AuthProvider({
 		) => {
 			try {
 				// Load region from storage BEFORE validating API key
-				await loadRegion().catch(() => {
-					// Ignore errors - will default to 'us'
-				});
+				await loadStoredRegion();
+			} catch (err) {
+				// A retired region (e.g. 'eu') must stop here, before any request,
+				// instead of falling through to the login flow or to US.
+				setError(err instanceof Error ? err.message : String(err));
+				return;
+			}
 
+			try {
 				const token = await loadAuthToken();
 				const {
 					valid,
@@ -194,9 +215,12 @@ export function AuthProvider({
 		if (state === 'validate') {
 			(async () => {
 				// Load region from storage BEFORE validating API key
-				await loadRegion().catch(() => {
-					// Ignore errors - will default to 'us'
-				});
+				try {
+					await loadStoredRegion();
+				} catch (err) {
+					setError(err instanceof Error ? err.message : String(err));
+					return;
+				}
 
 				const {
 					valid,
