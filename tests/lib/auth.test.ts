@@ -1,4 +1,4 @@
-import { describe, vi, it, expect } from 'vitest';
+import { describe, vi, it, expect, beforeEach } from 'vitest';
 import * as http from 'http';
 import {
 	KEYSTORE_PERMIT_SERVICE_NAME,
@@ -126,21 +126,27 @@ describe('Browser Auth', () => {
 });
 
 describe('Region Support in Auth', () => {
+	beforeEach(async () => {
+		vi.clearAllMocks();
+		const { setRegion } = await import('../../source/config');
+		setRegion('us');
+	});
+
 	it('Should save region to keystore', async () => {
 		const { setPassword } = pkg;
-		await auth.saveRegion('eu');
+		await auth.saveRegion('us');
 		expect(setPassword).toHaveBeenCalledWith(
 			'Permit.io',
 			'PERMIT_REGION',
-			'eu',
+			'us',
 		);
 	});
 
-	it('Should load region from keystore', async () => {
+	it('Should load us region from keystore', async () => {
 		const { getPassword } = pkg;
-		(getPassword as any).mockResolvedValueOnce('eu');
+		(getPassword as any).mockResolvedValueOnce('us');
 		const region = await auth.loadRegion();
-		expect(region).toBe('eu');
+		expect(region).toBe('us');
 		expect(getPassword).toHaveBeenCalledWith('Permit.io', 'PERMIT_REGION');
 	});
 
@@ -149,6 +155,18 @@ describe('Region Support in Auth', () => {
 		(getPassword as any).mockResolvedValueOnce(null);
 		const region = await auth.loadRegion();
 		expect(region).toBe('us');
+	});
+
+	it('Should reject a stored eu region instead of falling back to us', async () => {
+		const { getPassword } = pkg;
+		const { RetiredRegionError, EU_REGION_RETIRED_MESSAGE, getPermitApiUrl } =
+			await import('../../source/config');
+		(getPassword as any).mockResolvedValueOnce('eu');
+		await expect(auth.loadRegion()).rejects.toThrow(RetiredRegionError);
+		(getPassword as any).mockResolvedValueOnce('eu');
+		await expect(auth.loadRegion()).rejects.toThrow(EU_REGION_RETIRED_MESSAGE);
+		// The retired value stays in effect, so no US URL can be built with it.
+		expect(() => getPermitApiUrl()).toThrow(RetiredRegionError);
 	});
 
 	it('Should clean region when cleaning auth token', async () => {

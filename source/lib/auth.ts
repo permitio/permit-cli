@@ -13,6 +13,7 @@ import {
 	REGION_KEYSTORE_ACCOUNT,
 	type PermitRegion,
 	setRegion,
+	adoptRegion,
 	getAuthPermitDomain,
 } from '../config.js';
 import { URL, URLSearchParams } from 'url';
@@ -94,9 +95,10 @@ export const loadRegion = async (): Promise<PermitRegion> => {
 		KEYSTORE_PERMIT_SERVICE_NAME,
 		REGION_KEYSTORE_ACCOUNT,
 	);
-	const permitRegion = (region as PermitRegion) || 'us';
-	setRegion(permitRegion);
-	return permitRegion;
+	// Throws RetiredRegionError if the saved region was retired (e.g. 'eu').
+	// Callers must not swallow that error: falling back to US would send the
+	// old region's credentials to the US endpoints.
+	return adoptRegion(region);
 };
 
 export const authCallbackServer = async (verifier: string): Promise<string> => {

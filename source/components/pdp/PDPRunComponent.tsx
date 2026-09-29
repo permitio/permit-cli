@@ -4,7 +4,7 @@ import Spinner from 'ink-spinner';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 import { loadAuthToken } from '../../lib/auth.js';
-import { API_PDPS_CONFIG_URL } from '../../config.js';
+import { getApiPdpsConfigUrl } from '../../config.js';
 import { useAuth } from '../AuthProvider.js';
 import SelectInput from 'ink-select-input';
 
@@ -66,7 +66,7 @@ export default function PDPRunComponent({
 				}
 
 				// Fetch PDP configuration
-				const response = await fetch(API_PDPS_CONFIG_URL, {
+				const response = await fetch(getApiPdpsConfigUrl(), {
 					headers: {
 						'Content-Type': 'application/json',
 						Authorization: `Bearer ${token}`,
