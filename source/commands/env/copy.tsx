@@ -61,6 +61,36 @@ export const options = zod.object({
 					"Optional: Set the environment conflict strategy. In case not set, will use 'fail'.",
 			}),
 		),
+	dataMigration: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			option({
+				description:
+					'Optional: Migrate data (users, roles, etc.) from source to target environment after copying.',
+			}),
+		),
+	skipResources: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			option({
+				description:
+					'Optional: When migrating data, skip resource instances, attributes, and tuples.',
+			}),
+		),
+	skipUsers: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			option({
+				description:
+					'Optional: When migrating data, skip users, role assignments, and user attributes.',
+			}),
+		),
 });
 
 type Props = {
@@ -68,7 +98,17 @@ type Props = {
 };
 
 export default function Copy({
-	options: { apiKey, from, to, name, description, conflictStrategy },
+	options: {
+		apiKey,
+		from,
+		to,
+		name,
+		description,
+		conflictStrategy,
+		dataMigration,
+		skipResources,
+		skipUsers,
+	},
 }: Props) {
 	return (
 		<>
@@ -79,6 +119,9 @@ export default function Copy({
 					name={name}
 					description={description}
 					conflictStrategy={conflictStrategy}
+					dataMigration={dataMigration}
+					skipResources={skipResources}
+					skipUsers={skipUsers}
 				/>
 			</AuthProvider>
 		</>
