@@ -78,6 +78,15 @@ export const options = object({
 				alias: 'a',
 			}),
 		),
+	includeResourceInstanceRoles: boolean()
+		.optional()
+		.default(false)
+		.describe(
+			option({
+				description: 'Include resource instance roles in the response',
+				alias: 'i',
+			}),
+		),
 });
 
 type Props = {
